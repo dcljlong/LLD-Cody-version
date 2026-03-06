@@ -1353,6 +1353,393 @@ async def bulk_tag_tasks(task_ids: List[str], data: TaskTagUpdate, current_user:
     )
     return {"updated": result.modified_count}
 
+# ==================== TASK TO GATE CONVERSION ====================
+
+class TaskToGateConvert(BaseModel):
+    task_id: str
+    owner_party: str = "YOU"
+    buffer_days: int = 2
+    is_hard_gate: bool = False
+
+@api_router.post("/programme-tasks/{task_id}/convert-to-gate")
+async def convert_task_to_gate(task_id: str, data: TaskToGateConvert, current_user: dict = Depends(get_current_user)):
+    """Convert a programme task to a scope gate"""
+    task = await db.programme_tasks.find_one({"id": task_id, "user_id": current_user["id"]})
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    # Check if already converted
+    existing_gate = await db.gates.find_one({"linked_task_id": task_id})
+    if existing_gate:
+        raise HTTPException(status_code=400, detail="Task already converted to a gate")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    gate_id = str(uuid.uuid4())
+    
+    # Get current gate count for ordering
+    gate_count = await db.gates.count_documents({"project_id": task["project_id"], "user_id": current_user["id"]})
+    
+    gate_doc = {
+        "id": gate_id,
+        "project_id": task["project_id"],
+        "user_id": current_user["id"],
+        "name": task["task_name"],
+        "description": f"Converted from programme task",
+        "order": gate_count + 1,
+        "owner_party": data.owner_party,
+        "required_by_date": task.get("end_date") or now[:10],
+        "expected_complete_date": task.get("end_date"),
+        "buffer_days": data.buffer_days,
+        "depends_on_gate_ids": [],
+        "is_hard_gate": data.is_hard_gate,
+        "is_optional": False,
+        "completed_at": None,
+        "status": "ON_TRACK",
+        "linked_task_id": task_id,  # Link to source task
+        "created_at": now,
+        "updated_at": now
+    }
+    await db.gates.insert_one(gate_doc)
+    
+    # Update task to mark as converted
+    await db.programme_tasks.update_one(
+        {"id": task_id},
+        {"$set": {"converted_to_gate_id": gate_id, "is_tracked": True}}
+    )
+    
+    return {
+        "message": f"Created gate '{task['task_name']}' from programme task",
+        "gate": GateResponse(**gate_doc)
+    }
+
+@api_router.post("/programme-tasks/bulk-convert-to-gates")
+async def bulk_convert_to_gates(task_ids: List[str], current_user: dict = Depends(get_current_user)):
+    """Convert multiple programme tasks to gates"""
+    created_gates = []
+    errors = []
+    
+    for task_id in task_ids:
+        try:
+            task = await db.programme_tasks.find_one({"id": task_id, "user_id": current_user["id"]})
+            if not task:
+                errors.append({"task_id": task_id, "error": "Task not found"})
+                continue
+            
+            existing_gate = await db.gates.find_one({"linked_task_id": task_id})
+            if existing_gate:
+                errors.append({"task_id": task_id, "error": "Already converted"})
+                continue
+            
+            now = datetime.now(timezone.utc).isoformat()
+            gate_id = str(uuid.uuid4())
+            gate_count = await db.gates.count_documents({"project_id": task["project_id"], "user_id": current_user["id"]})
+            
+            gate_doc = {
+                "id": gate_id,
+                "project_id": task["project_id"],
+                "user_id": current_user["id"],
+                "name": task["task_name"],
+                "description": "Converted from programme task",
+                "order": gate_count + 1,
+                "owner_party": task.get("owner_tag", "YOU") if task.get("owner_tag") in ["YOU", "MC", "SUBBIES", "COUNCIL"] else "YOU",
+                "required_by_date": task.get("end_date") or now[:10],
+                "expected_complete_date": task.get("end_date"),
+                "buffer_days": 2,
+                "depends_on_gate_ids": [],
+                "is_hard_gate": False,
+                "is_optional": False,
+                "completed_at": None,
+                "status": "ON_TRACK",
+                "linked_task_id": task_id,
+                "created_at": now,
+                "updated_at": now
+            }
+            await db.gates.insert_one(gate_doc)
+            
+            await db.programme_tasks.update_one(
+                {"id": task_id},
+                {"$set": {"converted_to_gate_id": gate_id, "is_tracked": True}}
+            )
+            
+            created_gates.append(gate_doc)
+        except Exception as e:
+            errors.append({"task_id": task_id, "error": str(e)})
+    
+    return {
+        "created": len(created_gates),
+        "errors": errors,
+        "gates": [GateResponse(**g) for g in created_gates]
+    }
+
+# ==================== AUTO-SUGGEST GATES FROM PROGRAMME ====================
+
+@api_router.post("/programmes/{programme_id}/suggest-gates")
+async def suggest_gates_from_programme(programme_id: str, current_user: dict = Depends(get_current_user)):
+    """Use AI to suggest which programme tasks should become gates"""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    
+    programme = await db.programmes.find_one({"id": programme_id, "user_id": current_user["id"]})
+    if not programme:
+        raise HTTPException(status_code=404, detail="Programme not found")
+    
+    tasks = await db.programme_tasks.find(
+        {"programme_id": programme_id, "user_id": current_user["id"]},
+        {"_id": 0}
+    ).to_list(500)
+    
+    if not tasks:
+        return {"suggestions": [], "message": "No tasks found in programme"}
+    
+    # Prepare task list for AI
+    task_list = "\n".join([
+        f"- {t['task_name']} (Start: {t.get('start_date', 'N/A')}, End: {t.get('end_date', 'N/A')})"
+        for t in tasks
+    ])
+    
+    api_key = os.environ.get('EMERGENT_LLM_KEY', '')
+    if not api_key:
+        # Fallback: suggest tasks with common fitout keywords
+        keywords = ['partition', 'lining', 'ceiling', 'grid', 'paint', 'floor', 'joinery', 
+                   'door', 'frame', 'tile', 'stopping', 'gib', 'plaster', 'skirting',
+                   'bulkhead', 'fixture', 'fitout', 'install']
+        suggestions = []
+        for task in tasks:
+            task_lower = task['task_name'].lower()
+            if any(kw in task_lower for kw in keywords):
+                suggestions.append({
+                    "task_id": task["id"],
+                    "task_name": task["task_name"],
+                    "suggested_owner": "YOU",
+                    "reason": "Contains fitout-related keywords",
+                    "confidence": "medium"
+                })
+        return {"suggestions": suggestions[:15], "message": "Suggestions based on keyword matching (AI not available)"}
+    
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"suggest-{programme_id}",
+            system_message="""You are an expert NZ commercial interior fitout project manager. 
+Analyze the programme tasks and identify which ones are likely to be the fitout contractor's scope (partitions, linings, ceilings, joinery, etc.) vs main contractor (structure, painting, external) vs subbies (electrical, plumbing, HVAC, fire).
+
+For each task you identify as fitout contractor scope, provide:
+- task_name: exact task name from the list
+- suggested_owner: YOU (fitout contractor), MC (main contractor), SUBBIES, or COUNCIL
+- reason: brief explanation
+- confidence: high, medium, or low
+- is_key_gate: true if this is a critical milestone
+
+Return ONLY a JSON array. Focus on the 10-15 most important tasks for the fitout contractor to track as gates."""
+        ).with_model("gemini", "gemini-2.5-flash")
+        
+        response = await chat.send_message(UserMessage(
+            text=f"Here are the programme tasks. Identify which ones should be tracked as scope gates for an interior fitout contractor:\n\n{task_list}"
+        ))
+        
+        import json
+        import re
+        
+        json_match = re.search(r'\[[\s\S]*\]', response)
+        if json_match:
+            ai_suggestions = json.loads(json_match.group())
+            
+            # Match AI suggestions to actual task IDs
+            suggestions = []
+            for sugg in ai_suggestions:
+                matching_task = next(
+                    (t for t in tasks if t['task_name'].lower() == sugg.get('task_name', '').lower()),
+                    None
+                )
+                if not matching_task:
+                    # Try partial match
+                    matching_task = next(
+                        (t for t in tasks if sugg.get('task_name', '').lower() in t['task_name'].lower()),
+                        None
+                    )
+                
+                if matching_task:
+                    suggestions.append({
+                        "task_id": matching_task["id"],
+                        "task_name": matching_task["task_name"],
+                        "start_date": matching_task.get("start_date"),
+                        "end_date": matching_task.get("end_date"),
+                        "suggested_owner": sugg.get("suggested_owner", "YOU"),
+                        "reason": sugg.get("reason", ""),
+                        "confidence": sugg.get("confidence", "medium"),
+                        "is_key_gate": sugg.get("is_key_gate", False)
+                    })
+            
+            return {"suggestions": suggestions, "message": f"AI identified {len(suggestions)} potential gates"}
+        else:
+            raise ValueError("Invalid AI response")
+            
+    except Exception as e:
+        logger.error(f"AI suggestion error: {e}")
+        # Fallback to keyword matching
+        keywords = ['partition', 'lining', 'ceiling', 'grid', 'paint', 'floor', 'joinery', 'door', 'tile', 'stopping', 'gib']
+        suggestions = []
+        for task in tasks:
+            task_lower = task['task_name'].lower()
+            if any(kw in task_lower for kw in keywords):
+                suggestions.append({
+                    "task_id": task["id"],
+                    "task_name": task["task_name"],
+                    "suggested_owner": "YOU",
+                    "reason": "Contains fitout keywords",
+                    "confidence": "medium"
+                })
+        return {"suggestions": suggestions[:15], "message": "Suggestions based on keyword matching"}
+
+# ==================== LINK GATES TO PROGRAMME TASKS ====================
+
+class GateLinkUpdate(BaseModel):
+    linked_task_id: Optional[str] = None
+
+@api_router.put("/gates/{gate_id}/link-task")
+async def link_gate_to_task(gate_id: str, data: GateLinkUpdate, current_user: dict = Depends(get_current_user)):
+    """Link an existing gate to a programme task for date tracking"""
+    gate = await db.gates.find_one({"id": gate_id, "user_id": current_user["id"]})
+    if not gate:
+        raise HTTPException(status_code=404, detail="Gate not found")
+    
+    if data.linked_task_id:
+        task = await db.programme_tasks.find_one({"id": data.linked_task_id, "user_id": current_user["id"]})
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    await db.gates.update_one(
+        {"id": gate_id},
+        {"$set": {"linked_task_id": data.linked_task_id, "updated_at": now}}
+    )
+    
+    updated = await db.gates.find_one({"id": gate_id}, {"_id": 0})
+    return {"message": "Gate linked to task", "gate": updated}
+
+@api_router.get("/gates/{gate_id}/linked-task-impact")
+async def get_linked_task_impact(gate_id: str, current_user: dict = Depends(get_current_user)):
+    """Check if linked programme task dates have changed and show impact"""
+    gate = await db.gates.find_one({"id": gate_id, "user_id": current_user["id"]}, {"_id": 0})
+    if not gate:
+        raise HTTPException(status_code=404, detail="Gate not found")
+    
+    if not gate.get("linked_task_id"):
+        return {"has_link": False, "impact": None}
+    
+    task = await db.programme_tasks.find_one({"id": gate["linked_task_id"]}, {"_id": 0})
+    if not task:
+        return {"has_link": True, "task_deleted": True, "impact": None}
+    
+    # Calculate impact
+    impact = {
+        "task_name": task["task_name"],
+        "task_end_date": task.get("end_date"),
+        "task_original_end": task.get("original_end_date"),
+        "gate_required_by": gate.get("required_by_date"),
+        "has_date_change": task.get("end_date") != task.get("original_end_date"),
+        "days_difference": 0,
+        "impact_level": "none"
+    }
+    
+    if task.get("end_date") and task.get("original_end_date"):
+        try:
+            new_date = datetime.fromisoformat(task["end_date"])
+            orig_date = datetime.fromisoformat(task["original_end_date"])
+            impact["days_difference"] = (new_date - orig_date).days
+            
+            if impact["days_difference"] > 7:
+                impact["impact_level"] = "high"
+            elif impact["days_difference"] > 3:
+                impact["impact_level"] = "medium"
+            elif impact["days_difference"] > 0:
+                impact["impact_level"] = "low"
+        except:
+            pass
+    
+    # Check if gate date needs updating
+    if task.get("end_date") and gate.get("required_by_date"):
+        if task["end_date"] != gate["required_by_date"][:10]:
+            impact["suggested_gate_date"] = task["end_date"]
+            impact["needs_update"] = True
+    
+    return {"has_link": True, "impact": impact, "task": task}
+
+@api_router.post("/projects/{project_id}/sync-gates-with-programme")
+async def sync_gates_with_programme(project_id: str, current_user: dict = Depends(get_current_user)):
+    """Sync all linked gates with their programme task dates"""
+    project = await db.projects.find_one({"id": project_id, "user_id": current_user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    gates = await db.gates.find(
+        {"project_id": project_id, "user_id": current_user["id"], "linked_task_id": {"$ne": None}},
+        {"_id": 0}
+    ).to_list(100)
+    
+    updates = []
+    notifications_created = []
+    now = datetime.now(timezone.utc).isoformat()
+    
+    for gate in gates:
+        task = await db.programme_tasks.find_one({"id": gate["linked_task_id"]}, {"_id": 0})
+        if not task:
+            continue
+        
+        # Check if task date differs from gate date
+        task_end = task.get("end_date")
+        gate_required = gate.get("required_by_date", "")[:10] if gate.get("required_by_date") else None
+        
+        if task_end and task_end != gate_required:
+            # Update gate date
+            await db.gates.update_one(
+                {"id": gate["id"]},
+                {"$set": {
+                    "required_by_date": task_end,
+                    "updated_at": now
+                }}
+            )
+            
+            updates.append({
+                "gate_id": gate["id"],
+                "gate_name": gate["name"],
+                "old_date": gate_required,
+                "new_date": task_end,
+                "source_task": task["task_name"]
+            })
+            
+            # Create notification about the change
+            days_diff = 0
+            try:
+                if gate_required and task_end:
+                    old_dt = datetime.fromisoformat(gate_required)
+                    new_dt = datetime.fromisoformat(task_end)
+                    days_diff = (new_dt - old_dt).days
+            except:
+                pass
+            
+            if abs(days_diff) > 0:
+                notification = {
+                    "id": str(uuid.uuid4()),
+                    "user_id": current_user["id"],
+                    "type": "gate_risk",
+                    "title": f"Gate Date Changed: {gate['name']}",
+                    "message": f"Programme update moved date from {gate_required} to {task_end} ({days_diff:+d} days)",
+                    "related_id": gate["id"],
+                    "related_type": "gate",
+                    "is_read": False,
+                    "action_required": abs(days_diff) > 3,
+                    "created_at": now
+                }
+                await db.notifications.insert_one(notification)
+                notifications_created.append(notification)
+    
+    return {
+        "synced_gates": len(updates),
+        "updates": updates,
+        "notifications_created": len(notifications_created),
+        "message": f"Synced {len(updates)} gates with programme dates"
+    }
+
 # ==================== GATE TEMPLATE ROUTES ====================
 
 @api_router.get("/gate-templates")
