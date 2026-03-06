@@ -1,0 +1,139 @@
+{
+  "project_info": {
+    "name": "LLDv2 (Long Line Diary V2)",
+    "description": "Professional construction site diary and operational command center for fitout PMs.",
+    "persona": "The Site Commander",
+    "emotional_tone": "Precise, Urgent, Organized, Industrial, Durable",
+    "platform_context": "Mobile-first for site walks, Desktop for command center."
+  },
+  "design_philosophy": {
+    "core_concept": "Digital Hilti",
+    "principles": [
+      "Tactical Clarity: Information density without noise. Every pixel must earn its rent.",
+      "Industrial Durability: The UI should feel like it can survive a drop on concrete.",
+      "One-Handed Speed: PMs carry a coffee or a helmet in one hand. Primary actions must be thumb-accessible.",
+      "Status is God: The state of a project (Blocked, On Track) is the most important data point.",
+      "No Fluff: Remove decorative gradients. Use borders and contrast to separate content."
+    ],
+    "anti_patterns": [
+      "Soft, pillowy SaaS aesthetic (Inter font, big rounded corners, pastel purples).",
+      "Gamer RGB lighting effects.",
+      "Generic admin dashboard templates.",
+      "Hidden navigation requiring multiple taps."
+    ]
+  },
+  "typography": {
+    "font_family_heading": "\"Barlow Condensed\", sans-serif",
+    "font_family_body": "\"Public Sans\", sans-serif",
+    "font_family_mono": "\"JetBrains Mono\", monospace",
+    "scale": {
+      "h1": "text-4xl md:text-5xl font-bold tracking-tight uppercase",
+      "h2": "text-3xl md:text-4xl font-semibold tracking-tight uppercase",
+      "h3": "text-2xl font-semibold tracking-normal",
+      "body": "text-base font-normal leading-relaxed",
+      "small": "text-sm font-medium tracking-wide uppercase text-muted-foreground",
+      "tiny": "text-xs font-bold tracking-wider uppercase"
+    },
+    "instructions": "Import 'Barlow Condensed' (weights 400, 600, 700) and 'Public Sans' (weights 400, 500, 600) from Google Fonts. Use Barlow Condensed for all Headers, Card Titles, and Status Labels. Use Public Sans for body text, inputs, and tables."
+  },
+  "colors": {
+    "mode": "dark",
+    "palette": {
+      "background": "#09090b",
+      "foreground": "#fafafa",
+      "card": "#18181b",
+      "card_foreground": "#fafafa",
+      "popover": "#18181b",
+      "popover_foreground": "#fafafa",
+      "primary": "#f97316",
+      "primary_foreground": "#000000",
+      "secondary": "#27272a",
+      "secondary_foreground": "#fafafa",
+      "muted": "#27272a",
+      "muted_foreground": "#a1a1aa",
+      "accent": "#f97316",
+      "accent_foreground": "#000000",
+      "destructive": "#dc2626",
+      "destructive_foreground": "#fafafa",
+      "border": "#27272a",
+      "input": "#27272a",
+      "ring": "#f97316"
+    },
+    "status_colors": {
+      "blocked": {
+        "bg": "bg-red-950/50",
+        "text": "text-red-500",
+        "border": "border-red-900"
+      },
+      "delayed": {
+        "bg": "bg-red-950/30",
+        "text": "text-red-400",
+        "border": "border-red-900/50"
+      },
+      "at_risk": {
+        "bg": "bg-amber-950/50",
+        "text": "text-amber-500",
+        "border": "border-amber-900"
+      },
+      "on_track": {
+        "bg": "bg-emerald-950/50",
+        "text": "text-emerald-500",
+        "border": "border-emerald-900"
+      },
+      "completed": {
+        "bg": "bg-zinc-800",
+        "text": "text-zinc-400",
+        "border": "border-zinc-700"
+      }
+    }
+  },
+  "layout_strategies": {
+    "dashboard_grid": "Bento Grid Mode B (High Density). Use 'grid-cols-1 md:grid-cols-4 gap-4'. Cards should have 'h-full'.",
+    "mobile_navigation": "Bottom fixed navigation bar (5 items max). Operations (Walk, Diary, Gates) must be prominent.",
+    "containers": "Max width 'max-w-7xl' centered. Padding 'p-4 md:p-6'.",
+    "spacing_scale": "Tailwind default but prioritized: p-4 (1rem), p-6 (1.5rem), gap-4 (1rem)."
+  },
+  "components": {
+    "radius": "rounded-sm",
+    "border_width": "border",
+    "shadows": "none",
+    "card_style": "bg-card border border-border rounded-sm shadow-none hover:border-primary/50 transition-colors duration-200",
+    "button_primary": "bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-sm font-semibold tracking-wide uppercase text-sm",
+    "button_secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2 rounded-sm font-medium",
+    "input_style": "bg-input border-transparent focus:border-ring rounded-sm h-10",
+    "status_badge": "inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-bold uppercase tracking-wide border"
+  },
+  "visual_enhancers": {
+    "texture": "Add a subtle noise texture to the main background to simulate concrete/asphalt.",
+    "glassmorphism": "Use sparingly. Only for sticky headers: 'bg-background/80 backdrop-blur-md border-b border-border'.",
+    "borders": "Use 'border-zinc-800' for subtle separation. Use 'border-l-4' colored borders to indicate status on cards."
+  },
+  "image_urls": {
+    "hero_backgrounds": [
+      "https://images.unsplash.com/photo-1546414701-81cc6963c67f?q=80&w=2000&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1565768502473-c5dc73b7eb33?q=80&w=2000&auto=format&fit=crop"
+    ],
+    "textures": [
+      "https://images.unsplash.com/photo-1508107749649-a371e8cece60?q=80&w=2000&auto=format&fit=crop"
+    ],
+    "people": [
+      "https://images.unsplash.com/photo-1663058480259-2213d39f4f90?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1623728316172-7477a77740f6?q=80&w=800&auto=format&fit=crop"
+    ]
+  },
+  "icons": {
+    "library": "lucide-react",
+    "style": "Stroke width 1.5px (Thin/Technical).",
+    "usage": "Use icons as visual anchors for actions. Do not use them as decoration."
+  },
+  "universal_guidelines": [
+    "Always check contrast ratios. The dark theme must be accessible.",
+    "Use 'data-testid' on all interactive elements.",
+    "Do not use gradients for backgrounds. Use solid colors or subtle noise.",
+    "Inputs must have a clear focus state (Ring Orange).",
+    "For tables, use dense padding 'py-2 px-3'.",
+    "All dates must be formatted 'dd MMM yyyy' or 'HH:mm' (24h) for precision.",
+    "Use 'sonner' for toast notifications."
+  ],
+  "instructions_to_main_agent": "You are building a tool for professionals. Avoid 'Welcome, friend!' copy. Use 'System Ready' or 'Site Overview'. Prioritize density and speed. Implement the dark theme by default using the 'dark' class on the html element. Use the provided color palette in tailwind.config.js immediately."
+}
