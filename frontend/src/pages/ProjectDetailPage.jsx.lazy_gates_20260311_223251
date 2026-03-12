@@ -1,0 +1,439 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { projectsApi, gatesApi, actionItemsApi, diaryApi } from '../lib/api';
+import { toast } from 'sonner';
+import {
+  ArrowLeft,
+  Target,
+  ListTodo,
+  BookOpen,
+  Plus,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  User,
+  Calendar
+} from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Badge } from '../components/ui/badge';
+
+const StatusBadge = ({ status }) => {
+  const styles = {
+    BLOCKED: 'status-blocked',
+    DELAYED: 'status-delayed',
+    AT_RISK: 'status-at-risk',
+    ON_TRACK: 'status-on-track',
+    COMPLETED: 'status-completed'
+  };
+  return (
+    <span className={`status-badge ${styles[status] || styles.ON_TRACK}`}>
+      {status?.replace('_', ' ')}
+    </span>
+  );
+};
+
+const ProjectDetailPage = () => {
+  const { id } = useParams();
+  const [project, setProject] = useState(null);
+  const [gates, setGates] = useState([]);
+  const [actionItems, setActionItems] = useState([]);
+  const [diary, setDiary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('gates');
+
+  const fetchData = useCallback(async () => {
+  setLoading(true)
+
+  try {
+    const projectRes = await projectsApi.get(id)
+    setProject(projectRes.data)
+  } catch (e) {
+    console.error("Project load failed", e)
+    setProject(null)
+    setLoading(false)
+    return
+  }
+
+  setLoading(false)
+
+    // gates load temporarily disabled for debug
+
+  // action items load temporarily disabled for debug
+
+  // diary load temporarily disabled for debug
+}, [id]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleCompleteGate = async (gateId) => {
+    try {
+      await gatesApi.complete(gateId);
+      toast.success('Gate marked complete');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to complete gate');
+    }
+  };
+
+  const handleReopenGate = async (gateId) => {
+    try {
+      await gatesApi.reopen(gateId);
+      toast.success('Gate reopened');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to reopen gate');
+    }
+  };
+
+  const handleCompleteItem = async (itemId) => {
+    try {
+      await actionItemsApi.complete(itemId);
+      toast.success('Item completed');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to complete item');
+    }
+  };
+
+  const createDefaultGates = async () => {
+    try {
+      await projectsApi.createDefaultGates(id);
+      toast.success('Default gates created');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to create gates');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-muted-foreground">Project not found</p>
+        <Link to="/projects">
+          <Button variant="link" className="mt-4">Back to projects</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const openItems = actionItems.filter(i => i.status === 'open');
+  const completedItems = actionItems.filter(i => i.status === 'completed');
+  const blockedGates = gates.filter(g => g.status === 'BLOCKED' || g.status === 'DELAYED');
+  const atRiskGates = gates.filter(g => g.status === 'AT_RISK');
+
+  return (
+    <div className="space-y-6" data-testid="project-detail-page">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <Link to="/projects" className="text-muted-foreground hover:text-foreground flex items-center gap-2 mb-2">
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">Back to projects</span>
+          </Link>
+          <h1 className="font-heading text-3xl font-bold tracking-tight uppercase">{project.name}</h1>
+          {project.client_name && (
+            <p className="text-muted-foreground">{project.client_name} Ã¢â‚¬Â¢ {project.location}</p>
+          )}
+        </div>
+        <Badge variant={project.status === 'active' ? 'default' : 'secondary'} className="uppercase">
+          {project.status}
+        </Badge>
+      </div>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="ops-card">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-heading">Gates</p>
+                <p className="text-2xl font-heading font-bold">{gates.length}</p>
+              </div>
+              <Target className="w-6 h-6 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="ops-card">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-heading">Open Items</p>
+                <p className="text-2xl font-heading font-bold">{openItems.length}</p>
+              </div>
+              <ListTodo className="w-6 h-6 text-amber-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="ops-card">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-heading">Blocked</p>
+                <p className="text-2xl font-heading font-bold text-red-500">{blockedGates.length}</p>
+              </div>
+              <AlertTriangle className="w-6 h-6 text-red-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="ops-card">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-heading">At Risk</p>
+                <p className="text-2xl font-heading font-bold text-amber-500">{atRiskGates.length}</p>
+              </div>
+              <Clock className="w-6 h-6 text-amber-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-secondary">
+          <TabsTrigger value="gates" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Target className="w-4 h-4 mr-2" />
+            Scope Gates
+          </TabsTrigger>
+          <TabsTrigger value="items" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <ListTodo className="w-4 h-4 mr-2" />
+            Action Items
+          </TabsTrigger>
+          <TabsTrigger value="diary" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <BookOpen className="w-4 h-4 mr-2" />
+            Today's Diary
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Gates Tab */}
+        <TabsContent value="gates" className="mt-4">
+          {gates.length > 0 ? (
+            <div className="gate-timeline space-y-0">
+              {gates.map((gate, index) => (
+                <div key={gate.id} className="gate-item" data-testid={`gate-${gate.id}`}>
+                  <div className={`gate-marker ${
+                    gate.status === 'COMPLETED' ? 'bg-emerald-500 border-emerald-500' :
+                    gate.status === 'BLOCKED' || gate.status === 'DELAYED' ? 'bg-red-500 border-red-500' :
+                    gate.status === 'AT_RISK' ? 'bg-amber-500 border-amber-500' :
+                    'bg-background border-border'
+                  }`}>
+                    {gate.status === 'COMPLETED' && <CheckCircle2 className="w-3 h-3 text-white" />}
+                  </div>
+                  
+                  <Card className={`ops-card ${
+                    gate.status === 'BLOCKED' || gate.status === 'DELAYED' ? 'border-l-4 border-l-red-500' :
+                    gate.status === 'AT_RISK' ? 'border-l-4 border-l-amber-500' :
+                    gate.status === 'COMPLETED' ? 'border-l-4 border-l-emerald-500' :
+                    ''
+                  }`}>
+                    <CardContent className="py-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs text-muted-foreground font-heading uppercase">Gate {index + 1}</span>
+                            {gate.is_hard_gate && <Badge variant="destructive" className="text-xs">Hard Gate</Badge>}
+                            {gate.is_optional && <Badge variant="secondary" className="text-xs">Optional</Badge>}
+                          </div>
+                          <h4 className="font-heading font-semibold text-lg">{gate.name}</h4>
+                          
+                          <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <User className="w-4 h-4" />
+                              {gate.owner_party}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              Required: {new Date(gate.required_by_date).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}
+                            </span>
+                            {gate.expected_complete_date && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                Expected: {new Date(gate.expected_complete_date).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <StatusBadge status={gate.status} />
+                          {gate.status !== 'COMPLETED' ? (
+                            <Button size="sm" variant="secondary" onClick={() => handleCompleteGate(gate.id)}>
+                              Complete
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="ghost" onClick={() => handleReopenGate(gate.id)}>
+                              Reopen
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state py-12">
+              <Target className="empty-state-icon" />
+              <p className="empty-state-title">No Gates Configured</p>
+              <p className="empty-state-description mb-4">Set up scope gates to track fitout progress.</p>
+              <Button className="btn-primary" onClick={createDefaultGates}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Default Gates
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Action Items Tab */}
+        <TabsContent value="items" className="mt-4">
+          {actionItems.length > 0 ? (
+            <div className="space-y-4">
+              {openItems.length > 0 && (
+                <div>
+                  <h3 className="font-heading text-sm uppercase tracking-wide text-muted-foreground mb-3">
+                    Open ({openItems.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {openItems.map(item => (
+                      <Card key={item.id} className={`ops-card border-l-4 ${
+                        item.priority === 'critical' ? 'border-l-red-500' :
+                        item.priority === 'high' ? 'border-l-orange-500' :
+                        item.priority === 'medium' ? 'border-l-amber-500' :
+                        'border-l-blue-400'
+                      }`} data-testid={`item-${item.id}`}>
+                        <CardContent className="py-3">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <p className="font-medium">{item.title}</p>
+                              {item.due_date && (
+                                <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  Due: {new Date(item.due_date).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}
+                                </p>
+                              )}
+                            </div>
+                            <Button size="sm" variant="secondary" onClick={() => handleCompleteItem(item.id)}>
+                              <CheckCircle2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {completedItems.length > 0 && (
+                <div>
+                  <h3 className="font-heading text-sm uppercase tracking-wide text-muted-foreground mb-3">
+                    Completed ({completedItems.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {completedItems.slice(0, 5).map(item => (
+                      <Card key={item.id} className="ops-card opacity-60" data-testid={`item-${item.id}`}>
+                        <CardContent className="py-3">
+                          <p className="font-medium line-through">{item.title}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="empty-state py-12">
+              <ListTodo className="empty-state-icon" />
+              <p className="empty-state-title">No Action Items</p>
+              <p className="empty-state-description">Use walkaround capture to create action items.</p>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Diary Tab */}
+        <TabsContent value="diary" className="mt-4">
+          {diary && (
+            <Card className="ops-card">
+              <CardHeader className="ops-card-header">
+                <CardTitle className="font-heading uppercase">
+                  Daily Summary - {new Date(diary.date).toLocaleDateString('en-NZ', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' })}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="py-4 space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="text-center p-3 bg-secondary/50 rounded-sm">
+                    <p className="text-2xl font-heading font-bold">{diary.summary.entries_count}</p>
+                    <p className="text-xs text-muted-foreground uppercase">Entries</p>
+                  </div>
+                  <div className="text-center p-3 bg-secondary/50 rounded-sm">
+                    <p className="text-2xl font-heading font-bold">{diary.summary.items_opened}</p>
+                    <p className="text-xs text-muted-foreground uppercase">Items Opened</p>
+                  </div>
+                  <div className="text-center p-3 bg-secondary/50 rounded-sm">
+                    <p className="text-2xl font-heading font-bold text-emerald-500">{diary.summary.items_closed}</p>
+                    <p className="text-xs text-muted-foreground uppercase">Items Closed</p>
+                  </div>
+                </div>
+
+                {diary.blocked_gates?.length > 0 && (
+                  <div>
+                    <h4 className="font-heading text-sm uppercase tracking-wide text-red-500 mb-2">Blocked Gates</h4>
+                    <ul className="space-y-1">
+                      {diary.blocked_gates.map(g => (
+                        <li key={g.id} className="text-sm text-muted-foreground">Ã¢â‚¬Â¢ {g.name}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {diary.overdue_items?.length > 0 && (
+                  <div>
+                    <h4 className="font-heading text-sm uppercase tracking-wide text-amber-500 mb-2">Overdue Items</h4>
+                    <ul className="space-y-1">
+                      {diary.overdue_items.map(i => (
+                        <li key={i.id} className="text-sm text-muted-foreground">Ã¢â‚¬Â¢ {i.title}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {diary.walkaround_entries?.length > 0 && (
+                  <div>
+                    <h4 className="font-heading text-sm uppercase tracking-wide mb-2">Today's Notes</h4>
+                    <ul className="space-y-2">
+                      {diary.walkaround_entries.map(e => (
+                        <li key={e.id} className="text-sm p-2 bg-secondary/30 rounded-sm">{e.note}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default ProjectDetailPage;
+
+
+
+
+

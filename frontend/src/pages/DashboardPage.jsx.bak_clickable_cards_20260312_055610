@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { dashboardApi } from '../lib/api';
+import { dashboardApi, weatherApi, projectsApi } from '../lib/api';
 import { toast } from 'sonner';
 import {
   AlertTriangle,
@@ -8,10 +8,25 @@ import {
   CheckCircle2,
   Calendar,
   Target,
+  Thermometer,
+  Droplets,
+  CloudRain,
+  Sun,
+  Cloud,
+  CloudSun,
   ArrowRight
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
+
+const getWeatherIcon = (icon) => {
+  if (icon?.includes('01')) return <Sun className="w-6 h-6 text-amber-400" />;
+  if (icon?.includes('02') || icon?.includes('03')) return <CloudSun className="w-6 h-6 text-gray-400" />;
+  if (icon?.includes('04')) return <Cloud className="w-6 h-6 text-gray-500" />;
+  if (icon?.includes('09') || icon?.includes('10')) return <CloudRain className="w-6 h-6 text-blue-400" />;
+  return <Sun className="w-6 h-6 text-amber-400" />;
+};
 
 const StatusBadge = ({ status }) => {
   const styles = {
@@ -45,6 +60,9 @@ const PriorityBadge = ({ priority }) => {
 
 const DashboardPage = () => {
   const [data, setData] = useState(null);
+  const [weather, setWeather] = useState(null);
+  const [projects, setProjects] = useState([]);
+  const [selectedProjectId, setSelectedProjectId] = useState('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -53,8 +71,14 @@ const DashboardPage = () => {
 
   const fetchData = async () => {
     try {
-      const dashRes = await dashboardApi.getSummary();
+      const [dashRes, weatherRes, projectsRes] = await Promise.all([
+        dashboardApi.getSummary(),
+        weatherApi.get(-36.8485, 174.7633),
+        projectsApi.getAll()
+      ]);
       setData(dashRes.data);
+      setWeather(weatherRes.data);
+      setProjects(projectsRes.data || []);
     } catch (error) {
       toast.error('Failed to load dashboard');
       console.error(error);
@@ -62,6 +86,41 @@ const DashboardPage = () => {
       setLoading(false);
     }
   };
+
+  const selectedProject = useMemo(
+    () => projects.find((p) => p.id === selectedProjectId) || null,
+    [projects, selectedProjectId]
+  );
+
+  const filterByProject = (items = []) => {
+    if (selectedProjectId === 'all' || !selectedProject) return items;
+    return items.filter((item) => item.project_id === selectedProjectId || item.project_name === selectedProject.name);
+  };
+
+  const filtered = useMemo(() => {
+    const blockedDelayed = filterByProject(data?.blocked_delayed || []);
+    const atRisk = filterByProject(data?.at_risk || []);
+    const overdue = filterByProject(data?.overdue || []);
+    const dueToday = filterByProject(data?.due_today || []);
+    const dueThisWeek = filterByProject(data?.due_this_week || []);
+    const recentlyCompleted = filterByProject(data?.recently_completed || []);
+
+    const actionItems = [...overdue, ...dueToday, ...dueThisWeek, ...recentlyCompleted];
+    const criticalItems = actionItems.filter((item) => item.priority === 'critical');
+
+    return {
+      blockedDelayed,
+      atRisk,
+      overdue,
+      dueToday,
+      dueThisWeek,
+      recentlyCompleted,
+      projectsCount: selectedProjectId === 'all' ? (data?.projects_count || projects.length || 0) : (selectedProject ? 1 : 0),
+      openItems: [...overdue, ...dueToday, ...dueThisWeek].length,
+      criticalItems: criticalItems.length,
+      gatesAtRisk: blockedDelayed.length + atRisk.length
+    };
+  }, [data, projects.length, selectedProject, selectedProjectId]);
 
   if (loading) {
     return (
@@ -104,6 +163,39 @@ const DashboardPage = () => {
     </div>
   );
 
+  const JobTabs = () => (
+    <div className="overflow-x-auto pb-1" data-testid="dashboard-job-tabs">
+      <div className="flex items-center gap-2 min-w-max">
+        <button
+          type="button"
+          onClick={() => setSelectedProjectId('all')}
+          className={`h-9 px-4 rounded-sm border text-sm font-medium whitespace-nowrap transition-colors ${
+            selectedProjectId === 'all'
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-secondary/30 text-foreground border-border hover:bg-secondary/50'
+          }`}
+        >
+          All Jobs
+        </button>
+
+        {projects.map((project) => (
+          <button
+            key={project.id}
+            type="button"
+            onClick={() => setSelectedProjectId(project.id)}
+            className={`h-9 px-4 rounded-sm border text-sm font-medium whitespace-nowrap transition-colors ${
+              selectedProjectId === project.id
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-secondary/30 text-foreground border-border hover:bg-secondary/50'
+            }`}
+          >
+            {project.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6" data-testid="dashboard-page">
       <div className="dashboard-grid">
@@ -112,7 +204,7 @@ const DashboardPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="dashboard-stat-label">Active Projects</p>
-                <p className="dashboard-stat-value">{data?.projects_count || 0}</p>
+                <p className="dashboard-stat-value">{filtered.projectsCount}</p>
               </div>
               <Target className="w-8 h-8 text-primary" strokeWidth={1.5} />
             </div>
@@ -124,7 +216,7 @@ const DashboardPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="dashboard-stat-label">Open Items</p>
-                <p className="dashboard-stat-value">{data?.summary?.open_items || 0}</p>
+                <p className="dashboard-stat-value">{filtered.openItems}</p>
               </div>
               <Clock className="w-8 h-8 text-amber-500" strokeWidth={1.5} />
             </div>
@@ -136,7 +228,7 @@ const DashboardPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="dashboard-stat-label">Critical</p>
-                <p className="dashboard-stat-value text-red-500">{data?.summary?.critical_items || 0}</p>
+                <p className="dashboard-stat-value text-red-500">{filtered.criticalItems}</p>
               </div>
               <AlertTriangle className="w-8 h-8 text-red-500" strokeWidth={1.5} />
             </div>
@@ -148,9 +240,7 @@ const DashboardPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="dashboard-stat-label">Gates at Risk</p>
-                <p className="dashboard-stat-value text-amber-500">
-                  {(data?.summary?.gates_blocked || 0) + (data?.summary?.gates_delayed || 0) + (data?.summary?.gates_at_risk || 0)}
-                </p>
+                <p className="dashboard-stat-value text-amber-500">{filtered.gatesAtRisk}</p>
               </div>
               <Target className="w-8 h-8 text-amber-500" strokeWidth={1.5} />
             </div>
@@ -158,17 +248,61 @@ const DashboardPage = () => {
         </Card>
       </div>
 
+      <JobTabs />
+
+      {weather && (
+        <Card className="ops-card" data-testid="weather-widget">
+          <CardHeader className="ops-card-header py-3">
+            <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2">
+              <Thermometer className="w-4 h-4" />
+              7-Day Weather {weather.is_mock && <Badge variant="secondary" className="text-xs">Mock</Badge>}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-3">
+            <div className="flex items-center gap-6 mb-4">
+              {getWeatherIcon(weather.current?.icon)}
+              <div>
+                <p className="text-3xl font-heading font-bold">{Math.round(weather.current?.temp)}°C</p>
+                <p className="text-sm text-muted-foreground capitalize">{weather.current?.description}</p>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Thermometer className="w-4 h-4" />
+                  Feels {Math.round(weather.current?.feels_like)}°
+                </span>
+                <span className="flex items-center gap-1">
+                  <Droplets className="w-4 h-4" />
+                  {weather.current?.humidity}%
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {weather.forecast?.slice(0, 7).map((day, i) => (
+                <div key={i} className="weather-day flex-shrink-0 text-center min-w-[60px]">
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(day.date).toLocaleDateString('en-NZ', { weekday: 'short' })}
+                  </p>
+                  {getWeatherIcon(day.icon)}
+                  <p className="text-xs font-medium">{Math.round(day.temp_max)}°</p>
+                  <p className="text-xs text-muted-foreground">{Math.round(day.temp_min)}°</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="ops-card" data-testid="blocked-delayed-section">
           <CardHeader className="ops-card-header py-3">
             <CardTitle className="font-heading text-sm uppercase tracking-wide text-red-500 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
-              Blocked / Delayed ({(data?.blocked_delayed?.length || 0)})
+              Blocked / Delayed ({filtered.blockedDelayed.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="py-3 max-h-80 overflow-y-auto">
-            {data?.blocked_delayed?.length > 0 ? (
-              data.blocked_delayed.map(item => (
+            {filtered.blockedDelayed.length > 0 ? (
+              filtered.blockedDelayed.map((item) => (
                 <ItemCard key={item.id} item={item} type="gate" />
               ))
             ) : (
@@ -181,12 +315,12 @@ const DashboardPage = () => {
           <CardHeader className="ops-card-header py-3">
             <CardTitle className="font-heading text-sm uppercase tracking-wide text-amber-500 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
-              At Risk ({(data?.at_risk?.length || 0)})
+              At Risk ({filtered.atRisk.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="py-3 max-h-80 overflow-y-auto">
-            {data?.at_risk?.length > 0 ? (
-              data.at_risk.map(item => (
+            {filtered.atRisk.length > 0 ? (
+              filtered.atRisk.map((item) => (
                 <ItemCard key={item.id} item={item} type="gate" />
               ))
             ) : (
@@ -199,12 +333,12 @@ const DashboardPage = () => {
           <CardHeader className="ops-card-header py-3">
             <CardTitle className="font-heading text-sm uppercase tracking-wide text-red-400 flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              Overdue ({(data?.overdue?.length || 0)})
+              Overdue ({filtered.overdue.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="py-3 max-h-80 overflow-y-auto">
-            {data?.overdue?.length > 0 ? (
-              data.overdue.map(item => (
+            {filtered.overdue.length > 0 ? (
+              filtered.overdue.map((item) => (
                 <ItemCard key={item.id} item={item} type="action" />
               ))
             ) : (
@@ -217,12 +351,12 @@ const DashboardPage = () => {
           <CardHeader className="ops-card-header py-3">
             <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              Due Today ({(data?.due_today?.length || 0)})
+              Due Today ({filtered.dueToday.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="py-3 max-h-80 overflow-y-auto">
-            {data?.due_today?.length > 0 ? (
-              data.due_today.map(item => (
+            {filtered.dueToday.length > 0 ? (
+              filtered.dueToday.map((item) => (
                 <ItemCard key={item.id} item={item} type="action" />
               ))
             ) : (
@@ -235,12 +369,12 @@ const DashboardPage = () => {
           <CardHeader className="ops-card-header py-3">
             <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              Due This Week ({(data?.due_this_week?.length || 0)})
+              Due This Week ({filtered.dueThisWeek.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="py-3 max-h-80 overflow-y-auto">
-            {data?.due_this_week?.length > 0 ? (
-              data.due_this_week.map(item => (
+            {filtered.dueThisWeek.length > 0 ? (
+              filtered.dueThisWeek.map((item) => (
                 <ItemCard key={item.id} item={item} type="action" />
               ))
             ) : (
@@ -253,12 +387,12 @@ const DashboardPage = () => {
           <CardHeader className="ops-card-header py-3">
             <CardTitle className="font-heading text-sm uppercase tracking-wide text-emerald-500 flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" />
-              Recently Completed ({(data?.recently_completed?.length || 0)})
+              Recently Completed ({filtered.recentlyCompleted.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="py-3 max-h-80 overflow-y-auto">
-            {data?.recently_completed?.length > 0 ? (
-              data.recently_completed.map(item => (
+            {filtered.recentlyCompleted.length > 0 ? (
+              filtered.recentlyCompleted.map((item) => (
                 <ItemCard key={item.id} item={item} type="action" />
               ))
             ) : (

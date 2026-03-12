@@ -25,7 +25,7 @@ const ProjectsPage = () => {
     try {
       setLoading(true);
       const res = await jobsApi.getAll();
-      setJobs(Array.isArray(res?.data) ? res.data : Array.isArray(res?.data?.value) ? res.data.value : []);
+      setJobs(Array.isArray(res?.data?.value) ? res.data.value : []);
     } catch (error) {
       console.error(error);
       toast.error('Failed to load jobs');
@@ -142,4 +142,3 @@ const ProjectsPage = () => {
 };
 
 export default ProjectsPage;
-

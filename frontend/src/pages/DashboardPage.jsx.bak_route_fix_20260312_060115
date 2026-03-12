@@ -1,0 +1,437 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { dashboardApi, weatherApi, projectsApi } from '../lib/api';
+import { toast } from 'sonner';
+import {
+  AlertTriangle,
+  Clock,
+  CheckCircle2,
+  Calendar,
+  Target,
+  Thermometer,
+  Droplets,
+  CloudRain,
+  Sun,
+  Cloud,
+  CloudSun,
+  ArrowRight
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+
+const getWeatherIcon = (icon) => {
+  if (icon?.includes('01')) return <Sun className="w-6 h-6 text-amber-400" />;
+  if (icon?.includes('02') || icon?.includes('03')) return <CloudSun className="w-6 h-6 text-gray-400" />;
+  if (icon?.includes('04')) return <Cloud className="w-6 h-6 text-gray-500" />;
+  if (icon?.includes('09') || icon?.includes('10')) return <CloudRain className="w-6 h-6 text-blue-400" />;
+  return <Sun className="w-6 h-6 text-amber-400" />;
+};
+
+const StatusBadge = ({ status }) => {
+  const styles = {
+    BLOCKED: 'status-blocked',
+    DELAYED: 'status-delayed',
+    AT_RISK: 'status-at-risk',
+    ON_TRACK: 'status-on-track',
+    COMPLETED: 'status-completed'
+  };
+  return (
+    <span className={`status-badge ${styles[status] || styles.ON_TRACK}`} data-testid={`status-${status?.toLowerCase()}`}>
+      {status?.replace('_', ' ')}
+    </span>
+  );
+};
+
+const PriorityBadge = ({ priority }) => {
+  const styles = {
+    critical: 'bg-red-950/50 text-red-500 border-red-900',
+    high: 'bg-orange-950/50 text-orange-500 border-orange-900',
+    medium: 'bg-amber-950/50 text-amber-500 border-amber-900',
+    low: 'bg-blue-950/50 text-blue-400 border-blue-900',
+    deferred: 'bg-zinc-800 text-zinc-400 border-zinc-700'
+  };
+  return (
+    <span className={`status-badge ${styles[priority] || styles.medium}`}>
+      {priority}
+    </span>
+  );
+};
+
+const ClickableStatCard = ({ to, label, value, icon, valueClassName = '' }) => (
+  <Link to={to} className="block" data-testid={`nav-${label.toLowerCase().replace(/\s+/g, '-')}`}>
+    <Card className="ops-card hover:border-primary/60 hover:bg-secondary/20 transition-colors cursor-pointer">
+      <CardContent className="pt-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="dashboard-stat-label">{label}</p>
+            <p className={`dashboard-stat-value ${valueClassName}`}>{value}</p>
+          </div>
+          {icon}
+        </div>
+      </CardContent>
+    </Card>
+  </Link>
+);
+
+const SectionHeaderLink = ({ to, className = '', children }) => (
+  <Link to={to} className={`inline-flex items-center gap-2 hover:underline ${className}`}>
+    {children}
+  </Link>
+);
+
+const DashboardPage = () => {
+  const [data, setData] = useState(null);
+  const [weather, setWeather] = useState(null);
+  const [projects, setProjects] = useState([]);
+  const [selectedProjectId, setSelectedProjectId] = useState('all');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [dashRes, weatherRes, projectsRes] = await Promise.all([
+        dashboardApi.getSummary(),
+        weatherApi.get(-36.8485, 174.7633),
+        projectsApi.getAll()
+      ]);
+      setData(dashRes.data);
+      setWeather(weatherRes.data);
+      setProjects(projectsRes.data || []);
+    } catch (error) {
+      toast.error('Failed to load dashboard');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectedProject = useMemo(
+    () => projects.find((p) => p.id === selectedProjectId) || null,
+    [projects, selectedProjectId]
+  );
+
+  const filterByProject = (items = []) => {
+    if (selectedProjectId === 'all' || !selectedProject) return items;
+    return items.filter((item) => item.project_id === selectedProjectId || item.project_name === selectedProject.name);
+  };
+
+  const filtered = useMemo(() => {
+    const blockedDelayed = filterByProject(data?.blocked_delayed || []);
+    const atRisk = filterByProject(data?.at_risk || []);
+    const overdue = filterByProject(data?.overdue || []);
+    const dueToday = filterByProject(data?.due_today || []);
+    const dueThisWeek = filterByProject(data?.due_this_week || []);
+    const recentlyCompleted = filterByProject(data?.recently_completed || []);
+
+    const actionItems = [...overdue, ...dueToday, ...dueThisWeek, ...recentlyCompleted];
+    const criticalItems = actionItems.filter((item) => item.priority === 'critical');
+
+    return {
+      blockedDelayed,
+      atRisk,
+      overdue,
+      dueToday,
+      dueThisWeek,
+      recentlyCompleted,
+      projectsCount: selectedProjectId === 'all' ? (data?.projects_count || projects.length || 0) : (selectedProject ? 1 : 0),
+      openItems: [...overdue, ...dueToday, ...dueThisWeek].length,
+      criticalItems: criticalItems.length,
+      gatesAtRisk: blockedDelayed.length + atRisk.length
+    };
+  }, [data, projects.length, selectedProject, selectedProjectId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  const ItemCard = ({ item, type }) => (
+    <div className={`action-card ops-card p-3 mb-2 border-l-4 ${
+      item.priority === 'critical' ? 'border-l-red-500' :
+      item.priority === 'high' ? 'border-l-orange-500' :
+      item.priority === 'medium' ? 'border-l-amber-500' :
+      'border-l-blue-400'
+    }`} data-testid={`item-${item.id}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm truncate">{item.title || item.name}</p>
+          <p className="text-xs text-muted-foreground">{item.project_name}</p>
+        </div>
+        {type === 'gate' ? (
+          <StatusBadge status={item.status} />
+        ) : (
+          <PriorityBadge priority={item.priority} />
+        )}
+      </div>
+      {item.due_date && (
+        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+          <Clock className="w-3 h-3" />
+          Due: {new Date(item.due_date).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}
+        </p>
+      )}
+      {item.required_by_date && (
+        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+          <Target className="w-3 h-3" />
+          Required: {new Date(item.required_by_date).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}
+        </p>
+      )}
+    </div>
+  );
+
+  const JobTabs = () => (
+    <div className="overflow-x-auto pb-1" data-testid="dashboard-job-tabs">
+      <div className="flex items-center gap-2 min-w-max">
+        <button
+          type="button"
+          onClick={() => setSelectedProjectId('all')}
+          className={`h-9 px-4 rounded-sm border text-sm font-medium whitespace-nowrap transition-colors ${
+            selectedProjectId === 'all'
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-secondary/30 text-foreground border-border hover:bg-secondary/50'
+          }`}
+        >
+          All Jobs
+        </button>
+
+        {projects.map((project) => (
+          <button
+            key={project.id}
+            type="button"
+            onClick={() => setSelectedProjectId(project.id)}
+            className={`h-9 px-4 rounded-sm border text-sm font-medium whitespace-nowrap transition-colors ${
+              selectedProjectId === project.id
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-secondary/30 text-foreground border-border hover:bg-secondary/50'
+            }`}
+          >
+            {project.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6" data-testid="dashboard-page">
+      <div className="dashboard-grid">
+        <ClickableStatCard
+          to="/projects"
+          label="Active Projects"
+          value={filtered.projectsCount}
+          icon={<Target className="w-8 h-8 text-primary" strokeWidth={1.5} />}
+        />
+
+        <ClickableStatCard
+          to="/action-items"
+          label="Open Items"
+          value={filtered.openItems}
+          icon={<Clock className="w-8 h-8 text-amber-500" strokeWidth={1.5} />}
+        />
+
+        <ClickableStatCard
+          to="/action-items"
+          label="Critical"
+          value={filtered.criticalItems}
+          valueClassName="text-red-500"
+          icon={<AlertTriangle className="w-8 h-8 text-red-500" strokeWidth={1.5} />}
+        />
+
+        <ClickableStatCard
+          to="/scope-gates"
+          label="Gates at Risk"
+          value={filtered.gatesAtRisk}
+          valueClassName="text-amber-500"
+          icon={<Target className="w-8 h-8 text-amber-500" strokeWidth={1.5} />}
+        />
+      </div>
+
+      <JobTabs />
+
+      {weather && (
+        <Card className="ops-card" data-testid="weather-widget">
+          <CardHeader className="ops-card-header py-3">
+            <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2">
+              <Thermometer className="w-4 h-4" />
+              7-Day Weather {weather.is_mock && <Badge variant="secondary" className="text-xs">Mock</Badge>}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-3">
+            <div className="flex items-center gap-6 mb-4">
+              {getWeatherIcon(weather.current?.icon)}
+              <div>
+                <p className="text-3xl font-heading font-bold">{Math.round(weather.current?.temp)}°C</p>
+                <p className="text-sm text-muted-foreground capitalize">{weather.current?.description}</p>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Thermometer className="w-4 h-4" />
+                  Feels {Math.round(weather.current?.feels_like)}°
+                </span>
+                <span className="flex items-center gap-1">
+                  <Droplets className="w-4 h-4" />
+                  {weather.current?.humidity}%
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {weather.forecast?.slice(0, 7).map((day, i) => (
+                <div key={i} className="weather-day flex-shrink-0 text-center min-w-[60px]">
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(day.date).toLocaleDateString('en-NZ', { weekday: 'short' })}
+                  </p>
+                  {getWeatherIcon(day.icon)}
+                  <p className="text-xs font-medium">{Math.round(day.temp_max)}°</p>
+                  <p className="text-xs text-muted-foreground">{Math.round(day.temp_min)}°</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="ops-card" data-testid="blocked-delayed-section">
+          <CardHeader className="ops-card-header py-3">
+            <CardTitle className="font-heading text-sm uppercase tracking-wide text-red-500 flex items-center gap-2">
+              <SectionHeaderLink to="/scope-gates" className="text-red-500">
+                <AlertTriangle className="w-4 h-4" />
+                Blocked / Delayed ({filtered.blockedDelayed.length})
+              </SectionHeaderLink>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-3 max-h-80 overflow-y-auto">
+            {filtered.blockedDelayed.length > 0 ? (
+              filtered.blockedDelayed.map((item) => (
+                <ItemCard key={item.id} item={item} type="gate" />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">No blocked items</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="ops-card" data-testid="at-risk-section">
+          <CardHeader className="ops-card-header py-3">
+            <CardTitle className="font-heading text-sm uppercase tracking-wide text-amber-500 flex items-center gap-2">
+              <SectionHeaderLink to="/scope-gates" className="text-amber-500">
+                <AlertTriangle className="w-4 h-4" />
+                At Risk ({filtered.atRisk.length})
+              </SectionHeaderLink>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-3 max-h-80 overflow-y-auto">
+            {filtered.atRisk.length > 0 ? (
+              filtered.atRisk.map((item) => (
+                <ItemCard key={item.id} item={item} type="gate" />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">No items at risk</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="ops-card" data-testid="overdue-section">
+          <CardHeader className="ops-card-header py-3">
+            <CardTitle className="font-heading text-sm uppercase tracking-wide text-red-400 flex items-center gap-2">
+              <SectionHeaderLink to="/action-items" className="text-red-400">
+                <Clock className="w-4 h-4" />
+                Overdue ({filtered.overdue.length})
+              </SectionHeaderLink>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-3 max-h-80 overflow-y-auto">
+            {filtered.overdue.length > 0 ? (
+              filtered.overdue.map((item) => (
+                <ItemCard key={item.id} item={item} type="action" />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">No overdue items</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="ops-card" data-testid="due-today-section">
+          <CardHeader className="ops-card-header py-3">
+            <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2">
+              <SectionHeaderLink to="/action-items">
+                <Calendar className="w-4 h-4" />
+                Due Today ({filtered.dueToday.length})
+              </SectionHeaderLink>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-3 max-h-80 overflow-y-auto">
+            {filtered.dueToday.length > 0 ? (
+              filtered.dueToday.map((item) => (
+                <ItemCard key={item.id} item={item} type="action" />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">Nothing due today</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="ops-card" data-testid="due-week-section">
+          <CardHeader className="ops-card-header py-3">
+            <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2">
+              <SectionHeaderLink to="/action-items">
+                <Calendar className="w-4 h-4" />
+                Due This Week ({filtered.dueThisWeek.length})
+              </SectionHeaderLink>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-3 max-h-80 overflow-y-auto">
+            {filtered.dueThisWeek.length > 0 ? (
+              filtered.dueThisWeek.map((item) => (
+                <ItemCard key={item.id} item={item} type="action" />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">Nothing due this week</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="ops-card" data-testid="completed-section">
+          <CardHeader className="ops-card-header py-3">
+            <CardTitle className="font-heading text-sm uppercase tracking-wide text-emerald-500 flex items-center gap-2">
+              <SectionHeaderLink to="/action-items" className="text-emerald-500">
+                <CheckCircle2 className="w-4 h-4" />
+                Recently Completed ({filtered.recentlyCompleted.length})
+              </SectionHeaderLink>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-3 max-h-80 overflow-y-auto">
+            {filtered.recentlyCompleted.length > 0 ? (
+              filtered.recentlyCompleted.map((item) => (
+                <ItemCard key={item.id} item={item} type="action" />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">No recent completions</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex gap-4">
+        <Link to="/walkaround">
+          <Button className="btn-primary" data-testid="quick-walkaround">
+            Quick Capture <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </Link>
+        <Link to="/projects">
+          <Button variant="secondary" data-testid="view-projects">
+            View Projects
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+export default DashboardPage;
