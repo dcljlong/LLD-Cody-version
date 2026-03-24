@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timedelta
 
 class LLDv2APITester:
-    def __init__(self, base_url="https://site-command-12.preview.emergentagent.com"):
+    def __init__(self, base_url="https://lld-cody-preview.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.user_id = None
