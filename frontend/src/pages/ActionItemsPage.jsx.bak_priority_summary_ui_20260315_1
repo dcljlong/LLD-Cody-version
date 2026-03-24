@@ -1,0 +1,559 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { tasksApi, jobsApi } from '../lib/api';
+import { toast } from 'sonner';
+import {
+  ListTodo,
+  Plus,
+  CheckCircle2,
+  Clock,
+  Filter,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  RotateCcw
+} from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+
+const PriorityBadge = ({ priority }) => {
+  const styles = {
+    critical: 'bg-red-950/50 text-red-500 border-red-900',
+    high: 'bg-orange-950/50 text-orange-500 border-orange-900',
+    medium: 'bg-amber-950/50 text-amber-500 border-amber-900',
+    low: 'bg-blue-950/50 text-blue-400 border-blue-900',
+    deferred: 'bg-zinc-800 text-zinc-400 border-zinc-700'
+  };
+  return (
+    <span className={`status-badge ${styles[priority] || styles.medium}`}>
+      {priority}
+    </span>
+  );
+};
+
+const ActionItemsPage = () => {
+  const [items, setItems] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [filterProject, setFilterProject] = useState('all');
+  const [activeTab, setActiveTab] = useState('open');
+  const [submitting, setSubmitting] = useState(false);
+
+  const [formData, setFormData] = useState({
+    project_id: '',
+    title: '',
+    description: '',
+    priority: 'medium',
+    due_date: '',
+    expected_complete_date: '',
+    owner: ''
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [itemsRes, projectsRes] = await Promise.all([
+        tasksApi.getAll({}),
+        jobsApi.getAll()
+      ]);
+
+      const items = Array.isArray(itemsRes?.data)
+        ? itemsRes.data
+        : Array.isArray(itemsRes?.data?.value)
+          ? itemsRes.data.value
+          : [];
+
+      const projects = Array.isArray(projectsRes?.data)
+        ? projectsRes.data
+        : Array.isArray(projectsRes?.data?.value)
+          ? projectsRes.data.value
+          : [];
+
+      setItems(items);
+      setProjects(projects);
+      console.log('ACTION ITEMS DEBUG', {
+        total: items.length,
+        statuses: items.reduce((acc, item) => {
+          const key = item.status ?? '<<missing>>';
+          acc[key] = (acc[key] || 0) + 1;
+          return acc;
+        }, {}),
+        projectIds: items.reduce((acc, item) => {
+          const key = item.project_id ?? '<<missing>>';
+          acc[key] = (acc[key] || 0) + 1;
+          return acc;
+        }, {})
+      });
+    } catch (error) {
+      toast.error('Failed to load action items');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.title.trim() || !formData.project_id) {
+      toast.error('Please fill in required fields');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (selectedItem) {
+        await tasksApi.update(selectedItem.id, formData);
+        toast.success('Item updated');
+      } else {
+        await tasksApi.create(formData);
+        toast.success('Item created');
+      }
+      setDialogOpen(false);
+      resetForm();
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to save item');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  const handleComplete = async (itemId) => {
+    try {
+      await tasksApi.update(itemId, { status: 'completed' });
+      toast.success('Item completed');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to complete item');
+    }
+  };
+  const handleReopen = async (itemId) => {
+    try {
+      await tasksApi.update(itemId, { status: 'open' });
+      toast.success('Item reopened');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to reopen item');
+    }
+  };
+
+  const handleDelete = async (itemId) => {
+    if (!window.confirm('Delete this action item?')) return;
+    try {
+      await tasksApi.delete(itemId);
+      toast.success('Item deleted');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to delete item');
+    }
+  };
+
+  const openEditDialog = (item) => {
+    setSelectedItem(item);
+    setFormData({
+      project_id: item.project_id,
+      title: item.title,
+      description: item.description || '',
+      priority: item.priority,
+      due_date: item.due_date?.split('T')[0] || '',
+      expected_complete_date: item.expected_complete_date?.split('T')[0] || '',
+      owner: item.owner || ''
+    });
+    setDialogOpen(true);
+  };
+
+  const openCreateDialog = () => {
+    setSelectedItem(null);
+    resetForm();
+    setDialogOpen(true);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      project_id: '',
+      title: '',
+      description: '',
+      priority: 'medium',
+      due_date: '',
+      expected_complete_date: '',
+      owner: ''
+    });
+  };
+
+  // Filter and sort items
+  const getProjectName = (projectId) => {
+    const project = projects.find(p => String(p.id) === String(projectId));
+    return project?.job_name || project?.name || 'Unknown';
+  };
+
+  const getItemProjectId = (item) => item.project_id || item.job_id || '';
+
+  const getNormalizedStatus = (status) => {
+    const normalized = String(status || 'open').trim().toLowerCase();
+    if (['completed', 'complete', 'done', 'closed'].includes(normalized)) return 'completed';
+    return 'open';
+  };
+
+  const filteredItems = items.filter(item => {
+    if (filterProject !== 'all' && String(getItemProjectId(item)) !== String(filterProject)) return false;
+    return true;
+  });
+
+  const openItems = filteredItems.filter(i => getNormalizedStatus(i.status) === 'open');
+  const completedItems = filteredItems.filter(i => getNormalizedStatus(i.status) === 'completed');
+
+  // Sort by priority then due date
+  const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3, deferred: 4 };
+  const sortedOpenItems = [...openItems].sort((a, b) => {
+    const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+    if (priorityDiff !== 0) return priorityDiff;
+    if (a.due_date && b.due_date) return new Date(a.due_date) - new Date(b.due_date);
+    return 0;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  const priorityOptions = [
+    { value: 'critical', label: 'Critical' },
+    { value: 'high', label: 'High' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'low', label: 'Low' },
+    { value: 'deferred', label: 'Deferred' }
+  ];
+
+  return (
+    <div className="space-y-6 overflow-visible overflow-visible" data-testid="action-items-page">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="font-heading text-2xl font-bold tracking-tight uppercase">Action Items</h2>
+          <p className="text-sm text-muted-foreground">{openItems.length} open, {completedItems.length} completed</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Select value={filterProject} onValueChange={setFilterProject}>
+            <SelectTrigger className="w-[180px]" data-testid="project-filter">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="All Projects" />
+            </SelectTrigger>
+            <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
+              <SelectItem value="all">All Projects</SelectItem>
+              {projects.map(p => (
+                <SelectItem key={p.id} value={p.id}>{p.job_name || p.name || "Untitled Job"}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button className="btn-primary" onClick={openCreateDialog} data-testid="create-item-btn">
+            <Plus className="w-4 h-4 mr-2" />
+            New Item
+          </Button>
+        </div>
+      </div>
+
+      {/* Priority Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {priorityOptions.map(p => {
+          const count = openItems.filter(i => i.priority === p.value).length;
+          return (
+            <Card key={p.value} className="ops-card">
+              <CardContent className="pt-3 pb-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground uppercase font-heading">{p.label}</span>
+                  <span className={`text-lg font-heading font-bold ${
+                    p.value === 'critical' ? 'text-red-500' :
+                    p.value === 'high' ? 'text-orange-500' :
+                    p.value === 'medium' ? 'text-amber-500' :
+                    p.value === 'low' ? 'text-blue-400' :
+                    'text-zinc-400'
+                  }`}>{count}</span>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-secondary">
+          <TabsTrigger value="open" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Open ({openItems.length})
+          </TabsTrigger>
+          <TabsTrigger value="completed" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Completed ({completedItems.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="open" className="mt-4">
+          {sortedOpenItems.length > 0 ? (
+            <div className="space-y-2">
+              {sortedOpenItems.map(item => (
+                <Card key={item.id} className={`ops-card border-l-4 group ${
+                  item.priority === 'critical' ? 'border-l-red-500' :
+                  item.priority === 'high' ? 'border-l-orange-500' :
+                  item.priority === 'medium' ? 'border-l-amber-500' :
+                  item.priority === 'low' ? 'border-l-blue-400' :
+                  'border-l-zinc-500'
+                }`} data-testid={`item-${item.id}`}>
+                  <CardContent className="py-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs text-muted-foreground">{getProjectName(getItemProjectId(item))}</span>
+                          <PriorityBadge priority={item.priority} />
+                        </div>
+                        <h4 className="font-medium">{item.title}</h4>
+                        {item.description && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
+                        )}
+                        <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
+                          {item.due_date && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              Due: {new Date(item.due_date).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}
+                            </span>
+                          )}
+                          {item.owner && (
+                            <span>Owner: {item.owner}</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="secondary" onClick={() => handleComplete(item.id)}>
+                          <CheckCircle2 className="w-4 h-4" />
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditDialog(item)}>
+                              <Pencil className="w-4 h-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(item.id)}>
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state py-12">
+              <CheckCircle2 className="empty-state-icon text-emerald-500" />
+              <p className="empty-state-title">All Clear</p>
+              <p className="empty-state-description">No open action items.</p>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="completed" className="mt-4">
+          {completedItems.length > 0 ? (
+            <div className="space-y-2">
+              {completedItems.map(item => (
+                <Card key={item.id} className="ops-card opacity-60 group" data-testid={`item-${item.id}`}>
+                  <CardContent className="py-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs text-muted-foreground">{getProjectName(getItemProjectId(item))}</span>
+                        </div>
+                        <h4 className="font-medium line-through">{item.title}</h4>
+                        {item.completed_at && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Completed: {new Date(item.completed_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <Button size="sm" variant="ghost" onClick={() => handleReopen(item.id)} className="opacity-0 group-hover:opacity-100">
+                        <RotateCcw className="w-4 h-4 mr-1" />
+                        Reopen
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state py-12">
+              <ListTodo className="empty-state-icon" />
+              <p className="empty-state-title">No Completed Items</p>
+              <p className="empty-state-description">Completed items will appear here.</p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Create/Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl uppercase tracking-tight">
+              {selectedItem ? 'Edit Item' : 'New Action Item'}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label className="form-label">Project *</Label>
+              <Select
+                value={formData.project_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, project_id: value }))}
+              >
+                <SelectTrigger data-testid="item-project-select">
+                  <SelectValue placeholder="Select project" />
+                </SelectTrigger>
+                <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
+                  {projects.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.job_name || p.name || "Untitled Job"}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="form-label">Title *</Label>
+              <Input
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="What needs to be done?"
+                className="form-input"
+                data-testid="item-title-input"
+              />
+            </div>
+
+            <div>
+              <Label className="form-label">Description</Label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Additional details..."
+                className="form-input min-h-[80px]"
+                data-testid="item-description-input"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="form-label">Priority</Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
+                >
+                  <SelectTrigger data-testid="item-priority-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
+                    {priorityOptions.map(p => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="form-label">Owner</Label>
+                <Input
+                  value={formData.owner}
+                  onChange={(e) => setFormData(prev => ({ ...prev, owner: e.target.value }))}
+                  placeholder="Responsible party"
+                  className="form-input"
+                  data-testid="item-owner-input"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="form-label">Due Date</Label>
+                <Input
+                  type="date"
+                  value={formData.due_date}
+                  onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                  className="form-input"
+                  data-testid="item-due-date"
+                />
+              </div>
+              <div>
+                <Label className="form-label">Expected Complete</Label>
+                <Input
+                  type="date"
+                  value={formData.expected_complete_date}
+                  onChange={(e) => setFormData(prev => ({ ...prev, expected_complete_date: e.target.value }))}
+                  className="form-input"
+                  data-testid="item-expected-date"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="btn-primary" disabled={submitting} data-testid="save-item-btn">
+                {submitting ? 'Saving...' : (selectedItem ? 'Update' : 'Create')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default ActionItemsPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

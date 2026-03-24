@@ -1,0 +1,74 @@
+import React, { useEffect, useState } from "react";
+import { gatesApi, projectsApi } from "../lib/api";
+
+export default function GatesPage() {
+
+  const [projects, setProjects] = useState([]);
+  const [gates, setGates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+const [selectedProject, setSelectedProject] = useState("");
+
+  useEffect(() => {
+    async function load() {
+      try {
+        setLoading(true);
+
+        const p = await projectsApi.getAll();
+        setProjects(p.data);
+
+        const g = await gatesApi.getAll();
+        setGates(g.data);
+
+      } catch (e) {
+        setError("Failed to load gates");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, []);
+
+  if (loading) return <div>Loading gates...</div>;
+  if (error) return <div>{error}</div>;
+  const filteredGates =
+    !selectedProject
+      ? gates
+      : gates.filter(g => g.project_id === selectedProject);
+
+
+  return (
+    <div style={{ padding: 20 }}>
+      <h2>Gates (debug)</h2>
+      <div style={{ marginBottom: 12 }}>
+        <select
+          value={selectedProject}
+          onChange={e => setSelectedProject(e.target.value)}
+        >
+          <option value="">All projects</option>
+          {projects.map(p => (
+            <option key={p.id} value={p.id}>
+              {p.name || p.project_name || p.id}
+            </option>
+          ))}
+        </select>
+      </div>
+
+
+      {filteredGates.map(g => (
+        <div key={g.id} style={{ border: "1px solid #555", margin: 6, padding: 6 }}>
+          <div><b>{g.name}</b></div>
+          <div>Status: {g.status}</div>
+          <div>Project: {g.project_id}</div>
+        </div>
+      ))}
+
+    </div>
+  );
+}
+
+
+
+
+

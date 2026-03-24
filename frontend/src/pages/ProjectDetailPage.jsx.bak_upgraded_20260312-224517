@@ -1,0 +1,217 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { jobsApi } from "../lib/api";
+
+function SectionCard({ title, children }) {
+  return (
+    <div className="bg-card border rounded-xl p-4 space-y-3 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">{title}</h2>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function StatCard({ label, value }) {
+  return (
+    <div className="bg-card border rounded-xl p-4 flex flex-col items-start shadow-sm">
+      <div className="text-sm text-muted-foreground">{label}</div>
+      <div className="text-2xl font-semibold mt-1">{value}</div>
+    </div>
+  );
+}
+
+function KeyValueGrid({ data }) {
+  const entries = Object.entries(data || {}).filter(
+    ([, value]) => value !== undefined && value !== null && value !== ""
+  );
+
+  if (entries.length === 0) return <div className="text-sm text-muted-foreground">No data</div>;
+
+  return (
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {entries.map(([key, value]) => (
+        <div key={key} className="border rounded-lg p-3">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">{key.replace(/_/g, " ")}</div>
+          <div className="text-sm mt-1 break-words">{typeof value === "object" ? JSON.stringify(value) : String(value)}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DataTable({ rows }) {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  const normalizedRows = safeRows.filter((row) => row && typeof row === "object");
+
+  if (!normalizedRows.length) return <div className="text-sm text-muted-foreground">No rows</div>;
+
+  const columns = Array.from(
+    normalizedRows.reduce((set, row) => {
+      Object.keys(row).forEach((key) => set.add(key));
+      return set;
+    }, new Set())
+  );
+
+  return (
+    <div className="overflow-x-auto border rounded-lg">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/40">
+          <tr>
+            {columns.map((column) => (
+              <th key={column} className="text-left p-3 font-medium whitespace-nowrap">
+                {column.replace(/_/g, " ")}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {normalizedRows.map((row, index) => (
+            <tr key={row.id || row._id || index} className="border-t align-top">
+              {columns.map((column) => (
+                <td key={column} className="p-3 whitespace-pre-wrap">
+                  {row[column] === undefined || row[column] === null ? "" : typeof row[column] === "object" ? JSON.stringify(row[column]) : String(row[column])}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function JsonBlock({ data }) {
+  if (data === undefined || data === null) return <div className="text-sm text-muted-foreground">No data</div>;
+  return <pre className="text-xs bg-muted/40 border rounded-lg p-3 overflow-auto">{JSON.stringify(data, null, 2)}</pre>;
+}
+
+export default function ProjectDetailPage() {
+  const { id } = useParams();
+  const [job, setJob] = useState(null);
+  const [analysis, setAnalysis] = useState(null);
+  const [programme, setProgramme] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [analysisError, setAnalysisError] = useState("");
+  const [programmeError, setProgrammeError] = useState("");
+  const [pageError, setPageError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setPageError("");
+      setAnalysisError("");
+      setProgrammeError("");
+
+      try {
+        const jobRes = await jobsApi.get(id);
+        if (!cancelled) setJob(jobRes.data || null);
+      } catch (error) {
+        if (!cancelled) {
+          setPageError(error?.response?.data?.detail || error?.message || "Failed to load job detail");
+          setJob(null);
+        }
+      }
+
+      try {
+        const analysisRes = await jobsApi.getAnalysis(id);
+        if (!cancelled) setAnalysis(analysisRes.data || null);
+      } catch (error) {
+        if (!cancelled) {
+          setAnalysis(null);
+          setAnalysisError(error?.response?.data?.detail || error?.message || "Analysis unavailable");
+        }
+      }
+
+      try {
+        const programmeRes = await jobsApi.getProgramme(id);
+        if (!cancelled) setProgramme(programmeRes.data || null);
+      } catch (error) {
+        if (!cancelled) {
+          setProgramme(null);
+          setProgrammeError(error?.response?.data?.detail || error?.message || "Programme unavailable");
+        }
+      }
+
+      if (!cancelled) setLoading(false);
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [id]);
+
+  const programmeRows = useMemo(() => {
+    if (Array.isArray(programme)) return programme;
+    if (Array.isArray(programme?.items)) return programme.items;
+    if (Array.isArray(programme?.programme)) return programme.programme;
+    if (Array.isArray(programme?.tasks)) return programme.tasks;
+    if (Array.isArray(programme?.data)) return programme.data;
+    return [];
+  }, [programme]);
+
+  const analysisSummary = useMemo(() => {
+    if (!analysis || typeof analysis !== "object") return {};
+    if (analysis.summary && typeof analysis.summary === "object") return analysis.summary;
+    return analysis;
+  }, [analysis]);
+
+  const headerTitle = job?.name || job?.job_name || job?.title || "Job Detail";
+  const headerCode = job?.job_number || job?.job_code || job?.code || "";
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="space-y-1">
+          <div className="text-sm text-muted-foreground">
+            <Link to="/projects" className="underline underline-offset-4">Projects</Link>
+            <span> / Job Detail</span>
+          </div>
+          <h1 className="text-3xl font-semibold">{headerTitle}</h1>
+          <div className="text-sm text-muted-foreground">{headerCode ? `${headerCode} · ` : ""}ID: {id}</div>
+        </div>
+      </div>
+
+      {loading && <div className="border rounded-xl p-6 text-sm text-muted-foreground">Loading job detail...</div>}
+      {pageError && <div className="border border-red-500/40 rounded-xl p-4 text-sm">{pageError}</div>}
+
+      {!pageError && (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard label="Programme Rows" value={programmeRows.length} />
+            <StatCard label="Analysis Fields" value={Object.keys(analysisSummary || {}).length} />
+            <StatCard label="Job Status" value={job?.status || "—"} />
+            <StatCard label="Client" value={job?.client || "—"} />
+          </div>
+
+          <SectionCard title="Job Overview"><KeyValueGrid data={job} /></SectionCard>
+
+          <SectionCard title="Analysis">
+            {analysisError ? <div className="text-sm text-amber-600">{analysisError}</div> :
+              <>
+                <KeyValueGrid data={analysisSummary} />
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-sm text-muted-foreground">Raw analysis</summary>
+                  <div className="mt-3"><JsonBlock data={analysis} /></div>
+                </details>
+              </>
+            }
+          </SectionCard>
+
+          <SectionCard title="Programme">
+            {programmeError ? <div className="text-sm text-amber-600">{programmeError}</div> :
+              programmeRows.length > 0 ? <DataTable rows={programmeRows} /> :
+              <>
+                <div className="text-sm text-muted-foreground">No structured programme rows found.</div>
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-sm text-muted-foreground">Raw programme</summary>
+                  <div className="mt-3"><JsonBlock data={programme} /></div>
+                </details>
+              </>
+            }
+          </SectionCard>
+        </>
+      )}
+    </div>
+  );
+}

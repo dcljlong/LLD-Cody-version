@@ -1,0 +1,234 @@
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { jobsApi, tasksApi } from '../lib/api';
+
+export default function ProjectDetailPage() {
+    const { id } = useParams();
+
+    const [job, setJob] = useState(null);
+    const [analysis, setAnalysis] = useState(null);
+    const [programme, setProgramme] = useState([]);
+    const [existingTasks, setExistingTasks] = useState([]);
+    const [tab, setTab] = useState('overview');
+
+    useEffect(() => {
+        async function load() {
+            const j = await jobsApi.get(id);
+            setJob(j.data);
+
+            try {
+                const a = await jobsApi.getAnalysis(id);
+                setAnalysis(a.data);
+            } catch {}
+
+            try {
+                const p = await jobsApi.getProgramme(id);
+                setProgramme(p.data);
+            } catch {}
+
+            try {
+                const t = await tasksApi.getAll({ job_id: id });
+                setExistingTasks(t.data?.value || t.data || []);
+            } catch {}
+        }
+
+        load();
+    }, [id]);
+
+    if (!job) return <div style={{ padding: 20 }}>Loading...</div>;
+
+    const confirmedAnalysis = analysis?.analysis || null;
+    const latestAnalysis = job?.latest_analysis || null;
+
+    const confirmedHasContent =
+        confirmedAnalysis &&
+        (
+            (confirmedAnalysis.scope_items && confirmedAnalysis.scope_items.length > 0) ||
+            (confirmedAnalysis.proposed_tasks && confirmedAnalysis.proposed_tasks.length > 0) ||
+            (confirmedAnalysis.materials && confirmedAnalysis.materials.length > 0) ||
+            (confirmedAnalysis.risks && confirmedAnalysis.risks.length > 0)
+        );
+
+    const effectiveAnalysis = confirmedHasContent ? confirmedAnalysis : latestAnalysis;
+
+    const scopeItems = effectiveAnalysis?.scope_items || [];
+    const risks = effectiveAnalysis?.risks || [];
+
+    const existingScopeTaskNames = new Set(
+        existingTasks
+            .filter(t => t.task_type === 'Scope')
+            .map(t => (t.task_name || '').trim().toLowerCase())
+    );
+
+    const pendingScopeItems = scopeItems.filter(
+        s => !existingScopeTaskNames.has((s || '').trim().toLowerCase())
+    );
+
+    const createTasksFromScope = async () => {
+        if (!pendingScopeItems.length) {
+            alert('No new Scope Tasks ({scopeTasks.length}) to create');
+            return;
+        }
+
+        for (const s of pendingScopeItems) {
+            await tasksApi.create({
+                job_id: job.id,
+                task_name: s,
+                task_type: 'Scope',
+                status: 'planned'
+            });
+        }
+
+        alert('Tasks created from scope');
+        window.location.reload();
+    };
+
+    const programmeTasks = existingTasks.filter(t => t.task_type !== 'Scope');
+    const scopeTasks = existingTasks.filter(t => t.task_type === 'Scope');
+    const programmeDurationTotal = programmeTasks.reduce((sum, t) => sum + (t.duration_days || 0), 0);
+
+    const tabBtn = (name) => ({
+        padding: '10px 16px',
+        marginRight: 8,
+        border: '1px solid #333',
+        background: tab === name ? '#7CC242' : '#111',
+        color: tab === name ? '#000' : '#fff',
+        borderRadius: 6,
+        cursor: 'pointer',
+        fontWeight: 600
+    });
+
+    const scopeActionBtn = {
+        padding: '8px 14px',
+        marginBottom: 12,
+        border: 'none',
+        background: '#7CC242',
+        color: '#000',
+        borderRadius: 6,
+        cursor: 'pointer',
+        fontWeight: 700
+    };
+
+    return (
+        <div style={{ padding: 20, maxWidth: 1100 }}>
+            <h2>{job.job_name}</h2>
+
+            <div style={{ marginBottom: 20 }}>
+                <button style={tabBtn('overview')} onClick={() => setTab('overview')}>Overview</button>
+                <button style={tabBtn('programme')} onClick={() => setTab('programme')}>Programme</button>
+                <button style={tabBtn('scope')} onClick={() => setTab('scope')}>Scope</button>
+                <button style={tabBtn('tasks')} onClick={() => setTab('tasks')}>Tasks</button>
+                <button style={tabBtn('risks')} onClick={() => setTab('risks')}>Risks</button>
+                <button style={tabBtn('analysis')} onClick={() => setTab('analysis')}>AI</button>
+            </div>
+
+            {tab === 'overview' && (
+                <div>
+                    <div>ID: {job.id}</div>
+                    <div>Number: {job.job_number}</div>
+                    <div>Contractor: {job.main_contractor}</div>
+                    <div>Address: {job.site_address}</div>
+                    <div>Status: {job.status}</div>
+                    <div>Latest Analysis Status: {job.latest_analysis_status}</div>
+                </div>
+            )}
+
+            {tab === 'programme' && (
+                <div>
+                    {programme.map((p) => (
+                        <div key={p.id} style={{ padding: 8, borderBottom: '1px solid #333' }}>
+                            <b>{p.name}</b>
+                            <div>{p.trade} - {p.duration} {p.duration_unit}</div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {tab === 'scope' && (
+                <div>
+                    <button
+                        style={scopeActionBtn}
+                        onClick={createTasksFromScope}
+                    >
+                        Create tasks from scope
+                    </button>
+
+                    <div style={{ marginBottom: 12 }}>
+                        Existing Scope Tasks ({scopeTasks.length}): {existingScopeTaskNames.size} | New scope items available: {pendingScopeItems.length}
+                    </div>
+
+                    {scopeItems.length === 0 && <div>No scope items found.</div>}
+
+                    {scopeItems.map((s, i) => {
+                        const exists = existingScopeTaskNames.has((s || '').trim().toLowerCase());
+
+                        return (
+                            <div key={i} style={{ padding: 8, borderBottom: '1px solid #333' }}>
+                                <div>{s}</div>
+                                <div style={{ fontSize: 12, color: exists ? '#7CC242' : '#aaa' }}>
+                                    {exists ? 'Task already exists' : 'Not yet created'}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {tab === 'tasks' && (
+                <div>
+                    <h3 style={{ marginBottom: 10 }}>Programme / Construction Tasks ({programmeTasks.length}) - {programmeDurationTotal} total days</h3>
+
+                    {programmeTasks.length === 0 && <div>No programme tasks found.</div>}
+
+                    {programmeTasks.map((t) => (
+                        <div key={t.id} style={{ padding: 8, borderBottom: '1px solid #333' }}>
+                            <div><b>{t.task_name}</b></div>
+                            <div style={{ fontSize: 13 }}>
+                                Type: {t.task_type || '-'} | Status: {t.status || '-'} | Owner: {t.owner_party || '-'}
+                            </div>
+                            <div style={{ fontSize: 12, color: '#aaa' }}>
+                                Duration: {t.duration_days ?? '-'} days | Start: {t.planned_start || '-'} | Finish: {t.planned_finish || '-'}
+                            </div>
+                        </div>
+                    ))}
+
+                    <h3 style={{ marginTop: 24, marginBottom: 10 }}>Scope Tasks ({scopeTasks.length})</h3>
+
+                    {scopeTasks.length === 0 && <div>No Scope Tasks ({scopeTasks.length}) found.</div>}
+
+                    {scopeTasks.map((t) => (
+                        <div key={t.id} style={{ padding: 8, borderBottom: '1px solid #333' }}>
+                            <div><b>{t.task_name}</b></div>
+                            <div style={{ fontSize: 13 }}>
+                                Type: {t.task_type || '-'} | Status: {t.status || '-'} | Owner: {t.owner_party || '-'}
+                            </div>
+                            <div style={{ fontSize: 12, color: '#aaa' }}>
+                                Duration: {t.duration_days ?? '-'} days | Start: {t.planned_start || '-'} | Finish: {t.planned_finish || '-'}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {tab === 'risks' && (
+                <div>
+                    {risks.length === 0 && <div>No risks found.</div>}
+
+                    {risks.map((r, i) => (
+                        <div key={i} style={{ padding: 8, borderBottom: '1px solid #333' }}>
+                            {r}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {tab === 'analysis' && effectiveAnalysis && (
+                <pre style={{ background: '#111', padding: 10, overflowX: 'auto' }}>
+                    {JSON.stringify(effectiveAnalysis, null, 2)}
+                </pre>
+            )}
+        </div>
+    );
+}
+
+

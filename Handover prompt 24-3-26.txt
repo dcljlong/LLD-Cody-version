@@ -1,0 +1,225 @@
+HANDOVER SUMMARY — LLD Cody Version / FitoutOS / Deployment
+Project overview
+
+We are developing two separate apps:
+
+1. FitoutOS (data engine / planning system)
+
+Purpose:
+
+Quotes
+Programmes
+Resource analysis
+Task codes
+Crew loading
+Scope parsing
+Programme parsing
+Scheduling logic
+Reports
+
+FitoutOS is the source of truth for construction data.
+
+Stack:
+
+FastAPI backend
+MongoDB
+React frontend
+Runs locally on port 8010
+2. LLD Cody Version (site operations app)
+
+Purpose:
+
+Daily site use
+Walkaround capture
+Action items
+Diary
+Gates / risks
+Dashboard
+Project visibility
+
+This app is for on-site use on phone / tablet / laptop.
+
+It must stay lightweight.
+
+LLD must NOT contain heavy planning logic.
+
+LLD will later pull data from FitoutOS via API.
+
+Stack:
+
+FastAPI backend
+MongoDB
+React frontend
+Runs locally on port 8011 (important)
+IMPORTANT ARCHITECTURE RULE
+
+FitoutOS = planning + resources + programme
+LLD = site operations only
+
+LLD should NOT parse:
+
+quotes
+programmes
+drawings
+schedules
+
+Those belong in FitoutOS.
+
+LLD should only consume:
+
+tasks
+project info
+programme summary
+resource flags
+risks
+dates
+
+via API later.
+
+Current LLD Cody Version status
+
+Working:
+
+login works
+projects load
+walkaround works
+action items created
+backend isolated to port 8011
+frontend API set to 8011
+project memory works
+note auto-focus works
+quick entry mode works
+owner quick buttons added
+default owner = Me
+advanced fields hidden by default
+
+Walkaround page now usable for daily site use.
+
+Approx completion:
+
+LLD overall: ~90%
+Walkaround: ~95%
+Action items: needs cleanup
+Deployment: not done
+
+Current ports (important)
+
+FitoutOS backend:
+
+8010
+
+LLD backend:
+
+8011
+
+Frontend uses:
+
+REACT_APP_API_URL
+
+Fallback:
+
+http://127.0.0.1:8011/api
+
+AuthContext.js and api.js must match.
+
+Current file locations
+
+LLD project root:
+
+D:\LLD Cody version
+
+Backend:
+
+D:\LLD Cody version\backend
+
+Frontend:
+
+D:\LLD Cody version\frontend
+
+Key files:
+
+src/pages/WalkaroundPage.jsx
+src/lib/api.js
+src/contexts/AuthContext.js
+server.py
+Current development priorities for LLD
+
+Next tasks:
+
+Action Items page cleanup
+sort by priority
+overdue highlight
+filter by project
+filter by owner
+quick complete button
+better card layout
+Dashboard improvements
+show risks
+show overdue
+show today
+show blocked
+Diary output
+per project
+per day
+export later
+Gates / risk linking
+Mobile usability polish
+Deployment to free host
+Deployment goal
+
+We want LLD usable on phone with PC off.
+
+Chosen host:
+
+Render free tier
+
+Plan:
+
+Backend → Render Web Service
+Frontend → Render Static Site
+Mongo → MongoDB Atlas free
+
+Backend start command:
+
+uvicorn server:app --host 0.0.0.0 --port $PORT
+
+Frontend env:
+
+REACT_APP_API_URL=https://backend.onrender.com/api
+
+Must NOT use localhost in production.
+
+Known issues
+login fails if wrong port
+frontend must use env API URL
+backend must run on correct port
+FitoutOS and LLD conflict if both use 8010
+browser cache can keep old API URL
+must clear localStorage sometimes
+Development rules
+
+Follow these rules:
+
+One change at a time
+Always build after change
+Always verify backend port
+Do not mix FitoutOS and LLD logic
+Keep LLD lightweight
+Do not add heavy planning to LLD
+Prefer UI speed over features
+Current next task
+
+Continue LLD development with:
+
+Action Items page cleanup
+
+After that:
+
+Deploy to Render free
+
+Then later:
+
+Connect LLD to FitoutOS API
+End of handover
+
+Use this as full context for continuing development.

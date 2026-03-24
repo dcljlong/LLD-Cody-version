@@ -1,0 +1,442 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { dashboardApi } from '../lib/api';
+import { toast } from 'sonner';
+import {
+  AlertTriangle,
+  Clock,
+  CheckCircle2,
+  Calendar,
+  Target,
+  ArrowRight
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+
+const StatusBadge = ({ status }) => {
+  const styles = {
+    BLOCKED: 'bg-red-600 text-white border-red-700',
+    DELAYED: 'bg-orange-600 text-white border-orange-700',
+    AT_RISK: 'bg-card text-black border-amber-600',
+    ON_TRACK: 'bg-emerald-600 text-white border-emerald-700',
+    COMPLETED: 'bg-zinc-600 text-white border-zinc-700'
+  };
+  return (
+    <span className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-bold uppercase tracking-wide border shadow-sm ${styles[status] || styles.ON_TRACK}`}>
+      {status?.replace('_', ' ')}
+    </span>
+  );
+};
+
+const PriorityBadge = ({ priority }) => {
+  const styles = {
+    critical: 'inline-flex items-center px-3 py-1 rounded-md text-sm font-bold uppercase tracking-wide border border-red-500 bg-red-500/20 text-red-400',
+    high: 'inline-flex items-center px-3 py-1 rounded-md text-sm font-bold uppercase tracking-wide border border-orange-500 bg-orange-500/20 text-orange-400',
+    medium: 'inline-flex items-center px-3 py-1 rounded-md text-sm font-bold uppercase tracking-wide border border-amber-500 bg-amber-500/20 text-amber-400',
+    low: 'inline-flex items-center px-3 py-1 rounded-md text-sm font-bold uppercase tracking-wide border border-blue-500 bg-blue-500/15 text-blue-300',
+    deferred: 'inline-flex items-center px-3 py-1 rounded-md text-sm font-bold uppercase tracking-wide border border-slate-500 bg-slate-500/15 text-slate-300'
+  };
+
+  return (
+    <span className={styles[priority] || styles.low}>
+      {priority || 'low'}
+    </span>
+  );
+};
+
+const priorityRank = {
+  CRITICAL: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+  deferred: 4
+};
+
+const gateStatusRank = {
+  BLOCKED: 0,
+  DELAYED: 1,
+  AT_RISK: 2,
+  ON_TRACK: 3,
+  COMPLETED: 4
+};
+
+const getDateValue = (value) => {
+  if (!value) return Number.MAX_SAFE_INTEGER;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? Number.MAX_SAFE_INTEGER : date.getTime();
+};
+
+const sortActionItems = (items = []) => {
+  return [...items].sort((a, b) => {
+    const priorityDiff = (priorityRank[a.priority] ?? 99) - (priorityRank[b.priority] ?? 99);
+    if (priorityDiff !== 0) return priorityDiff;
+
+    const dueDiff = getDateValue(a.due_date) - getDateValue(b.due_date);
+    if (dueDiff !== 0) return dueDiff;
+
+    return getDateValue(b.created_at) - getDateValue(a.created_at);
+  });
+};
+
+const sortGateItems = (items = []) => {
+  return [...items].sort((a, b) => {
+    const statusDiff = (gateStatusRank[a.status] ?? 99) - (gateStatusRank[b.status] ?? 99);
+    if (statusDiff !== 0) return statusDiff;
+
+    const requiredDiff = getDateValue(a.required_by_date) - getDateValue(b.required_by_date);
+    if (requiredDiff !== 0) return requiredDiff;
+
+    return getDateValue(b.created_at) - getDateValue(a.created_at);
+  });
+};
+
+const DashboardPage = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const dashRes = await dashboardApi.getSummary();
+      setData(dashRes.data);
+    } catch (error) {
+      toast.error('Failed to load dashboard');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleItemClick = (item, type) => {
+    if (type === 'gate') {
+      navigate('/gates');
+      return;
+    }
+    navigate('/action-items');
+  };
+
+  const handleStatClick = (route) => {
+    navigate(route);
+  };
+
+  const StatCard = ({ label, value, icon, route, valueClassName = '', tone = 'default' }) => {
+    const toneClass =
+      tone === 'CRITICAL'
+        ? 'border-red-500/80 bg-gradient-to-br from-red-950/40 via-card to-card hover:border-red-400'
+        : tone === 'warning'
+          ? 'border-amber-500/80 bg-gradient-to-br from-amber-950/30 via-card to-card hover:border-amber-400'
+          : 'border-slate-700 bg-gradient-to-br from-slate-900/70 via-card to-card hover:border-primary';
+
+    const iconBoxClass =
+      tone === 'CRITICAL'
+        ? 'border-red-500/40 bg-red-500/10 text-red-500'
+        : tone === 'warning'
+          ? 'border-amber-500/40 bg-amber-500/10 text-amber-500'
+          : 'border-primary/30 bg-primary/10 text-primary';
+
+    const supportTextClass =
+      tone === 'CRITICAL'
+        ? 'text-red-500'
+        : tone === 'warning'
+          ? 'text-amber-500'
+          : 'text-primary';
+
+    return (
+      <button
+        type="button"
+        onClick={() => handleStatClick(route)}
+        className="w-full text-left"
+      >
+        <Card className={`ops-card overflow-hidden border shadow-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl ${toneClass}`}>
+          <CardContent className="p-0">
+            <div className="flex items-start justify-between gap-4 px-5 pt-5">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-muted-foreground">{label}</p>
+                <p className={`mt-3 text-6xl leading-none font-black font-heading text-foreground ${valueClassName}`.trim()}>{value}</p>
+              </div>
+              <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border shadow-sm ${iconBoxClass}`}>
+                {icon}
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between border-t border-white/5 px-5 py-3">
+              <span className={`text-[11px] font-bold uppercase tracking-[0.16em] ${supportTextClass}`}>
+                Operational status
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                Open
+                <ArrowRight className="h-3.5 w-3.5" />
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </button>
+    );
+  };
+
+  const ItemCard = ({ item, type }) => {
+    const cardTone =
+      item.priority === 'CRITICAL' ? 'bg-card border-red-500 shadow-[0_0_0_1px_rgba(220,38,38,0.12)]' :
+      item.priority === 'high' ? 'bg-card border-orange-500 shadow-[0_0_0_1px_rgba(249,115,22,0.12)]' :
+      item.priority === 'medium' ? 'bg-card border-amber-500' :
+      'bg-card border-slate-700';
+
+    const leftBorder =
+      item.priority === 'CRITICAL' ? 'border-l-red-600' :
+      item.priority === 'high' ? 'border-l-orange-500' :
+      item.priority === 'medium' ? 'border-l-amber-500' :
+      'border-l-blue-500';
+
+    return (
+      <button
+        type="button"
+        onClick={() => handleItemClick(item, type)}
+        className={`action-card p-4 mb-3 border border-l-4 rounded-md w-full text-left transition-all hover:scale-[1.01] hover:shadow-xl ${cardTone} ${leftBorder}`}
+        data-testid={`item-${item.id}`}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-lg leading-tight">{item.title || item.name}</p>
+            <p className="text-sm text-muted-foreground mt-1">{item.project_name}</p>
+          </div>
+          {type === 'gate' ? (
+            <StatusBadge status={item.status} />
+          ) : (
+            <PriorityBadge priority={item.priority} />
+          )}
+        </div>
+        {item.due_date && (
+          <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            Due: {new Date(item.due_date).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}
+          </p>
+        )}
+        {item.required_by_date && (
+          <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
+            <Target className="w-4 h-4" />
+            Required: {new Date(item.required_by_date).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}
+          </p>
+        )}
+      </button>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  const blockedDelayedItems = sortGateItems(data?.blocked_delayed || []);
+  const atRiskItems = sortGateItems(data?.at_risk || []);
+  const OVERDUEItems = sortActionItems(data?.OVERDUE || []);
+  const dueTodayItems = sortActionItems(data?.due_today || []);
+  const dueThisWeekItems = sortActionItems(data?.due_this_week || []);
+  const completedItems = sortActionItems(data?.recently_completed || []);
+
+  return (
+    <div className="space-y-6" data-testid="dashboard-page">
+      <div className="dashboard-grid">
+        <StatCard
+          label="ACTIVE PROJECTS"
+          value={data?.projects_count || 0}
+          route="/projects"
+          tone="default"
+          icon={<Target className="w-9 h-9 text-primary" strokeWidth={1.75} />}
+        />
+
+        <StatCard
+          label="OPEN ITEMS"
+          value={data?.summary?.open_items || 0}
+          route="/action-items"
+          tone="warning"
+          icon={<Clock className="w-9 h-9 text-amber-500" strokeWidth={1.75} />}
+        />
+
+        <StatCard
+          label="CRITICAL"
+          value={data?.summary?.CRITICAL_items || 0}
+          route="/action-items"
+          tone="CRITICAL"
+          valueClassName="text-red-600"
+          icon={<AlertTriangle className="w-9 h-9 text-red-600" strokeWidth={1.75} />}
+        />
+
+        <StatCard
+          label="GATES AT RISK"
+          value={(data?.summary?.gates_blocked || 0) + (data?.summary?.gates_delayed || 0) + (data?.summary?.gates_at_risk || 0)}
+          route="/gates"
+          tone="warning"
+          valueClassName="text-amber-600"
+          icon={<Target className="w-9 h-9 text-amber-500" strokeWidth={1.75} />}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <Card className="ops-card border border-red-500 shadow-xl bg-card" data-testid="blocked-delayed-section">
+          <CardHeader className="ops-card-header py-3 border-b border-border bg-card">
+            <CardTitle className="font-heading text-lg uppercase tracking-wide text-red-400 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              BLOCKED / DELAYED ({blockedDelayedItems.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-4 max-h-80 overflow-y-auto bg-card">
+            {blockedDelayedItems.length > 0 ? (
+              blockedDelayedItems.map(item => (
+                <ItemCard key={item.id} item={item} type="gate" />
+              ))
+            ) : (
+              <p className="text-sm text-sm text-muted-foreground text-center py-6">No blocked items</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="ops-card border border-orange-500 shadow-xl bg-card" data-testid="OVERDUE-section">
+          <CardHeader className="ops-card-header py-3 border-b border-border bg-card">
+            <CardTitle className="font-heading text-lg uppercase tracking-wide text-red-400 flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              OVERDUE ({OVERDUEItems.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-4 max-h-80 overflow-y-auto bg-card">
+            {OVERDUEItems.length > 0 ? (
+              OVERDUEItems.map(item => (
+                <ItemCard key={item.id} item={item} type="action" />
+              ))
+            ) : (
+              <p className="text-sm text-sm text-muted-foreground text-center py-6">No overdue items</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="ops-card border border-amber-500 shadow-xl bg-card" data-testid="at-risk-section">
+            <CardHeader className="ops-card-header py-3 border-b border-border bg-card">
+              <CardTitle className="font-heading text-lg uppercase tracking-wide text-amber-400 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                AT RISK ({atRiskItems.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-4 max-h-80 overflow-y-auto bg-card">
+              {atRiskItems.length > 0 ? (
+                atRiskItems.map(item => (
+                  <ItemCard key={item.id} item={item} type="gate" />
+                ))
+              ) : (
+                <p className="text-sm text-sm text-muted-foreground text-center py-6">No items at risk</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="ops-card border border-slate-700 shadow-xl bg-card" data-testid="due-today-section">
+            <CardHeader className="ops-card-header py-3 border-b border-border bg-card">
+              <CardTitle className="font-heading text-lg uppercase tracking-wide flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                DUE TODAY ({dueTodayItems.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-4 max-h-80 overflow-y-auto bg-card">
+              {dueTodayItems.length > 0 ? (
+                dueTodayItems.map(item => (
+                  <ItemCard key={item.id} item={item} type="action" />
+                ))
+              ) : (
+                <p className="text-sm text-sm text-muted-foreground text-center py-6">Nothing DUE TODAY</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="ops-card border border-slate-700 shadow-xl bg-card" data-testid="due-week-section">
+            <CardHeader className="ops-card-header py-3 border-b border-border bg-card">
+              <CardTitle className="font-heading text-lg uppercase tracking-wide flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                DUE THIS WEEK ({dueThisWeekItems.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-4 max-h-80 overflow-y-auto bg-card">
+              {dueThisWeekItems.length > 0 ? (
+                dueThisWeekItems.map(item => (
+                  <ItemCard key={item.id} item={item} type="action" />
+                ))
+              ) : (
+                <p className="text-sm text-sm text-muted-foreground text-center py-6">Nothing due this week</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="ops-card border border-emerald-500 shadow-xl bg-card" data-testid="completed-section">
+            <CardHeader className="ops-card-header py-3 border-b border-border bg-card">
+              <CardTitle className="font-heading text-lg uppercase tracking-wide text-emerald-400 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" />
+                RECENTLY COMPLETED ({completedItems.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-4 max-h-80 overflow-y-auto bg-card">
+              {completedItems.length > 0 ? (
+                completedItems.map(item => (
+                  <ItemCard key={item.id} item={item} type="action" />
+                ))
+              ) : (
+                <p className="text-sm text-sm text-muted-foreground text-center py-6">No recent completions</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <div className="flex gap-4">
+        <Link to="/walkaround">
+          <Button className="btn-primary" data-testid="quick-walkaround">
+            Quick Capture <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </Link>
+        <Link to="/projects">
+          <Button variant="secondary" data-testid="view-projects">
+            View Projects
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+export default DashboardPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

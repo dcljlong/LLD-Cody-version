@@ -1,0 +1,214 @@
+import React, { useEffect, useMemo, useState, useRef } from "react";
+import { Link, useParams } from "react-router-dom";
+import { jobsApi } from "../lib/api";
+
+function SectionCard({ title, children }) {
+  return (
+    <div className="bg-card border rounded-xl p-4 space-y-3 shadow-sm">
+      <h2 className="text-lg font-semibold">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function StatCard({ label, value }) {
+  return (
+    <div className="bg-card border rounded-xl p-4 flex flex-col items-start shadow-sm">
+      <div className="text-sm text-muted-foreground">{label}</div>
+      <div className="text-2xl font-semibold mt-1">{value}</div>
+    </div>
+  );
+}
+
+function KeyValueGrid({ data }) {
+  const entries = Object.entries(data || {}).filter(([_, value]) => value !== undefined && value !== null && value !== "");
+  if (!entries.length) return <div className="text-sm text-muted-foreground">No data</div>;
+  return (
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {entries.map(([key, value]) => (
+        <div key={key} className="border rounded-lg p-3">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">{key.replace(/_/g, " ")}</div>
+          <div className="text-sm mt-1 break-words">{typeof value === "object" ? JSON.stringify(value) : String(value)}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function JsonBlock({ data }) {
+  if (!data) return <div className="text-sm text-muted-foreground">No data</div>;
+  return <pre className="text-xs bg-muted/40 border rounded-lg p-3 overflow-auto">{JSON.stringify(data, null, 2)}</pre>;
+}
+
+function DataTable({ rows }) {
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortAsc, setSortAsc] = useState(true);
+  const [filterPhase, setFilterPhase] = useState("");
+  const [filterTrade, setFilterTrade] = useState("");
+  const [filterConfidence, setFilterConfidence] = useState("");
+  const rowRefs = useRef({});
+
+  const filteredRows = useMemo(() => {
+    return rows.filter(r =>
+      (filterPhase ? r.phase === filterPhase : true) &&
+      (filterTrade ? r.trade === filterTrade : true) &&
+      (filterConfidence ? r.confidence === filterConfidence : true)
+    );
+  }, [rows, filterPhase, filterTrade, filterConfidence]);
+
+  const sortedRows = useMemo(() => {
+    if (!sortColumn) return filteredRows;
+    return [...filteredRows].sort((a, b) => {
+      const aVal = a[sortColumn];
+      const bVal = b[sortColumn];
+      if (aVal === bVal) return 0;
+      if (aVal === undefined) return 1;
+      if (bVal === undefined) return -1;
+      if (typeof aVal === "string") return sortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      return sortAsc ? aVal - bVal : bVal - aVal;
+    });
+  }, [filteredRows, sortColumn, sortAsc]);
+
+  const columns = useMemo(() => {
+    const cols = new Set();
+    rows.forEach((row) => Object.keys(row).forEach((k) => cols.add(k)));
+    return Array.from(cols);
+  }, [rows]);
+
+  const uniqueValues = (key) => Array.from(new Set(rows.map(r => r[key]).filter(v => v))).sort();
+
+  const handleSort = (col) => {
+    if (sortColumn === col) setSortAsc(!sortAsc);
+    else { setSortColumn(col); setSortAsc(true); }
+  };
+
+  const handleDependsClick = (depId) => {
+    const el = rowRefs.current[depId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("bg-yellow-100");
+      setTimeout(() => el.classList.remove("bg-yellow-100"), 2000);
+    }
+  };
+
+  if (!rows.length) return <div className="text-sm text-muted-foreground">No programme rows</div>;
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-2 flex-wrap">
+        <select className="border rounded px-2 py-1" value={filterPhase} onChange={(e) => setFilterPhase(e.target.value)}>
+          <option value="">All Phases</option>
+          {uniqueValues("phase").map(v => <option key={v} value={v}>{v}</option>)}
+        </select>
+        <select className="border rounded px-2 py-1" value={filterTrade} onChange={(e) => setFilterTrade(e.target.value)}>
+          <option value="">All Trades</option>
+          {uniqueValues("trade").map(v => <option key={v} value={v}>{v}</option>)}
+        </select>
+        <select className="border rounded px-2 py-1" value={filterConfidence} onChange={(e) => setFilterConfidence(e.target.value)}>
+          <option value="">All Confidence</option>
+          {uniqueValues("confidence").map(v => <option key={v} value={v}>{v}</option>)}
+        </select>
+      </div>
+
+      <div className="overflow-x-auto border rounded-lg">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40">
+            <tr>
+              {columns.map((col) => (
+                <th key={col} className="text-left p-3 font-medium cursor-pointer select-none whitespace-nowrap" onClick={() => handleSort(col)}>
+                  {col.replace(/_/g, " ")} {sortColumn === col ? (sortAsc ? "?" : "?") : ""}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sortedRows.map((row, i) => (
+              <tr key={row.id || row._id || i} ref={el => rowRefs.current[row.id] = el} className="border-t align-top">
+                {columns.map(col => {
+                  const value = row[col];
+                  if (col === "depends_on" && Array.isArray(value) && value.length) {
+                    return <td key={col} className="p-3 whitespace-pre-wrap">
+                      {value.map(d => <span key={d} className="text-blue-500 underline mr-1 cursor-pointer" onClick={() => handleDependsClick(d)}>{d}</span>)}
+                    </td>;
+                  }
+                  return <td key={col} className="p-3 whitespace-pre-wrap">{typeof value === "object" ? JSON.stringify(value) : String(value)}</td>;
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export default function ProjectDetailPage() {
+  const { id } = useParams();
+  const [job, setJob] = useState(null);
+  const [analysis, setAnalysis] = useState(null);
+  const [programme, setProgramme] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const jobRes = await jobsApi.get(id);
+        if (!cancelled) setJob(jobRes.data);
+        const analysisRes = await jobsApi.getAnalysis(id);
+        if (!cancelled) setAnalysis(analysisRes.data);
+        const programmeRes = await jobsApi.getProgramme(id);
+        if (!cancelled) setProgramme(programmeRes.data || []);
+      } catch (e) {
+        console.error("Failed to load job detail:", e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [id]);
+
+  const programmeRows = useMemo(() => Array.isArray(programme) ? programme : [], [programme]);
+  const analysisSummary = useMemo(() => analysis || {}, [analysis]);
+  const headerTitle = job?.job_name || job?.name || "Job Detail";
+  const headerCode = job?.job_number || "";
+
+  return (
+    <div className="space-y-6 p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="text-sm text-muted-foreground"><Link to="/projects" className="underline">Projects</Link> / Job Detail</div>
+          <h1 className="text-3xl font-semibold">{headerTitle}</h1>
+          <div className="text-sm text-muted-foreground">{headerCode} · ID: {id}</div>
+        </div>
+      </div>
+
+      {loading && <div className="border p-6 text-sm text-muted-foreground">Loading...</div>}
+
+      {!loading && job && (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard label="Programme Rows" value={programmeRows.length} />
+            <StatCard label="Analysis Fields" value={Object.keys(analysisSummary).length} />
+            <StatCard label="Job Status" value={job?.status || "—"} />
+            <StatCard label="Client" value={job?.client || "—"} />
+          </div>
+
+          <SectionCard title="Job Overview"><KeyValueGrid data={job} /></SectionCard>
+          <SectionCard title="Analysis"><KeyValueGrid data={analysisSummary} />
+            <details className="mt-2"><summary className="cursor-pointer text-sm text-muted-foreground">Raw analysis</summary>
+              <div className="mt-3"><JsonBlock data={analysis} /></div>
+            </details>
+          </SectionCard>
+          <SectionCard title="Programme"><DataTable rows={programmeRows} />
+            <details className="mt-2"><summary className="cursor-pointer text-sm text-muted-foreground">Raw programme</summary>
+              <div className="mt-3"><JsonBlock data={programme} /></div>
+            </details>
+          </SectionCard>
+        </>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,160 @@
+﻿import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { jobsApi, tasksApi } from '../lib/api';
+
+export default function ProjectDetailPage() {
+    const { id } = useParams();
+
+    const [job, setJob] = useState(null);
+    const [analysis, setAnalysis] = useState(null);
+    const [programme, setProgramme] = useState([]);
+    const [tab, setTab] = useState('overview');
+
+    useEffect(() => {
+        async function load() {
+            const j = await jobsApi.get(id);
+            setJob(j.data);
+
+            try {
+                const a = await jobsApi.getAnalysis(id);
+                setAnalysis(a.data);
+            } catch {}
+
+            try {
+                const p = await jobsApi.getProgramme(id);
+                setProgramme(p.data);
+            } catch {}
+        }
+
+        load();
+    }, [id]);
+
+    if (!job) return <div style={{ padding: 20 }}>Loading...</div>;
+
+    const confirmedAnalysis = analysis?.analysis || null;
+    const latestAnalysis = job?.latest_analysis || null;
+
+    const confirmedHasContent =
+        confirmedAnalysis &&
+        (
+            (confirmedAnalysis.scope_items && confirmedAnalysis.scope_items.length > 0) ||
+            (confirmedAnalysis.proposed_tasks && confirmedAnalysis.proposed_tasks.length > 0) ||
+            (confirmedAnalysis.materials && confirmedAnalysis.materials.length > 0) ||
+            (confirmedAnalysis.risks && confirmedAnalysis.risks.length > 0)
+        );
+
+    const effectiveAnalysis = confirmedHasContent ? confirmedAnalysis : latestAnalysis;
+
+    const scopeItems = effectiveAnalysis?.scope_items || [];
+    const risks = effectiveAnalysis?.risks || [];
+
+    const createTasksFromScope = async () => {
+        if (!scopeItems.length) return;
+
+        for (const s of scopeItems) {
+            await tasksApi.create({
+                job_id: job.id,
+                task_name: s,
+                task_type: 'Scope',
+                status: 'planned'
+            });
+        }
+
+        alert('Tasks created from scope');
+    };
+
+    const tabBtn = (name) => ({
+        padding: '10px 16px',
+        marginRight: 8,
+        border: '1px solid #333',
+        background: tab === name ? '#7CC242' : '#111',
+        color: tab === name ? '#000' : '#fff',
+        borderRadius: 6,
+        cursor: 'pointer',
+        fontWeight: 600
+    });
+
+    const scopeActionBtn = {
+        padding: '8px 14px',
+        marginBottom: 12,
+        border: 'none',
+        background: '#7CC242',
+        color: '#000',
+        borderRadius: 6,
+        cursor: 'pointer',
+        fontWeight: 700
+    };
+
+    return (
+        <div style={{ padding: 20, maxWidth: 1100 }}>
+            <h2>{job.job_name}</h2>
+
+            <div style={{ marginBottom: 20 }}>
+                <button style={tabBtn('overview')} onClick={() => setTab('overview')}>Overview</button>
+                <button style={tabBtn('programme')} onClick={() => setTab('programme')}>Programme</button>
+                <button style={tabBtn('scope')} onClick={() => setTab('scope')}>Scope</button>
+                <button style={tabBtn('risks')} onClick={() => setTab('risks')}>Risks</button>
+                <button style={tabBtn('analysis')} onClick={() => setTab('analysis')}>AI</button>
+            </div>
+
+            {tab === 'overview' && (
+                <div>
+                    <div>ID: {job.id}</div>
+                    <div>Number: {job.job_number}</div>
+                    <div>Contractor: {job.main_contractor}</div>
+                    <div>Address: {job.site_address}</div>
+                    <div>Status: {job.status}</div>
+                    <div>Latest Analysis Status: {job.latest_analysis_status}</div>
+                </div>
+            )}
+
+            {tab === 'programme' && (
+                <div>
+                    {programme.map((p) => (
+                        <div key={p.id} style={{ padding: 8, borderBottom: '1px solid #333' }}>
+                            <b>{p.name}</b>
+                            <div>{p.trade} - {p.duration} {p.duration_unit}</div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {tab === 'scope' && (
+                <div>
+                    <button
+                        style={scopeActionBtn}
+                        onClick={createTasksFromScope}
+                    >
+                        Create tasks from scope
+                    </button>
+
+                    {scopeItems.length === 0 && <div>No scope items found.</div>}
+
+                    {scopeItems.map((s, i) => (
+                        <div key={i} style={{ padding: 8, borderBottom: '1px solid #333' }}>
+                            {s}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {tab === 'risks' && (
+                <div>
+                    {risks.length === 0 && <div>No risks found.</div>}
+
+                    {risks.map((r, i) => (
+                        <div key={i} style={{ padding: 8, borderBottom: '1px solid #333' }}>
+                            {r}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {tab === 'analysis' && effectiveAnalysis && (
+                <pre style={{ background: '#111', padding: 10, overflowX: 'auto' }}>
+                    {JSON.stringify(effectiveAnalysis, null, 2)}
+                </pre>
+            )}
+        </div>
+    );
+}

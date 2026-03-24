@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8010/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8011/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -37,6 +37,13 @@ export const authApi = {
 export const dashboardApi = {
   getSummary: () => api.get('/dashboard/summary')
 };
+export const projectsApi = {
+  getAll: () => api.get('/projects'),
+  get: (projectId) => api.get(`/projects/${projectId}`),
+  create: (data) => api.post('/projects', data),
+  update: (projectId, data) => api.put(`/projects/${projectId}`, data),
+  delete: (projectId) => api.delete(`/projects/${projectId}`)
+};
 
 export const jobsApi = {
   getAll: () => api.get('/jobs'),
@@ -54,6 +61,7 @@ export const tasksApi = {
   getAll: (params) => api.get('/tasks', { params }),
   create: (data) => api.post('/tasks', data),
   update: (taskId, data) => api.put(`/tasks/${taskId}`, data),
+  linkProgrammeTask: (taskId, data) => api.put(`/tasks/${taskId}/link-programme-task`, data),
   delete: (taskId) => api.delete(`/tasks/${taskId}`)
 };
 
@@ -62,6 +70,36 @@ export const materialsApi = {
   create: (data) => api.post('/materials', data),
   update: (materialId, data) => api.put(`/materials/${materialId}`, data),
   delete: (materialId) => api.delete(`/materials/${materialId}`)
+};
+
+
+
+export const programmesApi = {
+  upload: (data) => api.post('/programmes/upload', data),
+  getAll: (projectId) => api.get(`/programmes/${projectId}`),
+  getTasks: (programmeId) => api.get(`/programme-tasks/${programmeId}`),
+  updateTaskTag: (taskId, data) => api.put(`/programme-tasks/${taskId}/tag`, data),
+  updateTaskDates: (taskId, data) => api.put(`/programme-tasks/${taskId}/dates`, data)
+};
+
+export const gatesApi = {
+  getAll: (params) => api.get('/gates', { params }),
+  get: (gateId) => api.get(`/gates/${gateId}`),
+  create: (data) => api.post('/gates', data),
+  update: (gateId, data) => api.put(`/gates/${gateId}`, data),
+  complete: (gateId) => api.post(`/gates/${gateId}/complete`),
+  reopen: (gateId) => api.post(`/gates/${gateId}/reopen`),
+  delete: (gateId) => api.delete(`/gates/${gateId}`)
+};
+
+export const walkaroundApi = {
+  getAll: (params) => api.get('/walkaround', { params }),
+  create: (data) => api.post('/walkaround', data)
+};
+
+
+export const diaryApi = {
+  get: (projectId, date) => api.get(`/diary/${projectId}?date=${date}`)
 };
 
 export const timesheetsApi = {
@@ -84,4 +122,29 @@ export const settingsApi = {
   update: (data) => api.put('/settings', data)
 };
 
+
+export const actionItemsApi = {
+  getAll: (params) => api.get('/action-items', { params }),
+  get: (itemId) => api.get(`/action-items/${itemId}`),
+  create: (data) => api.post('/action-items', data),
+  update: (itemId, data) => api.put(`/action-items/${itemId}`, data),
+  complete: (itemId) => api.post(`/action-items/${itemId}/complete`),
+  reopen: (itemId) => api.post(`/action-items/${itemId}/reopen`),
+  delete: (itemId) => api.delete(`/action-items/${itemId}`)
+};
 export default api;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

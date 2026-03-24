@@ -7,7 +7,7 @@
 
 /* Sidebar */
 .sidebar {
-    @apply fixed left-0 top-0 h-full w-64 bg-card border-r border-border z-40;
+    @apply fixed left-0 top-0 h-full w-64 bg-card border-r border-border z-40 shadow-sm;
     @apply transform transition-transform duration-200 ease-in-out;
 }
 
@@ -17,12 +17,12 @@
 
 .sidebar-nav-item {
     @apply flex items-center gap-3 px-4 py-3 text-sm font-medium;
-    @apply text-muted-foreground hover:text-foreground hover:bg-secondary/50;
+    @apply text-muted-foreground hover:text-foreground hover:bg-secondary;
     @apply transition-colors duration-150 cursor-pointer;
 }
 
 .sidebar-nav-item.active {
-    @apply text-primary bg-primary/10 border-l-2 border-primary;
+    @apply text-primary bg-primary/15 border-l-4 border-primary font-semibold;
 }
 
 .sidebar-section-header {
@@ -42,14 +42,14 @@
 
 /* Header */
 .app-header {
-    @apply sticky top-0 z-30 bg-background/80 backdrop-blur-md;
-    @apply border-b-2 border-primary px-4 py-3;
+    @apply sticky top-0 z-30 bg-background/95 backdrop-blur-md;
+    @apply border-b-2 border-primary px-4 py-3 shadow-sm;
 }
 
 /* Cards */
 .ops-card {
-    @apply bg-card border border-border rounded-sm;
-    @apply hover:border-primary/50 transition-colors duration-200;
+    @apply bg-card border border-border rounded-md shadow-sm;
+    @apply hover:border-primary/50 hover:shadow-md transition-all duration-200;
 }
 
 .ops-card-header {
@@ -62,8 +62,8 @@
 
 /* Status badges */
 .status-badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-sm;
-    @apply text-xs font-bold uppercase tracking-wide border;
+    @apply inline-flex items-center px-3 py-1 rounded-sm;
+    @apply text-sm font-bold uppercase tracking-wide border shadow-sm;
     font-family: 'Barlow Condensed', sans-serif;
 }
 
@@ -74,13 +74,13 @@
 
 /* Action cards with left border */
 .action-card {
-    @apply relative pl-3 border-l-4;
+    @apply relative pl-3 border-l-4 bg-card;
 }
 
 /* Mobile bottom nav */
 .mobile-nav {
     @apply fixed bottom-0 left-0 right-0 z-50;
-    @apply bg-card/95 backdrop-blur-md border-t border-border;
+    @apply bg-card/95 backdrop-blur-md border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.08)];
     @apply flex items-center justify-around py-2;
 }
 
@@ -101,7 +101,7 @@
 
 /* Forms */
 .form-input {
-    @apply w-full bg-input border-transparent rounded-sm h-10 px-3;
+    @apply w-full bg-input border border-border rounded-md h-10 px-3 shadow-sm;
     @apply focus:border-ring focus:ring-1 focus:ring-ring;
     @apply placeholder:text-muted-foreground/50;
 }
@@ -115,24 +115,24 @@
 /* Buttons */
 .btn-primary {
     @apply bg-primary text-primary-foreground hover:bg-primary/90;
-    @apply h-10 px-4 py-2 rounded-sm font-semibold tracking-wide uppercase text-sm;
+    @apply h-10 px-4 py-2 rounded-md font-semibold tracking-wide uppercase text-sm shadow-sm;
     font-family: 'Barlow Condensed', sans-serif;
 }
 
 .btn-secondary {
     @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
-    @apply h-10 px-4 py-2 rounded-sm font-medium;
+    @apply h-10 px-4 py-2 rounded-md font-medium shadow-sm;
 }
 
 .btn-icon {
-    @apply h-10 w-10 flex items-center justify-center rounded-sm;
+    @apply h-10 w-10 flex items-center justify-center rounded-md;
     @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
-    @apply transition-colors duration-150;
+    @apply transition-colors duration-150 shadow-sm;
 }
 
 /* Weather widget */
 .weather-widget {
-    @apply bg-card border border-border rounded-sm p-4;
+    @apply bg-card border border-border rounded-md p-4 shadow-sm;
 }
 
 .weather-day {
@@ -164,22 +164,22 @@
 }
 
 .dashboard-stat {
-    @apply bg-card border border-border rounded-sm p-4;
+    @apply bg-card border border-border rounded-md p-4 shadow-sm;
 }
 
 .dashboard-stat-value {
-    @apply text-3xl font-bold;
+    @apply text-4xl font-bold leading-none;
     font-family: 'Barlow Condensed', sans-serif;
 }
 
 .dashboard-stat-label {
-    @apply text-sm text-muted-foreground uppercase tracking-wide;
+    @apply text-sm text-muted-foreground uppercase tracking-wide mb-2;
     font-family: 'Barlow Condensed', sans-serif;
 }
 
 /* Quick capture form (walkaround) */
 .quick-capture {
-    @apply bg-card border border-border rounded-sm;
+    @apply bg-card border border-border rounded-md shadow-sm;
 }
 
 .quick-capture-input {
@@ -190,13 +190,13 @@
 
 /* Photo upload */
 .photo-upload {
-    @apply border-2 border-dashed border-border rounded-sm;
+    @apply border-2 border-dashed border-border rounded-md;
     @apply flex items-center justify-center p-8;
     @apply hover:border-primary/50 transition-colors cursor-pointer;
 }
 
 .photo-preview {
-    @apply relative w-20 h-20 rounded-sm overflow-hidden;
+    @apply relative w-20 h-20 rounded-md overflow-hidden shadow-sm;
 }
 
 .photo-preview img {
@@ -219,6 +219,19 @@
 
 .empty-state-description {
     @apply text-sm text-muted-foreground/70;
+}
+
+/* Shared job tab strip */
+.job-tab {
+    @apply px-3 py-2 rounded-md border text-sm whitespace-nowrap transition-all shadow-sm;
+}
+
+.job-tab.active {
+    @apply bg-primary text-primary-foreground border-primary font-semibold;
+}
+
+.job-tab.inactive {
+    @apply bg-card text-foreground border-border hover:border-primary hover:bg-secondary;
 }
 
 /* Responsive padding for mobile bottom nav */

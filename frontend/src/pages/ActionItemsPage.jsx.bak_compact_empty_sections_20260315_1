@@ -1,0 +1,822 @@
+import React, { useEffect, useState } from 'react';
+import { tasksApi, jobsApi } from '../lib/api';
+import { toast } from 'sonner';
+import {
+  ListTodo,
+  Plus,
+  CheckCircle2,
+  Clock,
+  Filter,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  RotateCcw,
+  AlertTriangle,
+  CalendarDays,
+  FolderKanban
+} from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
+
+const PriorityBadge = ({ priority }) => {
+  const styles = {
+    critical: 'bg-red-950/50 text-red-500 border-red-900',
+    high: 'bg-orange-950/50 text-orange-500 border-orange-900',
+    medium: 'bg-amber-950/50 text-amber-500 border-amber-900',
+    low: 'bg-blue-950/50 text-blue-400 border-blue-900',
+    deferred: 'bg-zinc-800 text-zinc-400 border-zinc-700'
+  };
+
+  return (
+    <span className={`status-badge ${styles[priority] || styles.medium}`}>
+      {priority || 'medium'}
+    </span>
+  );
+};
+
+const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3, deferred: 4 };
+
+const startOfToday = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+};
+
+const endOfToday = () => {
+  const d = startOfToday();
+  d.setDate(d.getDate() + 1);
+  return d;
+};
+
+const endOfWeekWindow = () => {
+  const d = startOfToday();
+  d.setDate(d.getDate() + 7);
+  return d;
+};
+
+const parseDate = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const ActionItemsPage = () => {
+  const [items, setItems] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [filterProject, setFilterProject] = useState('all');
+  const [submitting, setSubmitting] = useState(false);
+
+  const [formData, setFormData] = useState({
+    project_id: '',
+    title: '',
+    description: '',
+    priority: 'medium',
+    due_date: '',
+    expected_complete_date: '',
+    owner: ''
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [itemsRes, projectsRes] = await Promise.all([
+        tasksApi.getAll({}),
+        jobsApi.getAll()
+      ]);
+
+      const loadedItems = Array.isArray(itemsRes?.data)
+        ? itemsRes.data
+        : Array.isArray(itemsRes?.data?.value)
+          ? itemsRes.data.value
+          : [];
+
+      const loadedProjects = Array.isArray(projectsRes?.data)
+        ? projectsRes.data
+        : Array.isArray(projectsRes?.data?.value)
+          ? projectsRes.data.value
+          : [];
+
+      setItems(loadedItems);
+      setProjects(loadedProjects);
+    } catch (error) {
+      toast.error('Failed to load action items');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!formData.title.trim() || !formData.project_id) {
+      toast.error('Please fill in required fields');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (selectedItem) {
+        await tasksApi.update(selectedItem.id, formData);
+        toast.success('Item updated');
+      } else {
+        await tasksApi.create(formData);
+        toast.success('Item created');
+      }
+
+      setDialogOpen(false);
+      resetForm();
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to save item');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleComplete = async (itemId) => {
+    try {
+      await tasksApi.update(itemId, { status: 'completed' });
+      toast.success('Item completed');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to complete item');
+    }
+  };
+
+  const handleReopen = async (itemId) => {
+    try {
+      await tasksApi.update(itemId, { status: 'open' });
+      toast.success('Item reopened');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to reopen item');
+    }
+  };
+
+  const handleDelete = async (itemId) => {
+    if (!window.confirm('Delete this action item?')) return;
+
+    try {
+      await tasksApi.delete(itemId);
+      toast.success('Item deleted');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to delete item');
+    }
+  };
+
+  const openEditDialog = (item) => {
+    setSelectedItem(item);
+    setFormData({
+      project_id: item.project_id || item.job_id || '',
+      title: item.title || '',
+      description: item.description || '',
+      priority: item.priority || 'medium',
+      due_date: item.due_date?.split('T')[0] || '',
+      expected_complete_date: item.expected_complete_date?.split('T')[0] || '',
+      owner: item.owner || ''
+    });
+    setDialogOpen(true);
+  };
+
+  const openCreateDialog = () => {
+    setSelectedItem(null);
+    resetForm();
+    setDialogOpen(true);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      project_id: '',
+      title: '',
+      description: '',
+      priority: 'medium',
+      due_date: '',
+      expected_complete_date: '',
+      owner: ''
+    });
+  };
+
+  const getProjectName = (projectId) => {
+    const project = projects.find((p) => String(p.id) === String(projectId));
+    return project?.job_name || project?.name || 'Unknown';
+  };
+
+  const getItemProjectId = (item) => item.project_id || item.job_id || '';
+
+  const getNormalizedStatus = (status) => {
+    const normalized = String(status || 'open').trim().toLowerCase();
+    if (['completed', 'complete', 'done', 'closed'].includes(normalized)) return 'completed';
+    return 'open';
+  };
+
+  const getDueDate = (item) => parseDate(item.due_date || item.expected_complete_date);
+
+  const isBlockedItem = (item) => {
+    const priority = String(item.priority || '').toLowerCase();
+    return priority === 'critical';
+  };
+
+  const isAtRiskItem = (item) => {
+    const priority = String(item.priority || '').toLowerCase();
+    return priority === 'high';
+  };
+
+  const filteredItems = items.filter((item) => {
+    if (filterProject !== 'all' && String(getItemProjectId(item)) !== String(filterProject)) return false;
+    return true;
+  });
+
+  const openItems = filteredItems.filter((item) => getNormalizedStatus(item.status) === 'open');
+  const completedItems = filteredItems.filter((item) => getNormalizedStatus(item.status) === 'completed');
+
+  const todayStart = startOfToday();
+  const todayEnd = endOfToday();
+  const weekEnd = endOfWeekWindow();
+
+  const sortedOpenItems = [...openItems].sort((a, b) => {
+    const priorityDiff = (priorityOrder[a.priority] ?? 99) - (priorityOrder[b.priority] ?? 99);
+    if (priorityDiff !== 0) return priorityDiff;
+
+    const aDue = getDueDate(a)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const bDue = getDueDate(b)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    if (aDue !== bDue) return aDue - bDue;
+
+    return String(a.title || '').localeCompare(String(b.title || ''));
+  });
+
+  const riskWindowEnd = new Date(todayStart);
+  riskWindowEnd.setDate(riskWindowEnd.getDate() + 2);
+
+  const blockedDelayedItems = sortedOpenItems.filter((item) => {
+    const due = getDueDate(item);
+    const overdue = due && due < todayStart;
+    return overdue || isBlockedItem(item);
+  });
+
+  const atRiskItems = sortedOpenItems.filter((item) => {
+    if (blockedDelayedItems.includes(item)) return false;
+    const due = getDueDate(item);
+    const nearTerm = due && due >= todayStart && due < riskWindowEnd;
+    return isAtRiskItem(item) || nearTerm;
+  });
+
+  const dueTodayItems = sortedOpenItems.filter((item) => {
+    if (blockedDelayedItems.includes(item) || atRiskItems.includes(item)) return false;
+    const due = getDueDate(item);
+    return due && due >= todayStart && due < todayEnd;
+  });
+
+  const dueThisWeekItems = sortedOpenItems.filter((item) => {
+    if (blockedDelayedItems.includes(item) || atRiskItems.includes(item) || dueTodayItems.includes(item)) return false;
+    const due = getDueDate(item);
+    return due && due >= todayEnd && due < weekEnd;
+  });
+
+  const otherOpenItems = sortedOpenItems.filter((item) => {
+    return !blockedDelayedItems.includes(item)
+      && !atRiskItems.includes(item)
+      && !dueTodayItems.includes(item)
+      && !dueThisWeekItems.includes(item);
+  });
+
+  const sortedCompletedItems = [...completedItems].sort((a, b) => {
+    const aCompleted = parseDate(a.completed_at)?.getTime() ?? 0;
+    const bCompleted = parseDate(b.completed_at)?.getTime() ?? 0;
+    return bCompleted - aCompleted;
+  });
+
+  const priorityOptions = [
+    { value: 'critical', label: 'Critical' },
+    { value: 'high', label: 'High' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'low', label: 'Low' },
+    { value: 'deferred', label: 'Deferred' }
+  ];
+
+  const summaryCards = [
+    {
+      key: 'blocked',
+      label: 'Blocked / Delayed',
+      count: blockedDelayedItems.length,
+      toneClass: 'border-red-500/70 bg-gradient-to-br from-red-950/25 via-card to-card shadow-[0_14px_36px_rgba(127,29,29,0.18)]',
+      countClass: 'text-red-400',
+      accentClass: 'bg-red-500/90'
+    },
+    {
+      key: 'risk',
+      label: 'At Risk',
+      count: atRiskItems.length,
+      toneClass: 'border-orange-500/70 bg-gradient-to-br from-orange-950/20 via-card to-card shadow-[0_14px_36px_rgba(124,45,18,0.16)]',
+      countClass: 'text-orange-400',
+      accentClass: 'bg-orange-500/90'
+    },
+    {
+      key: 'today',
+      label: 'Due Today',
+      count: dueTodayItems.length,
+      toneClass: 'border-amber-500/70 bg-gradient-to-br from-amber-950/20 via-card to-card shadow-[0_14px_36px_rgba(120,53,15,0.14)]',
+      countClass: 'text-amber-400',
+      accentClass: 'bg-amber-500/90'
+    },
+    {
+      key: 'week',
+      label: 'Due This Week',
+      count: dueThisWeekItems.length,
+      toneClass: 'border-blue-500/60 bg-gradient-to-br from-blue-950/15 via-card to-card shadow-xl',
+      countClass: 'text-blue-300',
+      accentClass: 'bg-blue-400/90'
+    }
+  ];
+
+  const SectionCard = ({ title, count, icon, tone = 'neutral', emptyText, children, testId }) => {
+    const toneClasses = {
+      critical: {
+        card: 'border-red-500/80 bg-gradient-to-br from-red-950/25 via-card to-card shadow-[0_18px_50px_rgba(127,29,29,0.22)]',
+        header: 'border-red-500/20 bg-red-950/20',
+        title: 'text-red-400',
+        count: 'border-red-500/30 bg-red-500/10 text-red-300'
+      },
+      warning: {
+        card: 'border-orange-500/70 bg-gradient-to-br from-orange-950/20 via-card to-card shadow-[0_18px_50px_rgba(124,45,18,0.18)]',
+        header: 'border-orange-500/20 bg-orange-950/10',
+        title: 'text-orange-300',
+        count: 'border-orange-500/30 bg-orange-500/10 text-orange-200'
+      },
+      today: {
+        card: 'border-amber-500/70 bg-gradient-to-br from-amber-950/20 via-card to-card shadow-[0_18px_50px_rgba(120,53,15,0.16)]',
+        header: 'border-amber-500/20 bg-amber-950/10',
+        title: 'text-amber-300',
+        count: 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+      },
+      neutral: {
+        card: 'border-slate-700 bg-gradient-to-br from-slate-900/70 via-card to-card shadow-xl',
+        header: 'border-white/5 bg-white/[0.02]',
+        title: 'text-foreground',
+        count: 'border-slate-600 bg-slate-800/70 text-slate-200'
+      },
+      success: {
+        card: 'border-emerald-500/70 bg-gradient-to-br from-emerald-950/20 via-card to-card shadow-[0_18px_50px_rgba(6,78,59,0.16)]',
+        header: 'border-emerald-500/20 bg-emerald-950/10',
+        title: 'text-emerald-300',
+        count: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+      }
+    };
+
+    const currentTone = toneClasses[tone] || toneClasses.neutral;
+
+    return (
+      <Card className={`ops-card overflow-hidden border ${currentTone.card}`} data-testid={testId}>
+        <CardHeader className={`ops-card-header flex flex-row items-center justify-between gap-3 py-3 ${currentTone.header}`}>
+          <CardTitle className={`font-heading text-lg uppercase tracking-[0.12em] flex items-center gap-2 ${currentTone.title}`}>
+            {icon}
+            {title}
+          </CardTitle>
+          <span className={`inline-flex min-w-[2.25rem] items-center justify-center rounded-full border px-2.5 py-1 text-xs font-extrabold ${currentTone.count}`}>
+            {count}
+          </span>
+        </CardHeader>
+        <CardContent className="py-4 bg-card/70">
+          {count > 0 ? children : (
+            <p className="py-6 text-center text-sm text-muted-foreground">{emptyText}</p>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const OpenItemCard = ({ item }) => (
+    <Card
+      key={item.id}
+      className={`ops-card group overflow-hidden border border-l-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl ${
+        item.priority === 'critical' ? 'border-red-500/80 border-l-red-500 bg-gradient-to-br from-red-950/20 via-card to-card shadow-[0_16px_40px_rgba(127,29,29,0.18)]' :
+        item.priority === 'high' ? 'border-orange-500/70 border-l-orange-500 bg-gradient-to-br from-orange-950/15 via-card to-card shadow-[0_16px_40px_rgba(124,45,18,0.16)]' :
+        item.priority === 'medium' ? 'border-amber-500/70 border-l-amber-500 bg-gradient-to-br from-amber-950/15 via-card to-card shadow-[0_16px_40px_rgba(120,53,15,0.14)]' :
+        item.priority === 'low' ? 'border-blue-500/60 border-l-blue-400 bg-gradient-to-br from-blue-950/10 via-card to-card shadow-xl' :
+        'border-zinc-600 border-l-zinc-500 bg-gradient-to-br from-zinc-900/70 via-card to-card shadow-xl'
+      }`}
+      data-testid={`item-${item.id}`}
+    >
+      <CardContent className="px-4 py-4 sm:px-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                {getProjectName(getItemProjectId(item))}
+              </span>
+              <PriorityBadge priority={item.priority} />
+            </div>
+
+            <h4 className="text-base font-semibold leading-tight text-foreground sm:text-lg">{item.title}</h4>
+
+            {item.description && (
+              <p className="mt-2 text-sm leading-6 text-muted-foreground line-clamp-2">{item.description}</p>
+            )}
+
+            <div className="mt-3 flex flex-wrap gap-2.5 text-xs">
+              {getDueDate(item) && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  Due {getDueDate(item).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}
+                </span>
+              )}
+              {item.owner && (
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-muted-foreground">
+                  Owner {item.owner}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-start gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => handleComplete(item.id)}
+              className="h-10 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200"
+            >
+              <CheckCircle2 className="mr-1.5 h-4 w-4" />
+              Done
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.03] opacity-60 transition-all hover:bg-white/[0.08] hover:opacity-100 group-hover:opacity-100"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => openEditDialog(item)}>
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(item.id)}>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const CompletedItemCard = ({ item }) => (
+    <Card
+      key={item.id}
+      className="ops-card group overflow-hidden border border-emerald-500/20 bg-gradient-to-br from-emerald-950/10 via-card to-card opacity-75 transition-all duration-200 hover:opacity-100 hover:shadow-xl"
+      data-testid={`item-${item.id}`}
+    >
+      <CardContent className="px-4 py-4 sm:px-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                {getProjectName(getItemProjectId(item))}
+              </span>
+              <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-300">
+                Completed
+              </span>
+            </div>
+            <h4 className="text-base font-semibold leading-tight text-foreground line-through sm:text-lg">{item.title}</h4>
+            {item.completed_at && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Completed {new Date(item.completed_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}
+              </p>
+            )}
+          </div>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleReopen(item.id)}
+            className="h-10 rounded-xl border border-white/10 bg-white/[0.03] px-3 opacity-70 transition-all hover:bg-white/[0.08] hover:opacity-100 group-hover:opacity-100"
+          >
+            <RotateCcw className="mr-1.5 h-4 w-4" />
+            Reopen
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+  const GroupedSectionItems = ({ items, completed = false }) => {
+    const grouped = items.reduce((acc, item) => {
+      const projectId = getItemProjectId(item) || '__unassigned__';
+      if (!acc[projectId]) acc[projectId] = [];
+      acc[projectId].push(item);
+      return acc;
+    }, {});
+
+    const orderedGroups = Object.entries(grouped).sort((a, b) => {
+      const aName = getProjectName(a[0]);
+      const bName = getProjectName(b[0]);
+      return aName.localeCompare(bName);
+    });
+
+    return (
+      <div className="space-y-4">
+        {orderedGroups.map(([projectId, projectItems]) => (
+          <div key={projectId} className="space-y-3">
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                {getProjectName(projectId)}
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {projectItems.length}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {projectItems.map((item) => (
+                completed
+                  ? <CompletedItemCard key={item.id} item={item} />
+                  : <OpenItemCard key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 overflow-visible" data-testid="action-items-page">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="font-heading text-2xl font-bold tracking-tight uppercase">Action Items</h2>
+          <p className="text-sm text-muted-foreground">{openItems.length} open, {completedItems.length} completed</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Select value={filterProject} onValueChange={setFilterProject}>
+            <SelectTrigger className="w-[180px]" data-testid="project-filter">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="All Projects" />
+            </SelectTrigger>
+            <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
+              <SelectItem value="all">All Projects</SelectItem>
+              {projects.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.job_name || p.name || 'Untitled Job'}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button className="btn-primary" onClick={openCreateDialog} data-testid="create-item-btn">
+            <Plus className="w-4 h-4 mr-2" />
+            New Item
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {summaryCards.map((card) => (
+          <Card key={card.key} className={`ops-card overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl ${card.toneClass}`}>
+            <CardContent className="px-4 py-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">
+                  {card.label}
+                </span>
+                <span className={`text-3xl leading-none font-black font-heading ${card.countClass}`}>
+                  {card.count}
+                </span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+                <div
+                  className={`h-full rounded-full ${card.accentClass}`}
+                  style={{ width: `${Math.max(10, Math.min(100, card.count === 0 ? 10 : card.count * 14))}%` }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <SectionCard
+          title="Blocked / Delayed"
+          count={blockedDelayedItems.length}
+          icon={<AlertTriangle className="w-4 h-4" />}
+          tone="critical"
+          emptyText="No blocked or delayed items."
+          testId="blocked-delayed-section"
+        >
+          <GroupedSectionItems items={blockedDelayedItems} />
+        </SectionCard>
+
+        <SectionCard
+          title="At Risk"
+          count={atRiskItems.length}
+          icon={<AlertTriangle className="w-4 h-4" />}
+          tone="warning"
+          emptyText="No at-risk items."
+          testId="at-risk-section"
+        >
+          <GroupedSectionItems items={atRiskItems} />
+        </SectionCard>
+
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <SectionCard
+            title="Due Today"
+            count={dueTodayItems.length}
+            icon={<CalendarDays className="w-4 h-4" />}
+            tone="today"
+            emptyText="Nothing due today."
+            testId="due-today-section"
+          >
+            <GroupedSectionItems items={dueTodayItems} />
+          </SectionCard>
+
+          <SectionCard
+            title="Due This Week"
+            count={dueThisWeekItems.length}
+            icon={<Clock className="w-4 h-4" />}
+            tone="neutral"
+            emptyText="Nothing due this week."
+            testId="due-week-section"
+          >
+            <GroupedSectionItems items={dueThisWeekItems} />
+          </SectionCard>
+        </div>
+
+        <SectionCard
+          title="Other Open"
+          count={otherOpenItems.length}
+          icon={<FolderKanban className="w-4 h-4" />}
+          tone="neutral"
+          emptyText="No other open items."
+          testId="other-open-section"
+        >
+          <GroupedSectionItems items={otherOpenItems} />
+        </SectionCard>
+
+        <SectionCard
+          title="Recently Completed"
+          count={sortedCompletedItems.length}
+          icon={<CheckCircle2 className="w-4 h-4" />}
+          tone="success"
+          emptyText="No completed items yet."
+          testId="completed-section"
+        >
+          <GroupedSectionItems items={sortedCompletedItems} completed />
+        </SectionCard>
+      </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl uppercase tracking-tight">
+              {selectedItem ? 'Edit Item' : 'New Action Item'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label className="form-label">Project *</Label>
+              <Select
+                value={formData.project_id}
+                onValueChange={(value) => setFormData((prev) => ({ ...prev, project_id: value }))}
+              >
+                <SelectTrigger data-testid="item-project-select">
+                  <SelectValue placeholder="Select project" />
+                </SelectTrigger>
+                <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.job_name || p.name || 'Untitled Job'}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="form-label">Title *</Label>
+              <Input
+                value={formData.title}
+                onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder="What needs to be done?"
+                className="form-input"
+                data-testid="item-title-input"
+              />
+            </div>
+
+            <div>
+              <Label className="form-label">Description</Label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="Additional details..."
+                className="form-input min-h-[80px]"
+                data-testid="item-description-input"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="form-label">Priority</Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, priority: value }))}
+                >
+                  <SelectTrigger data-testid="item-priority-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
+                    {priorityOptions.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="form-label">Owner</Label>
+                <Input
+                  value={formData.owner}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, owner: e.target.value }))}
+                  placeholder="Responsible party"
+                  className="form-input"
+                  data-testid="item-owner-input"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="form-label">Due Date</Label>
+                <Input
+                  type="date"
+                  value={formData.due_date}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, due_date: e.target.value }))}
+                  className="form-input"
+                  data-testid="item-due-date"
+                />
+              </div>
+
+              <div>
+                <Label className="form-label">Expected Complete</Label>
+                <Input
+                  type="date"
+                  value={formData.expected_complete_date}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, expected_complete_date: e.target.value }))}
+                  className="form-input"
+                  data-testid="item-expected-date"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="btn-primary" disabled={submitting} data-testid="save-item-btn">
+                {submitting ? 'Saving...' : (selectedItem ? 'Update' : 'Create')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default ActionItemsPage;
+
+
+

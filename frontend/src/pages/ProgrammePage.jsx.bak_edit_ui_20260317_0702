@@ -1,0 +1,309 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { projectsApi, programmesApi } from '../lib/api';
+
+export default function ProgrammePage() {
+  const [projects, setProjects] = useState([]);
+  const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [programmes, setProgrammes] = useState([]);
+  const [selectedProgrammeId, setSelectedProgrammeId] = useState('');
+  const [tasks, setTasks] = useState([]);
+  const [file, setFile] = useState(null);
+  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [loadingProgrammes, setLoadingProgrammes] = useState(false);
+  const [loadingTasks, setLoadingTasks] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        setLoadingProjects(true);
+        setError('');
+        const res = await projectsApi.getAll();
+        const items = res.data?.value || res.data || [];
+        setProjects(items);
+        if (items.length > 0) {
+          setSelectedProjectId(items[0].id);
+        }
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load projects');
+      } finally {
+        setLoadingProjects(false);
+      }
+    };
+
+    loadProjects();
+  }, []);
+
+  useEffect(() => {
+    const loadProgrammes = async () => {
+      if (!selectedProjectId) {
+        setProgrammes([]);
+        setSelectedProgrammeId('');
+        setTasks([]);
+        return;
+      }
+
+      try {
+        setLoadingProgrammes(true);
+        setError('');
+        const res = await programmesApi.getAll(selectedProjectId);
+        const items = res.data?.value || res.data || [];
+        setProgrammes(items);
+
+        if (items.length > 0) {
+          setSelectedProgrammeId(items[0].id);
+        } else {
+          setSelectedProgrammeId('');
+          setTasks([]);
+        }
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load programmes');
+        setProgrammes([]);
+        setSelectedProgrammeId('');
+        setTasks([]);
+      } finally {
+        setLoadingProgrammes(false);
+      }
+    };
+
+    loadProgrammes();
+  }, [selectedProjectId]);
+
+  useEffect(() => {
+    const loadTasks = async () => {
+      if (!selectedProgrammeId) {
+        setTasks([]);
+        return;
+      }
+
+      try {
+        setLoadingTasks(true);
+        setError('');
+        const res = await programmesApi.getTasks(selectedProgrammeId);
+        const items = res.data?.value || res.data || [];
+        setTasks(items);
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load programme tasks');
+        setTasks([]);
+      } finally {
+        setLoadingTasks(false);
+      }
+    };
+
+    loadTasks();
+  }, [selectedProgrammeId]);
+
+  const selectedProject = useMemo(
+    () => projects.find((p) => p.id === selectedProjectId) || null,
+    [projects, selectedProjectId]
+  );
+
+  const toBase64 = (fileObj) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(fileObj);
+    });
+
+  const handleUpload = async () => {
+    if (!selectedProjectId) {
+      setError('Select a project first');
+      return;
+    }
+
+    if (!file) {
+      setError('Choose a PDF first');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setError('');
+      setMessage('');
+
+      const pdfBase64 = await toBase64(file);
+
+      const payload = {
+        project_id: selectedProjectId,
+        pdf_base64: pdfBase64,
+        filename: file.name
+      };
+
+      const res = await programmesApi.upload(payload);
+      const uploadedProgramme = res.data?.programme;
+      const uploadedTasks = res.data?.tasks || [];
+
+      setMessage(res.data?.message || 'Programme uploaded');
+      setTasks(uploadedTasks);
+
+      const refreshed = await programmesApi.getAll(selectedProjectId);
+      const refreshedItems = refreshed.data?.value || refreshed.data || [];
+      setProgrammes(refreshedItems);
+
+      if (uploadedProgramme?.id) {
+        setSelectedProgrammeId(uploadedProgramme.id);
+      } else if (refreshedItems.length > 0) {
+        setSelectedProgrammeId(refreshedItems[0].id);
+      }
+
+      setFile(null);
+    } catch (err) {
+      console.error(err);
+      setError(err?.response?.data?.detail || 'Programme upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div style={{ padding: 20, display: 'grid', gap: 16 }}>
+      <div>
+        <h2 style={{ margin: 0 }}>Programme</h2>
+        <p style={{ marginTop: 8, color: '#666' }}>
+          Upload a programme PDF, parse tasks, and review the extracted task list.
+        </p>
+      </div>
+
+      {loadingProjects ? (
+        <div>Loading projects...</div>
+      ) : (
+        <div style={{ display: 'grid', gap: 12, maxWidth: 720 }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: 6 }}>Project</label>
+            <select
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+              style={{ width: '100%', padding: 10 }}
+            >
+              <option value="">Select project</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ padding: 12, border: '1px solid #ddd', borderRadius: 8 }}>
+            <div style={{ fontWeight: 600, marginBottom: 10 }}>Upload Programme PDF</div>
+
+            <input
+              type="file"
+              accept=".pdf,application/pdf"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+            />
+
+            {file && (
+              <div style={{ marginTop: 8, fontSize: 14 }}>
+                Selected: <b>{file.name}</b>
+              </div>
+            )}
+
+            <button
+              onClick={handleUpload}
+              disabled={uploading || !selectedProjectId || !file}
+              style={{
+                marginTop: 12,
+                padding: '10px 14px',
+                cursor: uploading || !selectedProjectId || !file ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {uploading ? 'Uploading / Parsing...' : 'Upload and Parse'}
+            </button>
+          </div>
+
+          {selectedProject && (
+            <div style={{ fontSize: 14, color: '#666' }}>
+              Current project: <b>{selectedProject.name}</b>
+            </div>
+          )}
+
+          {message && (
+            <div style={{ padding: 10, border: '1px solid #b7e4c7', background: '#f1fff4', borderRadius: 8 }}>
+              {message}
+            </div>
+          )}
+
+          {error && (
+            <div style={{ padding: 10, border: '1px solid #f5b5b5', background: '#fff5f5', borderRadius: 8 }}>
+              {error}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16 }}>
+        <div style={{ border: '1px solid #ddd', borderRadius: 8, padding: 12 }}>
+          <h3 style={{ marginTop: 0 }}>Programmes</h3>
+
+          {loadingProgrammes ? (
+            <div>Loading programmes...</div>
+          ) : programmes.length === 0 ? (
+            <div>No programmes uploaded for this project.</div>
+          ) : (
+            <div style={{ display: 'grid', gap: 8 }}>
+              {programmes.map((programme) => (
+                <button
+                  key={programme.id}
+                  onClick={() => setSelectedProgrammeId(programme.id)}
+                  style={{
+                    textAlign: 'left',
+                    padding: 10,
+                    border: '1px solid #ddd',
+                    borderRadius: 8,
+                    background: programme.id === selectedProgrammeId ? '#eef4ff' : '#fff',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <div style={{ fontWeight: 600 }}>{programme.filename}</div>
+                  <div style={{ fontSize: 12, color: '#666' }}>
+                    Tasks: {programme.task_count} | Parsed: {programme.parsed_at}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={{ border: '1px solid #ddd', borderRadius: 8, padding: 12 }}>
+          <h3 style={{ marginTop: 0 }}>Parsed Tasks</h3>
+
+          {loadingTasks ? (
+            <div>Loading tasks...</div>
+          ) : tasks.length === 0 ? (
+            <div>No parsed tasks loaded.</div>
+          ) : (
+            <div style={{ display: 'grid', gap: 8, maxHeight: 700, overflow: 'auto' }}>
+              {tasks.map((task) => (
+                <div
+                  key={task.id}
+                  style={{
+                    padding: 10,
+                    borderBottom: '1px solid #eee'
+                  }}
+                >
+                  <div style={{ fontWeight: 600 }}>{task.task_name}</div>
+                  <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>
+                    Start: {task.start_date || '-'} | End: {task.end_date || '-'} | Duration: {task.duration_days ?? '-'} days
+                  </div>
+                  <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>
+                    Owner: {task.owner_tag || '-'} | Tracked: {task.is_tracked ? 'Yes' : 'No'}
+                  </div>
+                  <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>
+                    Dependencies: {Array.isArray(task.dependencies) && task.dependencies.length > 0 ? task.dependencies.join(', ') : '-'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

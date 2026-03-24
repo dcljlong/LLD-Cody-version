@@ -1,0 +1,81 @@
+import React from "react";
+import { AlertTriangle, Target, Clock, CheckCircle2 } from "lucide-react";
+import { Card, CardContent } from "../components/ui/card";
+
+export default function GatesPage() {
+  return (
+    <div className="space-y-6" data-testid="gates-page">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-300">
+            Operational visibility
+          </p>
+          <h2 className="mt-2 font-heading text-2xl font-black uppercase tracking-[0.04em] text-foreground">
+            Scope / Gates
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Gate tracking is temporarily limited while backend alignment is completed.
+          </p>
+        </div>
+
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-300 shadow-sm">
+          <Target className="h-6 w-6" />
+        </div>
+      </div>
+
+      <Card className="ops-card overflow-hidden border border-amber-500/30 bg-gradient-to-br from-slate-900/80 via-card to-card shadow-[0_18px_50px_rgba(15,23,42,0.28)]">
+        <CardContent className="p-6">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-300">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-lg font-semibold text-foreground">Page temporarily limited</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                This page is intentionally held in a safe placeholder state while gate and risk data alignment is completed in the backend. Operational styling is now aligned, but live gate workflows are not yet re-enabled here.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card className="ops-card overflow-hidden border border-red-500/25 bg-gradient-to-br from-red-950/15 via-card to-card shadow-xl">
+          <CardContent className="p-5">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-red-500/25 bg-red-500/10 text-red-300">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-red-300">Blocked / Delayed</h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Will surface blocked and delayed operational gates first.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="ops-card overflow-hidden border border-amber-500/25 bg-gradient-to-br from-amber-950/15 via-card to-card shadow-xl">
+          <CardContent className="p-5">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-300">
+              <Clock className="h-5 w-5" />
+            </div>
+            <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-amber-300">At Risk</h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Will highlight near-term gate risk before it becomes a site issue.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="ops-card overflow-hidden border border-emerald-500/25 bg-gradient-to-br from-emerald-950/15 via-card to-card shadow-xl">
+          <CardContent className="p-5">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-300">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+            <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-emerald-300">On Track</h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Will show stable gates once the live workflow is reconnected.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

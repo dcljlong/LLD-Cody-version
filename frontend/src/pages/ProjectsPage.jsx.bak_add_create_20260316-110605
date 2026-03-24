@@ -1,0 +1,167 @@
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { projectsApi } from '../lib/api';
+import { toast } from 'sonner';
+import {
+  FolderOpen,
+  MapPin,
+  Building2,
+  Calendar,
+  Trash2,
+  ArrowRight
+} from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+
+const ProjectsPage = () => {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const res = await projectsApi.getAll();
+      setProjects(Array.isArray(res?.data) ? res.data : Array.isArray(res?.data?.value) ? res.data.value : []);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to load projects');
+      setProjects([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteProject = async (project) => {
+    const label = project.name || 'this project';
+    if (!window.confirm(`Delete ${label}? This will also delete related gates, action items, and walkaround entries.`)) {
+      return;
+    }
+
+    try {
+      setDeletingId(project.id);
+      await projectsApi.delete(project.id);
+      toast.success('Project deleted');
+      fetchProjects();
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to delete project');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const formatDate = (value) => {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleDateString('en-NZ', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6" data-testid="projects-page">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-heading text-2xl font-bold tracking-tight uppercase">Projects</h2>
+          <p className="text-sm text-muted-foreground">
+            {projects.length} project{projects.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+      </div>
+
+      {projects.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {projects.map((project) => (
+            <Card key={project.id} className="ops-card group" data-testid={`project-${project.id}`}>
+              <CardHeader className="ops-card-header py-3">
+                <CardTitle className="font-heading text-lg tracking-tight truncate">
+                  {project.name || 'Untitled Project'}
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="py-4">
+                <div className="space-y-2 text-sm">
+                  {project.client_name && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Building2 className="w-4 h-4" />
+                      <span>{project.client_name}</span>
+                    </div>
+                  )}
+
+                  {project.location && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="w-4 h-4" />
+                      <span>{project.location}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="w-4 h-4" />
+                    <span>Created {formatDate(project.created_at)}</span>
+                  </div>
+                </div>
+
+                {project.description && (
+                  <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
+                    {project.description}
+                  </p>
+                )}
+
+                <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+                  <span className={`status-badge ${project.status === 'active' ? 'status-on-track' : 'status-completed'}`}>
+                    {project.status || 'unknown'}
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleDeleteProject(project)}
+                      disabled={deletingId === project.id}
+                    >
+                      <Trash2 className="mr-1 h-4 w-4" />
+                      {deletingId === project.id ? 'Deleting' : 'Delete'}
+                    </Button>
+
+                    <Link to={`/projects/${project.id}`}>
+                      <Button variant="ghost" size="sm" className="text-primary">
+                        View <ArrowRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-state py-20">
+          <FolderOpen className="empty-state-icon" />
+          <p className="empty-state-title">No Projects Found</p>
+          <p className="empty-state-description mb-4">
+            No projects are available yet.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ProjectsPage;
