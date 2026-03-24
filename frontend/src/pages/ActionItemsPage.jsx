@@ -89,6 +89,9 @@ const ActionItemsPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [filterProject, setFilterProject] = useState('all');
+  const [filterOwner, setFilterOwner] = useState('all');
+  const [filterPriority, setFilterPriority] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('open');
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -251,8 +254,15 @@ const ActionItemsPage = () => {
     return priority === 'high';
   };
 
+  // Get unique owners for filter
+  const uniqueOwners = [...new Set(items.map(i => i.owner).filter(Boolean))].sort();
+
   const filteredItems = items.filter((item) => {
     if (filterProject !== 'all' && String(getItemProjectId(item)) !== String(filterProject)) return false;
+    if (filterOwner !== 'all' && item.owner !== filterOwner) return false;
+    if (filterPriority !== 'all' && item.priority !== filterPriority) return false;
+    if (filterStatus === 'open' && getNormalizedStatus(item.status) !== 'open') return false;
+    if (filterStatus === 'completed' && getNormalizedStatus(item.status) !== 'completed') return false;
     return true;
   });
 
@@ -606,24 +616,91 @@ const ActionItemsPage = () => {
           <h2 className="font-heading text-2xl font-bold tracking-tight uppercase">Action Items</h2>
           <p className="text-sm text-muted-foreground">{openItems.length} open, {completedItems.length} completed</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Select value={filterProject} onValueChange={setFilterProject}>
-            <SelectTrigger className="w-[180px]" data-testid="project-filter">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="All Projects" />
-            </SelectTrigger>
-            <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
-              <SelectItem value="all">All Projects</SelectItem>
-              {projects.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.job_name || p.name || 'Untitled Job'}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button className="btn-primary" onClick={openCreateDialog} data-testid="create-item-btn">
-            <Plus className="w-4 h-4 mr-2" />
-            New Item
-          </Button>
+        <Button className="btn-primary" onClick={openCreateDialog} data-testid="create-item-btn">
+          <Plus className="w-4 h-4 mr-2" />
+          New Item
+        </Button>
+      </div>
+
+      {/* Filters Row */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Filter className="w-4 h-4 text-muted-foreground" />
+        <Select value={filterProject} onValueChange={setFilterProject}>
+          <SelectTrigger className="w-[160px] h-9 text-sm" data-testid="project-filter">
+            <SelectValue placeholder="All Projects" />
+          </SelectTrigger>
+          <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
+            <SelectItem value="all">All Projects</SelectItem>
+            {projects.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.job_number ? `${p.job_number} - ` : ''}{p.name || 'Untitled'}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterOwner} onValueChange={setFilterOwner}>
+          <SelectTrigger className="w-[130px] h-9 text-sm" data-testid="owner-filter">
+            <SelectValue placeholder="All Owners" />
+          </SelectTrigger>
+          <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
+            <SelectItem value="all">All Owners</SelectItem>
+            {uniqueOwners.map((owner) => (
+              <SelectItem key={owner} value={owner}>{owner}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterPriority} onValueChange={setFilterPriority}>
+          <SelectTrigger className="w-[130px] h-9 text-sm" data-testid="priority-filter">
+            <SelectValue placeholder="All Priorities" />
+          </SelectTrigger>
+          <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
+            <SelectItem value="all">All Priorities</SelectItem>
+            {priorityOptions.map((p) => (
+              <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="flex rounded-md border border-border overflow-hidden">
+          <button
+            onClick={() => setFilterStatus('open')}
+            className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+              filterStatus === 'open' ? 'bg-primary text-primary-foreground' : 'bg-secondary/40 hover:bg-secondary'
+            }`}
+          >
+            Open
+          </button>
+          <button
+            onClick={() => setFilterStatus('completed')}
+            className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+              filterStatus === 'completed' ? 'bg-primary text-primary-foreground' : 'bg-secondary/40 hover:bg-secondary'
+            }`}
+          >
+            Completed
+          </button>
+          <button
+            onClick={() => setFilterStatus('all')}
+            className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+              filterStatus === 'all' ? 'bg-primary text-primary-foreground' : 'bg-secondary/40 hover:bg-secondary'
+            }`}
+          >
+            All
+          </button>
         </div>
+
+        {(filterProject !== 'all' || filterOwner !== 'all' || filterPriority !== 'all' || filterStatus !== 'open') && (
+          <button
+            onClick={() => {
+              setFilterProject('all');
+              setFilterOwner('all');
+              setFilterPriority('all');
+              setFilterStatus('open');
+            }}
+            className="text-xs text-muted-foreground hover:text-foreground underline"
+          >
+            Clear filters
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

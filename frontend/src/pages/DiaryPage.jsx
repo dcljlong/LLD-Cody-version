@@ -303,7 +303,7 @@ const DiaryPage = () => {
                       <div key={gate.id} className="p-2 bg-red-950/30 rounded-sm border-l-4 border-l-red-500">
                         <p className="text-sm font-medium">{gate.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          Owner: {gate.owner_party} • Required:{' '}
+                          Owner: {gate.owner_party} â€¢ Required:{' '}
                           {new Date(gate.required_by_date).toLocaleDateString('en-NZ', {
                             day: '2-digit',
                             month: 'short'
