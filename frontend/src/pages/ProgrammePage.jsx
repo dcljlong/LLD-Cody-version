@@ -1,27 +1,30 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { projectsApi, programmesApi } from '../lib/api';
+import { toast } from 'sonner';
+import {
+  Upload,
+  FileText,
+  Calendar,
+  User,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Save
+} from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 
 const OWNER_OPTIONS = ['UNASSIGNED', 'OURS', 'MC', 'SUBBIES', 'COUNCIL', 'WATCH'];
-
-const inputStyle = {
-  width: '100%',
-  padding: '8px 10px',
-  border: '1px solid #334155',
-  borderRadius: 6,
-  background: '#0f172a',
-  color: '#e2e8f0'
-};
-
-const cardStyle = {
-  border: '1px solid #334155',
-  borderRadius: 10,
-  padding: 14,
-  background: '#0f172a'
-};
-
-const mutedText = {
-  color: '#94a3b8'
-};
 
 function normaliseItems(res) {
   return res?.data?.value || res?.data || [];
@@ -41,20 +44,18 @@ export default function ProgrammePage() {
   const [tasks, setTasks] = useState([]);
   const [drafts, setDrafts] = useState({});
   const [file, setFile] = useState(null);
+  const [expandedTasks, setExpandedTasks] = useState({});
 
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [loadingProgrammes, setLoadingProgrammes] = useState(false);
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [savingTaskId, setSavingTaskId] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
 
   useEffect(() => {
     const loadProjects = async () => {
       try {
         setLoadingProjects(true);
-        setError('');
         const res = await projectsApi.getAll();
         const items = normaliseItems(res);
         setProjects(items);
@@ -63,7 +64,7 @@ export default function ProgrammePage() {
         }
       } catch (err) {
         console.error(err);
-        setError('Failed to load projects');
+        toast.error('Failed to load projects');
       } finally {
         setLoadingProjects(false);
       }
@@ -84,7 +85,6 @@ export default function ProgrammePage() {
 
       try {
         setLoadingProgrammes(true);
-        setError('');
         const res = await programmesApi.getAll(selectedProjectId);
         const items = normaliseItems(res);
         setProgrammes(items);
@@ -98,11 +98,8 @@ export default function ProgrammePage() {
         }
       } catch (err) {
         console.error(err);
-        setError('Failed to load programmes');
+        toast.error('Failed to load programmes');
         setProgrammes([]);
-        setSelectedProgrammeId('');
-        setTasks([]);
-        setDrafts({});
       } finally {
         setLoadingProgrammes(false);
       }
@@ -121,7 +118,6 @@ export default function ProgrammePage() {
 
       try {
         setLoadingTasks(true);
-        setError('');
         const res = await programmesApi.getTasks(selectedProgrammeId);
         const items = normaliseItems(res);
         setTasks(items);
@@ -142,9 +138,8 @@ export default function ProgrammePage() {
         setDrafts(nextDrafts);
       } catch (err) {
         console.error(err);
-        setError('Failed to load programme tasks');
+        toast.error('Failed to load programme tasks');
         setTasks([]);
-        setDrafts({});
       } finally {
         setLoadingTasks(false);
       }
@@ -166,10 +161,22 @@ export default function ProgrammePage() {
   const taskSummary = useMemo(() => {
     const trackedCount = tasks.filter((task) => !!task.is_tracked).length;
     const ownedCount = tasks.filter((task) => (task.owner_tag || 'UNASSIGNED') !== 'UNASSIGNED').length;
+    
+    // Calculate late/at risk
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const lateCount = tasks.filter(task => {
+      if (!task.end_date || task.is_tracked) return false;
+      const endDate = new Date(task.end_date);
+      return endDate < today;
+    }).length;
+    
     return {
       total: tasks.length,
       tracked: trackedCount,
-      tagged: ownedCount
+      tagged: ownedCount,
+      late: lateCount
     };
   }, [tasks]);
 
@@ -183,19 +190,17 @@ export default function ProgrammePage() {
 
   const handleUpload = async () => {
     if (!selectedProjectId) {
-      setError('Select a project first');
+      toast.error('Select a project first');
       return;
     }
 
     if (!file) {
-      setError('Choose a PDF first');
+      toast.error('Choose a PDF first');
       return;
     }
 
     try {
       setUploading(true);
-      setError('');
-      setMessage('');
 
       const pdfBase64 = await toBase64(file);
 
@@ -209,7 +214,7 @@ export default function ProgrammePage() {
       const uploadedProgramme = res.data?.programme;
       const uploadedTasks = res.data?.tasks || [];
 
-      setMessage(res.data?.message || 'Programme uploaded');
+      toast.success(res.data?.message || 'Programme uploaded');
       setTasks(uploadedTasks);
 
       const refreshed = await programmesApi.getAll(selectedProjectId);
@@ -225,7 +230,7 @@ export default function ProgrammePage() {
       setFile(null);
     } catch (err) {
       console.error(err);
-      setError(err?.response?.data?.detail || 'Programme upload failed');
+      toast.error(err?.response?.data?.detail || 'Programme upload failed');
     } finally {
       setUploading(false);
     }
@@ -265,8 +270,6 @@ export default function ProgrammePage() {
 
     try {
       setSavingTaskId(task.id);
-      setError('');
-      setMessage('');
 
       await programmesApi.updateTaskTag(task.id, {
         owner_tag: draft.owner_tag || 'UNASSIGNED',
@@ -300,281 +303,352 @@ export default function ProgrammePage() {
         )
       );
 
-      setMessage(`Saved: ${task.task_name}`);
+      toast.success(`Saved: ${task.task_name}`);
     } catch (err) {
       console.error(err);
-      setError(err?.response?.data?.detail || 'Failed to save programme row');
+      toast.error(err?.response?.data?.detail || 'Failed to save');
     } finally {
       setSavingTaskId('');
     }
   };
 
+  const toggleTaskExpand = (taskId) => {
+    setExpandedTasks(prev => ({
+      ...prev,
+      [taskId]: !prev[taskId]
+    }));
+  };
+
+  const getTaskStatus = (task) => {
+    if (task.is_tracked) return { label: 'Tracked', color: 'text-emerald-400' };
+    if (!task.end_date) return { label: 'No Date', color: 'text-muted-foreground' };
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(task.end_date);
+    
+    if (endDate < today) return { label: 'Late', color: 'text-red-400' };
+    
+    const daysUntil = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+    if (daysUntil <= 7) return { label: `${daysUntil}d left`, color: 'text-amber-400' };
+    
+    return { label: 'On Track', color: 'text-emerald-400' };
+  };
+
+  if (loadingProjects) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ padding: 20, display: 'grid', gap: 16 }}>
-      <div>
-        <h2 style={{ margin: 0 }}>Programme</h2>
-        <p style={{ marginTop: 8, ...mutedText }}>
-          Upload a programme PDF, review parsed tasks, edit dates, assign owner tags, and confirm tracked rows.
-        </p>
+    <div className="space-y-6" data-testid="programme-page">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="font-heading text-2xl font-bold tracking-tight uppercase">Programme</h2>
+          <p className="text-sm text-muted-foreground">View and track programme tasks</p>
+        </div>
+
+        <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+          <SelectTrigger className="w-[200px]" data-testid="project-select">
+            <SelectValue placeholder="Select project" />
+          </SelectTrigger>
+          <SelectContent>
+            {projects.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.job_number ? `${p.job_number} - ` : ''}{p.name || 'Untitled'}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      {loadingProjects ? (
-        <div>Loading projects...</div>
-      ) : (
-        <div style={{ display: 'grid', gap: 12, maxWidth: 860 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 12 }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: 6 }}>Project</label>
-              <select
-                value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                style={inputStyle}
-              >
-                <option value="">Select project</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name || project.job_name || 'Untitled Project'}
-                  </option>
-                ))}
-              </select>
-            </div>
+      {/* Summary Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Card className="ops-card">
+          <CardContent className="py-3 px-4">
+            <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Total Tasks</p>
+            <p className="text-2xl font-bold mt-1">{taskSummary.total}</p>
+          </CardContent>
+        </Card>
+        <Card className="ops-card">
+          <CardContent className="py-3 px-4">
+            <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Assigned</p>
+            <p className="text-2xl font-bold mt-1">{taskSummary.tagged}</p>
+          </CardContent>
+        </Card>
+        <Card className="ops-card border-emerald-500/40">
+          <CardContent className="py-3 px-4">
+            <p className="text-xs uppercase tracking-[0.12em] text-emerald-400">Tracked</p>
+            <p className="text-2xl font-bold mt-1 text-emerald-400">{taskSummary.tracked}</p>
+          </CardContent>
+        </Card>
+        <Card className="ops-card border-red-500/40">
+          <CardContent className="py-3 px-4">
+            <p className="text-xs uppercase tracking-[0.12em] text-red-400">Late</p>
+            <p className="text-2xl font-bold mt-1 text-red-400">{taskSummary.late}</p>
+          </CardContent>
+        </Card>
+      </div>
 
-            <div style={cardStyle}>
-              <div style={{ fontWeight: 700, marginBottom: 8 }}>Upload Programme PDF</div>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        {/* Left Column - Upload and Programmes List */}
+        <div className="space-y-4">
+          {/* Upload Card */}
+          <Card className="ops-card">
+            <CardHeader className="ops-card-header py-3">
+              <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Upload Programme
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-4 space-y-3">
               <input
                 type="file"
                 accept=".pdf,application/pdf"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
               />
 
               {file && (
-                <div style={{ marginTop: 8, fontSize: 13, ...mutedText }}>
-                  Selected: <b style={{ color: '#e2e8f0' }}>{file.name}</b>
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Selected: <span className="text-foreground font-medium">{file.name}</span>
+                </p>
               )}
 
-              <button
+              <Button
                 onClick={handleUpload}
                 disabled={uploading || !selectedProjectId || !file}
-                style={{
-                  marginTop: 12,
-                  padding: '10px 14px',
-                  borderRadius: 6,
-                  border: '1px solid #475569',
-                  background: uploading || !selectedProjectId || !file ? '#1e293b' : '#2563eb',
-                  color: '#fff',
-                  cursor: uploading || !selectedProjectId || !file ? 'not-allowed' : 'pointer'
-                }}
+                className="w-full"
               >
-                {uploading ? 'Uploading / Parsing...' : 'Upload and Parse'}
-              </button>
-            </div>
-          </div>
+                {uploading ? 'Uploading...' : 'Upload & Parse'}
+              </Button>
+            </CardContent>
+          </Card>
 
-          {selectedProject && (
-            <div style={{ fontSize: 14, ...mutedText }}>
-              Current project: <b style={{ color: '#e2e8f0' }}>{selectedProject.name || selectedProject.job_name}</b>
-            </div>
-          )}
-
-          {message && (
-            <div style={{ padding: 10, border: '1px solid #166534', background: '#052e16', borderRadius: 8, color: '#dcfce7' }}>
-              {message}
-            </div>
-          )}
-
-          {error && (
-            <div style={{ padding: 10, border: '1px solid #991b1b', background: '#450a0a', borderRadius: 8, color: '#fecaca' }}>
-              {error}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '320px minmax(0, 1fr)', gap: 16 }}>
-        <div style={cardStyle}>
-          <h3 style={{ marginTop: 0 }}>Programmes</h3>
-
-          {loadingProgrammes ? (
-            <div>Loading programmes...</div>
-          ) : programmes.length === 0 ? (
-            <div style={mutedText}>No programmes uploaded for this project.</div>
-          ) : (
-            <div style={{ display: 'grid', gap: 8 }}>
-              {programmes.map((programme) => (
-                <button
-                  key={programme.id}
-                  onClick={() => setSelectedProgrammeId(programme.id)}
-                  style={{
-                    textAlign: 'left',
-                    padding: 10,
-                    border: programme.id === selectedProgrammeId ? '1px solid #60a5fa' : '1px solid #334155',
-                    borderRadius: 8,
-                    background: programme.id === selectedProgrammeId ? '#172554' : '#111827',
-                    color: '#e5e7eb',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <div style={{ fontWeight: 700 }}>{programme.filename}</div>
-                  <div style={{ fontSize: 12, marginTop: 4, ...mutedText }}>
-                    Tasks: {programme.task_count ?? 0}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Programmes List */}
+          <Card className="ops-card">
+            <CardHeader className="ops-card-header py-3">
+              <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Programmes ({programmes.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-3">
+              {loadingProgrammes ? (
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              ) : programmes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No programmes uploaded</p>
+              ) : (
+                <div className="space-y-2">
+                  {programmes.map((prog) => (
+                    <button
+                      key={prog.id}
+                      onClick={() => setSelectedProgrammeId(prog.id)}
+                      className={`w-full text-left p-3 rounded-md border transition-colors ${
+                        prog.id === selectedProgrammeId
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border bg-secondary/30 hover:border-primary/50'
+                      }`}
+                    >
+                      <p className="font-medium text-sm truncate">{prog.filename}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {prog.task_count ?? 0} tasks
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
-        <div style={cardStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 12, marginBottom: 12 }}>
-            <div>
-              <h3 style={{ margin: 0 }}>Programme Review Table</h3>
-              <div style={{ marginTop: 6, fontSize: 13, ...mutedText }}>
-                {selectedProgramme ? selectedProgramme.filename : 'No programme selected'}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <div style={{ padding: '6px 10px', border: '1px solid #334155', borderRadius: 999, fontSize: 12, color: '#e2e8f0' }}>
-                Total: {taskSummary.total}
-              </div>
-              <div style={{ padding: '6px 10px', border: '1px solid #334155', borderRadius: 999, fontSize: 12, color: '#e2e8f0' }}>
-                Tagged: {taskSummary.tagged}
-              </div>
-              <div style={{ padding: '6px 10px', border: '1px solid #334155', borderRadius: 999, fontSize: 12, color: '#e2e8f0' }}>
-                Tracked: {taskSummary.tracked}
-              </div>
-            </div>
-          </div>
-
-          {loadingTasks ? (
-            <div>Loading tasks...</div>
-          ) : tasks.length === 0 ? (
-            <div style={mutedText}>No parsed tasks loaded.</div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1180 }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #334155' }}>
-                    <th style={{ textAlign: 'left', padding: '10px 8px', fontSize: 12, color: '#94a3b8' }}>Task</th>
-                    <th style={{ textAlign: 'left', padding: '10px 8px', fontSize: 12, color: '#94a3b8' }}>Dependencies</th>
-                    <th style={{ textAlign: 'left', padding: '10px 8px', fontSize: 12, color: '#94a3b8' }}>Start</th>
-                    <th style={{ textAlign: 'left', padding: '10px 8px', fontSize: 12, color: '#94a3b8' }}>End</th>
-                    <th style={{ textAlign: 'left', padding: '10px 8px', fontSize: 12, color: '#94a3b8' }}>Days</th>
-                    <th style={{ textAlign: 'left', padding: '10px 8px', fontSize: 12, color: '#94a3b8' }}>Owner</th>
-                    <th style={{ textAlign: 'left', padding: '10px 8px', fontSize: 12, color: '#94a3b8' }}>Tracked</th>
-                    <th style={{ textAlign: 'left', padding: '10px 8px', fontSize: 12, color: '#94a3b8' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
+        {/* Right Column - Tasks */}
+        <div className="lg:col-span-3">
+          <Card className="ops-card">
+            <CardHeader className="ops-card-header py-3">
+              <CardTitle className="font-heading text-sm uppercase tracking-wide">
+                {selectedProgramme ? selectedProgramme.filename : 'Select a programme'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-3">
+              {loadingTasks ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">Loading tasks...</p>
+              ) : tasks.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">No tasks loaded</p>
+              ) : (
+                <div className="space-y-2">
                   {tasks.map((task) => {
                     const draft = drafts[task.id] || {
                       owner_tag: task.owner_tag || 'UNASSIGNED',
                       is_tracked: !!task.is_tracked,
                       programme_start_date: formatDateCell(task.programme_start_date),
                       end_date: formatDateCell(task.end_date),
-                      duration_days:
-                        task.duration_days === null || task.duration_days === undefined ? '' : String(task.duration_days)
+                      duration_days: task.duration_days === null ? '' : String(task.duration_days)
                     };
                     const dirty = isRowDirty(task);
                     const saving = savingTaskId === task.id;
+                    const expanded = expandedTasks[task.id];
+                    const status = getTaskStatus(task);
 
                     return (
-                      <tr key={task.id} style={{ borderBottom: '1px solid #1e293b', background: dirty ? '#0b2447' : 'transparent' }}>
-                        <td style={{ padding: '10px 8px', verticalAlign: 'top' }}>
-                          <div style={{ fontWeight: 700, color: '#e2e8f0' }}>{task.task_name}</div>
-                          <div style={{ marginTop: 6, fontSize: 12, color: '#94a3b8' }}>
-                            Source ID: {task.source_task_id || task.id}
-                          </div>
-                        </td>
-
-                        <td style={{ padding: '10px 8px', verticalAlign: 'top', fontSize: 13, color: '#cbd5e1', maxWidth: 260 }}>
-                          {Array.isArray(task.dependencies) && task.dependencies.length > 0 ? task.dependencies.join(', ') : '-'}
-                        </td>
-
-                        <td style={{ padding: '10px 8px', verticalAlign: 'top' }}>
-                          <input
-                            type="date"
-                            value={draft.programme_start_date || ''}
-                            disabled={saving}
-                            onChange={(e) => updateDraft(task.id, 'programme_start_date', e.target.value)}
-                            style={inputStyle}
-                          />
-                        </td>
-
-                        <td style={{ padding: '10px 8px', verticalAlign: 'top' }}>
-                          <input
-                            type="date"
-                            value={draft.end_date || ''}
-                            disabled={saving}
-                            onChange={(e) => updateDraft(task.id, 'end_date', e.target.value)}
-                            style={inputStyle}
-                          />
-                        </td>
-
-                        <td style={{ padding: '10px 8px', verticalAlign: 'top' }}>
-                          <input
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={draft.duration_days}
-                            disabled={saving}
-                            onChange={(e) => updateDraft(task.id, 'duration_days', e.target.value)}
-                            style={inputStyle}
-                          />
-                        </td>
-
-                        <td style={{ padding: '10px 8px', verticalAlign: 'top' }}>
-                          <select
-                            value={draft.owner_tag || 'UNASSIGNED'}
-                            disabled={saving}
-                            onChange={(e) => updateDraft(task.id, 'owner_tag', e.target.value)}
-                            style={inputStyle}
-                          >
-                            {OWNER_OPTIONS.map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-
-                        <td style={{ padding: '10px 8px', verticalAlign: 'top' }}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 38, color: '#cbd5e1' }}>
-                            <input
-                              type="checkbox"
-                              checked={!!draft.is_tracked}
-                              disabled={saving}
-                              onChange={(e) => updateDraft(task.id, 'is_tracked', e.target.checked)}
-                            />
-                            {draft.is_tracked ? 'Yes' : 'No'}
-                          </label>
-                        </td>
-
-                        <td style={{ padding: '10px 8px', verticalAlign: 'top' }}>
-                          <button
-                            onClick={() => handleSaveRow(task)}
-                            disabled={!dirty || saving}
-                            style={{
-                              padding: '9px 12px',
-                              borderRadius: 6,
-                              border: '1px solid #475569',
-                              background: !dirty || saving ? '#1e293b' : '#2563eb',
-                              color: '#fff',
-                              cursor: !dirty || saving ? 'not-allowed' : 'pointer',
-                              minWidth: 88
-                            }}
-                          >
-                            {saving ? 'Saving...' : dirty ? 'Save' : 'Saved'}
+                      <div
+                        key={task.id}
+                        className={`border rounded-lg overflow-hidden ${
+                          dirty ? 'border-amber-500/50 bg-amber-950/10' : 'border-border'
+                        }`}
+                      >
+                        {/* Task Header - Always visible */}
+                        <div
+                          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-secondary/30"
+                          onClick={() => toggleTaskExpand(task.id)}
+                        >
+                          <button className="p-1">
+                            {expanded ? (
+                              <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            )}
                           </button>
-                        </td>
-                      </tr>
+
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{task.task_name}</p>
+                            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                              {task.end_date && (
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {formatDateCell(task.end_date)}
+                                </span>
+                              )}
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                {draft.owner_tag}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span className={`text-xs font-medium ${status.color}`}>
+                            {status.label}
+                          </span>
+
+                          {dirty && (
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSaveRow(task);
+                              }}
+                              disabled={saving}
+                              className="h-7"
+                            >
+                              {saving ? '...' : <Save className="w-3 h-3" />}
+                            </Button>
+                          )}
+                        </div>
+
+                        {/* Expanded Edit Fields */}
+                        {expanded && (
+                          <div className="border-t border-border p-3 bg-secondary/20 space-y-3">
+                            {/* Dependencies */}
+                            {Array.isArray(task.dependencies) && task.dependencies.length > 0 && (
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Dependencies</p>
+                                <p className="text-sm">{task.dependencies.join(', ')}</p>
+                              </div>
+                            )}
+
+                            {/* Dates Row */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                              <div>
+                                <label className="text-xs text-muted-foreground block mb-1">Start</label>
+                                <Input
+                                  type="date"
+                                  value={draft.programme_start_date || ''}
+                                  disabled={saving}
+                                  onChange={(e) => updateDraft(task.id, 'programme_start_date', e.target.value)}
+                                  className="h-9 text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-muted-foreground block mb-1">End</label>
+                                <Input
+                                  type="date"
+                                  value={draft.end_date || ''}
+                                  disabled={saving}
+                                  onChange={(e) => updateDraft(task.id, 'end_date', e.target.value)}
+                                  className="h-9 text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-muted-foreground block mb-1">Days</label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  value={draft.duration_days}
+                                  disabled={saving}
+                                  onChange={(e) => updateDraft(task.id, 'duration_days', e.target.value)}
+                                  className="h-9 text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-muted-foreground block mb-1">Owner</label>
+                                <Select
+                                  value={draft.owner_tag || 'UNASSIGNED'}
+                                  onValueChange={(val) => updateDraft(task.id, 'owner_tag', val)}
+                                  disabled={saving}
+                                >
+                                  <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {OWNER_OPTIONS.map((opt) => (
+                                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+
+                            {/* Tracked Toggle & Save */}
+                            <div className="flex items-center justify-between pt-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={!!draft.is_tracked}
+                                  disabled={saving}
+                                  onChange={(e) => updateDraft(task.id, 'is_tracked', e.target.checked)}
+                                  className="w-4 h-4 rounded border-border"
+                                />
+                                <span className="text-sm">
+                                  {draft.is_tracked ? (
+                                    <span className="text-emerald-400 flex items-center gap-1">
+                                      <CheckCircle2 className="w-4 h-4" /> Tracked
+                                    </span>
+                                  ) : (
+                                    'Mark as Tracked'
+                                  )}
+                                </span>
+                              </label>
+
+                              <Button
+                                onClick={() => handleSaveRow(task)}
+                                disabled={!dirty || saving}
+                                size="sm"
+                              >
+                                {saving ? 'Saving...' : dirty ? 'Save Changes' : 'Saved'}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
-          )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
