@@ -249,7 +249,7 @@ const WalkaroundPage = () => {
             {/* Quick Priority Buttons - Always visible */}
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Priority</Label>
-              <div className="grid grid-cols-5 gap-1.5">
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-5">
                 {priorityOptions.map((p) => {
                   const active = formData.priority === p.value;
                   return (
@@ -294,7 +294,7 @@ const WalkaroundPage = () => {
                   placeholder="Other..."
                   value={!ownerOptions.includes(formData.owner) ? formData.owner : ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, owner: e.target.value }))}
-                  className="flex-1 min-w-[80px] h-9 text-xs"
+                  className="h-9 w-full text-xs sm:min-w-[80px] sm:flex-1"
                 />
               </div>
             </div>
@@ -321,14 +321,14 @@ const WalkaroundPage = () => {
                   type="date"
                   value={formData.due_date}
                   onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
-                  className="flex-1 min-w-[120px] h-9 text-xs"
+                  className="h-9 w-full text-xs sm:min-w-[120px] sm:flex-1"
                   data-testid="due-date-input"
                 />
               </div>
             </div>
 
             {/* Photo Upload - Compact */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <input
                 type="file"
                 ref={fileInputRef}

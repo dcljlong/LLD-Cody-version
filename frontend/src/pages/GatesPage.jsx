@@ -605,7 +605,7 @@ export default function GatesPage() {
         </select>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7">
         {summaryCards.map((card) => (
           <button
             key={card.key}

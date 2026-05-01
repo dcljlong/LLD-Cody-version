@@ -226,12 +226,12 @@ const DiaryPage = () => {
           <p className="text-sm text-muted-foreground">Project summary by day</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
           <Select value={selectedProject} onValueChange={(val) => {
             setSelectedProject(val);
             localStorage.setItem('lld_last_project_id', val);
           }}>
-            <SelectTrigger className="w-[200px]" data-testid="diary-project-select">
+            <SelectTrigger className="w-full sm:w-[220px]" data-testid="diary-project-select">
               <SelectValue placeholder="Select project" />
             </SelectTrigger>
             <SelectContent>
@@ -440,7 +440,7 @@ const DiaryPage = () => {
       {diary && (
         <>
           {/* Summary Stats */}
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
             <Card className="ops-card">
               <CardContent className="pt-3 pb-3 text-center">
                 <p className="text-2xl font-heading font-bold">{diary.summary?.entries_count || 0}</p>

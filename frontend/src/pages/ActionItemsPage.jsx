@@ -623,10 +623,10 @@ const ActionItemsPage = () => {
       </div>
 
       {/* Filters Row */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
         <Filter className="w-4 h-4 text-muted-foreground" />
         <Select value={filterProject} onValueChange={setFilterProject}>
-          <SelectTrigger className="w-[160px] h-9 text-sm" data-testid="project-filter">
+          <SelectTrigger className="h-9 w-full text-sm sm:w-[180px]" data-testid="project-filter">
             <SelectValue placeholder="All Projects" />
           </SelectTrigger>
           <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
@@ -638,7 +638,7 @@ const ActionItemsPage = () => {
         </Select>
 
         <Select value={filterOwner} onValueChange={setFilterOwner}>
-          <SelectTrigger className="w-[130px] h-9 text-sm" data-testid="owner-filter">
+          <SelectTrigger className="h-9 w-full text-sm sm:w-[150px]" data-testid="owner-filter">
             <SelectValue placeholder="All Owners" />
           </SelectTrigger>
           <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
@@ -650,7 +650,7 @@ const ActionItemsPage = () => {
         </Select>
 
         <Select value={filterPriority} onValueChange={setFilterPriority}>
-          <SelectTrigger className="w-[130px] h-9 text-sm" data-testid="priority-filter">
+          <SelectTrigger className="h-9 w-full text-sm sm:w-[150px]" data-testid="priority-filter">
             <SelectValue placeholder="All Priorities" />
           </SelectTrigger>
           <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
@@ -661,7 +661,7 @@ const ActionItemsPage = () => {
           </SelectContent>
         </Select>
 
-        <div className="flex rounded-md border border-border overflow-hidden">
+        <div className="grid w-full grid-cols-3 overflow-hidden rounded-md border border-border sm:w-auto">
           <button
             onClick={() => setFilterStatus('open')}
             className={`px-3 py-1.5 text-xs font-medium transition-colors ${
@@ -703,7 +703,7 @@ const ActionItemsPage = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
         {summaryCards.map((card) => (
           <Card key={card.key} className={`ops-card overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl ${card.toneClass}`}>
             <CardContent className="px-4 py-4">
@@ -860,7 +860,7 @@ const ActionItemsPage = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label className="form-label">Priority</Label>
                 <Select
@@ -890,7 +890,7 @@ const ActionItemsPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label className="form-label">Due Date</Label>
                 <Input
