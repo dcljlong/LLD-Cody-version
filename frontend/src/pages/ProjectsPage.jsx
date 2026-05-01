@@ -194,9 +194,9 @@ const [showCreate, setShowCreate] = useState(false);
   };
 
   const formatDate = (value) => {
-    if (!value) return '�';
+    if (!value) return 'â€”';
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '�';
+    if (Number.isNaN(date.getTime())) return 'â€”';
     return date.toLocaleDateString('en-NZ', {
       day: '2-digit',
       month: 'short',
@@ -290,7 +290,7 @@ const [showCreate, setShowCreate] = useState(false);
               value={form.display_order}
               onChange={(e) => setForm({ ...form, display_order: e.target.value })}
             />            <div>
-              <label className="mb-1 block text-sm text-muted-foreground">Programme start date</label>
+              <label className="mb-1 block text-sm text-muted-foreground">Start date</label>
               <input
                 type="date"
                 className="w-full rounded-md border border-border bg-background px-3 py-2"
@@ -366,7 +366,7 @@ const [showCreate, setShowCreate] = useState(false);
 
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="w-4 h-4" />
-                    <span>{project.programme_start_date && project.required_finish_date ? `${formatDate(project.programme_start_date)} to ${formatDate(project.required_finish_date)}` : project.programme_start_date ? `Start ${formatDate(project.programme_start_date)}` : project.required_finish_date ? `Finish ${formatDate(project.required_finish_date)}` : "No programme dates"}</span>
+                    <span>{project.programme_start_date && project.required_finish_date ? `${formatDate(project.programme_start_date)} to ${formatDate(project.required_finish_date)}` : project.programme_start_date ? `Start ${formatDate(project.programme_start_date)}` : project.required_finish_date ? `Finish ${formatDate(project.required_finish_date)}` : "No key dates"}</span>
                   </div>
 
                   {project.display_order !== null && project.display_order !== undefined && (
