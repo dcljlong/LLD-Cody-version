@@ -194,9 +194,9 @@ const [showCreate, setShowCreate] = useState(false);
   };
 
   const formatDate = (value) => {
-    if (!value) return 'â€”';
+    if (!value) return '-';
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'â€”';
+    if (Number.isNaN(date.getTime())) return '-';
     return date.toLocaleDateString('en-NZ', {
       day: '2-digit',
       month: 'short',
