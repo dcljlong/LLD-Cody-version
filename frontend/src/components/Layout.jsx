@@ -90,7 +90,7 @@ const Layout = () => {
 
         <div className="px-4 py-4 border-b-2-2 border-b-2-2order">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-sm flex items-center justify-center overflow-hidden bg-background border border-border">
+            <div className="w-20 h-20 shrink-0 rounded-sm flex items-center justify-center overflow-hidden bg-background border border-border">
               <img src={lldLogo} alt="LLD logo" className="w-full h-full object-contain" />
             </div>
             <div>
