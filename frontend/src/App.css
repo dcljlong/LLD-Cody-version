@@ -240,3 +240,205 @@
         @apply pb-20;
     }
 }
+/* Login visual pass */
+.lld-login-shell {
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    overflow: hidden;
+    background: #070707;
+}
+
+.lld-login-background {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    transform: scale(1.03);
+    filter: saturate(0.95) contrast(1.03);
+}
+
+.lld-login-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at center, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.72)),
+        linear-gradient(135deg, rgba(0, 0, 0, 0.76), rgba(0, 0, 0, 0.32) 45%, rgba(0, 0, 0, 0.72));
+    backdrop-filter: blur(1px);
+}
+
+.lld-login-card {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 430px);
+    padding: 2rem;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(245, 190, 80, 0.35);
+    background: rgba(8, 8, 8, 0.68);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.46);
+    backdrop-filter: blur(14px);
+    color: #fff8e8;
+}
+
+.lld-login-heading {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.lld-login-kicker {
+    margin-bottom: 0.25rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(245, 190, 80, 0.86);
+}
+
+.lld-login-heading h1 {
+    margin: 0;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 3.35rem;
+    line-height: 0.9;
+    letter-spacing: 0.04em;
+    color: #fff2c8;
+}
+
+.lld-login-heading p:last-child {
+    margin-top: 0.35rem;
+    color: rgba(255, 248, 232, 0.74);
+}
+
+.lld-login-form {
+    display: grid;
+    gap: 1.1rem;
+}
+
+.lld-logo-submit {
+    width: 8rem;
+    height: 8rem;
+    margin: 0 auto 0.35rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(245, 190, 80, 0.34);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 rgba(245, 190, 80, 0);
+    cursor: pointer;
+    opacity: 0.62;
+    transform: scale(0.88);
+    transition: opacity 180ms ease, transform 180ms ease, background 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.lld-logo-submit:hover,
+.lld-logo-submit:focus-visible {
+    opacity: 1;
+    transform: scale(1.08);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(245, 190, 80, 0.88);
+    box-shadow: 0 0 36px rgba(245, 190, 80, 0.38);
+    outline: none;
+}
+
+.lld-logo-submit:disabled {
+    cursor: wait;
+    opacity: 0.75;
+}
+
+.lld-logo-submit img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0.72;
+    transition: opacity 180ms ease, filter 180ms ease;
+}
+
+.lld-logo-submit:hover img,
+.lld-logo-submit:focus-visible img {
+    opacity: 1;
+    filter: saturate(1.1) contrast(1.05);
+}
+
+.lld-login-title-block {
+    text-align: center;
+    margin-bottom: 0.25rem;
+}
+
+.lld-login-title-block h2 {
+    margin: 0;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.75rem;
+    line-height: 1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #fff2c8;
+}
+
+.lld-login-title-block p {
+    margin-top: 0.45rem;
+    font-size: 0.88rem;
+    color: rgba(255, 248, 232, 0.72);
+}
+
+.lld-login-label {
+    color: rgba(255, 248, 232, 0.78);
+}
+
+.lld-login-input {
+    color: #fff8e8;
+    background: rgba(255, 255, 255, 0.11);
+    border-color: rgba(245, 190, 80, 0.34);
+}
+
+.lld-login-input:focus {
+    border-color: rgba(245, 190, 80, 0.85);
+    box-shadow: 0 0 0 1px rgba(245, 190, 80, 0.45);
+}
+
+.lld-login-input::placeholder {
+    color: rgba(255, 248, 232, 0.44);
+}
+
+.lld-login-eye-button {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 248, 232, 0.62);
+    transition: color 150ms ease;
+}
+
+.lld-login-eye-button:hover {
+    color: #fff2c8;
+}
+
+.lld-login-register {
+    margin-top: 1.35rem;
+    text-align: center;
+    font-size: 0.88rem;
+    color: rgba(255, 248, 232, 0.64);
+}
+
+.lld-login-register a {
+    color: #f5be50;
+    font-weight: 700;
+}
+
+.lld-login-register a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+    .lld-login-card {
+        padding: 1.35rem;
+        border-radius: 1rem;
+    }
+
+    .lld-logo-submit {
+        width: 6.5rem;
+        height: 6.5rem;
+    }
+
+    .lld-login-heading h1 {
+        font-size: 2.75rem;
+    }
+}
