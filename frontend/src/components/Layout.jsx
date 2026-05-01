@@ -93,8 +93,8 @@ const Layout = () => {
               <span className="text-primary-foreground font-bold text-lg">LL</span>
             </div>
             <div>
-              <h1 className="font-bold text-lg">LLDv2</h1>
-              <p className="text-xs text-muted-foreground">Site Command</p>
+              <h1 className="font-bold text-lg">Cody</h1>
+              <p className="text-xs text-muted-foreground">Site Operations</p>
             </div>
           </div>
         </div>

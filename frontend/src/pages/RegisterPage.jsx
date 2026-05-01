@@ -58,8 +58,8 @@ const RegisterPage = () => {
               <span className="text-primary-foreground font-heading font-bold text-2xl">LL</span>
             </div>
             <div>
-              <h1 className="font-heading font-bold text-3xl tracking-tight">LLDv2</h1>
-              <p className="text-muted-foreground">Site Command Center</p>
+              <h1 className="font-heading font-bold text-3xl tracking-tight">Cody</h1>
+              <p className="text-muted-foreground">Site Operations Hub</p>
             </div>
           </div>
           <h2 className="font-heading text-4xl font-bold tracking-tight uppercase mb-4">
@@ -95,8 +95,8 @@ const RegisterPage = () => {
               <span className="text-primary-foreground font-heading font-bold text-xl">LL</span>
             </div>
             <div>
-              <h1 className="font-heading font-bold text-2xl tracking-tight">LLDv2</h1>
-              <p className="text-xs text-muted-foreground">Site Command</p>
+              <h1 className="font-heading font-bold text-2xl tracking-tight">Cody</h1>
+              <p className="text-xs text-muted-foreground">Site Operations</p>
             </div>
           </div>
 
@@ -105,7 +105,7 @@ const RegisterPage = () => {
               Create Account
             </h2>
             <p className="text-muted-foreground text-sm">
-              Set up your site command access
+              Set up your site operations access
             </p>
           </div>
 

@@ -42,8 +42,8 @@ const LoginPage = () => {
               <span className="text-primary-foreground font-heading font-bold text-2xl">LL</span>
             </div>
             <div>
-              <h1 className="font-heading font-bold text-3xl tracking-tight">LLDv2</h1>
-              <p className="text-muted-foreground">Site Command Center</p>
+              <h1 className="font-heading font-bold text-3xl tracking-tight">Cody</h1>
+              <p className="text-muted-foreground">Site Operations Hub</p>
             </div>
           </div>
           <h2 className="font-heading text-4xl font-bold tracking-tight uppercase mb-4">
@@ -64,8 +64,8 @@ const LoginPage = () => {
               <span className="text-primary-foreground font-heading font-bold text-xl">LL</span>
             </div>
             <div>
-              <h1 className="font-heading font-bold text-2xl tracking-tight">LLDv2</h1>
-              <p className="text-xs text-muted-foreground">Site Command</p>
+              <h1 className="font-heading font-bold text-2xl tracking-tight">Cody</h1>
+              <p className="text-xs text-muted-foreground">Site Operations</p>
             </div>
           </div>
 
@@ -135,7 +135,7 @@ const LoginPage = () => {
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            New to LLDv2?{' '}
+            New to Cody?{' '}
             <Link to="/register" className="text-primary hover:underline font-medium" data-testid="register-link">
               Create account
             </Link>
