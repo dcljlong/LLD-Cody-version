@@ -265,8 +265,8 @@
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(circle at center, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.72)),
-        linear-gradient(135deg, rgba(0, 0, 0, 0.76), rgba(0, 0, 0, 0.32) 45%, rgba(0, 0, 0, 0.72));
+        radial-gradient(circle at center, rgba(0, 0, 0, 0.14), rgba(0, 0, 0, 0.58)),
+        linear-gradient(135deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.22) 45%, rgba(0, 0, 0, 0.58));
     backdrop-filter: blur(1px);
 }
 
@@ -277,8 +277,8 @@
     padding: 2rem;
     border-radius: 1.5rem;
     border: 1px solid rgba(245, 190, 80, 0.35);
-    background: rgba(8, 8, 8, 0.68);
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.46);
+    background: rgba(8, 8, 8, 0.56);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
     backdrop-filter: blur(14px);
     color: #fff8e8;
 }
@@ -321,11 +321,11 @@
     margin: 0 auto 0.35rem;
     border-radius: 9999px;
     border: 1px solid rgba(245, 190, 80, 0.34);
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.13);
     box-shadow: 0 0 0 rgba(245, 190, 80, 0);
     cursor: pointer;
-    opacity: 0.62;
-    transform: scale(0.88);
+    opacity: 0.78;
+    transform: scale(0.92);
     transition: opacity 180ms ease, transform 180ms ease, background 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
@@ -348,7 +348,7 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    opacity: 0.72;
+    opacity: 0.88;
     transition: opacity 180ms ease, filter 180ms ease;
 }
 
@@ -385,7 +385,7 @@
 
 .lld-login-input {
     color: #fff8e8;
-    background: rgba(255, 255, 255, 0.11);
+    background: rgba(255, 255, 255, 0.15);
     border-color: rgba(245, 190, 80, 0.34);
 }
 
@@ -395,7 +395,7 @@
 }
 
 .lld-login-input::placeholder {
-    color: rgba(255, 248, 232, 0.44);
+    color: rgba(255, 248, 232, 0.56);
 }
 
 .lld-login-eye-button {
