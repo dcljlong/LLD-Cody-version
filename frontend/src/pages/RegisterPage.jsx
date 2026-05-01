@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
+import lldLogo from '../assets/lld-logo.png';
 
 const RegisterPage = () => {
   const { register } = useAuth();
@@ -54,12 +55,12 @@ const RegisterPage = () => {
       <div className="hidden lg:flex lg:w-1/2 bg-card border-r border-border items-center justify-center p-12">
         <div className="max-w-md">
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-16 h-16 bg-primary rounded-sm flex items-center justify-center">
-              <span className="text-primary-foreground font-heading font-bold text-2xl">LL</span>
+            <div className="w-16 h-16 rounded-sm flex items-center justify-center overflow-hidden bg-background border border-border">
+              <img src={lldLogo} alt="LLD logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="font-heading font-bold text-3xl tracking-tight">Cody</h1>
-              <p className="text-muted-foreground">Site Operations Hub</p>
+              <h1 className="font-heading font-bold text-3xl tracking-tight">LLD</h1>
+              <p className="text-muted-foreground">Site Diary</p>
             </div>
           </div>
           <h2 className="font-heading text-4xl font-bold tracking-tight uppercase mb-4">
@@ -91,12 +92,12 @@ const RegisterPage = () => {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-primary rounded-sm flex items-center justify-center">
-              <span className="text-primary-foreground font-heading font-bold text-xl">LL</span>
+            <div className="w-12 h-12 rounded-sm flex items-center justify-center overflow-hidden bg-background border border-border">
+              <img src={lldLogo} alt="LLD logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="font-heading font-bold text-2xl tracking-tight">Cody</h1>
-              <p className="text-xs text-muted-foreground">Site Operations</p>
+              <h1 className="font-heading font-bold text-2xl tracking-tight">LLD</h1>
+              <p className="text-xs text-muted-foreground">Site Diary</p>
             </div>
           </div>
 
@@ -105,7 +106,7 @@ const RegisterPage = () => {
               Create Account
             </h2>
             <p className="text-muted-foreground text-sm">
-              Set up your site operations access
+              Set up your diary access
             </p>
           </div>
 

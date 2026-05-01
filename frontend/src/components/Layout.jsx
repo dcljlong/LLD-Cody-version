@@ -3,6 +3,7 @@ import { Outlet, NavLink, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { projectsApi } from '../lib/api';
+import lldLogo from '../assets/lld-logo.png';
 import {
   LayoutDashboard,
   Route,
@@ -89,12 +90,12 @@ const Layout = () => {
 
         <div className="px-4 py-4 border-b-2-2 border-b-2-2order">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-sm flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">LL</span>
+            <div className="w-10 h-10 rounded-sm flex items-center justify-center overflow-hidden bg-background border border-border">
+              <img src={lldLogo} alt="LLD logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="font-bold text-lg">Cody</h1>
-              <p className="text-xs text-muted-foreground">Site Operations</p>
+              <h1 className="font-bold text-lg">LLD</h1>
+              <p className="text-xs text-muted-foreground">Site Diary</p>
             </div>
           </div>
         </div>
