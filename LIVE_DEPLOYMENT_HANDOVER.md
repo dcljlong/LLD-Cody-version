@@ -1,4 +1,4 @@
-﻿# LLD Cody Live Deployment Handover
+# LLD Cody Live Deployment Handover
 
 ## Current stable checkpoint
 
