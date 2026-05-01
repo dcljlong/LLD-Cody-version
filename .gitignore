@@ -83,3 +83,9 @@ backend/.env
 # Environment files
 *.env
 *.env.*
+
+# Safe environment templates
+!.env.example
+!*.env.example
+!frontend/.env.example
+!backend/.env.example

@@ -28,6 +28,8 @@ db = client[os.environ['DB_NAME']]
 
 # JWT Configuration
 JWT_SECRET = os.environ.get('JWT_SECRET', 'lldv2-secret-key-change-in-production')
+if os.environ.get('ENVIRONMENT') == 'production' and JWT_SECRET == 'lldv2-secret-key-change-in-production':
+    raise RuntimeError('JWT_SECRET must be set in production')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
 
