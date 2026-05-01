@@ -229,6 +229,38 @@ const ActionItemsPage = () => {
     });
   };
 
+  const hasUnsavedDialogChanges = () => {
+    if (selectedItem) return true;
+
+    return Boolean(
+      formData.project_id ||
+      formData.title.trim() ||
+      formData.description.trim() ||
+      formData.due_date ||
+      formData.expected_complete_date ||
+      formData.owner.trim() ||
+      formData.priority !== 'medium'
+    );
+  };
+
+  const requestDialogOpenChange = (open) => {
+    if (open) {
+      setDialogOpen(true);
+      return;
+    }
+
+    if (submitting) return;
+
+    if (hasUnsavedDialogChanges()) {
+      const discard = window.confirm('Discard unsaved action item changes?');
+      if (!discard) return;
+    }
+
+    setDialogOpen(false);
+    resetForm();
+  };
+
+
   const getProjectName = (projectId) => {
     const project = projects.find((p) => String(p.id) === String(projectId));
     return project?.job_name || project?.name || 'Unknown';
@@ -812,7 +844,7 @@ const ActionItemsPage = () => {
         )}
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={requestDialogOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-heading text-xl uppercase tracking-tight">
@@ -915,7 +947,7 @@ const ActionItemsPage = () => {
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>
+              <Button type="button" variant="secondary" onClick={() => requestDialogOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit" className="btn-primary" disabled={submitting} data-testid="save-item-btn">
@@ -930,21 +962,3 @@ const ActionItemsPage = () => {
 };
 
 export default ActionItemsPage;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

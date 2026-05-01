@@ -98,7 +98,7 @@ function cleanDateForInput(value) {
 }
 
 function formatDate(value) {
-  if (!value) return "â€”";
+  if (!value) return "-";
 
   const raw = String(value);
   const date = /^\d{4}-\d{2}-\d{2}$/.test(raw)
@@ -445,7 +445,7 @@ export default function GatesPage() {
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
               <div className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Owner</div>
-              <div className="font-medium">{gate.owner_party || "â€”"}</div>
+              <div className="font-medium">{gate.owner_party || "-"}</div>
             </div>
 
             <div>
@@ -472,7 +472,7 @@ export default function GatesPage() {
               <div className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Flags</div>
               <div className="font-medium">
                 {gate.is_hard_gate ? "Hard gate" : "Standard"}
-                {gate.is_optional ? " â€¢ Optional" : ""}
+                {gate.is_optional ? " - Optional" : ""}
               </div>
             </div>
           </div>

@@ -17,7 +17,6 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
-  FileUp
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
@@ -53,12 +52,11 @@ const Layout = () => {
     { to: '/walkaround', icon: Route, label: 'Walkaround' },
     { to: '/action-items', icon: ListTodo, label: 'Action Items' },
     { to: '/projects', icon: FolderOpen, label: 'Projects' },
-    { to: '/gates', icon: Target, label: 'Scope / Gates' },
-    { to: '/programme', icon: FileUp, label: 'Programme' },
+    { to: '/gates', icon: Target, label: 'Gates / Risks' },
+    { to: '/diary', icon: BookOpen, label: 'Diary' },
   ];
 
   const adminNav = [
-    { to: '/diary', icon: BookOpen, label: 'Diary' },
     { to: '/settings', icon: Settings, label: 'Settings' },
   ];
 
@@ -230,18 +228,3 @@ const Layout = () => {
 };
 
 export default Layout;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

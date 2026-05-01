@@ -30,11 +30,38 @@ import {
   SelectValue,
 } from '../components/ui/select';
 
+const NZ_TIME_ZONE = 'Pacific/Auckland';
+
+const formatDateInput = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getNzDateString = (offsetDays = 0) => {
+  const date = new Date(Date.now() + offsetDays * 86400000);
+  const parts = new Intl.DateTimeFormat('en-NZ', {
+    timeZone: NZ_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+};
+
+const parseDateInput = (dateStr) => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 const DiaryPage = () => {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
   const [diary, setDiary] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => getNzDateString());
   const [loading, setLoading] = useState(true);
   const [showQuickEntry, setShowQuickEntry] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -42,8 +69,8 @@ const DiaryPage = () => {
   const fileInputRef = useRef(null);
   const noteInputRef = useRef(null);
 
-  const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const today = getNzDateString();
+  const tomorrow = getNzDateString(1);
 
   const [entryData, setEntryData] = useState({
     note: '',
@@ -111,13 +138,14 @@ const DiaryPage = () => {
   }, [selectedProject, selectedDate, fetchDiary, fetchGates]);
 
   const changeDate = (days) => {
-    const current = new Date(selectedDate);
+    const current = parseDateInput(selectedDate);
     current.setDate(current.getDate() + days);
-    setSelectedDate(current.toISOString().split('T')[0]);
+    setSelectedDate(formatDateInput(current));
   };
 
   const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('en-NZ', {
+    return parseDateInput(dateStr).toLocaleDateString('en-NZ', {
+      timeZone: NZ_TIME_ZONE,
       weekday: 'long',
       day: '2-digit',
       month: 'short',
