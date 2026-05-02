@@ -258,16 +258,16 @@
     background-size: cover;
     background-position: center;
     transform: scale(1.03);
-    filter: saturate(0.95) contrast(1.03);
+    filter: saturate(1.08) contrast(1.01) brightness(2.10);
 }
 
 .lld-login-overlay {
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(circle at center, rgba(0, 0, 0, 0.14), rgba(0, 0, 0, 0.58)),
-        linear-gradient(135deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.22) 45%, rgba(0, 0, 0, 0.58));
-    backdrop-filter: blur(1px);
+        radial-gradient(circle at center, rgba(0, 0, 0, 0.00), rgba(0, 0, 0, 0.14)),
+        linear-gradient(135deg, rgba(245, 190, 80, 0.06), rgba(255, 255, 255, 0.00) 45%, rgba(25, 78, 120, 0.05));
+    backdrop-filter: blur(0px);
 }
 
 .lld-login-card {
