@@ -7,7 +7,7 @@ import lldLogo from '../assets/lld-logo.png';
 import {
   LayoutDashboard,
   Route,
-  Target,
+  AlertTriangle,
   ListTodo,
   FolderOpen,
   BookOpen,
@@ -50,11 +50,11 @@ const Layout = () => {
 
   const operationsNav = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/walkaround', icon: Route, label: 'Walkaround' },
-    { to: '/action-items', icon: ListTodo, label: 'Action Items' },
-    { to: '/projects', icon: FolderOpen, label: 'Projects' },
-    { to: '/gates', icon: Target, label: 'Gates / Risks' },
     { to: '/diary', icon: BookOpen, label: 'Diary' },
+    { to: '/projects', icon: FolderOpen, label: 'Projects' },
+    { to: '/action-items', icon: ListTodo, label: 'Action Items' },
+    { to: '/walkaround', icon: Route, label: 'Walkaround' },
+    { to: '/gates', icon: AlertTriangle, label: 'Roadblocks / Concerns' },
   ];
 
   const adminNav = [
@@ -62,7 +62,18 @@ const Layout = () => {
   ];
 
   const pageTitle = useMemo(() => {
-    return location.pathname.split('/')[1]?.replace(/-/g, ' ') || 'Dashboard';
+    const section = location.pathname.split('/')[1] || 'dashboard';
+    const titles = {
+      dashboard: 'Dashboard',
+      diary: 'Diary',
+      projects: 'Projects',
+      'action-items': 'Action Items',
+      walkaround: 'Walkaround',
+      gates: 'Roadblocks / Concerns',
+      settings: 'Settings'
+    };
+
+    return titles[section] || section.replace(/-/g, ' ');
   }, [location.pathname]);
 
   const currentJobId = useMemo(() => {
