@@ -440,6 +440,15 @@
     color: #fff2c8;
 }
 
+
+.lld-register-card {
+    width: min(100%, 470px);
+}
+
+.lld-register-logo-submit {
+    width: 6.75rem;
+    height: 6.75rem;
+}
 .lld-login-register {
     margin-top: 1.35rem;
     text-align: center;

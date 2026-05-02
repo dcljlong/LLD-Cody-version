@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import lldLogo from '../assets/lld-logo.png';
+import loginBackground from '../assets/login-background.jpg';
 
 const RegisterPage = () => {
   const { register } = useAuth();
@@ -50,160 +50,128 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Left side - branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-card border-r border-border items-center justify-center p-12">
-        <div className="max-w-md">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-16 h-16 rounded-sm flex items-center justify-center overflow-hidden bg-background border border-border">
-              <img src={lldLogo} alt="LLD logo" className="w-full h-full object-contain" />
-            </div>
-            <div>
-              <h1 className="font-heading font-bold text-3xl tracking-tight">LLD</h1>
-              <p className="text-muted-foreground">Site Diary</p>
-            </div>
-          </div>
-          <h2 className="font-heading text-4xl font-bold tracking-tight uppercase mb-4">
-            Built for Fitout Operations
-          </h2>
-          <ul className="space-y-3 text-muted-foreground">
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-              10-second walkaround capture
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-              Auto-sorted risk dashboard
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-              Fitout scope gates + prereq radar
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-              Daily diary per project
-            </li>
-          </ul>
+    <div className="lld-login-shell">
+      <div
+        className="lld-login-background"
+        style={{ backgroundImage: `url(${loginBackground})` }}
+        aria-hidden="true"
+      />
+      <div className="lld-login-overlay" aria-hidden="true" />
+
+      <main className="lld-login-card lld-register-card" aria-label="Create LLD account">
+        <div className="lld-login-heading">
+          <p className="lld-login-kicker">Long Line Diary</p>
+          <h1>LLD</h1>
+          <p>Site Diary</p>
         </div>
-      </div>
 
-      {/* Right side - register form */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-sm flex items-center justify-center overflow-hidden bg-background border border-border">
-              <img src={lldLogo} alt="LLD logo" className="w-full h-full object-contain" />
-            </div>
-            <div>
-              <h1 className="font-heading font-bold text-2xl tracking-tight">LLD</h1>
-              <p className="text-xs text-muted-foreground">Site Diary</p>
+        <form onSubmit={handleSubmit} className="lld-login-form">
+          <button
+            type="submit"
+            className="lld-logo-submit lld-register-logo-submit"
+            disabled={loading}
+            data-testid="register-logo-submit"
+            aria-label="Create LLD account"
+            title="Create LLD account"
+          >
+            <img src={lldLogo} alt="LLD logo" />
+          </button>
+
+          <div className="lld-login-title-block">
+            <h2>Create Account</h2>
+            <p>{loading ? 'Creating your account...' : 'Create your Long Line Diary access.'}</p>
+          </div>
+
+          <div>
+            <Label htmlFor="name" className="form-label lld-login-label">Full Name *</Label>
+            <Input
+              id="name"
+              name="name"
+              type="text"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="David Long"
+              className="form-input lld-login-input"
+              data-testid="register-name"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="email" className="form-label lld-login-label">Email *</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="david.long@company.co.nz"
+              className="form-input lld-login-input"
+              data-testid="register-email"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="company" className="form-label lld-login-label">Company</Label>
+            <Input
+              id="company"
+              name="company"
+              type="text"
+              value={formData.company}
+              onChange={handleChange}
+              placeholder="Westaco Limited"
+              className="form-input lld-login-input"
+              data-testid="register-company"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="password" className="form-label lld-login-label">Password *</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Min 6 characters"
+                className="form-input lld-login-input pr-10"
+                data-testid="register-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="lld-login-eye-button"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
-          <div className="mb-8">
-            <h2 className="font-heading text-2xl font-bold tracking-tight uppercase mb-2">
-              Create Account
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Set up your diary access
-            </p>
-          </div>
+          <button
+            type="submit"
+            className="lld-login-action-button"
+            disabled={loading}
+            data-testid="register-submit"
+          >
+            {loading ? (
+              'Creating...'
+            ) : (
+              <span className="inline-flex items-center justify-center gap-2">
+                <UserPlus className="w-4 h-4" />
+                Create account
+              </span>
+            )}
+          </button>
+        </form>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <Label htmlFor="name" className="form-label">Full Name *</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="John Smith"
-                className="form-input"
-                data-testid="register-name"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="email" className="form-label">Email *</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="john@company.co.nz"
-                className="form-input"
-                data-testid="register-email"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="company" className="form-label">Company</Label>
-              <Input
-                id="company"
-                name="company"
-                type="text"
-                value={formData.company}
-                onChange={handleChange}
-                placeholder="Fitout Co Ltd"
-                className="form-input"
-                data-testid="register-company"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="password" className="form-label">Password *</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Min 6 characters"
-                  className="form-input pr-10"
-                  data-testid="register-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full btn-primary"
-              disabled={loading}
-              data-testid="register-submit"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></span>
-                  Creating...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <UserPlus className="w-4 h-4" />
-                  Create Account
-                </span>
-              )}
-            </Button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Already have access?{' '}
-            <Link to="/login" className="text-primary hover:underline font-medium" data-testid="login-link">
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </div>
+        <p className="lld-login-register">
+          Already have access?{' '}
+          <Link to="/login" data-testid="login-link">
+            Sign in
+          </Link>
+        </p>
+      </main>
     </div>
   );
 };
