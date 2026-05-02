@@ -89,3 +89,6 @@ backend/.env
 !*.env.example
 !frontend/.env.example
 !backend/.env.example
+
+# Local Long Line brand reference/source pack
+frontend/src/assets/brand/
