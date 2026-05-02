@@ -54,7 +54,7 @@ const LoginPage = () => {
             type="submit"
             className="lld-logo-submit"
             disabled={loading}
-            data-testid="login-submit"
+            data-testid="login-logo-submit"
             aria-label="Log in to LLD"
             title="Log in to LLD"
           >
@@ -63,7 +63,7 @@ const LoginPage = () => {
 
           <div className="lld-login-title-block">
             <h2>Construction Diary Hub</h2>
-            <p>{loading ? 'Authenticating...' : 'Enter your credentials, then click the LLD logo to access your diary.'}</p>
+            <p>{loading ? 'Authenticating...' : 'Enter your credentials, then click Log in.'}</p>
           </div>
 
           <div>
@@ -101,6 +101,15 @@ const LoginPage = () => {
               </button>
             </div>
           </div>
+
+          <button
+            type="submit"
+            className="lld-login-action-button"
+            disabled={loading}
+            data-testid="login-submit"
+          >
+            {loading ? 'Authenticating...' : 'Log in'}
+          </button>
         </form>
 
         <p className="lld-login-register">
