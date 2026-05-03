@@ -18,6 +18,8 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
+  ExternalLink,
+  Wrench,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
@@ -61,6 +63,15 @@ const Layout = () => {
     { to: '/settings', icon: Settings, label: 'Settings' },
   ];
 
+  const suiteNav = [
+    {
+      href: 'http://localhost:3002/dashboard',
+      icon: Wrench,
+      label: 'Tool Tracker',
+      description: 'Tool & asset control',
+    },
+  ];
+
   const pageTitle = useMemo(() => {
     const section = location.pathname.split('/')[1] || 'dashboard';
     const titles = {
@@ -94,6 +105,27 @@ const Layout = () => {
     </NavLink>
   );
 
+  const ExternalNavItem = ({ href, icon: Icon, label, description }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      onClick={() => setSidebarOpen(false)}
+      className="sidebar-nav-item"
+    >
+      <Icon className="w-5 h-5" strokeWidth={1.5} />
+      <span className="min-w-0 flex-1">
+        <span className="block font-heading tracking-wide">{label}</span>
+        {description && (
+          <span className="block truncate text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+            {description}
+          </span>
+        )}
+      </span>
+      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+    </a>
+  );
+
   return (
     <div className="app-container">
 
@@ -118,6 +150,13 @@ const Layout = () => {
             <div className="sidebar-section-header">Operations</div>
             {operationsNav.map((item) => (
               <NavItem key={item.to} {...item} />
+            ))}
+          </div>
+
+          <div className="mb-4">
+            <div className="sidebar-section-header">Long Line Suite</div>
+            {suiteNav.map((item) => (
+              <ExternalNavItem key={item.href} {...item} />
             ))}
           </div>
 
