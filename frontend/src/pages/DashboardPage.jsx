@@ -276,7 +276,7 @@ const DashboardPage = () => {
 
             <div className="mt-3 flex items-center justify-between border-t border-white/5 px-4 py-2.5">
               <span className={`text-[11px] font-bold uppercase tracking-[0.16em] ${supportTextClass}`}>
-                Operational status
+                Live overview
               </span>
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
                 Open
@@ -336,6 +336,25 @@ const DashboardPage = () => {
     );
   };
 
+  const HeroMetric = ({ label, value, tone = 'default' }) => {
+    const toneClass =
+      tone === 'danger'
+        ? 'text-red-400'
+        : tone === 'warning'
+          ? 'text-amber-300'
+          : 'text-primary';
+
+    return (
+      <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-slate-400">
+          {label}
+        </p>
+        <p className={`mt-1 font-heading text-3xl font-black leading-none ${toneClass}`}>
+          {value}
+        </p>
+      </div>
+    );
+  };
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -361,8 +380,54 @@ const DashboardPage = () => {
   const dueThisWeekItems = sortActionItems(data?.due_this_week || []);
   const completedItems = sortActionItems(data?.recently_completed || []);
 
+  const openItemsCount = data?.summary?.open_items || 0;
+  const criticalItemsCount = data?.summary?.CRITICAL_items || 0;
+  const roadblocksCount = (data?.summary?.gates_blocked || 0) + (data?.summary?.gates_delayed || 0) + (data?.summary?.gates_at_risk || 0);
+  const urgentTodayCount = overdueItems.length + dueTodayItems.length + blockedDelayedItems.length;
+
   return (
-    <div className="space-y-4" data-testid="dashboard-page">
+    <div className="space-y-5" data-testid="dashboard-page">
+      <section className="overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-slate-950 via-slate-900 to-black shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
+        <div className="grid grid-cols-1 gap-5 p-5 lg:grid-cols-[1.4fr_0.9fr]">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.26em] text-primary">
+              Long Line Diary
+            </p>
+            <h1 className="mt-2 font-heading text-3xl font-black uppercase tracking-[0.08em] text-foreground sm:text-4xl">
+              Today&apos;s Site Reality
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+              Capture the day, review roadblocks, and keep action items moving from one clear operations dashboard.
+            </p>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link to="/diary">
+                <Button className="btn-primary">
+                  Open Diary <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/walkaround">
+                <Button variant="secondary">
+                  Quick Capture
+                </Button>
+              </Link>
+              <Link to="/gates">
+                <Button variant="secondary">
+                  Roadblocks / Concerns
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <HeroMetric label="Urgent Today" value={urgentTodayCount} tone={urgentTodayCount > 0 ? 'danger' : 'default'} />
+            <HeroMetric label="Open Items" value={openItemsCount} tone={openItemsCount > 0 ? 'warning' : 'default'} />
+            <HeroMetric label="Critical" value={criticalItemsCount} tone={criticalItemsCount > 0 ? 'danger' : 'default'} />
+            <HeroMetric label="Roadblocks" value={roadblocksCount} tone={roadblocksCount > 0 ? 'warning' : 'default'} />
+          </div>
+        </div>
+      </section>
+
       {widgets.stats && (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
           <StatCard
@@ -496,18 +561,35 @@ const DashboardPage = () => {
       )}
 
       {widgets.quickActions && (
-        <div className="flex gap-3">
-          <Link to="/walkaround">
-            <Button className="btn-primary" data-testid="quick-walkaround">
-              Quick Capture <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
-          <Link to="/projects">
-            <Button variant="secondary" data-testid="view-projects">
-              View Projects
-            </Button>
-          </Link>
-        </div>
+        <section className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card p-4 shadow-xl">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-primary">
+                Quick Actions
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Jump straight into today&apos;s diary workflow.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/diary">
+                <Button className="btn-primary">
+                  Open Diary <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+              <Link to="/walkaround">
+                <Button variant="secondary" data-testid="quick-walkaround">
+                  Quick Capture
+                </Button>
+              </Link>
+              <Link to="/projects">
+                <Button variant="secondary" data-testid="view-projects">
+                  View Projects
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
       )}
     </div>
   );
