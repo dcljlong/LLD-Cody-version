@@ -354,10 +354,10 @@ const DiaryPage = () => {
                   />
                 </div>
 
-                {/* Gate Link */}
+                {/* Roadblock / Concern Link */}
                 {gates.length > 0 && (
                   <div>
-                    <Label className="text-xs text-muted-foreground mb-1.5 block">Link to Gate</Label>
+                    <Label className="text-xs text-muted-foreground mb-1.5 block">Link to Roadblock / Concern</Label>
                     <Select
                       value={entryData.gate_id}
                       onValueChange={(val) => setEntryData(prev => ({ ...prev, gate_id: val }))}
@@ -622,12 +622,12 @@ const DiaryPage = () => {
               </CardContent>
             </Card>
 
-            {/* Blocked Gates */}
+            {/* Blocked Roadblocks / Concerns */}
             <Card className="ops-card">
               <CardHeader className="ops-card-header py-3">
                 <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2 text-red-500">
                   <AlertTriangle className="w-4 h-4" />
-                  Blocked / Delayed ({diary.blocked_gates?.length || 0})
+                  Blocked / Delayed Roadblocks ({diary.blocked_gates?.length || 0})
                 </CardTitle>
               </CardHeader>
 
@@ -648,7 +648,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No blocked gates</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No blocked roadblocks</p>
                 )}
               </CardContent>
             </Card>

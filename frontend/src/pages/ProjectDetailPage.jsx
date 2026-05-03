@@ -264,7 +264,7 @@ export default function ProjectDetailPage() {
       return {
         label: "Needs Attention",
         className: "bg-red-500/20 text-red-400 border border-red-500/30",
-        helper: "There are overdue items, blocked gates, or delayed gates."
+        helper: "There are overdue items, blocked roadblocks, or delayed concerns."
       };
     }
 
@@ -272,7 +272,7 @@ export default function ProjectDetailPage() {
       return {
         label: "At Risk",
         className: "bg-amber-500/20 text-amber-400 border border-amber-500/30",
-        helper: "There are high-priority actions or gates inside the risk window."
+        helper: "There are high-priority actions or roadblocks / concerns inside the risk window."
       };
     }
 
@@ -319,7 +319,7 @@ export default function ProjectDetailPage() {
       border: overdueItems.length > 0 ? "border-red-500/50" : ""
     },
     {
-      label: "Gates at Risk",
+      label: "Roadblocks / Concerns",
       value: riskGates.length,
       helper: `${completedGates.length} completed`,
       icon: ShieldAlert,
@@ -476,7 +476,7 @@ export default function ProjectDetailPage() {
                 <DiaryStat label="Walkaround" value={diarySummary.walkaround_entries || 0} />
                 <DiaryStat label="Created" value={diarySummary.action_items_created || 0} />
                 <DiaryStat label="Completed" value={diarySummary.action_items_completed || 0} />
-                <DiaryStat label="Gates Closed" value={diarySummary.gates_completed || 0} />
+                <DiaryStat label="Roadblocks Closed" value={diarySummary.gates_completed || 0} />
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">No diary summary has been created for today yet.</p>
@@ -490,7 +490,7 @@ export default function ProjectDetailPage() {
           <CardHeader className="ops-card-header bg-amber-950/20 py-3">
             <CardTitle className="flex items-center gap-2 font-heading text-lg uppercase tracking-[0.12em] text-amber-400">
               <AlertTriangle className="h-5 w-5" />
-              Gates Needing Attention
+              Roadblocks / Concerns Needing Attention
             </CardTitle>
           </CardHeader>
 
@@ -499,7 +499,7 @@ export default function ProjectDetailPage() {
               {riskGates.slice(0, 6).map((gate) => (
                 <OperationalRow
                   key={gate.id}
-                  title={`${gate.order ? `${gate.order}. ` : ""}${gate.name || "Untitled Gate"}`}
+                  title={`${gate.order ? `${gate.order}. ` : ""}${gate.name || "Untitled Roadblock / Concern"}`}
                   meta={`${gate.status || "ON_TRACK"} - required ${formatDate(gate.required_by_date)} - ${dueText(gate.required_by_date)}`}
                   badge={gate.status || "RISK"}
                   badgeClass={statusBadgeClass(gate.status)}
@@ -510,7 +510,7 @@ export default function ProjectDetailPage() {
             {riskGates.length > 6 ? (
               <Link to="/gates" className="mt-3 block">
                 <Button variant="link" size="sm" className="p-0 text-amber-400">
-                  View all {riskGates.length} risk gates
+                  View all {riskGates.length} roadblocks / concerns
                 </Button>
               </Link>
             ) : null}

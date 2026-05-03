@@ -67,7 +67,7 @@ const STATUS_SECTIONS = [
     key: "completed",
     title: "Completed",
     statuses: ["COMPLETED"],
-    description: "Closed gates retained for audit trail."
+    description: "Closed roadblocks / concerns retained for audit trail."
   }
 ];
 
@@ -171,7 +171,7 @@ export default function GatesPage() {
         };
       });
     } catch (e) {
-      setError(e?.response?.data?.detail || "Failed to load gates.");
+      setError(e?.response?.data?.detail || "Failed to load roadblocks / concerns.");
     } finally {
       setLoading(false);
     }
@@ -557,7 +557,7 @@ export default function GatesPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Site control
           </p>
-          <h2 className="font-heading text-2xl font-bold tracking-tight uppercase">Gates / Risks</h2>
+          <h2 className="font-heading text-2xl font-bold tracking-tight uppercase">Roadblocks / Concerns</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Track the job blockers, handover points, inspections, dependencies, and risk dates that need site attention.
           </p>
@@ -595,13 +595,13 @@ export default function GatesPage() {
           value={selectedStatus}
           onChange={(event) => setSelectedStatus(event.target.value)}
         >
-          <option value="OPEN">Open gates</option>
+          <option value="OPEN">Open roadblocks / concerns</option>
           <option value="BLOCKED">Blocked only</option>
           <option value="DELAYED">Delayed only</option>
           <option value="AT_RISK">At risk only</option>
           <option value="ON_TRACK">On track only</option>
           <option value="COMPLETED">Completed only</option>
-          <option value="ALL">All gates</option>
+          <option value="ALL">All roadblocks / concerns</option>
         </select>
       </div>
 
@@ -641,7 +641,7 @@ export default function GatesPage() {
         <div className="empty-state py-16">
           <p className="empty-state-title">Create a Project First</p>
           <p className="empty-state-description">
-            Gates need to belong to a project before they can be tracked.
+            Roadblocks / concerns need to belong to a project before they can be tracked.
           </p>
         </div>
       ) : null}
@@ -805,7 +805,7 @@ export default function GatesPage() {
                     Dependencies
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Select gates that must be complete before this gate is clear.
+                    Select roadblocks / concerns that must be complete before this item is clear.
                   </p>
                 </div>
 
@@ -828,7 +828,7 @@ export default function GatesPage() {
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    No other gates available for this project yet.
+                    No other roadblocks / concerns available for this project yet.
                   </p>
                 )}
               </div>
@@ -885,9 +885,9 @@ export default function GatesPage() {
         </div>
       ) : (
         <div className="empty-state py-20">
-          <p className="empty-state-title">No Gates Found</p>
+          <p className="empty-state-title">No Roadblocks / Concerns Found</p>
           <p className="empty-state-description">
-            No gates match the current project/status filter.
+            No roadblocks / concerns match the current project/status filter.
           </p>
         </div>
       )}

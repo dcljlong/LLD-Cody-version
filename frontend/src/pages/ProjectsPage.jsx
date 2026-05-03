@@ -176,7 +176,7 @@ const [showCreate, setShowCreate] = useState(false);
 
   const handleDeleteProject = async (project) => {
     const label = project.name || 'this project';
-    if (!window.confirm(`Delete ${label}? This will also delete related gates, action items, and walkaround entries.`)) {
+    if (!window.confirm(`Delete ${label}? This will also delete related roadblocks / concerns, action items, and walkaround entries.`)) {
       return;
     }
 

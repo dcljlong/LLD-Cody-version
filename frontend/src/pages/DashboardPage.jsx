@@ -332,7 +332,7 @@ const DashboardPage = () => {
         />
 
         <StatCard
-          label="GATES AT RISK"
+          label="ROADBLOCKS / CONCERNS"
           value={(data?.summary?.gates_blocked || 0) + (data?.summary?.gates_delayed || 0) + (data?.summary?.gates_at_risk || 0)}
           route="/gates"
           tone="warning"
@@ -343,11 +343,11 @@ const DashboardPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
         <SectionCard
-          title="Blocked / Delayed"
+          title="Blocked / Delayed Roadblocks"
           count={blockedDelayedItems.length}
           icon={<AlertTriangle className="w-4 h-4" />}
           tone="critical"
-          emptyText="No blocked items"
+          emptyText="No blocked roadblocks"
           testId="blocked-delayed-section"
         >
           {blockedDelayedItems.map(item => (
@@ -356,11 +356,11 @@ const DashboardPage = () => {
         </SectionCard>
 
         <SectionCard
-          title="At Risk"
+          title="Concerns / At Risk"
           count={atRiskItems.length}
           icon={<AlertTriangle className="w-4 h-4" />}
           tone="risk"
-          emptyText="No items at risk"
+          emptyText="No concerns at risk"
           testId="at-risk-section"
         >
           {atRiskItems.map(item => (

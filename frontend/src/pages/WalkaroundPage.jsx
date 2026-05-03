@@ -92,7 +92,7 @@ const WalkaroundPage = () => {
       const items = Array.isArray(res.data) ? res.data : (res.data?.value || []);
       setGates(items.filter(g => g.status !== 'COMPLETED'));
     } catch (error) {
-      console.error('Failed to fetch gates:', error);
+      console.error('Failed to fetch roadblocks / concerns:', error);
       setGates([]);
     }
   };
