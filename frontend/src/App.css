@@ -7,8 +7,50 @@
 
 /* Sidebar */
 .sidebar {
-    @apply fixed left-0 top-0 h-full w-64 bg-card border-r border-border z-40 shadow-sm;
+    @apply fixed left-0 top-0 h-full w-72 z-40 shadow-sm;
     @apply transform transition-transform duration-200 ease-in-out;
+    border-right: 1px solid rgba(245, 190, 80, 0.18);
+    background:
+        radial-gradient(circle at top left, rgba(245, 190, 80, 0.14), transparent 28%),
+        linear-gradient(180deg, rgba(4, 9, 20, 0.99), rgba(5, 10, 22, 0.985) 38%, rgba(2, 7, 18, 1));
+}
+
+.lld-sidebar-brand {
+    @apply px-4 py-5;
+    border-bottom: 1px solid rgba(245, 190, 80, 0.18);
+    background:
+        linear-gradient(135deg, rgba(245, 190, 80, 0.10), rgba(255, 255, 255, 0.015) 48%, rgba(15, 26, 48, 0.30));
+}
+
+.lld-sidebar-brand > div {
+    @apply flex items-center gap-4;
+}
+
+.lld-sidebar-logo {
+    @apply w-[72px] h-[72px] shrink-0 rounded-2xl flex items-center justify-center overflow-hidden;
+    border: 1px solid rgba(245, 190, 80, 0.35);
+    background:
+        radial-gradient(circle at 30% 30%, rgba(245, 190, 80, 0.12), rgba(0, 0, 0, 0.18)),
+        rgba(3, 7, 16, 0.92);
+    box-shadow:
+        0 18px 48px rgba(0, 0, 0, 0.34),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.lld-sidebar-brand h1 {
+    @apply font-heading text-[34px] font-black leading-none tracking-[0.08em];
+    color: #f8fafc;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.24);
+}
+
+.lld-sidebar-brand p:first-of-type {
+    @apply mb-1 text-[10px] font-extrabold uppercase tracking-[0.28em];
+    color: #f5be50;
+}
+
+.lld-sidebar-brand p:last-of-type {
+    @apply mt-1 text-[11px] font-semibold uppercase tracking-[0.24em];
+    color: rgba(226, 232, 240, 0.72);
 }
 
 .sidebar-collapsed {
@@ -16,13 +58,24 @@
 }
 
 .sidebar-nav-item {
-    @apply flex items-center gap-3 px-4 py-3 text-sm font-medium;
-    @apply text-muted-foreground hover:text-foreground hover:bg-secondary;
-    @apply transition-colors duration-150 cursor-pointer;
+    @apply mx-3 mb-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium;
+    @apply transition-all duration-150 cursor-pointer;
+    color: rgba(226, 232, 240, 0.84);
+}
+
+.sidebar-nav-item:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .sidebar-nav-item.active {
-    @apply text-primary bg-primary/15 border-l-4 border-primary font-semibold;
+    @apply font-semibold;
+    color: #f5be50;
+    background:
+        linear-gradient(90deg, rgba(245, 190, 80, 0.14), rgba(245, 190, 80, 0.04));
+    box-shadow:
+        inset 3px 0 0 #f5be50,
+        0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
 .sidebar-section-header {
@@ -32,7 +85,7 @@
 
 /* Main content */
 .main-content {
-    @apply ml-0 md:ml-64 min-h-screen;
+    @apply ml-0 md:ml-72 min-h-screen;
     @apply transition-all duration-200;
 }
 
@@ -42,14 +95,16 @@
 
 /* Header */
 .app-header {
-    @apply sticky top-0 z-30 bg-background/95 backdrop-blur-md;
-    @apply border-b-2 border-primary px-4 py-3 shadow-sm;
+    @apply sticky top-0 z-30 backdrop-blur-md px-4 py-3 shadow-sm;
+    border-bottom: 1px solid rgba(245, 190, 80, 0.22);
+    background:
+        linear-gradient(180deg, rgba(252, 252, 251, 0.95), rgba(248, 248, 246, 0.95));
 }
 
 /* Cards */
 .ops-card {
-    @apply bg-card border border-border rounded-md shadow-sm;
-    @apply hover:border-primary/50 hover:shadow-md transition-all duration-200;
+    @apply bg-card border border-border rounded-xl shadow-sm;
+    @apply hover:border-primary/60 hover:shadow-lg transition-all duration-200;
 }
 
 .ops-card-header {
@@ -179,7 +234,7 @@
 
 /* Quick capture form (walkaround) */
 .quick-capture {
-    @apply bg-card border border-border rounded-md shadow-sm;
+    @apply bg-card border border-border rounded-xl shadow-sm;
 }
 
 .quick-capture-input {

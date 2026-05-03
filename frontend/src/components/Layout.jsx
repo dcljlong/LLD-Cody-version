@@ -99,14 +99,15 @@ const Layout = () => {
 
       <aside className={`sidebar ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
 
-        <div className="px-4 py-4 border-b-2-2 border-b-2-2order">
+        <div className="lld-sidebar-brand">
           <div className="flex items-center gap-3">
-            <div className="w-20 h-20 shrink-0 rounded-sm flex items-center justify-center overflow-hidden bg-background border border-border">
+            <div className="lld-sidebar-logo">
               <img src={lldLogo} alt="LLD logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="font-bold text-lg">LLD</h1>
-              <p className="text-xs text-muted-foreground">Site Diary</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-primary">Long Line</p>
+              <h1 className="font-heading text-2xl font-black leading-none tracking-[0.08em]">LLD</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Site Diary</p>
             </div>
           </div>
         </div>
@@ -141,7 +142,7 @@ const Layout = () => {
 
       <main className="main-content">
 
-        <header className="app-header border-b-2-2-4 border-slate-500 shadow-sm shadow-sm">
+        <header className="app-header">
 
           <div className="flex items-center justify-between">
 
@@ -155,7 +156,7 @@ const Layout = () => {
                 <Menu className="w-5 h-5" />
               </Button>
 
-              <h2 className="text-xl font-bold uppercase tracking-wide">
+              <h2 className="font-heading text-2xl font-black uppercase tracking-[0.08em]">
                 {pageTitle}
               </h2>
 
@@ -179,7 +180,7 @@ const Layout = () => {
                 className="flex items-center gap-2"
               >
                 <LogOut className="w-4 h-4" />
-                <span>Logout</span>
+                <span>Log out</span>
               </Button>
             </div>
 
