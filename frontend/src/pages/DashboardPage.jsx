@@ -13,6 +13,40 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 
+const DASHBOARD_LAYOUT_STORAGE_KEY = 'lld_dashboard_layout_v1';
+
+const DEFAULT_DASHBOARD_LAYOUT = {
+  preset: 'standard',
+  widgets: {
+    stats: true,
+    blockedDelayed: true,
+    concernsAtRisk: true,
+    overdue: true,
+    dueToday: true,
+    dueThisWeek: true,
+    recentlyCompleted: false,
+    quickActions: true
+  }
+};
+
+const readDashboardLayout = () => {
+  try {
+    const raw = localStorage.getItem(DASHBOARD_LAYOUT_STORAGE_KEY);
+    if (!raw) return DEFAULT_DASHBOARD_LAYOUT;
+
+    const parsed = JSON.parse(raw);
+    return {
+      preset: parsed.preset || DEFAULT_DASHBOARD_LAYOUT.preset,
+      widgets: {
+        ...DEFAULT_DASHBOARD_LAYOUT.widgets,
+        ...(parsed.widgets || {})
+      }
+    };
+  } catch {
+    return DEFAULT_DASHBOARD_LAYOUT;
+  }
+};
+
 const StatusBadge = ({ status }) => {
   const styles = {
     BLOCKED: 'bg-red-600 text-white border-red-700',
@@ -93,10 +127,23 @@ const sortGateItems = (items = []) => {
 const DashboardPage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [dashboardLayout, setDashboardLayout] = useState(readDashboardLayout);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const refreshLayout = () => setDashboardLayout(readDashboardLayout());
+
+    window.addEventListener('storage', refreshLayout);
+    window.addEventListener('lld-dashboard-layout-updated', refreshLayout);
+
+    return () => {
+      window.removeEventListener('storage', refreshLayout);
+      window.removeEventListener('lld-dashboard-layout-updated', refreshLayout);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -186,6 +233,7 @@ const DashboardPage = () => {
       </Card>
     );
   };
+
   const StatCard = ({ label, value, icon, route, valueClassName = '', tone = 'default' }) => {
     const toneClass =
       tone === 'CRITICAL'
@@ -296,6 +344,16 @@ const DashboardPage = () => {
     );
   }
 
+  const widgets = dashboardLayout.widgets || DEFAULT_DASHBOARD_LAYOUT.widgets;
+  const visibleSectionCount = [
+    widgets.blockedDelayed,
+    widgets.concernsAtRisk,
+    widgets.overdue,
+    widgets.dueToday,
+    widgets.dueThisWeek,
+    widgets.recentlyCompleted
+  ].filter(Boolean).length;
+
   const blockedDelayedItems = sortGateItems(data?.blocked_delayed || []);
   const atRiskItems = sortGateItems(data?.at_risk || []);
   const overdueItems = sortActionItems(data?.overdue || []);
@@ -305,184 +363,154 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-4" data-testid="dashboard-page">
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
-        <StatCard
-          label="ACTIVE PROJECTS"
-          value={data?.projects_count || 0}
-          route="/projects"
-          tone="default"
-          icon={<Target className="w-9 h-9 text-primary" strokeWidth={1.75} />}
-        />
+      {widgets.stats && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+          <StatCard
+            label="ACTIVE PROJECTS"
+            value={data?.projects_count || 0}
+            route="/projects"
+            tone="default"
+            icon={<Target className="w-9 h-9 text-primary" strokeWidth={1.75} />}
+          />
 
-        <StatCard
-          label="OPEN ITEMS"
-          value={data?.summary?.open_items || 0}
-          route="/action-items"
-          tone="warning"
-          icon={<Clock className="w-9 h-9 text-amber-500" strokeWidth={1.75} />}
-        />
+          <StatCard
+            label="OPEN ITEMS"
+            value={data?.summary?.open_items || 0}
+            route="/action-items"
+            tone="warning"
+            icon={<Clock className="w-9 h-9 text-amber-500" strokeWidth={1.75} />}
+          />
 
-        <StatCard
-          label="CRITICAL"
-          value={data?.summary?.CRITICAL_items || 0}
-          route="/action-items"
-          tone="CRITICAL"
-          valueClassName="text-red-600"
-          icon={<AlertTriangle className="w-9 h-9 text-red-600" strokeWidth={1.75} />}
-        />
+          <StatCard
+            label="CRITICAL"
+            value={data?.summary?.CRITICAL_items || 0}
+            route="/action-items"
+            tone="CRITICAL"
+            valueClassName="text-red-600"
+            icon={<AlertTriangle className="w-9 h-9 text-red-600" strokeWidth={1.75} />}
+          />
 
-        <StatCard
-          label="ROADBLOCKS / CONCERNS"
-          value={(data?.summary?.gates_blocked || 0) + (data?.summary?.gates_delayed || 0) + (data?.summary?.gates_at_risk || 0)}
-          route="/gates"
-          tone="warning"
-          valueClassName="text-amber-600"
-          icon={<Target className="w-9 h-9 text-amber-500" strokeWidth={1.75} />}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
-        <SectionCard
-          title="Blocked / Delayed Roadblocks"
-          count={blockedDelayedItems.length}
-          icon={<AlertTriangle className="w-4 h-4" />}
-          tone="critical"
-          emptyText="No blocked roadblocks"
-          testId="blocked-delayed-section"
-        >
-          {blockedDelayedItems.map(item => (
-            <ItemCard key={item.id} item={item} type={item.type} />
-          ))}
-        </SectionCard>
-
-        <SectionCard
-          title="Concerns / At Risk"
-          count={atRiskItems.length}
-          icon={<AlertTriangle className="w-4 h-4" />}
-          tone="risk"
-          emptyText="No concerns at risk"
-          testId="at-risk-section"
-        >
-          {atRiskItems.map(item => (
-            <ItemCard key={item.id} item={item} type={item.type} />
-          ))}
-        </SectionCard>
-
-        <SectionCard
-          title="Overdue"
-          count={overdueItems.length}
-          icon={<Clock className="w-4 h-4" />}
-          tone="warning"
-          emptyText="No overdue items"
-          testId="overdue-section"
-        >
-          {overdueItems.map(item => (
-            <ItemCard key={item.id} item={item} type="action" />
-          ))}
-        </SectionCard>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start lg:col-span-2 xl:col-span-3">
-          <SectionCard
-            title="Due Today"
-            count={dueTodayItems.length}
-            icon={<Calendar className="w-4 h-4" />}
-            tone="neutral"
-            emptyText="Nothing due today"
-            testId="due-today-section"
-          >
-            {dueTodayItems.map(item => (
-              <ItemCard key={item.id} item={item} type="action" />
-            ))}
-          </SectionCard>
-
-          <SectionCard
-            title="Due This Week"
-            count={dueThisWeekItems.length}
-            icon={<Calendar className="w-4 h-4" />}
-            tone="neutral"
-            emptyText="Nothing due this week"
-            testId="due-week-section"
-          >
-            {dueThisWeekItems.map(item => (
-              <ItemCard key={item.id} item={item} type="action" />
-            ))}
-          </SectionCard>
-
-          <SectionCard
-            title="Recently Completed"
-            count={completedItems.length}
-            icon={<CheckCircle2 className="w-4 h-4" />}
-            tone="success"
-            emptyText="No recent completions"
-            testId="completed-section"
-          >
-            {completedItems.map(item => (
-              <ItemCard key={item.id} item={item} type="action" />
-            ))}
-          </SectionCard>
+          <StatCard
+            label="ROADBLOCKS / CONCERNS"
+            value={(data?.summary?.gates_blocked || 0) + (data?.summary?.gates_delayed || 0) + (data?.summary?.gates_at_risk || 0)}
+            route="/gates"
+            tone="warning"
+            valueClassName="text-amber-600"
+            icon={<Target className="w-9 h-9 text-amber-500" strokeWidth={1.75} />}
+          />
         </div>
-      </div>
-      <div className="flex gap-3">
-        <Link to="/walkaround">
-          <Button className="btn-primary" data-testid="quick-walkaround">
-            Quick Capture <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </Link>
-        <Link to="/projects">
-          <Button variant="secondary" data-testid="view-projects">
-            View Projects
-          </Button>
-        </Link>
-      </div>
+      )}
+
+      {visibleSectionCount > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+          {widgets.blockedDelayed && (
+            <SectionCard
+              title="Blocked / Delayed Roadblocks"
+              count={blockedDelayedItems.length}
+              icon={<AlertTriangle className="w-4 h-4" />}
+              tone="critical"
+              emptyText="No blocked roadblocks"
+              testId="blocked-delayed-section"
+            >
+              {blockedDelayedItems.map(item => (
+                <ItemCard key={item.id} item={item} type={item.type} />
+              ))}
+            </SectionCard>
+          )}
+
+          {widgets.concernsAtRisk && (
+            <SectionCard
+              title="Concerns / At Risk"
+              count={atRiskItems.length}
+              icon={<AlertTriangle className="w-4 h-4" />}
+              tone="risk"
+              emptyText="No concerns at risk"
+              testId="at-risk-section"
+            >
+              {atRiskItems.map(item => (
+                <ItemCard key={item.id} item={item} type={item.type} />
+              ))}
+            </SectionCard>
+          )}
+
+          {widgets.overdue && (
+            <SectionCard
+              title="Overdue"
+              count={overdueItems.length}
+              icon={<Clock className="w-4 h-4" />}
+              tone="warning"
+              emptyText="No overdue items"
+              testId="overdue-section"
+            >
+              {overdueItems.map(item => (
+                <ItemCard key={item.id} item={item} type="action" />
+              ))}
+            </SectionCard>
+          )}
+
+          {widgets.dueToday && (
+            <SectionCard
+              title="Due Today"
+              count={dueTodayItems.length}
+              icon={<Calendar className="w-4 h-4" />}
+              tone="neutral"
+              emptyText="Nothing due today"
+              testId="due-today-section"
+            >
+              {dueTodayItems.map(item => (
+                <ItemCard key={item.id} item={item} type="action" />
+              ))}
+            </SectionCard>
+          )}
+
+          {widgets.dueThisWeek && (
+            <SectionCard
+              title="Due This Week"
+              count={dueThisWeekItems.length}
+              icon={<Calendar className="w-4 h-4" />}
+              tone="neutral"
+              emptyText="Nothing due this week"
+              testId="due-week-section"
+            >
+              {dueThisWeekItems.map(item => (
+                <ItemCard key={item.id} item={item} type="action" />
+              ))}
+            </SectionCard>
+          )}
+
+          {widgets.recentlyCompleted && (
+            <SectionCard
+              title="Recently Completed"
+              count={completedItems.length}
+              icon={<CheckCircle2 className="w-4 h-4" />}
+              tone="success"
+              emptyText="No recent completions"
+              testId="completed-section"
+            >
+              {completedItems.map(item => (
+                <ItemCard key={item.id} item={item} type="action" />
+              ))}
+            </SectionCard>
+          )}
+        </div>
+      )}
+
+      {widgets.quickActions && (
+        <div className="flex gap-3">
+          <Link to="/walkaround">
+            <Button className="btn-primary" data-testid="quick-walkaround">
+              Quick Capture <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
+          <Link to="/projects">
+            <Button variant="secondary" data-testid="view-projects">
+              View Projects
+            </Button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 };
 
 export default DashboardPage;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
