@@ -181,42 +181,42 @@ const DashboardPage = () => {
   }) => {
     const toneClasses = {
       critical: {
-        card: 'border-red-500 bg-slate-950 shadow-[0_18px_50px_rgba(127,29,29,0.24)]',
-        header: 'border-red-500/40 bg-red-950/55',
-        title: 'text-red-300',
-        count: 'border-red-500/60 bg-red-500/20 text-red-200'
+        card: 'border-red-500/45 bg-gradient-to-br from-slate-950 via-slate-950 to-red-950/25 shadow-[0_20px_60px_rgba(127,29,29,0.20)]',
+        header: 'border-red-500/25 bg-red-500/10',
+        title: 'text-red-200',
+        count: 'border-red-400/55 bg-red-500/15 text-red-100'
       },
       warning: {
-        card: 'border-primary/60 bg-slate-950 shadow-[0_18px_50px_rgba(249,115,22,0.18)]',
-        header: 'border-primary/40 bg-primary/15',
+        card: 'border-primary/40 bg-gradient-to-br from-slate-950 via-slate-950 to-primary/10 shadow-[0_20px_60px_rgba(245,190,80,0.14)]',
+        header: 'border-primary/25 bg-primary/10',
         title: 'text-primary',
-        count: 'border-primary/50 bg-primary/15 text-primary'
+        count: 'border-primary/45 bg-primary/15 text-primary'
       },
       risk: {
-        card: 'border-amber-500/70 bg-slate-950 shadow-[0_18px_50px_rgba(120,53,15,0.18)]',
-        header: 'border-amber-500/35 bg-amber-500/10',
+        card: 'border-amber-400/40 bg-gradient-to-br from-slate-950 via-slate-950 to-amber-950/20 shadow-[0_20px_60px_rgba(120,53,15,0.15)]',
+        header: 'border-amber-400/25 bg-amber-400/10',
         title: 'text-amber-200',
-        count: 'border-amber-500/60 bg-amber-500/20 text-amber-100'
+        count: 'border-amber-400/45 bg-amber-400/15 text-amber-100'
       },
       neutral: {
-        card: 'border-primary/30 bg-slate-950 shadow-xl',
-        header: 'border-primary/20 bg-primary/10',
+        card: 'border-primary/25 bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900 shadow-[0_18px_50px_rgba(0,0,0,0.18)]',
+        header: 'border-primary/20 bg-primary/8',
         title: 'text-primary',
-        count: 'border-primary/40 bg-primary/10 text-primary'
+        count: 'border-primary/35 bg-primary/10 text-primary'
       },
       success: {
-        card: 'border-emerald-500/70 bg-slate-950 shadow-[0_18px_50px_rgba(6,78,59,0.18)]',
-        header: 'border-emerald-500/35 bg-emerald-500/10',
+        card: 'border-emerald-400/35 bg-gradient-to-br from-slate-950 via-slate-950 to-emerald-950/20 shadow-[0_18px_50px_rgba(6,78,59,0.14)]',
+        header: 'border-emerald-400/25 bg-emerald-400/10',
         title: 'text-emerald-200',
-        count: 'border-emerald-500/60 bg-emerald-500/20 text-emerald-100'
+        count: 'border-emerald-400/45 bg-emerald-400/15 text-emerald-100'
       }
     };
 
     const currentTone = toneClasses[tone] || toneClasses.neutral;
 
     return (
-      <Card className={`ops-card overflow-hidden border ${currentTone.card}`} data-testid={testId}>
-        <CardHeader className={`ops-card-header flex flex-row items-center justify-between gap-3 py-3 ${currentTone.header}`}>
+      <Card className={`ops-card overflow-hidden border rounded-2xl ${currentTone.card}`} data-testid={testId}>
+        <CardHeader className={`ops-card-header flex flex-row items-center justify-between gap-3 px-5 py-4 ${currentTone.header}`}>
           <CardTitle className={`font-heading text-lg uppercase tracking-[0.12em] flex items-center gap-2 ${currentTone.title}`}>
             {icon}
             {title}
@@ -225,7 +225,7 @@ const DashboardPage = () => {
             {count}
           </span>
         </CardHeader>
-        <CardContent className="py-3 bg-slate-950">
+        <CardContent className="bg-slate-950/95 px-5 py-5">
           {count > 0 ? children : (
             <p className="py-4 text-center text-sm text-slate-300">{emptyText}</p>
           )}
@@ -237,10 +237,10 @@ const DashboardPage = () => {
   const StatCard = ({ label, value, icon, route, valueClassName = '', tone = 'default' }) => {
     const toneClass =
       tone === 'CRITICAL'
-        ? 'border-red-500/80 bg-gradient-to-br from-red-950/40 via-card to-card hover:border-red-400'
+        ? 'border-red-400/45 bg-gradient-to-br from-slate-950 via-slate-900 to-red-950/15 hover:border-red-300'
         : tone === 'warning'
-          ? 'border-amber-500/80 bg-gradient-to-br from-amber-950/30 via-card to-card hover:border-amber-400'
-          : 'border-slate-700 bg-gradient-to-br from-slate-900/70 via-card to-card hover:border-primary';
+          ? 'border-primary/35 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/10 hover:border-primary'
+          : 'border-primary/20 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 hover:border-primary/70';
 
     const iconBoxClass =
       tone === 'CRITICAL'
@@ -262,9 +262,9 @@ const DashboardPage = () => {
         onClick={() => handleStatClick(route)}
         className="w-full text-left"
       >
-        <Card className={`ops-card overflow-hidden border shadow-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl ${toneClass}`}>
+        <Card className={`ops-card overflow-hidden rounded-2xl border shadow-[0_18px_50px_rgba(0,0,0,0.14)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(0,0,0,0.22)] ${toneClass}`}>
           <CardContent className="p-0">
-            <div className="flex items-start justify-between gap-3 px-4 pt-3">
+            <div className="flex items-start justify-between gap-3 px-5 pt-5">
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-muted-foreground">{label}</p>
                 <p className={`mt-2 text-4xl leading-none font-black font-heading text-foreground ${valueClassName}`.trim()}>{value}</p>
@@ -274,7 +274,7 @@ const DashboardPage = () => {
               </div>
             </div>
 
-            <div className="mt-3 flex items-center justify-between border-t border-white/5 px-4 py-2.5">
+            <div className="mt-4 flex items-center justify-between border-t border-white/10 px-5 py-3">
               <span className={`text-[11px] font-bold uppercase tracking-[0.16em] ${supportTextClass}`}>
                 Live overview
               </span>
@@ -386,8 +386,8 @@ const DashboardPage = () => {
   const urgentTodayCount = overdueItems.length + dueTodayItems.length + blockedDelayedItems.length;
 
   return (
-    <div className="space-y-5" data-testid="dashboard-page">
-      <section className="overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-slate-950 via-slate-900 to-black shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
+    <div className="space-y-5 pt-1" data-testid="dashboard-page">
+      <section className="overflow-hidden rounded-[1.6rem] border border-primary/35 bg-gradient-to-br from-slate-950 via-slate-900 to-black shadow-[0_28px_90px_rgba(0,0,0,0.30)] relative z-0">
         <div className="grid grid-cols-1 gap-5 p-5 lg:grid-cols-[1.4fr_0.9fr]">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.26em] text-primary">
@@ -467,7 +467,7 @@ const DashboardPage = () => {
       )}
 
       {visibleSectionCount > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
           {widgets.blockedDelayed && (
             <SectionCard
               title="Blocked / Delayed Roadblocks"
@@ -561,13 +561,13 @@ const DashboardPage = () => {
       )}
 
       {widgets.quickActions && (
-        <section className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card p-4 shadow-xl">
+        <section className="rounded-2xl border border-primary/30 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/10 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.16)]">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-primary">
                 Quick Actions
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm text-slate-300">
                 Jump straight into today&apos;s diary workflow.
               </p>
             </div>
