@@ -92,3 +92,4 @@ backend/.env
 
 # Local Long Line brand reference/source pack
 frontend/src/assets/brand/
+frontend/node_modules/.cache/default-development/0.pack
