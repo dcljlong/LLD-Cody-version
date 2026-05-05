@@ -108,6 +108,8 @@ const Layout = () => {
   const ExternalNavItem = ({ href, icon: Icon, label, description }) => (
     <a
       href={href}
+      target="_blank"
+      rel="noopener noreferrer"
       onClick={() => setSidebarOpen(false)}
       className="sidebar-nav-item"
     >
