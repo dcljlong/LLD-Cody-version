@@ -65,7 +65,7 @@ const Layout = () => {
 
   const suiteNav = [
     {
-      href: 'http://localhost:3002/dashboard',
+      href: process.env.REACT_APP_TOOL_TRACKER_URL || 'http://localhost:3002/dashboard',
       icon: Wrench,
       label: 'Tool Tracker',
       description: 'Tool & asset control',
