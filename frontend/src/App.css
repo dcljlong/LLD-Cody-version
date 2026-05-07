@@ -7,7 +7,7 @@
 
 /* Sidebar */
 .sidebar {
-    @apply fixed left-0 top-0 h-full w-72 z-40 shadow-sm;
+    @apply fixed left-0 top-0 h-full w-64 z-40 shadow-sm flex flex-col;
     @apply transform transition-transform duration-200 ease-in-out;
     border-right: 1px solid rgba(245, 190, 80, 0.18);
     background:
@@ -27,18 +27,11 @@
 }
 
 .lld-sidebar-logo {
-    @apply w-[72px] h-[72px] shrink-0 rounded-2xl flex items-center justify-center overflow-hidden;
-    border: 1px solid rgba(245, 190, 80, 0.35);
-    background:
-        radial-gradient(circle at 30% 30%, rgba(245, 190, 80, 0.12), rgba(0, 0, 0, 0.18)),
-        rgba(3, 7, 16, 0.92);
-    box-shadow:
-        0 18px 48px rgba(0, 0, 0, 0.34),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    @apply h-12 w-12 shrink-0 flex items-center justify-center overflow-hidden;
 }
 
 .lld-sidebar-brand h1 {
-    @apply font-heading text-[34px] font-black leading-none tracking-[0.08em];
+    @apply font-heading text-xl font-black leading-none tracking-[0.08em];
     color: #f8fafc;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.24);
 }
@@ -58,7 +51,7 @@
 }
 
 .sidebar-nav-item {
-    @apply mx-3 mb-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium;
+    @apply mx-2 mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium;
     @apply transition-all duration-150 cursor-pointer;
     color: rgba(226, 232, 240, 0.84);
 }
@@ -79,18 +72,34 @@
 }
 
 .sidebar-section-header {
-    @apply px-4 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground/70;
+    @apply px-3 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-slate-500;
     font-family: 'Barlow Condensed', sans-serif;
 }
 
+
+.lld-sidebar-footer {
+    @apply border-t border-white/10 p-3;
+}
+
+.lld-sidebar-user {
+    @apply mb-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3;
+}
+
+.lld-sidebar-avatar {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-black text-black;
+    background: #f5be50;
+}
 /* Main content */
 .main-content {
-    @apply ml-0 md:ml-72 min-h-screen;
+    @apply ml-0 min-h-screen;
     @apply transition-all duration-200;
+    background:
+        radial-gradient(circle at top right, rgba(245, 190, 80, 0.14), transparent 30%),
+        linear-gradient(180deg, #f8f5ee 0%, #f3efe4 100%);
 }
 
 .main-content.sidebar-collapsed {
-    @apply md:ml-16;
+    margin-left: 16rem;
 }
 
 /* Header */
@@ -99,6 +108,27 @@
     border-bottom: 1px solid rgba(245, 190, 80, 0.22);
     background:
         linear-gradient(180deg, rgba(252, 252, 251, 0.95), rgba(248, 248, 246, 0.95));
+}
+
+.dark .app-header {
+    background:
+        linear-gradient(180deg, rgba(4, 9, 20, 0.96), rgba(2, 7, 18, 0.96));
+}
+
+.dark .main-content {
+    background:
+        radial-gradient(circle at top right, rgba(245, 190, 80, 0.10), transparent 34%),
+        linear-gradient(180deg, #07111f 0%, #020617 100%);
+}
+
+@media (min-width: 1024px) {
+    .main-content {
+        margin-left: 16rem;
+    }
+
+    .app-header {
+        display: none;
+    }
 }
 
 /* Cards */
@@ -292,7 +322,7 @@
 /* Responsive padding for mobile bottom nav */
 @media (max-width: 768px) {
     .main-content {
-        @apply pb-20;
+        @apply pb-6;
     }
 }
 /* Login visual pass */
@@ -534,4 +564,78 @@
     .lld-login-heading h1 {
         font-size: 2.75rem;
     }
+}
+
+/* LLD dashboard dark-panel readability guard
+   Keeps dark operational panels readable in light mode without changing the global light workspace. */
+.main-content [class*="bg-slate-950"],
+.main-content [class*="from-slate-950"],
+.main-content [class*="via-slate-950"],
+.main-content [class*="to-slate-950"],
+.main-content [class*="bg-gradient-to-br"] {
+    color: #f8fafc;
+}
+
+.main-content [class*="bg-slate-950"] h1,
+.main-content [class*="bg-slate-950"] h2,
+.main-content [class*="bg-slate-950"] h3,
+.main-content [class*="from-slate-950"] h1,
+.main-content [class*="from-slate-950"] h2,
+.main-content [class*="from-slate-950"] h3,
+.main-content [class*="via-slate-950"] h1,
+.main-content [class*="via-slate-950"] h2,
+.main-content [class*="via-slate-950"] h3,
+.main-content [class*="bg-gradient-to-br"] h1,
+.main-content [class*="bg-gradient-to-br"] h2,
+.main-content [class*="bg-gradient-to-br"] h3 {
+    color: #ffffff;
+}
+
+.main-content [class*="bg-slate-950"] p,
+.main-content [class*="from-slate-950"] p,
+.main-content [class*="via-slate-950"] p,
+.main-content [class*="bg-gradient-to-br"] p {
+    color: rgba(248, 250, 252, 0.88);
+}
+
+.main-content [class*="bg-slate-950"] .text-muted-foreground,
+.main-content [class*="from-slate-950"] .text-muted-foreground,
+.main-content [class*="via-slate-950"] .text-muted-foreground,
+.main-content [class*="bg-gradient-to-br"] .text-muted-foreground {
+    color: rgba(203, 213, 225, 0.86) !important;
+}
+
+.main-content [class*="bg-slate-950"] .text-black,
+.main-content [class*="from-slate-950"] .text-black,
+.main-content [class*="via-slate-950"] .text-black,
+.main-content [class*="bg-gradient-to-br"] .text-black {
+    color: #f8fafc !important;
+}
+
+.main-content [class*="bg-slate-950"] .text-primary,
+.main-content [class*="from-slate-950"] .text-primary,
+.main-content [class*="via-slate-950"] .text-primary,
+.main-content [class*="bg-gradient-to-br"] .text-primary {
+    color: #f5be50 !important;
+}
+
+.main-content [class*="bg-slate-950"] .text-red-500,
+.main-content [class*="from-slate-950"] .text-red-500,
+.main-content [class*="via-slate-950"] .text-red-500,
+.main-content [class*="bg-gradient-to-br"] .text-red-500 {
+    color: #ef4444 !important;
+}
+
+.main-content [class*="bg-slate-950"] .text-emerald-500,
+.main-content [class*="from-slate-950"] .text-emerald-500,
+.main-content [class*="via-slate-950"] .text-emerald-500,
+.main-content [class*="bg-gradient-to-br"] .text-emerald-500 {
+    color: #34d399 !important;
+}
+
+.main-content [class*="bg-slate-950"] button:not(.bg-primary):not([class*="bg-orange"]),
+.main-content [class*="from-slate-950"] button:not(.bg-primary):not([class*="bg-orange"]),
+.main-content [class*="via-slate-950"] button:not(.bg-primary):not([class*="bg-orange"]),
+.main-content [class*="bg-gradient-to-br"] button:not(.bg-primary):not([class*="bg-orange"]) {
+    color: #f8fafc;
 }

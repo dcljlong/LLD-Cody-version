@@ -20,6 +20,8 @@ import {
   ChevronRight,
   ExternalLink,
   Wrench,
+  Calendar,
+  FileText,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
@@ -65,10 +67,22 @@ const Layout = () => {
 
   const suiteNav = [
     {
-      href: process.env.REACT_APP_TOOL_TRACKER_URL || 'http://localhost:3002/dashboard',
+      href: process.env.REACT_APP_TOOL_TRACKER_URL || 'http://localhost:3002',
       icon: Wrench,
       label: 'Tool Tracker',
-      description: 'Tool & asset control',
+      description: 'Tool control',
+    },
+    {
+      href: process.env.REACT_APP_TIMESHEET_MANAGER_URL || 'http://localhost:3001',
+      icon: Calendar,
+      label: 'Timesheet Manager',
+      description: 'Labour control',
+    },
+    {
+      href: process.env.REACT_APP_FITOUTOS_URL || 'http://localhost:3004',
+      icon: FileText,
+      label: 'FitoutOS',
+      description: 'Programme control',
     },
   ];
 
@@ -91,6 +105,9 @@ const Layout = () => {
     const parts = location.pathname.split('/');
     return parts[1] === 'projects' && parts[2] ? parts[2] : '';
   }, [location.pathname]);
+
+  const displayName = user?.name || user?.full_name || user?.email || 'LLD User';
+  const userInitial = (displayName.trim().charAt(0) || 'U').toUpperCase();
 
   const NavItem = ({ to, icon: Icon, label }) => (
     <NavLink
@@ -117,7 +134,7 @@ const Layout = () => {
       <span className="min-w-0 flex-1">
         <span className="block font-heading tracking-wide">{label}</span>
         {description && (
-          <span className="block truncate text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+          <span className="hidden">
             {description}
           </span>
         )}
@@ -129,7 +146,7 @@ const Layout = () => {
   return (
     <div className="app-container">
 
-      <aside className={`sidebar ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <aside className={`sidebar ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
 
         <div className="lld-sidebar-brand">
           <div className="flex items-center gap-3">
@@ -144,7 +161,7 @@ const Layout = () => {
           </div>
         </div>
 
-        <nav className="flex-1 py-4 overflow-y-auto">
+        <nav className="flex-1 overflow-y-auto py-3">
 
           <div className="mb-4">
             <div className="sidebar-section-header">Operations</div>
@@ -175,6 +192,46 @@ const Layout = () => {
           </Collapsible>
 
         </nav>
+
+        <div className="lld-sidebar-footer">
+          <div className="lld-sidebar-user">
+            <div className="lld-sidebar-avatar">
+              {userInitial}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-slate-100">{displayName}</p>
+              <p className="truncate text-[11px] uppercase tracking-[0.18em] text-slate-400">Long Line Diary</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={toggleTheme}
+              className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs font-bold uppercase tracking-wider text-slate-100 hover:bg-white/10"
+              data-testid="theme-toggle"
+            >
+              {theme === 'dark'
+                ? <Sun className="h-4 w-4" />
+                : <Moon className="h-4 w-4" />}
+              <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={logout}
+              className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs font-bold uppercase tracking-wider text-red-200 hover:bg-red-500/10"
+              data-testid="logout-btn"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </Button>
+          </div>
+        </div>
 
       </aside>
 
@@ -215,7 +272,7 @@ const Layout = () => {
               <Button
                 variant="secondary"
                 onClick={logout}
-                data-testid="logout-btn"
+                data-testid="mobile-logout-btn"
                 className="flex items-center gap-2"
               >
                 <LogOut className="w-4 h-4" />
@@ -269,7 +326,7 @@ const Layout = () => {
         </header>
 
 
-        <div className="p-4 md:p-6">
+        <div className="p-4 sm:p-5 lg:p-6">
           <Outlet />
         </div>
 
