@@ -204,7 +204,7 @@ const Layout = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="lld-sidebar-action-grid grid grid-cols-2 gap-2">
             <Button
               type="button"
               variant="secondary"
@@ -224,7 +224,7 @@ const Layout = () => {
               variant="secondary"
               size="sm"
               onClick={logout}
-              className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs font-bold uppercase tracking-wider text-red-200 hover:bg-red-500/10"
+              className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs font-bold uppercase tracking-wider text-slate-200 hover:bg-white/5 hover:text-white"
               data-testid="logout-btn"
             >
               <LogOut className="h-4 w-4" />
@@ -237,91 +237,126 @@ const Layout = () => {
 
 
       <main className="main-content">
-
         <header className="app-header">
 
-          <div className="flex items-center justify-between">
+          <div className="lld-compact-header-inner">
 
-            <div className="flex items-center gap-4">
+            <div className="lld-compact-brand-row">
 
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
+              <div className="lld-compact-brand-left">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={() => setSidebarOpen(true)}
+                  className="lld-compact-menu-button"
+                  aria-label="Open navigation"
+                >
+                  <Menu className="w-5 h-5" />
+                </Button>
 
-              <h2 className="font-heading text-2xl font-black uppercase tracking-[0.08em]">
-                {pageTitle}
-              </h2>
+                <Link to="/dashboard" className="lld-compact-brand-link" data-testid="compact-logo-link">
+                  <span className="lld-compact-logo">
+                    <img src={lldLogo} alt="LLD logo" />
+                  </span>
+                  <span className="lld-compact-brand-copy">
+                    <span className="lld-compact-kicker">Long Line</span>
+                    <span className="lld-compact-title">LLD</span>
+                    <span className="lld-compact-subtitle">Site Diary</span>
+                  </span>
+                </Link>
+              </div>
 
-            </div>
+              <div className="lld-compact-actions">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={toggleTheme}
+                  className="lld-compact-theme-button"
+                  data-testid="theme-toggle"
+                  aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                >
+                  {theme === 'dark'
+                    ? <Sun className="w-4 h-4" />
+                    : <Moon className="w-4 h-4" />}
+                </Button>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={toggleTheme}
-              >
-                {theme === 'dark'
-                  ? <Sun className="w-4 h-4" />
-                  : <Moon className="w-4 h-4" />}
-              </Button>
-
-              <Button
-                variant="secondary"
-                onClick={logout}
-                data-testid="mobile-logout-btn"
-                className="flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Log out</span>
-              </Button>
-            </div>
-
-          </div>
-
-
-          {projects.length > 0 && (
-
-            <div className="mt-2 border-t border-border pt-2 overflow-x-auto block">
-
-              <div className="flex flex-wrap gap-1.5">
-
-                {projects.map(project => {
-
-                  const isActive = currentJobId === project.id;
-                  const tabLabel = [project.job_number, project.name || 'Project'].filter(Boolean).join(' - ');
-
-                  return (
-                    <Link
-                      key={project.id}
-                      to={`/projects/${project.id}`}
-                      className={`
-                        max-w-full
-                        px-3 py-1.5 text-xs
-                        border
-                        rounded-sm
-                        transition-all
-                        ${isActive
-                          ? 'bg-primary text-primary-foreground border-primary shadow-lg'
-                          : 'bg-card text-foreground border-border hover:border-primary hover:bg-accent'}
-                      `}
-                    >
-                      <span className="font-semibold break-words">
-                        {tabLabel}
-                      </span>
-                    </Link>
-                  );
-
-                })}
-
+                <Button
+                  variant="secondary"
+                  onClick={logout}
+                  data-testid="mobile-logout-btn"
+                  className="lld-compact-logout-button"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
+                </Button>
               </div>
 
             </div>
 
-          )}
+            <div className="lld-compact-nav-row">
+              <nav className="lld-compact-nav" aria-label="LLD compact navigation">
+                {operationsNav.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.to === '/dashboard'}
+                      onClick={() => setSidebarOpen(false)}
+                      className={({ isActive }) =>
+                        `lld-compact-nav-link ${isActive ? 'active' : ''}`
+                      }
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  );
+                })}
+
+                <div className="lld-compact-nav-divider" aria-hidden="true" />
+
+                {suiteNav.map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="lld-compact-suite-link"
+                    title={item.description}
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
+            </div>
+
+            {projects.length > 0 && (
+              <div className="lld-compact-project-row">
+                <div className="flex flex-wrap gap-1.5">
+                  {projects.map(project => {
+                    const isActive = currentJobId === project.id;
+                    const tabLabel = [project.job_number, project.name || 'Project'].filter(Boolean).join(' - ');
+
+                    return (
+                      <Link
+                        key={project.id}
+                        to={`/projects/${project.id}`}
+                        className={`
+                          lld-compact-project-link
+                          ${isActive ? 'active' : ''}
+                        `}
+                      >
+                        <span className="font-semibold break-words">
+                          {tabLabel}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+          </div>
 
         </header>
 

@@ -568,74 +568,752 @@
 
 /* LLD dashboard dark-panel readability guard
    Keeps dark operational panels readable in light mode without changing the global light workspace. */
-.main-content [class*="bg-slate-950"],
-.main-content [class*="from-slate-950"],
-.main-content [class*="via-slate-950"],
-.main-content [class*="to-slate-950"],
-.main-content [class*="bg-gradient-to-br"] {
+.dark .main-content [class*="bg-slate-950"],
+.dark .main-content [class*="from-slate-950"],
+.dark .main-content [class*="via-slate-950"],
+.dark .main-content [class*="to-slate-950"],
+.dark .main-content [class*="bg-gradient-to-br"] {
     color: #f8fafc;
 }
 
-.main-content [class*="bg-slate-950"] h1,
-.main-content [class*="bg-slate-950"] h2,
-.main-content [class*="bg-slate-950"] h3,
-.main-content [class*="from-slate-950"] h1,
-.main-content [class*="from-slate-950"] h2,
-.main-content [class*="from-slate-950"] h3,
-.main-content [class*="via-slate-950"] h1,
-.main-content [class*="via-slate-950"] h2,
-.main-content [class*="via-slate-950"] h3,
-.main-content [class*="bg-gradient-to-br"] h1,
-.main-content [class*="bg-gradient-to-br"] h2,
-.main-content [class*="bg-gradient-to-br"] h3 {
+.dark .main-content [class*="bg-slate-950"] h1,
+.dark .main-content [class*="bg-slate-950"] h2,
+.dark .main-content [class*="bg-slate-950"] h3,
+.dark .main-content [class*="from-slate-950"] h1,
+.dark .main-content [class*="from-slate-950"] h2,
+.dark .main-content [class*="from-slate-950"] h3,
+.dark .main-content [class*="via-slate-950"] h1,
+.dark .main-content [class*="via-slate-950"] h2,
+.dark .main-content [class*="via-slate-950"] h3,
+.dark .main-content [class*="bg-gradient-to-br"] h1,
+.dark .main-content [class*="bg-gradient-to-br"] h2,
+.dark .main-content [class*="bg-gradient-to-br"] h3 {
     color: #ffffff;
 }
 
-.main-content [class*="bg-slate-950"] p,
-.main-content [class*="from-slate-950"] p,
-.main-content [class*="via-slate-950"] p,
-.main-content [class*="bg-gradient-to-br"] p {
+.dark .main-content [class*="bg-slate-950"] p,
+.dark .main-content [class*="from-slate-950"] p,
+.dark .main-content [class*="via-slate-950"] p,
+.dark .main-content [class*="bg-gradient-to-br"] p {
     color: rgba(248, 250, 252, 0.88);
 }
 
-.main-content [class*="bg-slate-950"] .text-muted-foreground,
-.main-content [class*="from-slate-950"] .text-muted-foreground,
-.main-content [class*="via-slate-950"] .text-muted-foreground,
-.main-content [class*="bg-gradient-to-br"] .text-muted-foreground {
+.dark .main-content [class*="bg-slate-950"] .text-muted-foreground,
+.dark .main-content [class*="from-slate-950"] .text-muted-foreground,
+.dark .main-content [class*="via-slate-950"] .text-muted-foreground,
+.dark .main-content [class*="bg-gradient-to-br"] .text-muted-foreground {
     color: rgba(203, 213, 225, 0.86) !important;
 }
 
-.main-content [class*="bg-slate-950"] .text-black,
-.main-content [class*="from-slate-950"] .text-black,
-.main-content [class*="via-slate-950"] .text-black,
-.main-content [class*="bg-gradient-to-br"] .text-black {
+.dark .main-content [class*="bg-slate-950"] .text-black,
+.dark .main-content [class*="from-slate-950"] .text-black,
+.dark .main-content [class*="via-slate-950"] .text-black,
+.dark .main-content [class*="bg-gradient-to-br"] .text-black {
     color: #f8fafc !important;
 }
 
-.main-content [class*="bg-slate-950"] .text-primary,
-.main-content [class*="from-slate-950"] .text-primary,
-.main-content [class*="via-slate-950"] .text-primary,
-.main-content [class*="bg-gradient-to-br"] .text-primary {
+.dark .main-content [class*="bg-slate-950"] .text-primary,
+.dark .main-content [class*="from-slate-950"] .text-primary,
+.dark .main-content [class*="via-slate-950"] .text-primary,
+.dark .main-content [class*="bg-gradient-to-br"] .text-primary {
     color: #f5be50 !important;
 }
 
-.main-content [class*="bg-slate-950"] .text-red-500,
-.main-content [class*="from-slate-950"] .text-red-500,
-.main-content [class*="via-slate-950"] .text-red-500,
-.main-content [class*="bg-gradient-to-br"] .text-red-500 {
+.dark .main-content [class*="bg-slate-950"] .text-red-500,
+.dark .main-content [class*="from-slate-950"] .text-red-500,
+.dark .main-content [class*="via-slate-950"] .text-red-500,
+.dark .main-content [class*="bg-gradient-to-br"] .text-red-500 {
     color: #ef4444 !important;
 }
 
-.main-content [class*="bg-slate-950"] .text-emerald-500,
-.main-content [class*="from-slate-950"] .text-emerald-500,
-.main-content [class*="via-slate-950"] .text-emerald-500,
-.main-content [class*="bg-gradient-to-br"] .text-emerald-500 {
+.dark .main-content [class*="bg-slate-950"] .text-emerald-500,
+.dark .main-content [class*="from-slate-950"] .text-emerald-500,
+.dark .main-content [class*="via-slate-950"] .text-emerald-500,
+.dark .main-content [class*="bg-gradient-to-br"] .text-emerald-500 {
     color: #34d399 !important;
 }
 
-.main-content [class*="bg-slate-950"] button:not(.bg-primary):not([class*="bg-orange"]),
-.main-content [class*="from-slate-950"] button:not(.bg-primary):not([class*="bg-orange"]),
-.main-content [class*="via-slate-950"] button:not(.bg-primary):not([class*="bg-orange"]),
-.main-content [class*="bg-gradient-to-br"] button:not(.bg-primary):not([class*="bg-orange"]) {
+.dark .main-content [class*="bg-slate-950"] button:not(.bg-primary):not([class*="bg-orange"]),
+.dark .main-content [class*="from-slate-950"] button:not(.bg-primary):not([class*="bg-orange"]),
+.dark .main-content [class*="via-slate-950"] button:not(.bg-primary):not([class*="bg-orange"]),
+.dark .main-content [class*="bg-gradient-to-br"] button:not(.bg-primary):not([class*="bg-orange"]) {
     color: #f8fafc;
+}
+
+/* LLD compact header TSM rhythm
+   Brings sub-desktop LLD header closer to the Timesheet Manager branded top-nav rhythm.
+   Desktop left rail remains the source of truth at >=1024px. */
+.app-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+    padding: 0 !important;
+    color: #f8fafc !important;
+    border-bottom: 1px solid rgba(245, 190, 80, 0.20) !important;
+    background:
+        radial-gradient(circle at top left, rgba(245, 190, 80, 0.15), transparent 28%),
+        linear-gradient(180deg, #050916 0%, #080d18 100%) !important;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.22) !important;
+    backdrop-filter: blur(12px);
+}
+
+.lld-compact-header-inner {
+    width: 100%;
+}
+
+.lld-compact-brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+    min-height: 4.35rem;
+    padding: 0.75rem 1rem;
+}
+
+.lld-compact-brand-left,
+.lld-compact-actions,
+.lld-compact-brand-link,
+.lld-compact-nav {
+    display: flex;
+    align-items: center;
+}
+
+.lld-compact-brand-left {
+    min-width: 0;
+    gap: 0.85rem;
+}
+
+.lld-compact-menu-button,
+.lld-compact-theme-button,
+.lld-compact-logout-button {
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #f8fafc !important;
+    box-shadow: none !important;
+}
+
+.lld-compact-menu-button:hover,
+.lld-compact-theme-button:hover,
+.lld-compact-logout-button:hover {
+    background: rgba(245, 190, 80, 0.12) !important;
+    border-color: rgba(245, 190, 80, 0.30) !important;
+}
+
+.lld-compact-brand-link {
+    min-width: 0;
+    gap: 0.75rem;
+    color: #f8fafc;
+    text-decoration: none;
+}
+
+.lld-compact-logo {
+    width: 2.65rem;
+    height: 2.65rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.lld-compact-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.lld-compact-brand-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+}
+
+.lld-compact-kicker {
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: #f5be50;
+}
+
+.lld-compact-title {
+    margin-top: 0.18rem;
+    font-family: var(--font-heading, inherit);
+    font-size: 1.35rem;
+    font-weight: 950;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #ffffff;
+}
+
+.lld-compact-subtitle {
+    margin-top: 0.18rem;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.20em;
+    text-transform: uppercase;
+    color: rgba(203, 213, 225, 0.82);
+}
+
+.lld-compact-actions {
+    flex: 0 0 auto;
+    gap: 0.55rem;
+}
+
+.lld-compact-logout-button {
+    height: 2.4rem !important;
+    padding-left: 0.85rem !important;
+    padding-right: 0.85rem !important;
+    font-weight: 800 !important;
+}
+
+.lld-compact-nav-row {
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+    padding: 0.45rem 0.85rem 0.55rem;
+    overflow-x: auto;
+}
+
+.lld-compact-nav-row::-webkit-scrollbar {
+    display: none;
+}
+
+.lld-compact-nav {
+    gap: 0.35rem;
+    min-width: max-content;
+}
+
+.lld-compact-nav-link,
+.lld-compact-suite-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    min-height: 2.15rem;
+    border-radius: 0.72rem;
+    padding: 0.48rem 0.68rem;
+    color: rgba(226, 232, 240, 0.88);
+    font-size: 0.78rem;
+    font-weight: 850;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.lld-compact-nav-link:hover,
+.lld-compact-suite-link:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #ffffff;
+}
+
+.lld-compact-nav-link.active {
+    background: rgba(245, 190, 80, 0.18);
+    color: #f5be50;
+    box-shadow: inset 3px 0 0 rgba(245, 190, 80, 0.85);
+}
+
+.lld-compact-suite-link {
+    color: #f5be50;
+}
+
+.lld-compact-nav-divider {
+    width: 1px;
+    align-self: stretch;
+    min-height: 1.65rem;
+    margin: 0 0.25rem;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.lld-compact-project-row {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.5rem 1rem 0.65rem;
+    overflow-x: auto;
+}
+
+.lld-compact-project-link {
+    max-width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 0.55rem;
+    padding: 0.35rem 0.65rem;
+    color: rgba(226, 232, 240, 0.88);
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 0.75rem;
+    transition: all 150ms ease;
+}
+
+.lld-compact-project-link.active {
+    border-color: rgba(245, 190, 80, 0.55);
+    background: rgba(245, 190, 80, 0.16);
+    color: #f5be50;
+}
+
+@media (min-width: 1024px) {
+    .app-header {
+        display: none !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .lld-compact-brand-row {
+        min-height: 3.95rem;
+        padding: 0.65rem 0.75rem;
+    }
+
+    .lld-compact-logo {
+        width: 2.25rem;
+        height: 2.25rem;
+    }
+
+    .lld-compact-title {
+        font-size: 1.05rem;
+    }
+
+    .lld-compact-subtitle {
+        display: none;
+    }
+
+    .lld-compact-logout-button span {
+        display: none;
+    }
+
+    .lld-compact-nav-link,
+    .lld-compact-suite-link {
+        font-size: 0.72rem;
+        padding: 0.42rem 0.58rem;
+    }
+}
+
+/* LLD final TSM comparison polish
+   Tightens half-screen header/card rhythm after build-passed LLD shell alignment.
+   Keeps desktop left rail and dark mode intact. */
+
+/* At tablet/half-screen widths, TSM does not show a hamburger beside the brand.
+   Keep hamburger for true mobile only. */
+@media (min-width: 641px) and (max-width: 1023px) {
+    .lld-compact-menu-button {
+        display: none !important;
+    }
+
+    .lld-compact-brand-row {
+        min-height: 4.05rem;
+        padding: 0.68rem 1rem 0.62rem;
+    }
+
+    .lld-compact-brand-left {
+        gap: 0.7rem;
+    }
+
+    .lld-compact-logo {
+        width: 2.48rem;
+        height: 2.48rem;
+    }
+
+    .lld-compact-title {
+        font-size: 1.22rem;
+        letter-spacing: 0.075em;
+    }
+
+    .lld-compact-subtitle {
+        font-size: 0.62rem;
+        letter-spacing: 0.18em;
+    }
+
+    .lld-compact-actions {
+        gap: 0.45rem;
+    }
+
+    .lld-compact-theme-button {
+        width: 2.35rem !important;
+        height: 2.35rem !important;
+    }
+
+    .lld-compact-logout-button {
+        height: 2.35rem !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    .lld-compact-nav-row {
+        padding: 0.36rem 0.78rem 0.42rem;
+    }
+
+    .lld-compact-nav {
+        gap: 0.28rem;
+    }
+
+    .lld-compact-nav-link,
+    .lld-compact-suite-link {
+        min-height: 2rem;
+        border-radius: 0.55rem;
+        padding: 0.42rem 0.58rem;
+        font-size: 0.73rem;
+        font-weight: 820;
+    }
+}
+
+/* Bring LLD light dashboard cards closer to TSM's flatter admin-card rhythm. */
+.light .main-content [data-testid="dashboard-page"] .rounded-xl,
+.light .main-content [data-testid="dashboard-page"] .rounded-2xl,
+.light .main-content [data-testid="dashboard-page"] .rounded-\[1\.6rem\] {
+    border-radius: 0.28rem !important;
+}
+
+.light .main-content [data-testid="dashboard-page"] .ops-card {
+    border-radius: 0.28rem !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+}
+
+.light .main-content [data-testid="dashboard-page"] .ops-card:hover {
+    transform: none !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.10) !important;
+}
+
+/* Make the Live Overview footer less dominant so cards read more like TSM tiles. */
+.light .main-content [data-testid="dashboard-page"] .ops-card [class*="border-t"] {
+    background: #fafafa !important;
+    padding-top: 0.52rem !important;
+    padding-bottom: 0.52rem !important;
+}
+
+.light .main-content [data-testid="dashboard-page"] .ops-card [class*="tracking-\[0\.16em\]"] {
+    letter-spacing: 0.11em !important;
+    font-size: 0.68rem !important;
+}
+
+/* Pull the LLD dashboard start closer to TSM's admin content spacing. */
+.light .main-content [data-testid="dashboard-page"] {
+    padding-top: 2.35rem !important;
+}
+
+/* Keep true mobile usable. */
+@media (max-width: 640px) {
+    .lld-compact-menu-button {
+        display: inline-flex !important;
+    }
+
+    .light .main-content [data-testid="dashboard-page"] {
+        padding-top: 1.35rem !important;
+    }
+}
+
+/* LLD / MIRROR APPROVED TSM VISUAL BALANCE V1
+   Mirrors the approved Timesheet Manager visual direction:
+   dark/navy shell, cream workspace, clean cards, gold active/highlight only,
+   unboxed balanced logo lockup, and softer rail/header/card borders. */
+
+/* Compact header brand: unboxed logo with enough weight, not a floating coin. */
+.lld-compact-logo {
+    width: 3.05rem !important;
+    height: 3.05rem !important;
+    min-width: 3.05rem !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+}
+
+.lld-compact-logo img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 0 6px rgba(245, 190, 80, 0.16));
+}
+
+.lld-compact-brand-link {
+    gap: 0.7rem !important;
+    align-items: center !important;
+}
+
+.lld-compact-brand-copy {
+    justify-content: center !important;
+}
+
+.lld-compact-title {
+    letter-spacing: 0.06em !important;
+}
+
+.lld-compact-subtitle {
+    letter-spacing: 0.14em !important;
+}
+
+/* Compact header shell: keep dark identity, soften the boxed/outlined feel. */
+.app-header {
+    background:
+        radial-gradient(circle at top left, rgba(245, 190, 80, 0.10), transparent 32%),
+        linear-gradient(180deg, #060b17 0%, #091120 58%, #0b1322 100%) !important;
+    border-bottom-color: rgba(245, 190, 80, 0.16) !important;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14) !important;
+}
+
+.lld-compact-menu-button,
+.lld-compact-theme-button,
+.lld-compact-logout-button {
+    border-color: rgba(245, 190, 80, 0.18) !important;
+    background: rgba(255, 255, 255, 0.045) !important;
+}
+
+.lld-compact-menu-button:hover,
+.lld-compact-theme-button:hover,
+.lld-compact-logout-button:hover {
+    border-color: rgba(245, 190, 80, 0.34) !important;
+    background: rgba(245, 190, 80, 0.12) !important;
+}
+
+.lld-compact-nav-link,
+.lld-compact-suite-link {
+    border-radius: 0.56rem !important;
+    min-height: 1.9rem !important;
+    padding: 0.38rem 0.58rem !important;
+}
+
+.lld-compact-nav-link:hover,
+.lld-compact-suite-link:hover {
+    background: rgba(255, 255, 255, 0.075) !important;
+}
+
+.lld-compact-nav-link.active {
+    background: rgba(245, 190, 80, 0.17) !important;
+    box-shadow: inset 3px 0 0 rgba(245, 190, 80, 0.86) !important;
+}
+
+/* Desktop rail: target the known Long Line Suite rail classes when present.
+   These selectors are intentionally tolerant so they polish the existing LLD rail without touching business logic. */
+@media (min-width: 1024px) {
+    .desktop-sidebar,
+    .app-sidebar,
+    .lld-sidebar,
+    .sidebar {
+        background:
+            radial-gradient(circle at top left, rgba(245, 190, 80, 0.10), transparent 32%),
+            linear-gradient(180deg, #060b17 0%, #091120 58%, #0b1322 100%) !important;
+        border-color: rgba(245, 190, 80, 0.16) !important;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14) !important;
+    }
+
+    .brand-logo,
+    .sidebar-logo,
+    .lld-rail-logo,
+    .rail-logo {
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        filter: drop-shadow(0 0 6px rgba(245, 190, 80, 0.16));
+    }
+}
+
+/* LLD light dashboard: keep TSM practical admin rhythm. */
+.light .main-content [data-testid="dashboard-page"] {
+    padding-top: 2.35rem !important;
+}
+
+.light .main-content [data-testid="dashboard-page"] .ops-card,
+.light .main-content [data-testid="dashboard-page"] .rounded-xl,
+.light .main-content [data-testid="dashboard-page"] .rounded-2xl {
+    border-color: rgba(148, 111, 45, 0.20) !important;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.055) !important;
+}
+
+.light .main-content [data-testid="dashboard-page"] .ops-card:hover {
+    transform: none !important;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.075) !important;
+}
+
+/* LLD dark dashboard: readable but less harsh/boxed. */
+.dark .main-content [data-testid="dashboard-page"] .ops-card,
+.dark .main-content [data-testid="dashboard-page"] [class*="bg-white"],
+.dark .main-content [data-testid="dashboard-page"] [class*="bg-card"],
+.dark .main-content [data-testid="dashboard-page"] [class*="bg-slate"] {
+    border-color: rgba(245, 190, 80, 0.18) !important;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* Half-screen/tablet: mirror TSM density. */
+@media (min-width: 641px) and (max-width: 1023px) {
+    .lld-compact-logo {
+        width: 3.05rem !important;
+        height: 3.05rem !important;
+        min-width: 3.05rem !important;
+    }
+
+    .lld-compact-brand-row {
+        min-height: 4.12rem !important;
+        padding: 0.68rem 1rem 0.62rem !important;
+    }
+
+    .lld-compact-nav-link,
+    .lld-compact-suite-link {
+        min-height: 1.9rem !important;
+        padding: 0.38rem 0.58rem !important;
+        font-size: 0.73rem !important;
+    }
+}
+
+/* True mobile keeps the logo compact and the menu visible. */
+@media (max-width: 640px) {
+    .lld-compact-logo {
+        width: 2.65rem !important;
+        height: 2.65rem !important;
+        min-width: 2.65rem !important;
+    }
+
+    .lld-compact-brand-link {
+        gap: 0.55rem !important;
+    }
+
+    .lld-compact-menu-button {
+        display: inline-flex !important;
+    }
+
+    .light .main-content [data-testid="dashboard-page"] {
+        padding-top: 1.35rem !important;
+    }
+}
+
+/* LLD dark dashboard white strip fix V1
+   Fixes remaining light bg-white strips on dark dashboard cards after TSM mirror polish. */
+.dark .main-content [data-testid="dashboard-page"] [class*="bg-white"],
+.dark .main-content [data-testid="dashboard-page"] [class*="bg-gray-50"],
+.dark .main-content [data-testid="dashboard-page"] [class*="bg-slate-50"] {
+    background:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(8, 13, 24, 0.96)) !important;
+    color: #f8fafc !important;
+    border-color: rgba(245, 190, 80, 0.16) !important;
+}
+
+.dark .main-content [data-testid="dashboard-page"] [class*="bg-white"] h1,
+.dark .main-content [data-testid="dashboard-page"] [class*="bg-white"] h2,
+.dark .main-content [data-testid="dashboard-page"] [class*="bg-white"] h3,
+.dark .main-content [data-testid="dashboard-page"] [class*="bg-white"] p,
+.dark .main-content [data-testid="dashboard-page"] [class*="bg-white"] span,
+.dark .main-content [data-testid="dashboard-page"] [class*="bg-white"] div {
+    color: inherit;
+}
+
+.dark .main-content [data-testid="dashboard-page"] [class*="text-slate-900"],
+.dark .main-content [data-testid="dashboard-page"] [class*="text-slate-800"],
+.dark .main-content [data-testid="dashboard-page"] [class*="text-gray-900"],
+.dark .main-content [data-testid="dashboard-page"] [class*="text-gray-800"] {
+    color: #f8fafc !important;
+}
+
+.dark .main-content [data-testid="dashboard-page"] [class*="text-slate-600"],
+.dark .main-content [data-testid="dashboard-page"] [class*="text-slate-500"],
+.dark .main-content [data-testid="dashboard-page"] [class*="text-gray-600"],
+.dark .main-content [data-testid="dashboard-page"] [class*="text-gray-500"] {
+    color: rgba(203, 213, 225, 0.86) !important;
+}
+
+/* LLD desktop shell action relocation V1
+   On full desktop, account action buttons sit top-right like a proper app shell.
+   Sidebar footer actions remain available for mobile/tablet sidebar use. */
+.lld-desktop-shell-actions {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .lld-desktop-shell-actions {
+        position: fixed;
+        top: 1.05rem;
+        right: 1.35rem;
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+    }
+
+    .lld-desktop-theme-button,
+    .lld-desktop-logout-button {
+        height: 2.35rem !important;
+        border: 1px solid rgba(245, 190, 80, 0.20) !important;
+        border-radius: 0.55rem !important;
+        background: rgba(8, 13, 24, 0.86) !important;
+        color: #f8fafc !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18) !important;
+        backdrop-filter: blur(10px);
+    }
+
+    .lld-desktop-theme-button {
+        width: 2.35rem !important;
+        padding: 0 !important;
+    }
+
+    .lld-desktop-logout-button {
+        padding: 0 0.85rem !important;
+        gap: 0.45rem !important;
+        font-size: 0.78rem !important;
+        font-weight: 850 !important;
+        letter-spacing: 0.02em !important;
+    }
+
+    .lld-desktop-theme-button:hover,
+    .lld-desktop-logout-button:hover {
+        border-color: rgba(245, 190, 80, 0.38) !important;
+        background: rgba(245, 190, 80, 0.13) !important;
+    }
+
+    .lld-sidebar-action-grid {
+        display: none !important;
+    }
+}
+
+@media (max-width: 1023px) {
+    .lld-desktop-shell-actions {
+        display: none !important;
+    }
+
+    .lld-sidebar-action-grid {
+        display: grid !important;
+    }
+}
+/* LLD LEFT-RAIL THEME + LOGOUT — LONG LINE SUITE STANDARD */
+.lld-sidebar-footer {
+  margin-top: auto !important;
+  padding: 0.85rem 0.85rem 1rem !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.lld-sidebar-user {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  min-height: 3.6rem !important;
+  padding: 0.72rem 0.76rem !important;
+  border: 1px solid rgba(245, 190, 80, 0.18) !important;
+  border-radius: 0.9rem !important;
+  background:
+    radial-gradient(circle at top right, rgba(245, 190, 80, 0.10), transparent 34%),
+    rgba(255, 255, 255, 0.045) !important;
+}
+
+.lld-sidebar-action-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 0.5rem !important;
+  margin-top: 0.65rem !important;
+}
+
+.lld-sidebar-action-grid button {
+  min-height: 2.25rem !important;
+  justify-content: center !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  background: rgba(255, 255, 255, 0.045) !important;
+  color: rgba(226, 232, 240, 0.94) !important;
+  box-shadow: none !important;
+}
+
+.lld-sidebar-action-grid button:hover {
+  background: rgba(255, 255, 255, 0.075) !important;
+  color: #ffffff !important;
+}
+
+.lld-sidebar-action-grid [data-testid="logout-btn"] {
+  color: rgba(226, 232, 240, 0.94) !important;
+}
+
+.lld-desktop-shell-actions {
+  display: none !important;
 }

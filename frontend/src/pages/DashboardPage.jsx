@@ -181,34 +181,34 @@ const DashboardPage = () => {
   }) => {
     const toneClasses = {
       critical: {
-        card: 'border-red-500/45 bg-gradient-to-br from-slate-950 via-slate-950 to-red-950/25 shadow-[0_20px_60px_rgba(127,29,29,0.20)]',
-        header: 'border-red-500/25 bg-red-500/10',
-        title: 'text-red-200',
-        count: 'border-red-400/55 bg-red-500/15 text-red-100'
+        card: 'border-red-200 bg-red-50 shadow-sm dark:border-red-500/45 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-red-950/25 dark:shadow-[0_20px_60px_rgba(127,29,29,0.20)]',
+        header: 'border-red-200 bg-red-50 dark:border-red-500/25 dark:bg-red-500/10',
+        title: 'text-red-700 dark:text-red-200',
+        count: 'border-red-300 bg-red-100 text-red-700 dark:border-red-400/55 dark:bg-red-500/15 dark:text-red-100'
       },
       warning: {
-        card: 'border-primary/40 bg-gradient-to-br from-slate-950 via-slate-950 to-primary/10 shadow-[0_20px_60px_rgba(245,190,80,0.14)]',
-        header: 'border-primary/25 bg-primary/10',
-        title: 'text-primary',
-        count: 'border-primary/45 bg-primary/15 text-primary'
+        card: 'border-amber-200 bg-white shadow-sm dark:border-primary/40 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-primary/10 dark:shadow-[0_20px_60px_rgba(245,190,80,0.14)]',
+        header: 'border-amber-200 bg-amber-50 dark:border-primary/25 dark:bg-primary/10',
+        title: 'text-amber-700 dark:text-primary',
+        count: 'border-amber-300 bg-amber-100 text-amber-700 dark:border-primary/45 dark:bg-primary/15 dark:text-primary'
       },
       risk: {
-        card: 'border-amber-400/40 bg-gradient-to-br from-slate-950 via-slate-950 to-amber-950/20 shadow-[0_20px_60px_rgba(120,53,15,0.15)]',
-        header: 'border-amber-400/25 bg-amber-400/10',
-        title: 'text-amber-200',
-        count: 'border-amber-400/45 bg-amber-400/15 text-amber-100'
+        card: 'border-yellow-200 bg-yellow-50 shadow-sm dark:border-amber-400/40 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-amber-950/20 dark:shadow-[0_20px_60px_rgba(120,53,15,0.15)]',
+        header: 'border-yellow-200 bg-yellow-50 dark:border-amber-400/25 dark:bg-amber-400/10',
+        title: 'text-yellow-700 dark:text-amber-200',
+        count: 'border-yellow-300 bg-yellow-100 text-yellow-700 dark:border-amber-400/45 dark:bg-amber-400/15 dark:text-amber-100'
       },
       neutral: {
-        card: 'border-primary/25 bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900 shadow-[0_18px_50px_rgba(0,0,0,0.18)]',
-        header: 'border-primary/20 bg-primary/8',
-        title: 'text-primary',
-        count: 'border-primary/35 bg-primary/10 text-primary'
+        card: 'border-slate-200 bg-white shadow-sm dark:border-primary/25 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:shadow-[0_18px_50px_rgba(0,0,0,0.18)]',
+        header: 'border-slate-200 bg-white dark:border-primary/20 dark:bg-primary/8',
+        title: 'text-slate-900 dark:text-primary',
+        count: 'border-slate-300 bg-slate-100 text-slate-700 dark:border-primary/35 dark:bg-primary/10 dark:text-primary'
       },
       success: {
-        card: 'border-emerald-400/35 bg-gradient-to-br from-slate-950 via-slate-950 to-emerald-950/20 shadow-[0_18px_50px_rgba(6,78,59,0.14)]',
-        header: 'border-emerald-400/25 bg-emerald-400/10',
-        title: 'text-emerald-200',
-        count: 'border-emerald-400/45 bg-emerald-400/15 text-emerald-100'
+        card: 'border-emerald-200 bg-emerald-50 shadow-sm dark:border-emerald-400/35 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-emerald-950/20 dark:shadow-[0_18px_50px_rgba(6,78,59,0.14)]',
+        header: 'border-emerald-200 bg-emerald-50 dark:border-emerald-400/25 dark:bg-emerald-400/10',
+        title: 'text-emerald-700 dark:text-emerald-200',
+        count: 'border-emerald-300 bg-emerald-100 text-emerald-700 dark:border-emerald-400/45 dark:bg-emerald-400/15 dark:text-emerald-100'
       }
     };
 
@@ -225,9 +225,9 @@ const DashboardPage = () => {
             {count}
           </span>
         </CardHeader>
-        <CardContent className="bg-slate-950/95 px-5 py-5">
+        <CardContent className="bg-white px-5 py-5 dark:bg-slate-950/95">
           {count > 0 ? children : (
-            <p className="py-4 text-center text-sm text-slate-300">{emptyText}</p>
+            <p className="py-4 text-center text-sm text-slate-600 dark:text-slate-300">{emptyText}</p>
           )}
         </CardContent>
       </Card>
@@ -237,24 +237,24 @@ const DashboardPage = () => {
   const StatCard = ({ label, value, icon, route, valueClassName = '', tone = 'default' }) => {
     const toneClass =
       tone === 'CRITICAL'
-        ? 'border-red-400/45 bg-gradient-to-br from-slate-950 via-slate-900 to-red-950/15 hover:border-red-300'
+        ? 'border-red-200 bg-red-50 hover:border-red-300 dark:border-red-400/45 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-red-950/15 dark:hover:border-red-300'
         : tone === 'warning'
-          ? 'border-primary/35 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/10 hover:border-primary'
-          : 'border-primary/20 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 hover:border-primary/70';
+          ? 'border-amber-200 bg-white hover:border-amber-300 dark:border-primary/35 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-primary/10 dark:hover:border-primary'
+          : 'border-slate-200 bg-white hover:border-slate-300 dark:border-primary/20 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 dark:hover:border-primary/70';
 
     const iconBoxClass =
       tone === 'CRITICAL'
-        ? 'border-red-500/40 bg-red-500/10 text-red-500'
+        ? 'border-red-300 bg-red-100 text-red-600 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-500'
         : tone === 'warning'
-          ? 'border-amber-500/40 bg-amber-500/10 text-amber-500'
-          : 'border-primary/30 bg-primary/10 text-primary';
+          ? 'border-amber-300 bg-amber-100 text-amber-600 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-500'
+          : 'border-amber-300 bg-amber-100 text-amber-600 dark:border-primary/30 dark:bg-primary/10 dark:text-primary';
 
     const supportTextClass =
       tone === 'CRITICAL'
-        ? 'text-red-500'
+        ? 'text-red-700 dark:text-red-500'
         : tone === 'warning'
-          ? 'text-amber-500'
-          : 'text-primary';
+          ? 'text-amber-700 dark:text-amber-500'
+          : 'text-amber-700 dark:text-primary';
 
     return (
       <button
@@ -262,7 +262,7 @@ const DashboardPage = () => {
         onClick={() => handleStatClick(route)}
         className="w-full text-left"
       >
-        <Card className={`ops-card overflow-hidden rounded-2xl border shadow-[0_18px_50px_rgba(0,0,0,0.14)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(0,0,0,0.22)] ${toneClass}`}>
+        <Card className={`ops-card overflow-hidden rounded-xl border shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:shadow-[0_18px_50px_rgba(0,0,0,0.14)] dark:hover:shadow-[0_24px_70px_rgba(0,0,0,0.22)] ${toneClass}`}>
           <CardContent className="p-0">
             <div className="flex items-start justify-between gap-3 px-5 pt-5">
               <div className="min-w-0 flex-1">
@@ -274,7 +274,7 @@ const DashboardPage = () => {
               </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between border-t border-white/10 px-5 py-3">
+            <div className="mt-4 flex items-center justify-between border-t border-slate-200 px-5 py-3 dark:border-white/10">
               <span className={`text-[11px] font-bold uppercase tracking-[0.16em] ${supportTextClass}`}>
                 Live overview
               </span>
@@ -345,8 +345,8 @@ const DashboardPage = () => {
           : 'text-primary';
 
     return (
-      <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-slate-400">
+      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-white/10 dark:bg-black/20 dark:shadow-none">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-slate-700 dark:text-slate-400">
           {label}
         </p>
         <p className={`mt-1 font-heading text-3xl font-black leading-none ${toneClass}`}>
@@ -386,21 +386,21 @@ const DashboardPage = () => {
   const urgentTodayCount = overdueItems.length + dueTodayItems.length + blockedDelayedItems.length;
 
   return (
-    <div className="space-y-5 pt-1" data-testid="dashboard-page">
-      <section className="overflow-hidden rounded-[1.6rem] border border-primary/35 bg-gradient-to-br from-slate-950 via-slate-900 to-black shadow-[0_28px_90px_rgba(0,0,0,0.30)] relative z-0">
-        <div className="grid grid-cols-1 gap-5 p-5 lg:grid-cols-[1.4fr_0.9fr]">
+    <div className="space-y-5 pt-8" data-testid="dashboard-page">
+      <section className="relative z-0 rounded-none border-0 bg-transparent shadow-none dark:overflow-hidden dark:rounded-[1.6rem] dark:border dark:border-primary/35 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-black dark:shadow-[0_28px_90px_rgba(0,0,0,0.30)]">
+        <div className="grid grid-cols-1 gap-5 p-0 dark:p-5 lg:grid-cols-[1fr_1.15fr]">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.26em] text-primary">
               Long Line Diary
             </p>
-            <h1 className="mt-2 font-heading text-3xl font-black uppercase tracking-[0.08em] text-foreground sm:text-4xl">
+            <h1 className="mt-2 font-heading text-2xl font-black uppercase tracking-[0.08em] text-foreground sm:text-3xl">
               Today&apos;s Site Reality
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
               Capture the day, review roadblocks, and keep action items moving from one clear operations dashboard.
             </p>
 
-            <div className="mt-5 flex flex-wrap gap-3">
+            <div className="mt-4 flex flex-wrap gap-3">
               <Link to="/diary">
                 <Button className="btn-primary">
                   Open Diary <ArrowRight className="ml-2 h-4 w-4" />
@@ -561,13 +561,13 @@ const DashboardPage = () => {
       )}
 
       {widgets.quickActions && (
-        <section className="rounded-2xl border border-primary/30 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/10 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.16)]">
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:rounded-2xl dark:border-primary/30 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-primary/10 dark:shadow-[0_18px_60px_rgba(0,0,0,0.16)]">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-primary">
                 Quick Actions
               </p>
-              <p className="mt-1 text-sm text-slate-300">
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                 Jump straight into today&apos;s diary workflow.
               </p>
             </div>
