@@ -35,6 +35,7 @@ JWT_EXPIRATION_HOURS = 24
 
 # Weather API
 OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY', '')
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '').strip().lower()
 
 app = FastAPI(title="LLDv2 API", description="Long Line Diary V2 - Construction Operations Command Center")
 api_router = APIRouter(prefix="/api")
@@ -423,6 +424,33 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+def is_admin_user(user: dict) -> bool:
+    configured_admin_email = ADMIN_EMAIL.strip().lower()
+    user_email = (user.get("email") or "").strip().lower()
+    return bool(configured_admin_email and user_email == configured_admin_email)
+
+async def require_admin_user(current_user: dict = Depends(get_current_user)):
+    if not is_admin_user(current_user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+def build_user_response(user: dict) -> UserResponse:
+    email = (user.get("email") or "").strip().lower()
+    created_at = user.get("created_at") or ""
+
+    if not isinstance(created_at, str):
+        if hasattr(created_at, "isoformat"):
+            created_at = created_at.isoformat()
+        else:
+            created_at = str(created_at)
+
+    return UserResponse(
+        id=str(user.get("id") or ""),
+        email=email,
+        name=user.get("name") or email,
+        company=user.get("company"),
+        created_at=created_at
+    )
 # ==================== AUTH ROUTES ====================
 
 @api_router.post("/auth/register", response_model=TokenResponse)
@@ -493,6 +521,27 @@ async def login(credentials: UserLogin):
 async def get_me(current_user: dict = Depends(get_current_user)):
     return UserResponse(**current_user)
 
+# ==================== ADMIN USER ROUTES ====================
+
+@api_router.get("/users", response_model=List[UserResponse])
+async def list_users(admin_user: dict = Depends(require_admin_user)):
+    users = await db.users.find({}, {"_id": 0, "password": 0}).sort("created_at", 1).to_list(1000)
+    return [build_user_response(user) for user in users]
+
+@api_router.delete("/users/{user_id}")
+async def delete_user(user_id: str, admin_user: dict = Depends(require_admin_user)):
+    if user_id == admin_user["id"]:
+        raise HTTPException(status_code=400, detail="Cannot delete your own admin account")
+
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    result = await db.users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"message": "User deleted", "deleted_user_id": user_id}
 # ==================== PROJECTS ROUTES ====================
 
 @api_router.post("/projects", response_model=ProjectResponse)
@@ -2560,29 +2609,3 @@ app.add_middleware(
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
