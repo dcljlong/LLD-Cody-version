@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Input } from '../components/ui/input';
@@ -14,6 +14,7 @@ const RegisterPage = () => {
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
     company: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -28,7 +29,7 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.password) {
+    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
       toast.error('Please fill in all required fields');
       return;
     }

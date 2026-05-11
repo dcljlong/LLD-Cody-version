@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, File, UploadFile
+﻿from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, File, UploadFile
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -436,7 +436,7 @@ async def register(user_data: UserCreate):
     
     user_doc = {
         "id": user_id,
-        "email": user_data.email,
+        "email": email,
         "password": hash_password(user_data.password),
         "name": user_data.name,
         "company": user_data.company,
@@ -462,7 +462,7 @@ async def register(user_data: UserCreate):
         access_token=token,
         user=UserResponse(
             id=user_id,
-            email=user_data.email,
+            email=email,
             name=user_data.name,
             company=user_data.company,
             created_at=now
@@ -2558,6 +2558,7 @@ app.add_middleware(
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
 
 
 
