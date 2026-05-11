@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Input } from '../components/ui/input';
@@ -39,9 +39,13 @@ const RegisterPage = () => {
       return;
     }
 
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
     setLoading(true);
     try {
-      await register(formData.email, formData.password, formData.name, formData.company);
+      await register(formData.email.trim().toLowerCase(), formData.password, formData.name.trim(), formData.company.trim());
       toast.success('Account created');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Registration failed');
@@ -149,6 +153,19 @@ const RegisterPage = () => {
             </div>
           </div>
 
+          <div>
+            <Label htmlFor="confirmPassword" className="form-label lld-login-label">Confirm Password *</Label>
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Re-enter password"
+              className="form-input lld-login-input"
+              data-testid="register-confirm-password"
+            />
+          </div>
           <button
             type="submit"
             className="lld-login-action-button"

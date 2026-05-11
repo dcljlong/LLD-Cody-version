@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext(null);
@@ -39,7 +39,8 @@ export const AuthProvider = ({ children }) => {
   }, [token, fetchUser]);
 
   const login = async (email, password) => {
-    const response = await axios.post(`${API_URL}/auth/login`, { email, password });
+    const normalisedEmail = email.trim().toLowerCase();
+    const response = await axios.post(`${API_URL}/auth/login`, { email: normalisedEmail, password });
     const { access_token, user: userData } = response.data;
 
     localStorage.setItem('lldv2_token', access_token);
@@ -51,11 +52,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (email, password, name, company) => {
+    const normalisedRegisterEmail = email.trim().toLowerCase();
     const response = await axios.post(`${API_URL}/auth/register`, {
-      email,
+      email: normalisedRegisterEmail,
       password,
-      name,
-      company
+      name: name.trim(),
+      company: company.trim()
     });
     const { access_token, user: userData } = response.data;
 
