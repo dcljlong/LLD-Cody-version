@@ -1317,3 +1317,318 @@
 .lld-desktop-shell-actions {
   display: none !important;
 }
+
+
+/* LLD / SUITE RAIL V6D STANDARD
+   Match approved Timesheet + FitoutOS rail standard:
+   - dark navy/gold rail rhythm
+   - app-specific gold suite mini-mark icons
+   - account/theme/logout footer pinned to rail base
+   - flexible blank space above account for future rail items
+*/
+@media (min-width: 1024px) {
+  .sidebar {
+    background:
+      radial-gradient(circle at top left, rgba(245, 190, 80, 0.12), transparent 34%),
+      linear-gradient(180deg, #050914 0%, #08101f 58%, #0b1220 100%) !important;
+    border-right: 1px solid rgba(245, 190, 80, 0.18) !important;
+    color: #f8fafc !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .sidebar nav {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+
+  .sidebar-section-header {
+    margin: 0 0 0.34rem !important;
+    padding: 0 0.72rem !important;
+    color: rgba(245, 190, 80, 0.80) !important;
+    font-size: 0.62rem !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.16em !important;
+    text-transform: uppercase !important;
+    line-height: 1 !important;
+  }
+
+  .sidebar .sidebar-nav-item[target="_blank"] {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 1.96rem !important;
+    padding: 0.36rem 0.72rem !important;
+    border-radius: 0.74rem !important;
+    gap: 0.58rem !important;
+    border: 1px solid transparent !important;
+    background: transparent !important;
+    color: rgba(245, 190, 80, 0.92) !important;
+    font-size: 0.80rem !important;
+    font-weight: 780 !important;
+    text-decoration: none !important;
+    transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease !important;
+  }
+
+  .sidebar .sidebar-nav-item[target="_blank"]:hover {
+    background: rgba(255, 255, 255, 0.10) !important;
+    border-color: rgba(245, 190, 80, 0.22) !important;
+    color: #ffffff !important;
+    transform: none !important;
+  }
+
+  .sidebar .sidebar-nav-item[target="_blank"] > svg:first-child {
+    width: 1.72rem !important;
+    height: 1.72rem !important;
+    min-width: 1.72rem !important;
+    padding: 0.38rem !important;
+    box-sizing: border-box !important;
+    border-radius: 0.62rem !important;
+    border: 1px solid rgba(245, 190, 80, 0.36) !important;
+    background:
+      radial-gradient(circle at 35% 25%, rgba(245, 190, 80, 0.18), transparent 48%),
+      linear-gradient(135deg, rgba(245, 190, 80, 0.11), rgba(255, 255, 255, 0.035)) !important;
+    color: #f5be50 !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.045),
+      0 8px 18px rgba(0, 0, 0, 0.14) !important;
+    flex: 0 0 auto !important;
+  }
+
+  .sidebar .sidebar-nav-item[target="_blank"]:hover > svg:first-child {
+    border-color: rgba(245, 190, 80, 0.62) !important;
+    background:
+      radial-gradient(circle at 35% 25%, rgba(245, 190, 80, 0.28), transparent 48%),
+      linear-gradient(135deg, rgba(245, 190, 80, 0.17), rgba(255, 255, 255, 0.055)) !important;
+    color: #ffe1a3 !important;
+  }
+
+  .sidebar .sidebar-nav-item[target="_blank"] > svg:last-child:not(:first-child) {
+    display: none !important;
+  }
+
+  .lld-sidebar-footer {
+    margin-top: auto !important;
+    padding: 0.62rem 0.72rem 0.08rem !important;
+    border-top: 1px solid rgba(245, 190, 80, 0.18) !important;
+    flex: 0 0 auto !important;
+  }
+
+  .lld-sidebar-user {
+    margin-bottom: 0 !important;
+    padding: 0.34rem 0.72rem 0.42rem !important;
+    border-radius: 0.78rem !important;
+    border: 1px solid rgba(245, 190, 80, 0.22) !important;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.070), rgba(255, 255, 255, 0.035)) !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16) !important;
+  }
+
+  .lld-sidebar-user p:first-of-type {
+    font-size: 0.82rem !important;
+    line-height: 1.08 !important;
+  }
+
+  .lld-sidebar-user p:last-of-type {
+    margin-top: 0.12rem !important;
+    color: rgba(245, 190, 80, 0.82) !important;
+    font-size: 0.64rem !important;
+    line-height: 1.05 !important;
+  }
+
+  .lld-sidebar-action-grid {
+    display: flex !important;
+    grid-template-columns: none !important;
+    align-items: center !important;
+    gap: 0.42rem !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    margin-top: 0.48rem !important;
+  }
+
+  .lld-sidebar-action-grid [data-testid="theme-toggle"] {
+    flex: 0 0 2.35rem !important;
+    width: 2.35rem !important;
+    min-width: 2.35rem !important;
+    height: 2.35rem !important;
+    min-height: 2.35rem !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .lld-sidebar-action-grid [data-testid="theme-toggle"] span {
+    display: none !important;
+  }
+
+  .lld-sidebar-action-grid [data-testid="logout-btn"] {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    height: 2.35rem !important;
+    min-height: 2.35rem !important;
+    padding: 0 0.85rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.45rem !important;
+    white-space: nowrap !important;
+  }
+
+  .lld-sidebar-action-grid button {
+    border: 1px solid rgba(245, 190, 80, 0.20) !important;
+    border-radius: 0.55rem !important;
+    background: rgba(8, 13, 24, 0.86) !important;
+    color: #f8fafc !important;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+
+  .lld-sidebar-action-grid button svg {
+    color: #f5be50 !important;
+  }
+
+  .lld-desktop-shell-actions {
+    display: none !important;
+  }
+}
+
+.lld-suite-mini-mark {
+  display: inline-flex;
+  width: 1.72rem;
+  height: 1.72rem;
+  min-width: 1.72rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.62rem;
+  border: 1px solid rgba(245, 190, 80, 0.36);
+  background:
+    radial-gradient(circle at 35% 25%, rgba(245, 190, 80, 0.18), transparent 48%),
+    linear-gradient(135deg, rgba(245, 190, 80, 0.11), rgba(255, 255, 255, 0.035));
+  color: #f5be50;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.045),
+    0 8px 18px rgba(0, 0, 0, 0.14);
+  flex: 0 0 auto;
+}
+
+.lld-suite-mini-mark svg {
+  width: 0.96rem;
+  height: 0.96rem;
+  flex: 0 0 auto;
+}
+
+.lld-suite-link-label {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.lld-compact-suite-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.48rem !important;
+  color: rgba(245, 190, 80, 0.94) !important;
+}
+
+.lld-compact-suite-link:hover .lld-suite-mini-mark {
+  border-color: rgba(245, 190, 80, 0.62);
+  background:
+    radial-gradient(circle at 35% 25%, rgba(245, 190, 80, 0.28), transparent 48%),
+    linear-gradient(135deg, rgba(245, 190, 80, 0.17), rgba(255, 255, 255, 0.055));
+  color: #ffe1a3;
+}
+
+@media (min-width: 1024px) and (max-height: 820px) {
+  .lld-sidebar-footer {
+    padding-top: 0.48rem !important;
+    padding-bottom: 0 !important;
+  }
+
+  .lld-sidebar-user {
+    padding-top: 0.28rem !important;
+    padding-bottom: 0.34rem !important;
+  }
+
+  .lld-sidebar-action-grid {
+    margin-top: 0.38rem !important;
+  }
+}
+/* LLD / SUITE RAIL V6D STANDARD END */
+
+
+/* LLD / FOOTER ACTION STACK V6D FIX
+   Final footer alignment to match Timesheet + FitoutOS:
+   - account card sits above controls
+   - theme button is centered on its own row
+   - logout is full-width below theme
+*/
+@media (min-width: 1024px) {
+  .lld-sidebar-footer {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+
+  .lld-sidebar-user {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .lld-sidebar-action-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 0.42rem !important;
+    width: 100% !important;
+    margin-top: 0.48rem !important;
+  }
+
+  .lld-sidebar-action-grid [data-testid="theme-toggle"] {
+    align-self: center !important;
+    flex: 0 0 2.35rem !important;
+    width: 2.35rem !important;
+    min-width: 2.35rem !important;
+    max-width: 2.35rem !important;
+    height: 2.35rem !important;
+    min-height: 2.35rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .lld-sidebar-action-grid [data-testid="theme-toggle"] span {
+    display: none !important;
+  }
+
+  .lld-sidebar-action-grid [data-testid="logout-btn"] {
+    align-self: stretch !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 2.35rem !important;
+    min-height: 2.35rem !important;
+    padding: 0 0.85rem !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.45rem !important;
+    white-space: nowrap !important;
+    font-size: 0.78rem !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.02em !important;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 820px) {
+  .lld-sidebar-action-grid {
+    margin-top: 0.38rem !important;
+    gap: 0.34rem !important;
+  }
+}
+/* LLD / FOOTER ACTION STACK V6D FIX END */

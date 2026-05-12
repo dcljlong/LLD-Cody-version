@@ -22,6 +22,7 @@ import {
   Wrench,
   Calendar,
   FileText,
+  Briefcase,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
@@ -80,7 +81,7 @@ const Layout = () => {
     },
     {
       href: process.env.REACT_APP_FITOUTOS_URL || 'http://localhost:3004',
-      icon: FileText,
+      icon: Briefcase,
       label: 'FitoutOS',
       description: 'Programme control',
     },
@@ -315,18 +316,24 @@ const Layout = () => {
 
                 <div className="lld-compact-nav-divider" aria-hidden="true" />
 
-                {suiteNav.map((item) => (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="lld-compact-suite-link"
-                    title={item.description}
-                  >
-                    {item.label}
-                  </a>
-                ))}
+                {suiteNav.map((item) => {
+                  const SuiteIcon = item.icon;
+                  return (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="lld-compact-suite-link"
+                      title={item.description}
+                    >
+                      <span className="lld-suite-mini-mark" aria-hidden="true">
+                        <SuiteIcon className="w-4 h-4" />
+                      </span>
+                      <span className="lld-suite-link-label">{item.label}</span>
+                    </a>
+                  );
+                })}
               </nav>
             </div>
 
