@@ -20,7 +20,7 @@ import {
   ChevronRight,
   ExternalLink,
   Wrench,
-  Calendar,
+  Clock,
   FileText,
   Briefcase,
 } from 'lucide-react';
@@ -75,8 +75,8 @@ const Layout = () => {
     },
     {
       href: process.env.REACT_APP_TIMESHEET_MANAGER_URL || 'http://localhost:3001',
-      icon: Calendar,
-      label: 'Timesheet Manager',
+      icon: Clock,
+      label: 'Timesheet',
       description: 'Labour control',
     },
     {
