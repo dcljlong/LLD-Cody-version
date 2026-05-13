@@ -1,4 +1,4 @@
-/* LLD - Long Line Diary */
+﻿/* LLD - Long Line Diary */
 
 /* Layout */
 .app-container {
@@ -1269,7 +1269,7 @@
         display: grid !important;
     }
 }
-/* LLD LEFT-RAIL THEME + LOGOUT — LONG LINE SUITE STANDARD */
+/* LLD LEFT-RAIL THEME + LOGOUT â€” LONG LINE SUITE STANDARD */
 .lld-sidebar-footer {
   margin-top: auto !important;
   padding: 0.85rem 0.85rem 1rem !important;
@@ -2599,3 +2599,479 @@
   }
 }
 /* LLD / SUITE ICON BOX CORRECTION V6I END */
+
+
+/* LLD / FITOUTOS RAIL CONTRACT TRANSPLANT V7A
+   This is not a visual override pass.
+   LLD Layout.jsx now uses the same rail class contract as FitoutOS:
+   fo-desktop-brand-rail, fo-rail-card, fo-rail-nav-link,
+   fo-rail-suite-link, fo-suite-mini-mark, fo-rail-account,
+   fo-rail-user-block, fo-rail-account-actions, fo-rail-theme-toggle,
+   fo-rail-logout-button.
+*/
+@media (min-width: 1024px) {
+  .app-container {
+    min-height: 100vh !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    z-index: 40 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 256px !important;
+    min-width: 256px !important;
+    max-width: 256px !important;
+    height: 100vh !important;
+    padding: 0.95rem 0.75rem !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    background:
+      radial-gradient(circle at top left, rgba(245, 190, 80, 0.14), transparent 34%),
+      linear-gradient(180deg, #050914 0%, #08101f 58%, #0b1220 100%) !important;
+    border-right: 1px solid rgba(245, 190, 80, 0.22) !important;
+    box-shadow: 14px 0 34px rgba(15, 23, 42, 0.22) !important;
+  }
+
+  .fo-main-content.lld-fitoutos-main {
+    margin-left: 256px !important;
+  }
+
+  .fo-rail-card {
+    padding: 0 0 0.95rem !important;
+    margin: 0 0 0.72rem !important;
+    border-bottom: 1px solid rgba(245, 190, 80, 0.26) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .fo-rail-brand {
+    display: grid !important;
+    grid-template-columns: 4.35rem minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 0.76rem !important;
+    width: 100% !important;
+  }
+
+  .fo-rail-brand-text {
+    min-width: 0 !important;
+  }
+
+  .fo-rail-card .lld-sidebar-logo {
+    width: 4.35rem !important;
+    height: 4.35rem !important;
+    min-width: 4.35rem !important;
+    max-width: 4.35rem !important;
+    filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.42)) !important;
+  }
+
+  .fo-rail-kicker {
+    margin: 0 0 0.12rem !important;
+    color: #f5be50 !important;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    font-size: 0.62rem !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.14em !important;
+    line-height: 1.05 !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+  }
+
+  .fo-rail-title {
+    margin: 0 !important;
+    color: #ffffff !important;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    font-size: 1.52rem !important;
+    font-weight: 850 !important;
+    letter-spacing: -0.015em !important;
+    line-height: 0.96 !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18) !important;
+  }
+
+  .fo-rail-subtitle {
+    margin: 0.16rem 0 0 !important;
+    color: rgba(226, 232, 240, 0.72) !important;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    font-size: 0.62rem !important;
+    font-weight: 760 !important;
+    letter-spacing: 0.08em !important;
+    line-height: 1.08 !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+  }
+
+  .fo-rail-nav {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .fo-rail-section {
+    margin: 0 0 0.62rem !important;
+  }
+
+  .fo-rail-section-title,
+  .fo-rail-suite-title,
+  .fo-desktop-brand-rail .sidebar-section-header {
+    margin: 0.72rem 0 0.34rem !important;
+    padding: 0 0.72rem !important;
+    color: rgba(245, 190, 80, 0.80) !important;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    font-size: 0.62rem !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.16em !important;
+    line-height: 1 !important;
+    text-transform: uppercase !important;
+  }
+
+  .fo-rail-nav-link,
+  .fo-rail-suite-link {
+    min-height: 2.04rem !important;
+    width: 100% !important;
+    padding: 0.42rem 0.72rem !important;
+    border-radius: 0.78rem !important;
+    gap: 0.58rem !important;
+    border: 1px solid transparent !important;
+    background: transparent !important;
+    color: rgba(226, 232, 240, 0.84) !important;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    font-size: 0.80rem !important;
+    font-weight: 760 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.08 !important;
+    text-transform: none !important;
+    text-decoration: none !important;
+  }
+
+  .fo-rail-nav-link:hover,
+  .fo-rail-suite-link:hover {
+    background: rgba(255, 255, 255, 0.10) !important;
+    color: #ffffff !important;
+  }
+
+  .fo-rail-nav-link.active {
+    background: rgba(245, 190, 80, 0.20) !important;
+    color: #f5be50 !important;
+    border-color: rgba(245, 190, 80, 0.34) !important;
+    box-shadow: inset 3px 0 0 rgba(245, 190, 80, 0.92) !important;
+  }
+
+  .fo-rail-nav-icon,
+  .lld-rail-nav-icon {
+    width: 1rem !important;
+    height: 1rem !important;
+    min-width: 1rem !important;
+    color: currentColor !important;
+  }
+
+  .fo-rail-nav-label,
+  .lld-rail-nav-label,
+  .fo-rail-suite-label,
+  .lld-suite-link-label {
+    color: inherit !important;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    font-size: 0.80rem !important;
+    font-weight: 760 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.08 !important;
+    text-transform: none !important;
+    white-space: nowrap !important;
+  }
+
+  .fo-rail-suite-link {
+    color: rgba(248, 250, 252, 0.92) !important;
+    font-weight: 780 !important;
+  }
+
+  .fo-suite-mini-mark,
+  .lld-suite-mini-mark {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 1.72rem !important;
+    height: 1.72rem !important;
+    min-width: 1.72rem !important;
+    max-width: 1.72rem !important;
+    border-radius: 0.62rem !important;
+    border: 1px solid rgba(245, 190, 80, 0.44) !important;
+    background:
+      radial-gradient(circle at 35% 25%, rgba(245, 190, 80, 0.24), transparent 48%),
+      linear-gradient(135deg, rgba(245, 190, 80, 0.15), rgba(255, 255, 255, 0.045)) !important;
+    color: #f5be50 !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.055),
+      0 8px 18px rgba(0, 0, 0, 0.18) !important;
+    flex: 0 0 1.72rem !important;
+  }
+
+  .fo-suite-mini-mark svg,
+  .fo-suite-mini-mark-icon {
+    width: 1rem !important;
+    height: 1rem !important;
+    stroke-width: 2.55 !important;
+  }
+
+  .fo-rail-account {
+    margin-top: auto !important;
+    width: 100% !important;
+    padding-top: 0.62rem !important;
+    padding-bottom: 0.08rem !important;
+    border-top: 1px solid rgba(245, 190, 80, 0.18) !important;
+    flex: 0 0 auto !important;
+  }
+
+  .fo-rail-user-block {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.22rem !important;
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 0.34rem 0.72rem 0.42rem !important;
+    border-radius: 0.78rem !important;
+    border: 1px solid rgba(245, 190, 80, 0.22) !important;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.070), rgba(255, 255, 255, 0.035)) !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16) !important;
+    box-sizing: border-box !important;
+  }
+
+  .fo-rail-user-text,
+  .lld-sidebar-user-text {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .fo-rail-user-name,
+  .lld-sidebar-user-name {
+    margin: 0 !important;
+    color: rgba(248, 250, 252, 0.92) !important;
+    font-size: 0.86rem !important;
+    font-weight: 850 !important;
+    line-height: 1.08 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .fo-rail-user-role,
+  .lld-sidebar-user-role {
+    margin: 0.12rem 0 0 !important;
+    color: rgba(226, 232, 240, 0.72) !important;
+    font-size: 0.62rem !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.13em !important;
+    line-height: 1.05 !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+  }
+
+  .fo-rail-account-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.35rem !important;
+    width: 100% !important;
+    margin-top: 0.48rem !important;
+  }
+
+  .fo-rail-theme-toggle,
+  .fo-rail-logout-button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0.65rem !important;
+    min-height: 2.35rem !important;
+    width: 100% !important;
+    padding: 0.6rem 0.8rem !important;
+    border: 0 !important;
+    border-radius: 0.9rem !important;
+    background: transparent !important;
+    color: rgba(226, 232, 240, 0.78) !important;
+    font-size: 0.82rem !important;
+    font-weight: 850 !important;
+    text-align: left !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+  }
+
+  .fo-rail-theme-toggle {
+    color: rgba(245, 190, 80, 0.86) !important;
+  }
+
+  .fo-rail-theme-toggle:hover,
+  .fo-rail-logout-button:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+    transform: translateX(2px) !important;
+  }
+
+  .fo-rail-logout-button {
+    margin-top: 0.42rem !important;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 820px) {
+  .fo-rail-account {
+    padding-top: 0.48rem !important;
+    padding-bottom: 0 !important;
+  }
+
+  .fo-rail-user-block {
+    padding-top: 0.28rem !important;
+    padding-bottom: 0.34rem !important;
+  }
+
+  .fo-rail-account-actions {
+    margin-top: 0.38rem !important;
+  }
+
+  .fo-rail-logout-button {
+    margin-top: 0.34rem !important;
+  }
+}
+/* LLD / FITOUTOS RAIL CONTRACT TRANSPLANT V7A END */
+
+/* LLD / FITOUTOS SHELL CONTRACT CORRECTION V7B
+   Small correction on top of V7A:
+   - attach the FitoutOS rail contract to the actual LLD nav/buttons
+   - match FitoutOS rail width and cream workspace behaviour
+   - keep theme icon centered and logout full-width like the approved footer stack
+*/
+@media (min-width: 1024px) {
+  .fo-desktop-brand-rail.lld-fitoutos-rail {
+    width: 272px !important;
+    min-width: 272px !important;
+    max-width: 272px !important;
+    padding: 1rem 0.85rem !important;
+  }
+
+  .fo-main-content.lld-fitoutos-main {
+    margin-left: 272px !important;
+    min-height: 100vh !important;
+    background:
+      radial-gradient(circle at top left, rgba(245, 190, 80, 0.08), transparent 26%),
+      linear-gradient(180deg, #fbf7ec 0%, #f4eddd 100%) !important;
+    color: #0b1220 !important;
+  }
+
+  .dark .fo-main-content.lld-fitoutos-main {
+    background:
+      radial-gradient(circle at top left, rgba(245, 190, 80, 0.08), transparent 26%),
+      linear-gradient(180deg, #fbf7ec 0%, #f4eddd 100%) !important;
+    color: #0b1220 !important;
+  }
+
+  .fo-main-content.lld-fitoutos-main > .app-header {
+    display: none !important;
+  }
+
+  .fo-main-content.lld-fitoutos-main > div:last-child {
+    padding: 1.75rem 1.5rem !important;
+  }
+
+  .dark .fo-main-content.lld-fitoutos-main [data-testid="dashboard-page"],
+  .fo-main-content.lld-fitoutos-main [data-testid="dashboard-page"] {
+    background: transparent !important;
+  }
+
+  .fo-rail-nav-link,
+  .fo-rail-suite-link {
+    border-radius: 0.78rem !important;
+  }
+
+  .fo-rail-account-actions {
+    align-items: center !important;
+    gap: 0.45rem !important;
+  }
+
+  .fo-rail-theme-toggle {
+    width: 2.35rem !important;
+    min-width: 2.35rem !important;
+    max-width: 2.35rem !important;
+    height: 2.35rem !important;
+    min-height: 2.35rem !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    border: 1px solid rgba(245, 190, 80, 0.26) !important;
+    border-radius: 0.82rem !important;
+    background: rgba(8, 13, 24, 0.86) !important;
+    color: rgba(245, 190, 80, 0.92) !important;
+  }
+
+  .fo-rail-theme-toggle span {
+    display: none !important;
+  }
+
+  .fo-rail-logout-button {
+    width: 100% !important;
+    min-height: 2.35rem !important;
+    padding: 0 0.85rem !important;
+    justify-content: center !important;
+    border: 1px solid rgba(245, 190, 80, 0.22) !important;
+    border-radius: 0.82rem !important;
+    background: rgba(8, 13, 24, 0.86) !important;
+    color: rgba(248, 250, 252, 0.92) !important;
+  }
+
+  .fo-rail-theme-toggle:hover,
+  .fo-rail-logout-button:hover {
+    background: rgba(245, 190, 80, 0.13) !important;
+    color: #ffffff !important;
+    transform: none !important;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 820px) {
+  .fo-main-content.lld-fitoutos-main {
+    margin-left: 272px !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail {
+    width: 272px !important;
+    min-width: 272px !important;
+    max-width: 272px !important;
+  }
+}
+/* LLD / FITOUTOS SHELL CONTRACT CORRECTION V7B END */
+
+
+
+/* LLD / SUITE TRUE DARK WORKSPACE V7E
+   Suite standard:
+   - Light mode may keep the FitoutOS-style cream workspace.
+   - Dark mode must be a true dark workspace, not cream canvas.
+   - Rail, footer, and dashboard cards remain visually aligned with the FitoutOS shell rhythm.
+*/
+@media (min-width: 1024px) {
+  .dark .fo-main-content.lld-fitoutos-main {
+    background:
+      radial-gradient(circle at top left, rgba(245, 190, 80, 0.08), transparent 28%),
+      linear-gradient(180deg, #060b16 0%, #08111f 46%, #050914 100%) !important;
+    color: rgba(248, 250, 252, 0.94) !important;
+  }
+
+  .dark .fo-main-content.lld-fitoutos-main > div:last-child,
+  .dark .fo-main-content.lld-fitoutos-main [data-testid="dashboard-page"],
+  .dark .fo-main-content.lld-fitoutos-main [data-testid="dashboard-page"] > div {
+    background: transparent !important;
+  }
+
+  .dark .fo-main-content.lld-fitoutos-main h1,
+  .dark .fo-main-content.lld-fitoutos-main h2,
+  .dark .fo-main-content.lld-fitoutos-main h3 {
+    color: rgba(248, 250, 252, 0.96) !important;
+  }
+
+  .dark .fo-main-content.lld-fitoutos-main p {
+    color: rgba(203, 213, 225, 0.86) !important;
+  }
+
+  .dark .fo-main-content.lld-fitoutos-main .text-muted-foreground {
+    color: rgba(203, 213, 225, 0.72) !important;
+  }
+}
+/* LLD / SUITE TRUE DARK WORKSPACE V7E END */

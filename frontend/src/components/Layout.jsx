@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Outlet, NavLink, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -115,11 +115,11 @@ const Layout = () => {
       to={to}
       onClick={() => setSidebarOpen(false)}
       className={({ isActive }) =>
-        `sidebar-nav-item ${isActive ? 'active' : ''}`
+        `sidebar-nav-item fo-rail-nav-link ${isActive ? 'active' : ''}`
       }
     >
-      <Icon className="w-5 h-5" strokeWidth={1.5} />
-      <span className="font-heading tracking-wide">{label}</span>
+      <Icon className="fo-rail-nav-icon lld-rail-nav-icon" strokeWidth={2} />
+      <span className="fo-rail-nav-label lld-rail-nav-label">{label}</span>
     </NavLink>
   );
 
@@ -129,50 +129,44 @@ const Layout = () => {
       target="_blank"
       rel="noopener noreferrer"
       onClick={() => setSidebarOpen(false)}
-      className="sidebar-nav-item"
+      className="sidebar-nav-item fo-rail-suite-link"
     >
-      <Icon className="w-5 h-5" strokeWidth={1.5} />
-      <span className="min-w-0 flex-1">
-        <span className="block font-heading tracking-wide">{label}</span>
-        {description && (
-          <span className="hidden">
-            {description}
-          </span>
-        )}
+      <span className="fo-suite-mini-mark lld-suite-mini-mark" aria-hidden="true">
+        <Icon className="fo-suite-mini-mark-icon" strokeWidth={2.35} />
       </span>
-      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+      <span className="fo-rail-suite-label lld-suite-link-label">{label}</span>
     </a>
   );
 
   return (
     <div className="app-container">
 
-      <aside className={`sidebar ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`sidebar fo-desktop-brand-rail lld-fitoutos-rail ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
 
-        <div className="lld-sidebar-brand">
-          <div className="flex items-center gap-3">
+        <div className="lld-sidebar-brand fo-rail-card">
+          <div className="fo-rail-brand lld-rail-brand-lockup">
             <div className="lld-sidebar-logo">
               <img src={lldLogo} alt="LLD logo" className="w-full h-full object-contain" />
             </div>
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-primary">Long Line</p>
-              <h1 className="font-heading text-2xl font-black leading-none tracking-[0.08em]">LLD</h1>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Site Diary</p>
+            <div className="fo-rail-brand-text lld-rail-brand-text">
+              <p className="fo-rail-kicker lld-rail-brand-eyebrow">Long Line</p>
+              <h1 className="fo-rail-title lld-rail-brand-title">LLD</h1>
+              <p className="fo-rail-subtitle lld-rail-brand-subtitle">Site Diary</p>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-3">
+        <nav className="fo-rail-nav lld-rail-nav">
 
-          <div className="mb-4">
-            <div className="sidebar-section-header">Operations</div>
+          <div className="fo-rail-section lld-rail-section">
+            <div className="sidebar-section-header fo-rail-section-title">Operations</div>
             {operationsNav.map((item) => (
               <NavItem key={item.to} {...item} />
             ))}
           </div>
 
-          <div className="mb-4">
-            <div className="sidebar-section-header">Long Line Suite</div>
+          <div className="fo-rail-section lld-rail-section">
+            <div className="sidebar-section-header fo-rail-suite-title">Long Line Suite</div>
             {suiteNav.map((item) => (
               <ExternalNavItem key={item.href} {...item} />
             ))}
@@ -180,7 +174,7 @@ const Layout = () => {
 
           <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
             <CollapsibleTrigger className="w-full">
-              <div className="sidebar-section-header flex justify-between">
+              <div className="sidebar-section-header fo-rail-section-title flex justify-between">
                 <span>Admin</span>
                 {adminOpen ? <ChevronDown /> : <ChevronRight />}
               </div>
@@ -194,24 +188,21 @@ const Layout = () => {
 
         </nav>
 
-        <div className="lld-sidebar-footer">
-          <div className="lld-sidebar-user">
-            <div className="lld-sidebar-avatar">
-              {userInitial}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-slate-100">{displayName}</p>
-              <p className="truncate text-[11px] uppercase tracking-[0.18em] text-slate-400">Long Line Diary</p>
+        <div className="lld-sidebar-footer fo-rail-account">
+          <div className="lld-sidebar-user fo-rail-user-block">
+            <div className="fo-rail-user-text lld-sidebar-user-text">
+              <p className="fo-rail-user-name lld-sidebar-user-name">{displayName}</p>
+              <p className="fo-rail-user-role lld-sidebar-user-role">Long Line Diary</p>
             </div>
           </div>
 
-          <div className="lld-sidebar-action-grid grid grid-cols-2 gap-2">
+          <div className="lld-sidebar-action-grid fo-rail-account-actions">
             <Button
               type="button"
               variant="secondary"
               size="sm"
               onClick={toggleTheme}
-              className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs font-bold uppercase tracking-wider text-slate-100 hover:bg-white/10"
+              className="fo-rail-theme-toggle"
               data-testid="theme-toggle"
             >
               {theme === 'dark'
@@ -225,7 +216,7 @@ const Layout = () => {
               variant="secondary"
               size="sm"
               onClick={logout}
-              className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs font-bold uppercase tracking-wider text-slate-200 hover:bg-white/5 hover:text-white"
+              className="fo-rail-logout-button"
               data-testid="logout-btn"
             >
               <LogOut className="h-4 w-4" />
@@ -237,7 +228,7 @@ const Layout = () => {
       </aside>
 
 
-      <main className="main-content">
+      <main className="main-content fo-main-content lld-fitoutos-main">
         <header className="app-header">
 
           <div className="lld-compact-header-inner">
@@ -379,3 +370,4 @@ const Layout = () => {
 };
 
 export default Layout;
+
