@@ -3075,3 +3075,321 @@
   }
 }
 /* LLD / SUITE TRUE DARK WORKSPACE V7E END */
+
+/* LLD / FINAL RAIL PARITY CALIBRATION V7F
+   Final LLD-only correction after live proof:
+   - keeps FitoutOS as the reference rail
+   - prevents LLD falling back to older compact 13.85rem/14rem rail rhythm
+   - makes the visible LLD rail match FitoutOS width, brand scale, nav spacing, and footer weight
+*/
+@media (min-width: 768px) {
+  .app-container > aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail,
+  aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail,
+  .fo-desktop-brand-rail.lld-fitoutos-rail {
+    width: 272px !important;
+    min-width: 272px !important;
+    max-width: 272px !important;
+    padding: 1rem 0.85rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-container > main.main-content.fo-main-content.lld-fitoutos-main,
+  main.main-content.fo-main-content.lld-fitoutos-main,
+  .fo-main-content.lld-fitoutos-main {
+    margin-left: 272px !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-card,
+  .fo-desktop-brand-rail.lld-fitoutos-rail .lld-sidebar-brand {
+    gap: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-brand,
+  .fo-desktop-brand-rail.lld-fitoutos-rail .lld-rail-brand-lockup {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.85rem !important;
+    min-height: 4.95rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .lld-sidebar-logo {
+    width: 4.7rem !important;
+    height: 4.7rem !important;
+    min-width: 4.7rem !important;
+    min-height: 4.7rem !important;
+    max-width: 4.7rem !important;
+    max-height: 4.7rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .lld-sidebar-logo img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-brand-text,
+  .fo-desktop-brand-rail.lld-fitoutos-rail .lld-rail-brand-text {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-kicker {
+    font-size: 0.68rem !important;
+    letter-spacing: 0.16em !important;
+    line-height: 1 !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-title,
+  .fo-desktop-brand-rail.lld-fitoutos-rail .lld-rail-brand-title {
+    font-size: 1.95rem !important;
+    line-height: 0.92 !important;
+    letter-spacing: 0.015em !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-subtitle,
+  .fo-desktop-brand-rail.lld-fitoutos-rail .lld-rail-brand-subtitle {
+    font-size: 0.68rem !important;
+    letter-spacing: 0.10em !important;
+    line-height: 1.08 !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-nav {
+    margin-top: 0.9rem !important;
+    gap: 0.18rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-nav-link {
+    min-height: 2.38rem !important;
+    padding: 0.58rem 0.72rem !important;
+    gap: 0.68rem !important;
+    font-size: 0.88rem !important;
+    border-radius: 0.82rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-nav-link svg {
+    width: 1.05rem !important;
+    height: 1.05rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-suite {
+    margin-top: 0.95rem !important;
+    padding-top: 0.85rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-suite-title,
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-section-title {
+    padding: 0 0.72rem !important;
+    font-size: 0.66rem !important;
+    letter-spacing: 0.16em !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-suite-link {
+    min-height: 2.32rem !important;
+    padding: 0.54rem 0.72rem !important;
+    gap: 0.68rem !important;
+    font-size: 0.86rem !important;
+    border-radius: 0.82rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-suite-mini-mark {
+    width: 1.72rem !important;
+    height: 1.72rem !important;
+    min-width: 1.72rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-account {
+    padding-top: 0.62rem !important;
+    padding-bottom: 0.08rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-user-block {
+    padding: 0.38rem 0.72rem 0.46rem !important;
+    border-radius: 0.78rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-user-name {
+    font-size: 0.86rem !important;
+    line-height: 1.08 !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-user-role {
+    font-size: 0.62rem !important;
+    letter-spacing: 0.09em !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-theme-toggle {
+    width: 2.35rem !important;
+    min-width: 2.35rem !important;
+    max-width: 2.35rem !important;
+    height: 2.35rem !important;
+    min-height: 2.35rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-logout-button {
+    width: 100% !important;
+    min-height: 2.35rem !important;
+  }
+}
+
+@media (min-width: 768px) and (max-height: 820px) {
+  .app-container > aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail,
+  aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail,
+  .fo-desktop-brand-rail.lld-fitoutos-rail {
+    width: 272px !important;
+    min-width: 272px !important;
+    max-width: 272px !important;
+  }
+
+  .app-container > main.main-content.fo-main-content.lld-fitoutos-main,
+  main.main-content.fo-main-content.lld-fitoutos-main,
+  .fo-main-content.lld-fitoutos-main {
+    margin-left: 272px !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .lld-sidebar-logo {
+    width: 4.35rem !important;
+    height: 4.35rem !important;
+    min-width: 4.35rem !important;
+    min-height: 4.35rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-title,
+  .fo-desktop-brand-rail.lld-fitoutos-rail .lld-rail-brand-title {
+    font-size: 1.78rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-nav-link,
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-suite-link {
+    min-height: 2.16rem !important;
+    padding-top: 0.44rem !important;
+    padding-bottom: 0.44rem !important;
+  }
+}
+/* LLD / FINAL RAIL PARITY CALIBRATION V7F END */
+
+
+/* LLD / FINAL CIRCLED RAIL CLEANUP V7G
+   Final cleanup from side-by-side proof:
+   - orphan Admin row removed in Layout.jsx
+   - subtitle follows FitoutOS rail subtitle rhythm
+   - account/footer/logout alignment is locked to the FitoutOS reference rhythm
+*/
+@media (min-width: 768px) {
+  .fo-desktop-brand-rail.lld-fitoutos-rail .lld-rail-brand-subtitle,
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-subtitle {
+    margin-top: 0.04rem !important;
+    color: rgba(245, 190, 80, 0.86) !important;
+    font-size: 0.66rem !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.10em !important;
+    line-height: 1.06 !important;
+    text-transform: uppercase !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-nav {
+    flex: 0 0 auto !important;
+    overflow: visible !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-account {
+    margin-top: auto !important;
+    border-top: 1px solid rgba(245, 190, 80, 0.18) !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-account-actions {
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.42rem !important;
+    width: 100% !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-theme-toggle {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-logout-button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.55rem !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-logout-button svg {
+    width: 1rem !important;
+    height: 1rem !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+}
+/* LLD / FINAL CIRCLED RAIL CLEANUP V7G END */
+
+/* LLD / FINAL CIRCLED DETAIL COMPLETION V7H
+   Completes the remaining side-by-side proof items:
+   - make SITE DIARY stand out
+   - add/match ACCOUNT label rhythm
+   - lock footer/logout alignment to FitoutOS suite rail rhythm
+*/
+@media (min-width: 768px) {
+  .fo-desktop-brand-rail.lld-fitoutos-rail .lld-rail-brand-subtitle,
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-subtitle {
+    display: inline-block !important;
+    margin-top: 0.08rem !important;
+    padding-top: 0.02rem !important;
+    color: rgba(248, 250, 252, 0.88) !important;
+    font-size: 0.70rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.13em !important;
+    line-height: 1.05 !important;
+    text-transform: uppercase !important;
+    text-shadow: 0 0 14px rgba(245, 190, 80, 0.16) !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-account-title {
+    display: block !important;
+    margin: 0 0 0.38rem !important;
+    padding: 0 0.72rem !important;
+    color: rgba(245, 190, 80, 0.86) !important;
+    font-size: 0.66rem !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.16em !important;
+    line-height: 1 !important;
+    text-transform: uppercase !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-account {
+    gap: 0.42rem !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-user-block {
+    width: 100% !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-account-actions {
+    width: 100% !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-logout-button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.55rem !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .fo-desktop-brand-rail.lld-fitoutos-rail .fo-rail-logout-button svg {
+    width: 1rem !important;
+    height: 1rem !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+}
+/* LLD / FINAL CIRCLED DETAIL COMPLETION V7H END */

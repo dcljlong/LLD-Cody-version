@@ -16,8 +16,6 @@ import {
   Sun,
   Moon,
   LogOut,
-  ChevronDown,
-  ChevronRight,
   ExternalLink,
   Wrench,
   Clock,
@@ -25,14 +23,12 @@ import {
   Briefcase,
 } from 'lucide-react';
 import { Button } from './ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
 const Layout = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [adminOpen, setAdminOpen] = useState(false);
   const [projects, setProjects] = useState([]);
 
   useEffect(() => {
@@ -62,9 +58,6 @@ const Layout = () => {
     { to: '/gates', icon: AlertTriangle, label: 'Roadblocks / Concerns' },
   ];
 
-  const adminNav = [
-    { to: '/settings', icon: Settings, label: 'Settings' },
-  ];
 
   const suiteNav = [
     {
@@ -172,23 +165,10 @@ const Layout = () => {
             ))}
           </div>
 
-          <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
-            <CollapsibleTrigger className="w-full">
-              <div className="sidebar-section-header fo-rail-section-title flex justify-between">
-                <span>Admin</span>
-                {adminOpen ? <ChevronDown /> : <ChevronRight />}
-              </div>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              {adminNav.map((item) => (
-                <NavItem key={item.to} {...item} />
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
-
         </nav>
 
         <div className="lld-sidebar-footer fo-rail-account">
+          <div className="sidebar-section-header fo-rail-section-title fo-rail-account-title">Account</div>
           <div className="lld-sidebar-user fo-rail-user-block">
             <div className="fo-rail-user-text lld-sidebar-user-text">
               <p className="fo-rail-user-name lld-sidebar-user-name">{displayName}</p>
@@ -370,4 +350,6 @@ const Layout = () => {
 };
 
 export default Layout;
+
+
 
