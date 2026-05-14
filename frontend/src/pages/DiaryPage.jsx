@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   FileText,
+  Printer,
   Plus,
   Send,
   Camera,
@@ -153,6 +154,27 @@ const DiaryPage = () => {
     });
   };
 
+  const currentProject = projects.find((project) => project.id === selectedProject);
+  const selectedDateLabel = formatDate(selectedDate);
+  const hasDiaryContent = Boolean(
+    diary && (
+      (diary.summary?.entries_count || 0) > 0 ||
+      (diary.summary?.items_opened || 0) > 0 ||
+      (diary.summary?.items_closed || 0) > 0 ||
+      (diary.summary?.blocked_gates || 0) > 0 ||
+      (diary.summary?.overdue_items || 0) > 0
+    )
+  );
+
+  const handlePrintReport = () => {
+    if (!diary) {
+      toast.error('Load a diary day before printing');
+      return;
+    }
+
+    window.print();
+  };
+
   const handlePhotoUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach(file => {
@@ -251,10 +273,23 @@ const DiaryPage = () => {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="font-heading text-2xl font-bold tracking-tight uppercase">Daily Diary</h2>
-          <p className="text-sm text-muted-foreground">Project summary by day</p>
+          <p className="text-sm text-muted-foreground">
+            Project summary by day{currentProject ? ` • ${currentProject.job_number ? `${currentProject.job_number} - ` : ''}${currentProject.name}` : ''}
+          </p>
         </div>
 
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePrintReport}
+            disabled={!diary}
+            data-testid="daily-report-print-button"
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            Print Report
+          </Button>
+
           <Select value={selectedProject} onValueChange={(val) => {
             setSelectedProject(val);
             localStorage.setItem('lld_last_project_id', val);
@@ -436,6 +471,44 @@ const DiaryPage = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Daily Report Readiness */}
+      <Card className="ops-card" data-testid="daily-report-readiness">
+        <CardContent className="py-3">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="font-heading text-sm font-semibold uppercase tracking-wide">Daily Report Ready</p>
+              <p className="text-xs text-muted-foreground">
+                {currentProject ? `${currentProject.job_number ? `${currentProject.job_number} - ` : ''}${currentProject.name}` : 'No project selected'} • {selectedDateLabel}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-5">
+              <span className="rounded border border-border bg-secondary/30 px-2 py-1">
+                Entries: {diary?.summary?.entries_count || 0}
+              </span>
+              <span className="rounded border border-border bg-secondary/30 px-2 py-1">
+                Opened: {diary?.summary?.items_opened || 0}
+              </span>
+              <span className="rounded border border-border bg-secondary/30 px-2 py-1">
+                Closed: {diary?.summary?.items_closed || 0}
+              </span>
+              <span className="rounded border border-border bg-secondary/30 px-2 py-1">
+                Blocked: {diary?.summary?.blocked_gates || 0}
+              </span>
+              <span className="rounded border border-border bg-secondary/30 px-2 py-1">
+                Overdue: {diary?.summary?.overdue_items || 0}
+              </span>
+            </div>
+          </div>
+
+          {!hasDiaryContent && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              No reportable activity for this day yet. Add a quick entry or review another date before issuing a report.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Date Navigation */}
       <Card className="ops-card">
