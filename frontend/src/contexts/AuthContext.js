@@ -30,13 +30,27 @@ export const AuthProvider = ({ children }) => {
   }, [logout]);
 
   useEffect(() => {
+    const auth401Interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error?.response?.status === 401) {
+          logout();
+        }
+        return Promise.reject(error);
+      }
+    );
+
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       fetchUser();
     } else {
       setLoading(false);
     }
-  }, [token, fetchUser]);
+
+    return () => {
+      axios.interceptors.response.eject(auth401Interceptor);
+    };
+  }, [token, fetchUser, logout]);
 
   const login = async (email, password) => {
     const normalisedEmail = email.trim().toLowerCase();
