@@ -66,7 +66,16 @@ function AppRoutes() {
     <Routes>
       {/* Public routes */}
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+      <Route
+        path="/register"
+        element={
+          process.env.REACT_APP_ALLOW_PUBLIC_REGISTRATION === "true" ? (
+            <PublicRoute><RegisterPage /></PublicRoute>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
       
       {/* Protected routes */}
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>

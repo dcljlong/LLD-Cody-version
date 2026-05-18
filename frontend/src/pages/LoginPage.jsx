@@ -112,12 +112,14 @@ const LoginPage = () => {
           </button>
         </form>
 
-        <p className="lld-login-register">
-          New to LLD?{' '}
-          <Link to="/register" data-testid="register-link">
-            Create account
-          </Link>
-        </p>
+        {process.env.REACT_APP_ALLOW_PUBLIC_REGISTRATION === "true" && (
+          <p className="lld-login-register">
+            New to LLD?{' '}
+            <Link to="/register" data-testid="register-link">
+              Create account
+            </Link>
+          </p>
+        )}
       </main>
     </div>
   );
