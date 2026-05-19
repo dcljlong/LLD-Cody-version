@@ -93,3 +93,14 @@ backend/.env
 # Local Long Line brand reference/source pack
 frontend/src/assets/brand/
 frontend/node_modules/.cache/default-development/0.pack
+
+# Local backup/corrupt recovery artifacts
+stable_backups/
+backups/
+backend/gate_corrupt_backup_*.json
+gate_corrupt_backup_*.json
+*.bak
+*.backup
+*.old
+*_backup*
+*backup_*
