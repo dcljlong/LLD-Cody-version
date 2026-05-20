@@ -16,6 +16,7 @@ import {
   Sun,
   Moon,
   LogOut,
+  MessageSquare,
   ExternalLink,
   Wrench,
   Clock,
@@ -102,6 +103,22 @@ const Layout = () => {
 
   const displayName = user?.name || user?.full_name || user?.email || 'LLD User';
   const userInitial = (displayName.trim().charAt(0) || 'U').toUpperCase();
+
+  const handleFeedbackClick = () => {
+    const subject = encodeURIComponent('[LLD Feedback] Pilot feedback');
+    const body = encodeURIComponent([
+      'App: Long Line Diary',
+      `Page: ${location.pathname}`,
+      `User: ${user?.email || displayName || 'Unknown'}`,
+      '',
+      'Feedback type:',
+      'What happened:',
+      'What did you expect:',
+      'How urgent:',
+    ].join('\n'));
+
+    window.location.href = `mailto:feedback@longlinesuite.co.nz?subject=${subject}&body=${body}`;
+  };
 
   const NavItem = ({ to, icon: Icon, label }) => (
     <NavLink
@@ -195,6 +212,19 @@ const Layout = () => {
               type="button"
               variant="secondary"
               size="sm"
+              onClick={handleFeedbackClick}
+              className="fo-rail-theme-toggle"
+              data-testid="feedback-btn"
+              aria-label="Send LLD feedback"
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span>Feedback</span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
               onClick={logout}
               className="fo-rail-logout-button"
               data-testid="logout-btn"
@@ -250,6 +280,18 @@ const Layout = () => {
                   {theme === 'dark'
                     ? <Sun className="w-4 h-4" />
                     : <Moon className="w-4 h-4" />}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleFeedbackClick}
+                  data-testid="mobile-feedback-btn"
+                  className="lld-compact-theme-button"
+                  aria-label="Send LLD feedback"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Feedback</span>
                 </Button>
 
                 <Button
@@ -350,6 +392,7 @@ const Layout = () => {
 };
 
 export default Layout;
+
 
 
 
