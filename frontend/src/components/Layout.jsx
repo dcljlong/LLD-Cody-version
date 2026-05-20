@@ -117,7 +117,7 @@ const Layout = () => {
       'How urgent:',
     ].join('\n'));
 
-    window.location.href = `mailto:feedback@longlinesuite.co.nz?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:longlinesuite.feedback@gmail.com?subject=${subject}&body=${body}`;
   };
 
   const NavItem = ({ to, icon: Icon, label }) => (
@@ -392,6 +392,7 @@ const Layout = () => {
 };
 
 export default Layout;
+
 
 
 
