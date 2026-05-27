@@ -605,8 +605,13 @@ async def operator_admin_reset_password(
 
     role_value = str(user.get("role") or "").strip().lower()
     allowed_reset_roles = {"admin", "administrator", "super_admin", "superadmin", "owner"}
-    if role_value not in allowed_reset_roles:
-        raise HTTPException(status_code=403, detail="Only admin users can be reset through this route")
+    approved_reset_emails = {
+        value.strip().lower()
+        for value in (os.environ.get("LLD_ADMIN_RESET_ALLOWED_EMAILS") or "david.long@westaco.co.nz").split(",")
+        if value.strip()
+    }
+    if role_value not in allowed_reset_roles and email not in approved_reset_emails:
+        raise HTTPException(status_code=403, detail="Only approved admin users can be reset through this route")
 
     password_hash = hash_password(data.new_password)
     now = datetime.now(timezone.utc).isoformat()
