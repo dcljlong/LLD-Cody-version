@@ -62,19 +62,19 @@ const Layout = () => {
 
   const suiteNav = [
     {
-      href: process.env.REACT_APP_TOOL_TRACKER_URL || 'http://localhost:3002',
+      href: process.env.REACT_APP_TOOL_TRACKER_URL || 'https://tool-tracker-enterprise.vercel.app',
       icon: Wrench,
       label: 'Tool Tracker',
       description: 'Tool control',
     },
     {
-      href: process.env.REACT_APP_TIMESHEET_MANAGER_URL || 'http://localhost:3001',
+      href: process.env.REACT_APP_TIMESHEET_MANAGER_URL || 'https://timesheet-manager-two.vercel.app',
       icon: Clock,
       label: 'Timesheet',
       description: 'Labour control',
     },
     {
-      href: process.env.REACT_APP_FITOUTOS_URL || 'http://localhost:3004',
+      href: process.env.REACT_APP_FITOUTOS_URL || 'https://fitout-os-project.vercel.app',
       icon: Briefcase,
       label: 'FitoutOS',
       description: 'Programme control',
