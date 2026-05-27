@@ -62,6 +62,11 @@ const Layout = () => {
 
   const suiteNav = [
     {
+    href: process.env.REACT_APP_LONG_LINE_SUITE_LAUNCHER_URL || 'https://long-line-suite-launcher.vercel.app',
+    label: 'Launcher',
+    description: 'Suite home',
+  },
+  {
       href: process.env.REACT_APP_TOOL_TRACKER_URL || 'https://tool-tracker-enterprise.vercel.app',
       icon: Wrench,
       label: 'Tool Tracker',
