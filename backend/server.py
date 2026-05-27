@@ -603,7 +603,9 @@ async def operator_admin_reset_password(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user.get("role") != "admin":
+    role_value = str(user.get("role") or "").strip().lower()
+    allowed_reset_roles = {"admin", "administrator", "super_admin", "superadmin", "owner"}
+    if role_value not in allowed_reset_roles:
         raise HTTPException(status_code=403, detail="Only admin users can be reset through this route")
 
     password_hash = hash_password(data.new_password)
