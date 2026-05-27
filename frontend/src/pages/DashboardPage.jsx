@@ -559,6 +559,64 @@ const DashboardPage = () => {
           )}
         </div>
       )}
+          <Card className="ops-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-primary/25 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-slate-900" data-testid="daily-operations-suite-card">
+            <CardHeader className="ops-card-header flex flex-row items-start justify-between gap-3 px-5 py-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Daily Operations</p>
+                <CardTitle className="font-heading text-lg uppercase tracking-[0.12em]">Site support apps</CardTitle>
+              </div>
+              <span className="rounded-full border border-primary/30 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+                Suite Links
+              </span>
+            </CardHeader>
+            <CardContent className="bg-white px-5 py-5 dark:bg-slate-950/95">
+              <p className="mb-4 text-sm text-muted-foreground">
+                Open the specialist Long Line Suite apps that support today's diary. LLD stays as the daily site cockpit; timesheets, tools, and programme control stay in their own apps.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <a
+                  href={process.env.REACT_APP_TIMESHEET_MANAGER_URL || 'https://timesheet-manager-two.vercel.app'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 transition hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-primary/50"
+                  data-testid="daily-ops-timesheet-link"
+                >
+                  <p className="text-sm font-bold uppercase tracking-[0.12em]">Timesheets</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Labour entry, PM approval, admin approval, payroll/export.</p>
+                </a>
+                <a
+                  href={process.env.REACT_APP_TOOL_TRACKER_URL || 'https://tool-tracker-enterprise.vercel.app'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 transition hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-primary/50"
+                  data-testid="daily-ops-tooltracker-link"
+                >
+                  <p className="text-sm font-bold uppercase tracking-[0.12em]">Tool Tracker</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Tool allocation, expected returns, certificates, compliance.</p>
+                </a>
+                <a
+                  href={process.env.REACT_APP_FITOUTOS_URL || 'https://fitout-os-project.vercel.app'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 transition hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-primary/50"
+                  data-testid="daily-ops-fitoutos-link"
+                >
+                  <p className="text-sm font-bold uppercase tracking-[0.12em]">FitoutOS</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Programme control, actual labour visibility, risk and recovery.</p>
+                </a>
+                <a
+                  href={process.env.REACT_APP_LONG_LINE_SUITE_LAUNCHER_URL || 'https://long-line-suite-launcher.vercel.app'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 transition hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-primary/50"
+                  data-testid="daily-ops-launcher-link"
+                >
+                  <p className="text-sm font-bold uppercase tracking-[0.12em]">Launcher</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Open the Long Line Suite app hub.</p>
+                </a>
+              </div>
+            </CardContent>
+          </Card>
 
       {widgets.quickActions && (
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:rounded-2xl dark:border-primary/30 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-primary/10 dark:shadow-[0_18px_60px_rgba(0,0,0,0.16)]">
