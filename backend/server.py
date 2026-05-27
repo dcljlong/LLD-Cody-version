@@ -1,9 +1,12 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, File, UploadFile
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, File, UploadFile, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import re
+import secrets
+import hashlib
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
@@ -56,6 +59,11 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+class OperatorAdminPasswordResetRequest(BaseModel):
+    email: str
+    new_password: str
+
 
 class UserResponse(BaseModel):
     id: str
@@ -567,6 +575,69 @@ async def create_project(project: ProjectCreate, current_user: dict = Depends(ge
     await db.projects.insert_one(doc)
     doc.pop("_id", None)
     return ProjectResponse(**doc)
+
+@api_router.post("/operator/admin-reset-password")
+async def operator_admin_reset_password(
+    data: OperatorAdminPasswordResetRequest,
+    x_lld_admin_reset_key: Optional[str] = Header(None)
+):
+    configured_hash = (os.environ.get("LLD_ADMIN_RESET_KEY_HASH") or "").strip().lower()
+    if not configured_hash:
+        raise HTTPException(status_code=404, detail="Admin reset route is not configured")
+
+    if not x_lld_admin_reset_key:
+        raise HTTPException(status_code=403, detail="Admin reset key required")
+
+    supplied_hash = hashlib.sha256(x_lld_admin_reset_key.encode("utf-8")).hexdigest().lower()
+    if not secrets.compare_digest(supplied_hash, configured_hash):
+        raise HTTPException(status_code=403, detail="Invalid admin reset key")
+
+    email = (data.email or "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Valid email is required")
+
+    if not data.new_password or len(data.new_password) < 10:
+        raise HTTPException(status_code=400, detail="Password must be at least 10 characters")
+
+    user = await db.users.find_one({"email": email}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Only admin users can be reset through this route")
+
+    password_hash = hash_password(data.new_password)
+    now = datetime.now(timezone.utc).isoformat()
+
+    result = await db.users.update_one(
+        {"email": email},
+        {"$set": {"password": password_hash, "updated_at": now}}
+    )
+
+    try:
+        login_attempts = await db.login_attempts.delete_many({
+            "$or": [
+                {"identifier": {"$regex": ":" + re.escape(email) + "$"}},
+                {"email": email}
+            ]
+        })
+        cleared_attempts = login_attempts.deleted_count
+    except Exception:
+        cleared_attempts = 0
+
+    if result.matched_count != 1:
+        raise HTTPException(status_code=500, detail="Password reset did not match exactly one user")
+
+    return {
+        "status": "admin_password_reset",
+        "email": email,
+        "role": user.get("role"),
+        "is_active": user.get("is_active", True),
+        "modified_count": result.modified_count,
+        "cleared_login_attempts": cleared_attempts,
+        "updated_at": now,
+    }
+
 
 @api_router.get("/projects", response_model=List[ProjectResponse])
 async def get_projects(current_user: dict = Depends(get_current_user)):
