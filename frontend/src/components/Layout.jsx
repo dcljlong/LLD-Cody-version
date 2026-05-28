@@ -138,7 +138,7 @@ const Layout = () => {
     </NavLink>
   );
 
-  const ExternalNavItem = ({ href, icon: Icon, label, description }) => (
+  const ExternalNavItem = ({ href, icon: Icon = FileText, label, description }) => (
     <a
       href={href}
       target="_blank"
@@ -335,7 +335,7 @@ const Layout = () => {
                 <div className="lld-compact-nav-divider" aria-hidden="true" />
 
                 {suiteNav.map((item) => {
-                  const SuiteIcon = item.icon;
+                  const SuiteIcon = item.icon || FileText;
                   return (
                     <a
                       key={item.href}
