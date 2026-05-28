@@ -171,6 +171,28 @@ class ActionItemResponse(BaseModel):
     created_at: str
     updated_at: str
 
+
+class DailyLabourRow(BaseModel):
+    employee_name: str
+    work_date: Optional[str] = None
+    day: Optional[str] = None
+    start_time: Optional[str] = None
+    lunch_duration: Optional[str] = "30"
+    finish_time: Optional[str] = None
+    total_hours: Optional[float] = 0
+    job_number: Optional[str] = None
+    task_code: Optional[str] = None
+    project_manager_id: Optional[str] = None
+    description: Optional[str] = None
+    other: Optional[str] = None
+    source: Optional[str] = "LLD"
+    source_diary_project_id: Optional[str] = None
+    source_diary_date: Optional[str] = None
+    sync_status: Optional[str] = "local_only"
+
+class DailyLabourSaveRequest(BaseModel):
+    date: str
+    rows: List[DailyLabourRow] = []
 class WalkaroundEntryCreate(BaseModel):
     project_id: str
     gate_id: Optional[str] = None
@@ -1185,6 +1207,139 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
 
 # ==================== DIARY ROUTES ====================
 
+
+@api_router.get("/diary/{project_id}/labour")
+async def get_daily_labour_rows(
+    project_id: str,
+    date: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get Timesheet-compatible daily labour rows stored locally in LLD."""
+    project = await db.projects.find_one({"id": project_id, "user_id": current_user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    doc = await db.daily_labour_rows.find_one(
+        {"project_id": project_id, "date": date, "user_id": current_user["id"]},
+        {"_id": 0}
+    )
+
+    rows = doc.get("rows", []) if doc else []
+    total_hours = 0.0
+    for row in rows:
+        try:
+            total_hours += float(row.get("total_hours", 0) or 0)
+        except Exception:
+            pass
+
+    return {
+        "project_id": project_id,
+        "project_name": project.get("name"),
+        "job_number": project.get("job_number"),
+        "date": date,
+        "source": "LLD",
+        "sync_status": "local_only",
+        "summary": {
+            "labour_rows_count": len(rows),
+            "labour_total_hours": round(total_hours, 2)
+        },
+        "rows": rows
+    }
+
+@api_router.post("/diary/{project_id}/labour")
+async def save_daily_labour_rows(
+    project_id: str,
+    payload: DailyLabourSaveRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Save Timesheet-compatible daily labour rows locally in LLD.
+
+    This is capture-only V1. It does not create Timesheet Manager records.
+    """
+    project = await db.projects.find_one({"id": project_id, "user_id": current_user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    now = datetime.now(timezone.utc).isoformat()
+    date_value = payload.date
+    rows = []
+
+    for index, row in enumerate(payload.rows or []):
+        data = row.model_dump()
+        employee_name = str(data.get("employee_name") or "").strip()
+        if not employee_name:
+            continue
+
+        try:
+            total_hours = float(data.get("total_hours", 0) or 0)
+        except Exception:
+            total_hours = 0.0
+
+        item = {
+            "id": data.get("id") or str(uuid.uuid4()),
+            "row_index": index,
+            "employee_name": employee_name,
+            "work_date": data.get("work_date") or date_value,
+            "day": data.get("day") or "",
+            "start_time": data.get("start_time") or "",
+            "lunch_duration": str(data.get("lunch_duration") or "0"),
+            "finish_time": data.get("finish_time") or "",
+            "total_hours": round(total_hours, 2),
+            "job_number": data.get("job_number") or project.get("job_number") or "",
+            "task_code": data.get("task_code") or "",
+            "project_manager_id": data.get("project_manager_id") or "",
+            "description": data.get("description") or data.get("other") or "",
+            "other": data.get("other") or data.get("description") or "",
+            "source": "LLD",
+            "source_diary_project_id": project_id,
+            "source_diary_date": date_value,
+            "sync_status": "local_only",
+            "timesheet_compatible": True,
+            "updated_at": now
+        }
+        rows.append(item)
+
+    total_hours = round(sum(float(row.get("total_hours", 0) or 0) for row in rows), 2)
+
+    doc = {
+        "id": f"{project_id}:{date_value}:daily-labour",
+        "project_id": project_id,
+        "project_name": project.get("name"),
+        "job_number": project.get("job_number"),
+        "date": date_value,
+        "user_id": current_user["id"],
+        "source": "LLD",
+        "sync_status": "local_only",
+        "rows": rows,
+        "summary": {
+            "labour_rows_count": len(rows),
+            "labour_total_hours": total_hours
+        },
+        "updated_at": now
+    }
+
+    existing = await db.daily_labour_rows.find_one({"project_id": project_id, "date": date_value, "user_id": current_user["id"]})
+    if existing:
+        doc["created_at"] = existing.get("created_at", now)
+    else:
+        doc["created_at"] = now
+
+    await db.daily_labour_rows.update_one(
+        {"project_id": project_id, "date": date_value, "user_id": current_user["id"]},
+        {"$set": doc},
+        upsert=True
+    )
+
+    return {
+        "project_id": project_id,
+        "project_name": project.get("name"),
+        "job_number": project.get("job_number"),
+        "date": date_value,
+        "source": "LLD",
+        "sync_status": "local_only",
+        "summary": doc["summary"],
+        "rows": rows
+    }
 @api_router.get("/diary/{project_id}")
 async def get_project_diary(
     project_id: str,

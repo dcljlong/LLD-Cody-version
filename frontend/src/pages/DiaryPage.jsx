@@ -62,6 +62,9 @@ const DiaryPage = () => {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
   const [diary, setDiary] = useState(null);
+  const [labourRows, setLabourRows] = useState([]);
+  const [labourLoading, setLabourLoading] = useState(false);
+  const [labourSaving, setLabourSaving] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => getNzDateString());
   const [loading, setLoading] = useState(true);
   const [showQuickEntry, setShowQuickEntry] = useState(false);
@@ -73,6 +76,58 @@ const DiaryPage = () => {
   const today = getNzDateString();
   const tomorrow = getNzDateString(1);
 
+  const createEmptyLabourRow = () => ({
+    employee_name: '',
+    work_date: selectedDate,
+    day: selectedDateLabel || '',
+    start_time: '',
+    finish_time: '',
+    lunch_duration: '30',
+    total_hours: 0,
+    job_number: currentProject?.job_number || '',
+    task_code: '',
+    project_manager_id: '',
+    description: '',
+    other: '',
+    source: 'LLD',
+    source_diary_project_id: selectedProject || '',
+    source_diary_date: selectedDate,
+    sync_status: 'local_only'
+  });
+
+  const calculateLabourHours = (start, finish, lunchMinutes) => {
+    if (!start || !finish) return 0;
+    const startDate = new Date(`1970-01-01T${start}`);
+    const finishDate = new Date(`1970-01-01T${finish}`);
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(finishDate.getTime())) return 0;
+    const minutes = Math.max(0, (finishDate - startDate) / 60000);
+    const lunch = parseFloat(lunchMinutes || 0) || 0;
+    return Math.max(0, (minutes - lunch) / 60);
+  };
+
+  const updateLabourRow = (index, field, value) => {
+    setLabourRows((current) => current.map((row, rowIndex) => {
+      if (rowIndex !== index) return row;
+      const updated = { ...row, [field]: value };
+      if (['start_time', 'finish_time', 'lunch_duration'].includes(field)) {
+        updated.total_hours = calculateLabourHours(updated.start_time, updated.finish_time, updated.lunch_duration);
+      }
+      if (field === 'description') {
+        updated.other = value;
+      }
+      return updated;
+    }));
+  };
+
+  const addLabourRow = () => {
+    setLabourRows((current) => [...current, createEmptyLabourRow()]);
+  };
+
+  const removeLabourRow = (index) => {
+    setLabourRows((current) => current.filter((_, rowIndex) => rowIndex !== index));
+  };
+
+  const labourTotalHours = labourRows.reduce((sum, row) => sum + (parseFloat(row.total_hours) || 0), 0);
   const [entryData, setEntryData] = useState({
     note: '',
     priority: 'medium',
@@ -103,6 +158,64 @@ const DiaryPage = () => {
     }
   }, []);
 
+  const fetchLabourRows = useCallback(async () => {
+    if (!selectedProject || !selectedDate) {
+      setLabourRows([]);
+      return;
+    }
+
+    setLabourLoading(true);
+    try {
+      const res = await diaryApi.getLabour(selectedProject, selectedDate);
+      const rows = Array.isArray(res.data?.rows) ? res.data.rows : [];
+      setLabourRows(rows);
+    } catch (error) {
+      console.error('Failed to load labour rows:', error);
+      setLabourRows([]);
+    } finally {
+      setLabourLoading(false);
+    }
+  }, [selectedProject, selectedDate]);
+
+  const saveLabourRows = async () => {
+    if (!selectedProject || !selectedDate) {
+      toast.error('Select a project and date first');
+      return;
+    }
+
+    setLabourSaving(true);
+    try {
+      const cleanRows = labourRows
+        .filter((row) => (row.employee_name || '').trim())
+        .map((row) => ({
+          ...row,
+          work_date: selectedDate,
+          day: selectedDateLabel || '',
+          job_number: row.job_number || currentProject?.job_number || '',
+          source: 'LLD',
+          source_diary_project_id: selectedProject,
+          source_diary_date: selectedDate,
+          sync_status: 'local_only',
+          description: row.description || row.other || '',
+          other: row.other || row.description || ''
+        }));
+
+      const res = await diaryApi.saveLabour(selectedProject, {
+        date: selectedDate,
+        rows: cleanRows
+      });
+
+      setLabourRows(Array.isArray(res.data?.rows) ? res.data.rows : []);
+      toast.success('Labour rows saved locally in LLD');
+      fetchDiary();
+    fetchLabourRows();
+    } catch (error) {
+      console.error('Failed to save labour rows:', error);
+      toast.error('Failed to save labour rows');
+    } finally {
+      setLabourSaving(false);
+    }
+  };
   const fetchDiary = useCallback(async () => {
     if (!selectedProject) return;
 
@@ -134,9 +247,10 @@ const DiaryPage = () => {
   useEffect(() => {
     if (selectedProject) {
       fetchDiary();
+    fetchLabourRows();
       fetchGates();
     }
-  }, [selectedProject, selectedDate, fetchDiary, fetchGates]);
+  }, [selectedProject, selectedDate, fetchDiary, fetchLabourRows, fetchGates]);
 
   const changeDate = (days) => {
     const current = parseDateInput(selectedDate);
@@ -232,6 +346,7 @@ const DiaryPage = () => {
       
       // Refresh diary
       fetchDiary();
+    fetchLabourRows();
       setShowQuickEntry(false);
     } catch (error) {
       toast.error('Failed to save entry');
@@ -587,7 +702,124 @@ const DiaryPage = () => {
 
           {/* Content Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Site Notes */}
+            <Card className="ops-card" data-testid="daily-labour-card">
+          <CardHeader>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <CardTitle className="font-heading uppercase tracking-[0.12em]">Labour / Staff Onsite</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Timesheet-compatible daily rows. Local-only in LLD until Timesheet draft import is added.
+                </p>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                <span data-testid="daily-labour-row-count">{labourRows.length}</span> rows •{' '}
+                <span data-testid="daily-labour-total-hours">{labourTotalHours.toFixed(2)}</span> hrs
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {labourLoading ? (
+              <p className="text-sm text-muted-foreground">Loading labour rows...</p>
+            ) : labourRows.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground" data-testid="daily-labour-empty">
+                No staff rows recorded for this diary day yet.
+              </div>
+            ) : (
+              <div className="space-y-3" data-testid="daily-labour-rows">
+                {labourRows.map((row, index) => (
+                  <div key={row.id || index} className="grid gap-2 rounded-xl border p-3 md:grid-cols-12">
+                    <input
+                      className="input md:col-span-2"
+                      placeholder="Employee"
+                      value={row.employee_name || ''}
+                      onChange={(e) => updateLabourRow(index, 'employee_name', e.target.value)}
+                      data-testid={`daily-labour-employee-${index}`}
+                    />
+                    <input
+                      className="input md:col-span-1"
+                      type="time"
+                      value={row.start_time || ''}
+                      onChange={(e) => updateLabourRow(index, 'start_time', e.target.value)}
+                      data-testid={`daily-labour-start-${index}`}
+                    />
+                    <select
+                      className="input md:col-span-1"
+                      value={String(row.lunch_duration ?? '30')}
+                      onChange={(e) => updateLabourRow(index, 'lunch_duration', e.target.value)}
+                      data-testid={`daily-labour-lunch-${index}`}
+                    >
+                      <option value="0">No lunch</option>
+                      <option value="30">30m</option>
+                      <option value="60">60m</option>
+                    </select>
+                    <input
+                      className="input md:col-span-1"
+                      type="time"
+                      value={row.finish_time || ''}
+                      onChange={(e) => updateLabourRow(index, 'finish_time', e.target.value)}
+                      data-testid={`daily-labour-finish-${index}`}
+                    />
+                    <div className="rounded-md border bg-secondary/30 px-3 py-2 text-sm font-semibold md:col-span-1" data-testid={`daily-labour-hours-${index}`}>
+                      {(parseFloat(row.total_hours) || 0).toFixed(2)}h
+                    </div>
+                    <input
+                      className="input md:col-span-1"
+                      placeholder="Job #"
+                      value={row.job_number || ''}
+                      onChange={(e) => updateLabourRow(index, 'job_number', e.target.value)}
+                      data-testid={`daily-labour-job-${index}`}
+                    />
+                    <input
+                      className="input md:col-span-1"
+                      placeholder="Task code"
+                      value={row.task_code || ''}
+                      onChange={(e) => updateLabourRow(index, 'task_code', e.target.value)}
+                      data-testid={`daily-labour-task-${index}`}
+                    />
+                    <input
+                      className="input md:col-span-1"
+                      placeholder="PM"
+                      value={row.project_manager_id || ''}
+                      onChange={(e) => updateLabourRow(index, 'project_manager_id', e.target.value)}
+                      data-testid={`daily-labour-pm-${index}`}
+                    />
+                    <input
+                      className="input md:col-span-2"
+                      placeholder="Description / work done"
+                      value={row.description || row.other || ''}
+                      onChange={(e) => updateLabourRow(index, 'description', e.target.value)}
+                      data-testid={`daily-labour-description-${index}`}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeLabourRow(index)}
+                      data-testid={`daily-labour-remove-${index}`}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="secondary" onClick={addLabourRow} data-testid="daily-labour-add-row">
+                Add staff row
+              </Button>
+              <Button type="button" onClick={saveLabourRows} disabled={labourSaving || !selectedProject} data-testid="daily-labour-save">
+                {labourSaving ? 'Saving...' : 'Save labour rows'}
+              </Button>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Fields match Timesheet Manager row shape: employee, start, lunch, finish, hours, job number, task code, PM, description.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Site Notes */}
             <Card className="ops-card">
               <CardHeader className="ops-card-header py-3">
                 <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2">
