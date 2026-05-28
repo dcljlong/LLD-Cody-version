@@ -98,6 +98,9 @@ export const walkaroundApi = {
 };
 
 
+export const integrationsApi = {
+  getTimesheetReferenceOptions: () => api.get('/integrations/timesheet/reference-options')
+};
 export const diaryApi = {
   get: (projectId, date) => api.get(`/diary/${projectId}?date=${date}`),
   getLabour: (projectId, date) => api.get(`/diary/${projectId}/labour?date=${date}`),

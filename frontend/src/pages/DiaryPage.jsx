@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { diaryApi, projectsApi, walkaroundApi, gatesApi } from '../lib/api';
+import { diaryApi, integrationsApi, projectsApi, walkaroundApi, gatesApi } from '../lib/api';
 import { toast } from 'sonner';
 import {
   BookOpen,
@@ -65,6 +65,12 @@ const DiaryPage = () => {
   const [labourRows, setLabourRows] = useState([]);
   const [labourLoading, setLabourLoading] = useState(false);
   const [labourSaving, setLabourSaving] = useState(false);
+  const [timesheetReferenceOptions, setTimesheetReferenceOptions] = useState({
+    employees: [],
+    project_managers: [],
+    task_codes: [],
+    lunch_options: ['0', '30', '60']
+  });
   const [selectedDate, setSelectedDate] = useState(() => getNzDateString());
   const [loading, setLoading] = useState(true);
   const [showQuickEntry, setShowQuickEntry] = useState(false);
@@ -128,6 +134,76 @@ const DiaryPage = () => {
   };
 
   const labourTotalHours = labourRows.reduce((sum, row) => sum + (parseFloat(row.total_hours) || 0), 0);
+  const getReferenceOptionText = (item, keys = []) => {
+    if (item === null || item === undefined) return '';
+    if (typeof item === 'string' || typeof item === 'number') return String(item);
+
+    for (const key of keys) {
+      const value = item?.[key];
+      if (value !== null && value !== undefined && String(value).trim()) {
+        return String(value);
+      }
+    }
+
+    return '';
+  };
+
+  const buildReferenceOptions = (items, currentValue, valueKeys = [], labelKeys = []) => {
+    const seen = new Set();
+    const options = (Array.isArray(items) ? items : [])
+      .map((item) => {
+        const value = getReferenceOptionText(item, valueKeys);
+        const label = getReferenceOptionText(item, labelKeys) || value;
+        return value ? { value, label } : null;
+      })
+      .filter((option) => {
+        if (!option || seen.has(option.value)) return false;
+        seen.add(option.value);
+        return true;
+      });
+
+    const current = currentValue === null || currentValue === undefined ? '' : String(currentValue);
+    if (current && !seen.has(current)) {
+      options.unshift({ value: current, label: `${current} (saved)` });
+    }
+
+    return options;
+  };
+
+  const employeeOptionsForRow = (currentValue) => buildReferenceOptions(
+    timesheetReferenceOptions.employees,
+    currentValue,
+    ['employee_name', 'name', 'full_name', 'display_name', 'email', 'id'],
+    ['employee_name', 'name', 'full_name', 'display_name', 'email', 'id']
+  );
+
+  const taskCodeOptionsForRow = (currentValue) => buildReferenceOptions(
+    timesheetReferenceOptions.task_codes,
+    currentValue,
+    ['task_code', 'code', 'value', 'name', 'id'],
+    ['label', 'description', 'name', 'task_code', 'code', 'value', 'id']
+  );
+
+  const projectManagerOptionsForRow = (currentValue) => buildReferenceOptions(
+    timesheetReferenceOptions.project_managers,
+    currentValue,
+    ['project_manager_id', 'id', 'employee_id', 'name', 'full_name', 'email'],
+    ['name', 'full_name', 'employee_name', 'display_name', 'email', 'project_manager_id', 'id']
+  );
+
+  const lunchOptionsForRow = (currentValue) => {
+    const configuredLunchOptions = Array.isArray(timesheetReferenceOptions.lunch_options) && timesheetReferenceOptions.lunch_options.length
+      ? timesheetReferenceOptions.lunch_options
+      : ['0', '30', '60'];
+
+    return buildReferenceOptions(configuredLunchOptions, currentValue ?? '30');
+  };
+
+  const formatLunchLabel = (value) => {
+    const minutes = String(value ?? '');
+    if (minutes === '0') return 'No lunch';
+    return minutes ? `${minutes}m` : 'Lunch';
+  };
   const [entryData, setEntryData] = useState({
     note: '',
     priority: 'medium',
@@ -158,6 +234,33 @@ const DiaryPage = () => {
     }
   }, []);
 
+  const fetchTimesheetReferenceOptions = useCallback(async () => {
+    try {
+      const res = await integrationsApi.getTimesheetReferenceOptions();
+      const data = res.data || {};
+
+      setTimesheetReferenceOptions({
+        employees: Array.isArray(data.employees) ? data.employees : [],
+        project_managers: Array.isArray(data.project_managers) ? data.project_managers : [],
+        task_codes: Array.isArray(data.task_codes) ? data.task_codes : [],
+        lunch_options: Array.isArray(data.lunch_options) && data.lunch_options.length
+          ? data.lunch_options
+          : ['0', '30', '60']
+      });
+    } catch (error) {
+      console.error('Failed to load Timesheet reference options:', error);
+      setTimesheetReferenceOptions((current) => ({
+        ...current,
+        lunch_options: Array.isArray(current.lunch_options) && current.lunch_options.length
+          ? current.lunch_options
+          : ['0', '30', '60']
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTimesheetReferenceOptions();
+  }, [fetchTimesheetReferenceOptions]);
   const fetchLabourRows = useCallback(async () => {
     if (!selectedProject || !selectedDate) {
       setLabourRows([]);
@@ -316,7 +419,7 @@ const DiaryPage = () => {
 
   const handleQuickEntry = async (e) => {
     e.preventDefault();
-    
+
     if (!entryData.note.trim()) {
       toast.error('Please enter a note');
       noteInputRef.current?.focus();
@@ -329,10 +432,10 @@ const DiaryPage = () => {
         ...entryData,
         project_id: selectedProject
       });
-      
+
       localStorage.setItem('lld_last_project_id', selectedProject);
       toast.success('Entry captured');
-      
+
       // Reset form
       setEntryData({
         note: '',
@@ -343,7 +446,7 @@ const DiaryPage = () => {
         photos: [],
         create_action_item: true
       });
-      
+
       // Refresh diary
       fetchDiary();
     fetchLabourRows();
@@ -548,7 +651,7 @@ const DiaryPage = () => {
                     <Camera className="w-4 h-4" />
                     <span className="text-sm">Photo</span>
                   </button>
-                  
+
                   {entryData.photos.map((photo, i) => (
                     <div key={i} className="relative group">
                       <img src={photo} alt={`Upload ${i + 1}`} className="w-10 h-10 object-cover rounded" />
@@ -702,7 +805,7 @@ const DiaryPage = () => {
 
           {/* Content Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card className="ops-card" data-testid="daily-labour-card">
+            <Card className="ops-card lg:col-span-2" data-testid="daily-labour-card">
           <CardHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -727,64 +830,76 @@ const DiaryPage = () => {
             ) : (
               <div className="space-y-3" data-testid="daily-labour-rows">
                 {labourRows.map((row, index) => (
-                  <div key={row.id || index} className="grid gap-2 rounded-xl border p-3 md:grid-cols-12">
-                    <input
-                      className="input md:col-span-2"
-                      placeholder="Employee"
+                  <div key={row.id || index} className="grid gap-2 rounded-xl border p-3 sm:grid-cols-2 xl:grid-cols-12">
+                    <select
+                      className="input sm:col-span-2 xl:col-span-2"
                       value={row.employee_name || ''}
                       onChange={(e) => updateLabourRow(index, 'employee_name', e.target.value)}
                       data-testid={`daily-labour-employee-${index}`}
-                    />
+                    >
+                      <option value="">Employee</option>
+                      {employeeOptionsForRow(row.employee_name).map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
                     <input
-                      className="input md:col-span-1"
+                      className="input xl:col-span-1"
                       type="time"
                       value={row.start_time || ''}
                       onChange={(e) => updateLabourRow(index, 'start_time', e.target.value)}
                       data-testid={`daily-labour-start-${index}`}
                     />
                     <select
-                      className="input md:col-span-1"
+                      className="input xl:col-span-1"
                       value={String(row.lunch_duration ?? '30')}
                       onChange={(e) => updateLabourRow(index, 'lunch_duration', e.target.value)}
                       data-testid={`daily-labour-lunch-${index}`}
                     >
-                      <option value="0">No lunch</option>
-                      <option value="30">30m</option>
-                      <option value="60">60m</option>
+                      {lunchOptionsForRow(row.lunch_duration).map((option) => (
+                        <option key={option.value} value={option.value}>{formatLunchLabel(option.value)}</option>
+                      ))}
                     </select>
                     <input
-                      className="input md:col-span-1"
+                      className="input xl:col-span-1"
                       type="time"
                       value={row.finish_time || ''}
                       onChange={(e) => updateLabourRow(index, 'finish_time', e.target.value)}
                       data-testid={`daily-labour-finish-${index}`}
                     />
-                    <div className="rounded-md border bg-secondary/30 px-3 py-2 text-sm font-semibold md:col-span-1" data-testid={`daily-labour-hours-${index}`}>
+                    <div className="rounded-md border bg-secondary/30 px-3 py-2 text-sm font-semibold xl:col-span-1" data-testid={`daily-labour-hours-${index}`}>
                       {(parseFloat(row.total_hours) || 0).toFixed(2)}h
                     </div>
                     <input
-                      className="input md:col-span-1"
+                      className="input xl:col-span-1"
                       placeholder="Job #"
                       value={row.job_number || ''}
                       onChange={(e) => updateLabourRow(index, 'job_number', e.target.value)}
                       data-testid={`daily-labour-job-${index}`}
                     />
-                    <input
-                      className="input md:col-span-1"
-                      placeholder="Task code"
+                    <select
+                      className="input xl:col-span-1"
                       value={row.task_code || ''}
                       onChange={(e) => updateLabourRow(index, 'task_code', e.target.value)}
                       data-testid={`daily-labour-task-${index}`}
-                    />
-                    <input
-                      className="input md:col-span-1"
-                      placeholder="PM"
+                    >
+                      <option value="">Task code</option>
+                      {taskCodeOptionsForRow(row.task_code).map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                    <select
+                      className="input xl:col-span-1"
                       value={row.project_manager_id || ''}
                       onChange={(e) => updateLabourRow(index, 'project_manager_id', e.target.value)}
                       data-testid={`daily-labour-pm-${index}`}
-                    />
+                    >
+                      <option value="">PM</option>
+                      {projectManagerOptionsForRow(row.project_manager_id).map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
                     <input
-                      className="input md:col-span-2"
+                      className="input sm:col-span-2 xl:col-span-2"
                       placeholder="Description / work done"
                       value={row.description || row.other || ''}
                       onChange={(e) => updateLabourRow(index, 'description', e.target.value)}
@@ -794,6 +909,7 @@ const DiaryPage = () => {
                       type="button"
                       variant="ghost"
                       size="sm"
+                      className="sm:col-span-2 xl:col-span-1"
                       onClick={() => removeLabourRow(index)}
                       data-testid={`daily-labour-remove-${index}`}
                     >
