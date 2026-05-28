@@ -1205,6 +1205,72 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
         }
     }
 
+
+# ==================== TIMESHEET INTEGRATION ROUTES ====================
+
+@api_router.get("/integrations/timesheet/reference-options")
+async def get_timesheet_reference_options_proxy(current_user: dict = Depends(get_current_user)):
+    """Proxy Timesheet reference/dropdown options for LLD labour rows.
+
+    LLD frontend calls this endpoint only.
+    LLD backend calls Timesheet backend using a server-side integration token.
+    The integration token is never exposed to the browser.
+    """
+    reference_url = (os.environ.get("TIMESHEET_REFERENCE_OPTIONS_URL") or "").strip()
+    integration_token = (os.environ.get("LLS_REFERENCE_OPTIONS_TOKEN") or "").strip()
+
+    if not reference_url:
+        raise HTTPException(status_code=503, detail="Timesheet reference options URL is not configured")
+    if not integration_token:
+        raise HTTPException(status_code=503, detail="Timesheet reference options integration token is not configured")
+
+    headers = {
+        "X-LLS-Reference-Token": integration_token,
+        "Accept": "application/json"
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(reference_url, headers=headers)
+    except httpx.RequestError:
+        raise HTTPException(status_code=502, detail="Timesheet reference options service is unreachable")
+
+    if response.status_code == 401 or response.status_code == 403:
+        raise HTTPException(status_code=502, detail="Timesheet reference options integration auth failed")
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail="Timesheet reference options service returned an error")
+
+    try:
+        payload = response.json()
+    except Exception:
+        raise HTTPException(status_code=502, detail="Timesheet reference options service returned invalid JSON")
+
+    return {
+        "source": "LLD",
+        "proxy": "timesheet_reference_options",
+        "requested_by": {
+            "id": current_user.get("id"),
+            "email": current_user.get("email"),
+            "role": current_user.get("role")
+        },
+        "timesheet_auth_mode": payload.get("auth_mode"),
+        "field_names": payload.get("field_names", {}),
+        "defaults": payload.get("defaults", {}),
+        "lunch_options": payload.get("lunch_options", []),
+        "employees": payload.get("employees", []),
+        "project_managers": payload.get("project_managers", []),
+        "task_codes": payload.get("task_codes", []),
+        "counts": payload.get("counts", {}),
+        "source_warnings": payload.get("source_warnings", []),
+        "honest_status": {
+            "read_only": True,
+            "creates_timesheets": False,
+            "approves_timesheets": False,
+            "token_exposed_to_browser": False,
+            "next_step": "Wire LLD labour dropdowns to this proxy endpoint."
+        }
+    }
+
 # ==================== DIARY ROUTES ====================
 
 
