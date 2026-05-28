@@ -496,10 +496,10 @@ async def register(user_data: UserCreate):
     existing = await db.users.find_one({"email": email})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     user_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
-    
+
     user_doc = {
         "id": user_id,
         "email": email,
@@ -509,7 +509,7 @@ async def register(user_data: UserCreate):
         "created_at": now
     }
     await db.users.insert_one(user_doc)
-    
+
     # Create default settings
     settings_doc = {
         "id": str(uuid.uuid4()),
@@ -522,7 +522,7 @@ async def register(user_data: UserCreate):
         "updated_at": now
     }
     await db.settings.insert_one(settings_doc)
-    
+
     token = create_token(user_id)
     return TokenResponse(
         access_token=token,
@@ -541,7 +541,7 @@ async def login(credentials: UserLogin):
     user = await db.users.find_one({"email": email})
     if not user or not verify_password(credentials.password, user["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
     token = create_token(user["id"])
     return TokenResponse(
         access_token=token,
@@ -585,7 +585,7 @@ async def delete_user(user_id: str, admin_user: dict = Depends(require_admin_use
 async def create_project(project: ProjectCreate, current_user: dict = Depends(get_current_user)):
     now = datetime.now(timezone.utc).isoformat()
     project_id = str(uuid.uuid4())
-    
+
     doc = {
         "id": project_id,
         "user_id": current_user["id"],
@@ -709,7 +709,7 @@ def calculate_gate_status(gate: dict, all_gates: List[dict]) -> str:
     """Calculate gate status based on dates and dependencies"""
     if gate.get("completed_at"):
         return "COMPLETED"
-    
+
     # Check dependencies
     for dep_id in gate.get("depends_on_gate_ids", []):
         dep_gate = next((g for g in all_gates if g["id"] == dep_id), None)
@@ -718,18 +718,18 @@ def calculate_gate_status(gate: dict, all_gates: List[dict]) -> str:
             dep_status = calculate_gate_status_simple(dep_gate)
             if dep_status in ["BLOCKED", "DELAYED"]:
                 return "BLOCKED"
-    
+
     return calculate_gate_status_simple(gate)
 
 def calculate_gate_status_simple(gate: dict) -> str:
     """Calculate status without checking dependencies"""
     if gate.get("completed_at"):
         return "COMPLETED"
-    
+
     now = datetime.now(timezone.utc)
     required_by = None
     expected = None
-    
+
     # Safely parse dates with timezone handling
     if gate.get("required_by_date"):
         try:
@@ -743,7 +743,7 @@ def calculate_gate_status_simple(gate: dict) -> str:
             required_by = datetime.fromisoformat(required_by_str)
         except:
             pass
-    
+
     if gate.get("expected_complete_date"):
         try:
             expected_str = gate["expected_complete_date"]
@@ -756,9 +756,9 @@ def calculate_gate_status_simple(gate: dict) -> str:
             expected = datetime.fromisoformat(expected_str)
         except:
             pass
-    
+
     buffer_days = gate.get("buffer_days", 2)
-    
+
     if required_by:
         if expected and expected > required_by:
             return "DELAYED"
@@ -767,7 +767,7 @@ def calculate_gate_status_simple(gate: dict) -> str:
             return "AT_RISK"
         if now > required_by:
             return "DELAYED"
-    
+
     return "ON_TRACK"
 
 @api_router.post("/gates", response_model=GateResponse)
@@ -776,13 +776,13 @@ async def create_gate(gate: GateCreate, current_user: dict = Depends(get_current
     project = await db.projects.find_one({"id": gate.project_id, "user_id": current_user["id"]})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     now = datetime.now(timezone.utc).isoformat()
     gate_id = str(uuid.uuid4())
-    
+
     # Get all gates for status calculation
     all_gates = await db.gates.find({"project_id": gate.project_id}, {"_id": 0}).to_list(100)
-    
+
     doc = {
         "id": gate_id,
         "user_id": current_user["id"],
@@ -791,10 +791,10 @@ async def create_gate(gate: GateCreate, current_user: dict = Depends(get_current
         "created_at": now,
         "updated_at": now
     }
-    
+
     status = calculate_gate_status(doc, all_gates)
     doc["status"] = status
-    
+
     await db.gates.insert_one(doc)
     return GateResponse(**doc)
 
@@ -803,14 +803,14 @@ async def get_gates(project_id: Optional[str] = None, current_user: dict = Depen
     query = {"user_id": current_user["id"]}
     if project_id:
         query["project_id"] = project_id
-    
+
     gates = await db.gates.find(query, {"_id": 0}).to_list(20)
-    
+
     # Recalculate statuses
     for gate in gates:
         project_gates = [g for g in gates if g["project_id"] == gate["project_id"]]
         gate["status"] = calculate_gate_status(gate, project_gates)
-    
+
     return [GateResponse(**g) for g in sorted(gates, key=lambda x: x.get("order", 0))]
 
 @api_router.get("/gates/{gate_id}", response_model=GateResponse)
@@ -818,7 +818,7 @@ async def get_gate(gate_id: str, current_user: dict = Depends(get_current_user))
     gate = await db.gates.find_one({"id": gate_id, "user_id": current_user["id"]}, {"_id": 0})
     if not gate:
         raise HTTPException(status_code=404, detail="Gate not found")
-    
+
     all_gates = await db.gates.find({"project_id": gate["project_id"]}, {"_id": 0}).to_list(100)
     gate["status"] = calculate_gate_status(gate, all_gates)
     return GateResponse(**gate)
@@ -826,18 +826,18 @@ async def get_gate(gate_id: str, current_user: dict = Depends(get_current_user))
 @api_router.put("/gates/{gate_id}", response_model=GateResponse)
 async def update_gate(gate_id: str, gate_data: GateCreate, current_user: dict = Depends(get_current_user)):
     now = datetime.now(timezone.utc).isoformat()
-    
+
     existing = await db.gates.find_one({"id": gate_id, "user_id": current_user["id"]})
     if not existing:
         raise HTTPException(status_code=404, detail="Gate not found")
-    
+
     update_doc = {**gate_data.model_dump(), "updated_at": now}
     await db.gates.update_one({"id": gate_id}, {"$set": update_doc})
-    
+
     updated = await db.gates.find_one({"id": gate_id}, {"_id": 0})
     all_gates = await db.gates.find({"project_id": updated["project_id"]}, {"_id": 0}).to_list(100)
     updated["status"] = calculate_gate_status(updated, all_gates)
-    
+
     return GateResponse(**updated)
 
 @api_router.post("/gates/{gate_id}/complete", response_model=GateResponse)
@@ -849,7 +849,7 @@ async def complete_gate(gate_id: str, current_user: dict = Depends(get_current_u
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Gate not found")
-    
+
     updated = await db.gates.find_one({"id": gate_id}, {"_id": 0})
     updated["status"] = "COMPLETED"
     return GateResponse(**updated)
@@ -863,7 +863,7 @@ async def reopen_gate(gate_id: str, current_user: dict = Depends(get_current_use
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Gate not found")
-    
+
     updated = await db.gates.find_one({"id": gate_id}, {"_id": 0})
     all_gates = await db.gates.find({"project_id": updated["project_id"]}, {"_id": 0}).to_list(100)
     updated["status"] = calculate_gate_status(updated, all_gates)
@@ -894,10 +894,10 @@ async def create_default_gates(project_id: str, current_user: dict = Depends(get
     project = await db.projects.find_one({"id": project_id, "user_id": current_user["id"]})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     now = datetime.now(timezone.utc)
     base_date = now + timedelta(days=30)  # Start 30 days from now
-    
+
     default_gates = [
         {"name": "Closed In / Ready for Partitions", "owner_party": "MC", "days_offset": 0, "is_hard_gate": False, "is_optional": False, "depends_on": []},
         {"name": "Partitions Complete", "owner_party": "YOU", "days_offset": 14, "is_hard_gate": False, "is_optional": True, "depends_on": [0]},
@@ -907,17 +907,17 @@ async def create_default_gates(project_id: str, current_user: dict = Depends(get
         {"name": "2-Way Grid Install + Aluminium Skirting", "owner_party": "YOU", "days_offset": 56, "is_hard_gate": False, "is_optional": False, "depends_on": [4]},
         {"name": "Subbies 2nd Fix to Ceiling Grid", "owner_party": "SUBBIES", "days_offset": 63, "is_hard_gate": False, "is_optional": False, "depends_on": [5]},
     ]
-    
+
     created_gates = []
     gate_ids = []
-    
+
     for i, gate_template in enumerate(default_gates):
         gate_id = str(uuid.uuid4())
         gate_ids.append(gate_id)
-        
+
         depends_on = [gate_ids[dep_idx] for dep_idx in gate_template["depends_on"] if dep_idx < len(gate_ids)]
         required_by = (base_date + timedelta(days=gate_template["days_offset"])).isoformat()
-        
+
         doc = {
             "id": gate_id,
             "project_id": project_id,
@@ -939,7 +939,7 @@ async def create_default_gates(project_id: str, current_user: dict = Depends(get
         }
         await db.gates.insert_one(doc)
         created_gates.append(doc)
-    
+
     return {"message": f"Created {len(created_gates)} default gates", "gates": [GateResponse(**g) for g in created_gates]}
 
 # ==================== ACTION ITEMS ROUTES ====================
@@ -950,10 +950,10 @@ async def create_action_item(item: ActionItemCreate, current_user: dict = Depend
     project = await db.projects.find_one({"id": item.project_id, "user_id": current_user["id"]})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     now = datetime.now(timezone.utc).isoformat()
     item_id = str(uuid.uuid4())
-    
+
     doc = {
         "id": item_id,
         "user_id": current_user["id"],
@@ -977,7 +977,7 @@ async def get_action_items(
         query["project_id"] = project_id
     if status:
         query["status"] = status
-    
+
     items = await db.action_items.find(query, {"_id": 0}).to_list(1000)
     return [ActionItemResponse(**i) for i in items]
 
@@ -997,7 +997,7 @@ async def update_action_item(item_id: str, item_data: ActionItemCreate, current_
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Action item not found")
-    
+
     updated = await db.action_items.find_one({"id": item_id}, {"_id": 0})
     return ActionItemResponse(**updated)
 
@@ -1010,7 +1010,7 @@ async def complete_action_item(item_id: str, current_user: dict = Depends(get_cu
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Action item not found")
-    
+
     updated = await db.action_items.find_one({"id": item_id}, {"_id": 0})
     return ActionItemResponse(**updated)
 
@@ -1023,7 +1023,7 @@ async def reopen_action_item(item_id: str, current_user: dict = Depends(get_curr
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Action item not found")
-    
+
     updated = await db.action_items.find_one({"id": item_id}, {"_id": 0})
     return ActionItemResponse(**updated)
 
@@ -1042,11 +1042,11 @@ async def create_walkaround_entry(entry: WalkaroundEntryCreate, current_user: di
     project = await db.projects.find_one({"id": entry.project_id, "user_id": current_user["id"]})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     now = datetime.now(timezone.utc).isoformat()
     entry_id = str(uuid.uuid4())
     action_item_id = None
-    
+
     # Optionally create action item
     if entry.create_action_item:
         action_item_id = str(uuid.uuid4())
@@ -1068,7 +1068,7 @@ async def create_walkaround_entry(entry: WalkaroundEntryCreate, current_user: di
             "updated_at": now
         }
         await db.action_items.insert_one(action_doc)
-    
+
     doc = {
         "id": entry_id,
         "user_id": current_user["id"],
@@ -1105,7 +1105,7 @@ async def get_walkaround_entries(
         start = local_start_dt.astimezone(timezone.utc).isoformat()
         end = local_end_dt.astimezone(timezone.utc).isoformat()
         query["created_at"] = {"$gte": start, "$lte": end}
-    
+
     entries = await db.walkaround_entries.find(query, {"_id": 0}).to_list(1000)
     return [WalkaroundEntryResponse(**e) for e in sorted(entries, key=lambda x: x["created_at"], reverse=True)]
 
@@ -1117,17 +1117,17 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
     now = datetime.now(timezone.utc)
     today = now.date().isoformat()
     week_end = (now + timedelta(days=7)).date().isoformat()
-    
+
     # Get all data
     projects = await db.projects.find({"user_id": current_user["id"], "status": "active"}, {"_id": 0}).to_list(100)
     action_items = await db.action_items.find({"user_id": current_user["id"]}, {"_id": 0}).to_list(1000)
     gates = await db.gates.find({"user_id": current_user["id"]}, {"_id": 0}).to_list(1000)
-    
+
     # Recalculate gate statuses
     for gate in gates:
         project_gates = [g for g in gates if g["project_id"] == gate["project_id"]]
         gate["status"] = calculate_gate_status(gate, project_gates)
-    
+
     # Categorize items
     blocked_delayed = []
     at_risk = []
@@ -1135,7 +1135,7 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
     due_today = []
     due_this_week = []
     recently_completed = []
-    
+
     for item in action_items:
         if item["status"] == "completed":
             # Check if completed in last 7 days
@@ -1144,9 +1144,9 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
                 if completed_date >= (now - timedelta(days=7)).date().isoformat():
                     recently_completed.append(item)
             continue
-        
+
         due_date = item.get("due_date", "")[:10] if item.get("due_date") else None
-        
+
         if due_date:
             if due_date < today:
                 overdue.append(item)
@@ -1154,7 +1154,7 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
                 due_today.append(item)
             elif due_date <= week_end:
                 due_this_week.append(item)
-    
+
     # Add blocked/delayed gates
     for gate in gates:
         if gate["status"] in ["BLOCKED", "DELAYED"]:
@@ -1177,16 +1177,16 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
                 "required_by_date": gate["required_by_date"],
                 "owner_party": gate["owner_party"]
             })
-    
+
     # Project lookup
     project_map = {p["id"]: p["name"] for p in projects}
-    
+
     # Add project names to items
     def enrich_items(items):
         for item in items:
             item["project_name"] = project_map.get(item.get("project_id"), "Unknown")
         return items
-    
+
     return {
         "projects_count": len(projects),
         "blocked_delayed": enrich_items(blocked_delayed),
@@ -1416,7 +1416,7 @@ async def get_project_diary(
     project = await db.projects.find_one({"id": project_id, "user_id": current_user["id"]}, {"_id": 0})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     from zoneinfo import ZoneInfo
 
     nz_tz = ZoneInfo("Pacific/Auckland")
@@ -1437,7 +1437,7 @@ async def get_project_diary(
         "user_id": current_user["id"],
         "created_at": {"$gte": start, "$lte": end}
     }, {"_id": 0}).to_list(100)
-    
+
     task_ids = list({e.get("task_id") for e in entries if e.get("task_id")})
     task_lookup = {}
 
@@ -1467,22 +1467,22 @@ async def get_project_diary(
         "user_id": current_user["id"],
         "created_at": {"$gte": start, "$lte": end}
     }, {"_id": 0}).to_list(100)
-    
+
     # Get action items closed today
     items_closed = await db.action_items.find({
         "project_id": project_id,
         "user_id": current_user["id"],
         "completed_at": {"$gte": start, "$lte": end}
     }, {"_id": 0}).to_list(100)
-    
+
     # Get gates status
     gates = await db.gates.find({"project_id": project_id, "user_id": current_user["id"]}, {"_id": 0}).to_list(100)
     for gate in gates:
         gate["status"] = calculate_gate_status(gate, gates)
-    
+
     blocked_gates = [g for g in gates if g["status"] in ["BLOCKED", "DELAYED"]]
     at_risk_gates = [g for g in gates if g["status"] == "AT_RISK"]
-    
+
     # Get overdue items
     overdue_items = await db.action_items.find({
         "project_id": project_id,
@@ -1490,7 +1490,7 @@ async def get_project_diary(
         "status": "open",
         "due_date": {"$lt": start}
     }, {"_id": 0}).to_list(100)
-    
+
     return {
         "project": project,
         "date": target_date,
@@ -1542,7 +1542,7 @@ async def get_settings(current_user: dict = Depends(get_current_user)):
 @api_router.put("/settings")
 async def update_settings(settings_data: SettingsUpdate, current_user: dict = Depends(get_current_user)):
     now = datetime.now(timezone.utc).isoformat()
-    
+
     existing = await db.settings.find_one({"user_id": current_user["id"]})
     if existing:
         await db.settings.update_one(
@@ -1557,7 +1557,7 @@ async def update_settings(settings_data: SettingsUpdate, current_user: dict = De
             "updated_at": now
         }
         await db.settings.insert_one(doc)
-    
+
     updated = await db.settings.find_one({"user_id": current_user["id"]}, {"_id": 0, "smtp_password": 0})
     updated["smtp_configured"] = bool(updated.get("smtp_host") and updated.get("smtp_port"))
     return updated
@@ -1578,8 +1578,8 @@ async def get_weather(lat: float = -36.8485, lon: float = 174.7633):
                 "icon": "02d"
             },
             "forecast": [
-                {"date": (datetime.now(timezone.utc) + timedelta(days=i)).strftime("%Y-%m-%d"), 
-                 "temp_max": 20 + i % 3, "temp_min": 12 + i % 2, 
+                {"date": (datetime.now(timezone.utc) + timedelta(days=i)).strftime("%Y-%m-%d"),
+                 "temp_max": 20 + i % 3, "temp_min": 12 + i % 2,
                  "description": ["Sunny", "Cloudy", "Rain", "Partly cloudy", "Overcast", "Light rain", "Clear"][i % 7],
                  "icon": ["01d", "03d", "10d", "02d", "04d", "09d", "01d"][i % 7]}
                 for i in range(7)
@@ -1587,7 +1587,7 @@ async def get_weather(lat: float = -36.8485, lon: float = 174.7633):
             "location": {"lat": lat, "lon": lon},
             "is_mock": True
         }
-    
+
     try:
         async with httpx.AsyncClient() as client:
             # Get current weather
@@ -1602,7 +1602,7 @@ async def get_weather(lat: float = -36.8485, lon: float = 174.7633):
                 timeout=10
             )
             current_data = current_res.json()
-            
+
             # Get forecast
             forecast_res = await client.get(
                 "https://api.openweathermap.org/data/2.5/forecast",
@@ -1615,7 +1615,7 @@ async def get_weather(lat: float = -36.8485, lon: float = 174.7633):
                 timeout=10
             )
             forecast_data = forecast_res.json()
-            
+
             # Process forecast to daily
             daily_forecast = {}
             for item in forecast_data.get("list", []):
@@ -1631,7 +1631,7 @@ async def get_weather(lat: float = -36.8485, lon: float = 174.7633):
                 else:
                     daily_forecast[date]["temp_max"] = max(daily_forecast[date]["temp_max"], item["main"]["temp_max"])
                     daily_forecast[date]["temp_min"] = min(daily_forecast[date]["temp_min"], item["main"]["temp_min"])
-            
+
             return {
                 "current": {
                     "temp": current_data["main"]["temp"],
@@ -1655,27 +1655,27 @@ async def get_weather(lat: float = -36.8485, lon: float = 174.7633):
 @api_router.post("/programmes/upload")
 async def upload_programme(data: ProgrammeUpload, current_user: dict = Depends(get_current_user)):
     """Upload and parse a MC programme PDF using AI"""
-    
+
     import tempfile
-    
+
     # Verify project
     project = await db.projects.find_one({"id": data.project_id, "user_id": current_user["id"]})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     now = datetime.now(timezone.utc).isoformat()
     programme_id = str(uuid.uuid4())
-    
+
     # Decode and save PDF temporarily
     try:
         pdf_bytes = base64.b64decode(data.pdf_base64.split(',')[-1] if ',' in data.pdf_base64 else data.pdf_base64)
     except Exception as e:
         raise HTTPException(status_code=400, detail="Invalid PDF data")
-    
+
     with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
         tmp_file.write(pdf_bytes)
         tmp_path = tmp_file.name
-    
+
     try:
         # Use OpenAI to parse the PDF
         api_key = os.environ.get('OPENAI_API_KEY', '')
@@ -1732,14 +1732,14 @@ Example: [{"task_name": "Site Setup", "programme_start_date": "2024-01-15", "end
         # Parse the response
         import json
         import re
-        
+
         # Try to extract JSON from response
         json_match = re.search(r'\[[\s\S]*\]', response)
         if json_match:
             tasks_data = json.loads(json_match.group())
         else:
             raise HTTPException(status_code=500, detail="Failed to parse programme - AI response invalid")
-        
+
         # Store programme record
         programme_doc = {
             "id": programme_id,
@@ -1751,7 +1751,7 @@ Example: [{"task_name": "Site Setup", "programme_start_date": "2024-01-15", "end
             "created_at": now
         }
         await db.programmes.insert_one(programme_doc)
-        
+
         # Store tasks
         tasks_created = []
         for task in tasks_data:
@@ -1774,13 +1774,13 @@ Example: [{"task_name": "Site Setup", "programme_start_date": "2024-01-15", "end
             }
             await db.programme_tasks.insert_one(task_doc)
             tasks_created.append(task_doc)
-        
+
         return {
             "programme": ProgrammeResponse(**programme_doc),
             "tasks": [ProgrammeTaskResponse(**t) for t in tasks_created],
             "message": f"Successfully parsed {len(tasks_created)} tasks from programme"
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1821,7 +1821,7 @@ async def update_task_tag(task_id: str, data: TaskTagUpdate, current_user: dict 
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     task = await db.programme_tasks.find_one({"id": task_id}, {"_id": 0})
     return ProgrammeTaskResponse(**task)
 
@@ -1831,17 +1831,17 @@ async def update_task_dates(task_id: str, data: TaskDateUpdate, current_user: di
     task = await db.programme_tasks.find_one({"id": task_id, "user_id": current_user["id"]})
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     now = datetime.now(timezone.utc).isoformat()
     update_data = {}
-    
+
     if data.programme_start_date:
         update_data["programme_start_date"] = data.programme_start_date
     if data.end_date:
         update_data["end_date"] = data.end_date
-    
+
     await db.programme_tasks.update_one({"id": task_id}, {"$set": update_data})
-    
+
     # Log the date change
     if data.delay_reason:
         change_log = {
@@ -1857,7 +1857,7 @@ async def update_task_dates(task_id: str, data: TaskDateUpdate, current_user: di
             "created_at": now
         }
         await db.date_change_logs.insert_one(change_log)
-        
+
         # Create notification for delay notice
         if data.notify_mc:
             notification = {
@@ -1873,7 +1873,7 @@ async def update_task_dates(task_id: str, data: TaskDateUpdate, current_user: di
                 "created_at": now
             }
             await db.notifications.insert_one(notification)
-    
+
     updated = await db.programme_tasks.find_one({"id": task_id}, {"_id": 0})
     return ProgrammeTaskResponse(**updated)
 
@@ -1979,18 +1979,18 @@ async def convert_task_to_gate(task_id: str, data: TaskToGateConvert, current_us
     task = await db.programme_tasks.find_one({"id": task_id, "user_id": current_user["id"]})
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     # Check if already converted
     existing_gate = await db.gates.find_one({"linked_task_id": task_id})
     if existing_gate:
         raise HTTPException(status_code=400, detail="Task already converted to a gate")
-    
+
     now = datetime.now(timezone.utc).isoformat()
     gate_id = str(uuid.uuid4())
-    
+
     # Get current gate count for ordering
     gate_count = await db.gates.count_documents({"project_id": task["project_id"], "user_id": current_user["id"]})
-    
+
     gate_doc = {
         "id": gate_id,
         "project_id": task["project_id"],
@@ -2012,13 +2012,13 @@ async def convert_task_to_gate(task_id: str, data: TaskToGateConvert, current_us
         "updated_at": now
     }
     await db.gates.insert_one(gate_doc)
-    
+
     # Update task to mark as converted
     await db.programme_tasks.update_one(
         {"id": task_id},
         {"$set": {"converted_to_gate_id": gate_id, "is_tracked": True}}
     )
-    
+
     return {
         "message": f"Created gate '{task['task_name']}' from programme task",
         "gate": GateResponse(**gate_doc)
@@ -2029,23 +2029,23 @@ async def bulk_convert_to_gates(task_ids: List[str], current_user: dict = Depend
     """Convert multiple programme tasks to gates"""
     created_gates = []
     errors = []
-    
+
     for task_id in task_ids:
         try:
             task = await db.programme_tasks.find_one({"id": task_id, "user_id": current_user["id"]})
             if not task:
                 errors.append({"task_id": task_id, "error": "Task not found"})
                 continue
-            
+
             existing_gate = await db.gates.find_one({"linked_task_id": task_id})
             if existing_gate:
                 errors.append({"task_id": task_id, "error": "Already converted"})
                 continue
-            
+
             now = datetime.now(timezone.utc).isoformat()
             gate_id = str(uuid.uuid4())
             gate_count = await db.gates.count_documents({"project_id": task["project_id"], "user_id": current_user["id"]})
-            
+
             gate_doc = {
                 "id": gate_id,
                 "project_id": task["project_id"],
@@ -2067,16 +2067,16 @@ async def bulk_convert_to_gates(task_ids: List[str], current_user: dict = Depend
                 "updated_at": now
             }
             await db.gates.insert_one(gate_doc)
-            
+
             await db.programme_tasks.update_one(
                 {"id": task_id},
                 {"$set": {"converted_to_gate_id": gate_id, "is_tracked": True}}
             )
-            
+
             created_gates.append(gate_doc)
         except Exception as e:
             errors.append({"task_id": task_id, "error": str(e)})
-    
+
     return {
         "created": len(created_gates),
         "errors": errors,
@@ -2088,30 +2088,30 @@ async def bulk_convert_to_gates(task_ids: List[str], current_user: dict = Depend
 @api_router.post("/programmes/{programme_id}/suggest-gates")
 async def suggest_gates_from_programme(programme_id: str, current_user: dict = Depends(get_current_user)):
     """Use AI to suggest which programme tasks should become gates"""
-    
-    
+
+
     programme = await db.programmes.find_one({"id": programme_id, "user_id": current_user["id"]})
     if not programme:
         raise HTTPException(status_code=404, detail="Programme not found")
-    
+
     tasks = await db.programme_tasks.find(
         {"programme_id": programme_id, "user_id": current_user["id"]},
         {"_id": 0}
     ).to_list(500)
-    
+
     if not tasks:
         return {"suggestions": [], "message": "No tasks found in programme"}
-    
+
     # Prepare task list for AI
     task_list = "\n".join([
         f"- {t['task_name']} (Start: {t.get('programme_start_date', 'N/A')}, End: {t.get('end_date', 'N/A')})"
         for t in tasks
     ])
-    
+
     api_key = os.environ.get('OPENAI_API_KEY', '')
     if not api_key or api_key == 'put-your-openai-key-here':
         # Fallback: suggest tasks with common fitout keywords
-        keywords = ['partition', 'lining', 'ceiling', 'grid', 'paint', 'floor', 'joinery', 
+        keywords = ['partition', 'lining', 'ceiling', 'grid', 'paint', 'floor', 'joinery',
                    'door', 'frame', 'tile', 'stopping', 'gib', 'plaster', 'skirting',
                    'bulkhead', 'fixture', 'fitout', 'install']
         suggestions = []
@@ -2126,7 +2126,7 @@ async def suggest_gates_from_programme(programme_id: str, current_user: dict = D
                     "confidence": "medium"
                 })
         return {"suggestions": suggestions[:15], "message": "Suggestions based on keyword matching (AI not available)"}
-    
+
     try:
         current_openai_client = OpenAI(api_key=api_key)
         response_obj = current_openai_client.responses.create(
@@ -2166,11 +2166,11 @@ Return ONLY a JSON array. Focus on the 10-15 most important tasks for the fitout
         response = response_obj.output_text
         import json
         import re
-        
+
         json_match = re.search(r'\[[\s\S]*\]', response)
         if json_match:
             ai_suggestions = json.loads(json_match.group())
-            
+
             # Match AI suggestions to actual task IDs
             suggestions = []
             for sugg in ai_suggestions:
@@ -2184,7 +2184,7 @@ Return ONLY a JSON array. Focus on the 10-15 most important tasks for the fitout
                         (t for t in tasks if sugg.get('task_name', '').lower() in t['task_name'].lower()),
                         None
                     )
-                
+
                 if matching_task:
                     suggestions.append({
                         "task_id": matching_task["id"],
@@ -2196,11 +2196,11 @@ Return ONLY a JSON array. Focus on the 10-15 most important tasks for the fitout
                         "confidence": sugg.get("confidence", "medium"),
                         "is_key_gate": sugg.get("is_key_gate", False)
                     })
-            
+
             return {"suggestions": suggestions, "message": f"AI identified {len(suggestions)} potential gates"}
         else:
             raise ValueError("Invalid AI response")
-            
+
     except Exception as e:
         logger.error(f"AI suggestion error: {e}")
         # Fallback to keyword matching
@@ -2229,18 +2229,18 @@ async def link_gate_to_task(gate_id: str, data: GateLinkUpdate, current_user: di
     gate = await db.gates.find_one({"id": gate_id, "user_id": current_user["id"]})
     if not gate:
         raise HTTPException(status_code=404, detail="Gate not found")
-    
+
     if data.linked_task_id:
         task = await db.programme_tasks.find_one({"id": data.linked_task_id, "user_id": current_user["id"]})
         if not task:
             raise HTTPException(status_code=404, detail="Task not found")
-    
+
     now = datetime.now(timezone.utc).isoformat()
     await db.gates.update_one(
         {"id": gate_id},
         {"$set": {"linked_task_id": data.linked_task_id, "updated_at": now}}
     )
-    
+
     updated = await db.gates.find_one({"id": gate_id}, {"_id": 0})
     return {"message": "Gate linked to task", "gate": updated}
 
@@ -2250,14 +2250,14 @@ async def get_linked_task_impact(gate_id: str, current_user: dict = Depends(get_
     gate = await db.gates.find_one({"id": gate_id, "user_id": current_user["id"]}, {"_id": 0})
     if not gate:
         raise HTTPException(status_code=404, detail="Gate not found")
-    
+
     if not gate.get("linked_task_id"):
         return {"has_link": False, "impact": None}
-    
+
     task = await db.programme_tasks.find_one({"id": gate["linked_task_id"]}, {"_id": 0})
     if not task:
         return {"has_link": True, "task_deleted": True, "impact": None}
-    
+
     # Calculate impact
     impact = {
         "task_name": task["task_name"],
@@ -2268,13 +2268,13 @@ async def get_linked_task_impact(gate_id: str, current_user: dict = Depends(get_
         "days_difference": 0,
         "impact_level": "none"
     }
-    
+
     if task.get("end_date") and task.get("original_end_date"):
         try:
             new_date = datetime.fromisoformat(task["end_date"])
             orig_date = datetime.fromisoformat(task["original_end_date"])
             impact["days_difference"] = (new_date - orig_date).days
-            
+
             if impact["days_difference"] > 7:
                 impact["impact_level"] = "high"
             elif impact["days_difference"] > 3:
@@ -2283,13 +2283,13 @@ async def get_linked_task_impact(gate_id: str, current_user: dict = Depends(get_
                 impact["impact_level"] = "low"
         except:
             pass
-    
+
     # Check if gate date needs updating
     if task.get("end_date") and gate.get("required_by_date"):
         if task["end_date"] != gate["required_by_date"][:10]:
             impact["suggested_gate_date"] = task["end_date"]
             impact["needs_update"] = True
-    
+
     return {"has_link": True, "impact": impact, "task": task}
 
 @api_router.post("/projects/{project_id}/sync-gates-with-programme")
@@ -2298,25 +2298,25 @@ async def sync_gates_with_programme(project_id: str, current_user: dict = Depend
     project = await db.projects.find_one({"id": project_id, "user_id": current_user["id"]})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     gates = await db.gates.find(
         {"project_id": project_id, "user_id": current_user["id"], "linked_task_id": {"$ne": None}},
         {"_id": 0}
     ).to_list(100)
-    
+
     updates = []
     notifications_created = []
     now = datetime.now(timezone.utc).isoformat()
-    
+
     for gate in gates:
         task = await db.programme_tasks.find_one({"id": gate["linked_task_id"]}, {"_id": 0})
         if not task:
             continue
-        
+
         # Check if task date differs from gate date
         task_end = task.get("end_date")
         gate_required = gate.get("required_by_date", "")[:10] if gate.get("required_by_date") else None
-        
+
         if task_end and task_end != gate_required:
             # Update gate date
             await db.gates.update_one(
@@ -2326,7 +2326,7 @@ async def sync_gates_with_programme(project_id: str, current_user: dict = Depend
                     "updated_at": now
                 }}
             )
-            
+
             updates.append({
                 "gate_id": gate["id"],
                 "gate_name": gate["name"],
@@ -2334,7 +2334,7 @@ async def sync_gates_with_programme(project_id: str, current_user: dict = Depend
                 "new_date": task_end,
                 "source_task": task["task_name"]
             })
-            
+
             # Create notification about the change
             days_diff = 0
             try:
@@ -2344,7 +2344,7 @@ async def sync_gates_with_programme(project_id: str, current_user: dict = Depend
                     days_diff = (new_dt - old_dt).days
             except:
                 pass
-            
+
             if abs(days_diff) > 0:
                 notification = {
                     "id": str(uuid.uuid4()),
@@ -2360,7 +2360,7 @@ async def sync_gates_with_programme(project_id: str, current_user: dict = Depend
                 }
                 await db.notifications.insert_one(notification)
                 notifications_created.append(notification)
-    
+
     return {
         "synced_gates": len(updates),
         "updates": updates,
@@ -2380,17 +2380,17 @@ async def get_gate_templates(current_user: dict = Depends(get_current_user)):
         {"user_id": current_user["id"], "is_system": False},
         {"_id": 0}
     ).to_list(100)
-    
+
     # If no system templates exist, create them
     if not system_templates:
         system_templates = await create_system_templates()
-    
+
     return system_templates + user_templates
 
 async def create_system_templates():
     """Create default system gate templates"""
     now = datetime.now(timezone.utc).isoformat()
-    
+
     templates = [
         {
             "id": str(uuid.uuid4()),
@@ -2492,10 +2492,10 @@ async def create_system_templates():
             "created_at": now
         }
     ]
-    
+
     for template in templates:
         await db.gate_templates.insert_one(template)
-    
+
     return templates
 
 @api_router.post("/gate-templates")
@@ -2503,7 +2503,7 @@ async def create_gate_template(data: GateTemplateCreate, current_user: dict = De
     """Create a custom gate template"""
     now = datetime.now(timezone.utc).isoformat()
     template_id = str(uuid.uuid4())
-    
+
     doc = {
         "id": template_id,
         "name": data.name,
@@ -2515,7 +2515,7 @@ async def create_gate_template(data: GateTemplateCreate, current_user: dict = De
         "created_at": now
     }
     await db.gate_templates.insert_one(doc)
-    
+
     return GateTemplateResponse(**doc)
 
 @api_router.post("/gate-templates/{template_id}/duplicate")
@@ -2524,10 +2524,10 @@ async def duplicate_template(template_id: str, new_name: str, current_user: dict
     template = await db.gate_templates.find_one({"id": template_id}, {"_id": 0})
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
-    
+
     now = datetime.now(timezone.utc).isoformat()
     new_id = str(uuid.uuid4())
-    
+
     new_template = {
         **template,
         "id": new_id,
@@ -2537,7 +2537,7 @@ async def duplicate_template(template_id: str, new_name: str, current_user: dict
         "created_at": now
     }
     await db.gate_templates.insert_one(new_template)
-    
+
     return GateTemplateResponse(**new_template)
 
 @api_router.delete("/gate-templates/{template_id}")
@@ -2550,7 +2550,7 @@ async def delete_template(template_id: str, current_user: dict = Depends(get_cur
         raise HTTPException(status_code=403, detail="Cannot delete system templates")
     if template.get("user_id") != current_user["id"]:
         raise HTTPException(status_code=403, detail="Not authorized")
-    
+
     await db.gate_templates.delete_one({"id": template_id})
     return {"message": "Template deleted"}
 
@@ -2565,32 +2565,32 @@ async def apply_template_to_project(
     project = await db.projects.find_one({"id": project_id, "user_id": current_user["id"]})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     template = await db.gate_templates.find_one({"id": template_id}, {"_id": 0})
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
-    
+
     now = datetime.now(timezone.utc).isoformat()
     base_date = datetime.fromisoformat(programme_start_date)
-    
+
     created_gates = []
     gate_id_map = {}  # order -> gate_id for dependencies
-    
+
     cumulative_days = 0
     for gate_data in template["gates"]:
         gate_id = str(uuid.uuid4())
         gate_id_map[gate_data["order"]] = gate_id
-        
+
         cumulative_days += gate_data.get("typical_duration_days", 7)
         required_by = (base_date + timedelta(days=cumulative_days)).isoformat()
-        
+
         # Map dependencies from order to actual IDs
         depends_on_ids = [
-            gate_id_map[order] 
-            for order in gate_data.get("depends_on_order", []) 
+            gate_id_map[order]
+            for order in gate_data.get("depends_on_order", [])
             if order in gate_id_map
         ]
-        
+
         gate_doc = {
             "id": gate_id,
             "project_id": project_id,
@@ -2612,7 +2612,7 @@ async def apply_template_to_project(
         }
         await db.gates.insert_one(gate_doc)
         created_gates.append(gate_doc)
-    
+
     return {
         "message": f"Applied template '{template['name']}' with {len(created_gates)} gates",
         "gates": [GateResponse(**g) for g in created_gates]
@@ -2629,7 +2629,7 @@ async def get_notifications(
     query = {"user_id": current_user["id"]}
     if unread_only:
         query["is_read"] = False
-    
+
     notifications = await db.notifications.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
     return [NotificationResponse(**n) for n in notifications]
 
@@ -2683,11 +2683,11 @@ async def generate_delay_notice(data: DelayNoticeCreate, current_user: dict = De
     task = await db.programme_tasks.find_one({"id": data.task_id, "user_id": current_user["id"]})
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     project = await db.projects.find_one({"id": task["project_id"]}, {"_id": 0})
     settings = await db.settings.find_one({"user_id": current_user["id"]}, {"_id": 0})
     user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0, "password": 0})
-    
+
     # Generate notice text
     notice_text = f"""DELAY NOTICE
 
@@ -2700,16 +2700,16 @@ Revised Completion Date: {data.new_date}
 Reason for Delay:
 {data.reason}
 
-This notice is to formally advise of the above delay to the programme. 
+This notice is to formally advise of the above delay to the programme.
 Please update your records accordingly.
 
 Kind regards,
 {user['name']}
 {settings.get('company_name', '') if settings else ''}
 """
-    
+
     now = datetime.now(timezone.utc).isoformat()
-    
+
     # Store the delay notice
     notice_doc = {
         "id": str(uuid.uuid4()),
@@ -2724,7 +2724,7 @@ Kind regards,
         "created_at": now
     }
     await db.delay_notices.insert_one(notice_doc)
-    
+
     email_result = None
     if data.send_email and settings and settings.get("smtp_host"):
         # Try to send email
@@ -2737,7 +2737,7 @@ Kind regards,
         except Exception as e:
             logger.error(f"Failed to send delay notice email: {e}")
             email_result = {"error": str(e)}
-    
+
     return {
         "notice": notice_doc,
         "notice_text": notice_text,
@@ -2750,18 +2750,18 @@ async def send_delay_notice_email(notice: dict, settings: dict, user: dict):
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
-    
-    if not all([settings.get("smtp_host"), settings.get("smtp_port"), 
+
+    if not all([settings.get("smtp_host"), settings.get("smtp_port"),
                 settings.get("smtp_username"), settings.get("smtp_password")]):
         raise ValueError("SMTP not fully configured")
-    
+
     msg = MIMEMultipart()
     msg["From"] = f"{settings.get('smtp_from_name', user['name'])} <{settings.get('smtp_from_email', settings['smtp_username'])}>"
     msg["Subject"] = f"Delay Notice - {notice.get('task_name', 'Programme Update')}"
     msg["To"] = ""  # User would fill this in
-    
+
     msg.attach(MIMEText(notice["notice_text"], "plain"))
-    
+
     # Note: In production, this would actually send the email
     # For now, we just return success to indicate email would be sent
     return {"status": "ready", "message": "Email prepared - recipient needed"}
@@ -2772,10 +2772,10 @@ async def test_smtp_connection(current_user: dict = Depends(get_current_user)):
     settings = await db.settings.find_one({"user_id": current_user["id"]}, {"_id": 0})
     if not settings:
         raise HTTPException(status_code=400, detail="Settings not configured")
-    
+
     if not all([settings.get("smtp_host"), settings.get("smtp_port")]):
         raise HTTPException(status_code=400, detail="SMTP not configured")
-    
+
     try:
         import smtplib
         server = smtplib.SMTP(settings["smtp_host"], settings["smtp_port"], timeout=10)
@@ -2794,26 +2794,26 @@ async def generate_reminders(current_user: dict = Depends(get_current_user)):
     """Generate reminder notifications for upcoming tasks"""
     settings = await db.settings.find_one({"user_id": current_user["id"]}, {"_id": 0})
     reminder_days = settings.get("default_reminder_days", 7) if settings else 7
-    
+
     now = datetime.now(timezone.utc)
     reminder_threshold = (now + timedelta(days=reminder_days)).isoformat()[:10]
-    
+
     # Find tasks due within reminder window
     tasks = await db.programme_tasks.find({
         "user_id": current_user["id"],
         "is_tracked": True,
         "end_date": {"$lte": reminder_threshold, "$gte": now.isoformat()[:10]}
     }, {"_id": 0}).to_list(100)
-    
+
     # Find gates due within reminder window
     gates = await db.gates.find({
         "user_id": current_user["id"],
         "completed_at": None,
         "required_by_date": {"$lte": reminder_threshold}
     }, {"_id": 0}).to_list(100)
-    
+
     notifications_created = 0
-    
+
     for task in tasks:
         # Check if reminder already exists
         existing = await db.notifications.find_one({
@@ -2836,7 +2836,7 @@ async def generate_reminders(current_user: dict = Depends(get_current_user)):
             }
             await db.notifications.insert_one(notification)
             notifications_created += 1
-    
+
     for gate in gates:
         existing = await db.notifications.find_one({
             "related_id": gate["id"],
@@ -2858,7 +2858,7 @@ async def generate_reminders(current_user: dict = Depends(get_current_user)):
             }
             await db.notifications.insert_one(notification)
             notifications_created += 1
-    
+
     return {"reminders_created": notifications_created}
 
 
