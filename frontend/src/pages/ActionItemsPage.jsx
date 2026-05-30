@@ -438,8 +438,8 @@ const ActionItemsPage = () => {
 
     return (
       <Card className={`ops-card overflow-hidden border ${currentTone.card}`} data-testid={testId}>
-        <CardHeader className={`ops-card-header flex flex-row items-center justify-between gap-3 py-3 ${currentTone.header}`}>
-          <CardTitle className={`font-heading text-lg uppercase tracking-[0.12em] flex items-center gap-2 ${currentTone.title}`}>
+        <CardHeader className={`ops-card-header flex flex-row items-center justify-between gap-3 border-b px-4 py-4 sm:px-5 ${currentTone.header}`}>
+          <CardTitle className={`font-heading text-xl font-black uppercase tracking-[0.14em] flex items-center gap-2 ${currentTone.title}`}>
             {icon}
             {title}
           </CardTitle>
@@ -447,7 +447,7 @@ const ActionItemsPage = () => {
             {count}
           </span>
         </CardHeader>
-        <CardContent className={`${count > 0 ? "py-4" : "py-2"} bg-card/70`}>
+        <CardContent className={`${count > 0 ? "px-4 py-4 sm:px-5" : "px-4 py-3 sm:px-5"} bg-card/70`}>
           {count > 0 ? children : (
             <p className="py-3 text-center text-sm text-muted-foreground">{emptyText}</p>
           )}
@@ -472,7 +472,7 @@ const ActionItemsPage = () => {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex flex-wrap items-start gap-2">
-              <h4 className="min-w-0 flex-1 text-sm font-semibold leading-5 text-foreground sm:text-base">
+              <h4 className="min-w-0 flex-1 text-base font-bold leading-5 text-foreground sm:text-lg">
                 {item.title || item.task_name || item.name || 'Untitled task'}
               </h4>
               <PriorityBadge priority={item.priority} />
@@ -611,7 +611,7 @@ const ActionItemsPage = () => {
       <div className="space-y-4">
         {orderedGroups.map(([projectId, projectItems]) => (
           <div key={projectId} className="space-y-3">
-            <div className="flex items-center justify-between gap-2 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-1.5">
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-secondary/20 px-3 py-2">
               <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 {getProjectName(projectId)}
               </span>
@@ -642,20 +642,20 @@ const ActionItemsPage = () => {
   }
 
   return (
-    <div className="space-y-6 overflow-visible" data-testid="action-items-page">
-      <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="space-y-7 overflow-visible" data-testid="action-items-page">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-heading text-2xl font-bold tracking-tight uppercase">Action Items</h2>
-          <p className="text-sm text-muted-foreground">{openItems.length} open, {completedItems.length} completed</p>
+          <h2 className="font-heading text-4xl font-black uppercase tracking-[0.08em]" data-testid="action-heading-polish-v1-marker">Action Items</h2>
+          <p className="mt-1 text-base font-medium text-muted-foreground">{openItems.length} open, {completedItems.length} completed</p>
         </div>
-        <Button className="btn-primary" onClick={openCreateDialog} data-testid="create-item-btn">
+        <Button className="btn-primary h-11 px-5 font-bold uppercase tracking-[0.08em]" onClick={openCreateDialog} data-testid="create-item-btn">
           <Plus className="w-4 h-4 mr-2" />
           New Item
         </Button>
       </div>
 
       {/* Filters Row */}
-      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
+      <div className="grid grid-cols-1 gap-2 rounded-2xl border border-border/70 bg-card/80 p-3 shadow-sm sm:flex sm:flex-wrap sm:items-center" data-testid="action-filter-panel-polish-v1">
         <Filter className="w-4 h-4 text-muted-foreground" />
         <Select value={filterProject} onValueChange={setFilterProject}>
           <SelectTrigger className="h-9 w-full text-sm sm:w-[180px]" data-testid="project-filter">
@@ -735,15 +735,15 @@ const ActionItemsPage = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
         {summaryCards.map((card) => (
           <Card key={card.key} className={`ops-card overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl ${card.toneClass}`}>
             <CardContent className="px-4 py-4">
               <div className="mb-3 flex items-center justify-between gap-3">
-                <span className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">
+                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                   {card.label}
                 </span>
-                <span className={`text-3xl leading-none font-black font-heading ${card.countClass}`}>
+                <span className={`text-4xl leading-none font-black font-heading ${card.countClass}`}>
                   {card.count}
                 </span>
               </div>
