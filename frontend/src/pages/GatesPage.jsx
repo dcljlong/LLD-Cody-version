@@ -567,9 +567,10 @@ export default function GatesPage() {
           type="button"
           onClick={startCreate}
           disabled={projects.length === 0}
+          data-testid="gates-new-roadblock-label-polish-v2"
           className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          New Gate
+          New Roadblock / Concern
         </button>
       </div>
 
@@ -848,7 +849,7 @@ export default function GatesPage() {
                   className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={saving}
                 >
-                  {saving ? "Saving..." : editingGateId ? "Save Gate" : "Create Gate"}
+                  {saving ? "Saving..." : editingGateId ? "Save Roadblock / Concern" : "Create Roadblock / Concern"}
                 </button>
               </div>
             </form>
