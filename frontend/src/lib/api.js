@@ -104,7 +104,8 @@ export const integrationsApi = {
 export const diaryApi = {
   get: (projectId, date) => api.get(`/diary/${projectId}?date=${date}`),
   getLabour: (projectId, date) => api.get(`/diary/${projectId}/labour?date=${date}`),
-  saveLabour: (projectId, data) => api.post(`/diary/${projectId}/labour`, data)
+  saveLabour: (projectId, data) => api.post(`/diary/${projectId}/labour`, data),
+  importLabourToTimesheet: (projectId, data) => api.post(`/diary/${projectId}/labour/import-timesheet`, data)
 };
 
 export const timesheetsApi = {

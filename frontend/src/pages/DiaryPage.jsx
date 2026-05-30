@@ -65,6 +65,7 @@ const DiaryPage = () => {
   const [labourRows, setLabourRows] = useState([]);
   const [labourLoading, setLabourLoading] = useState(false);
   const [labourSaving, setLabourSaving] = useState(false);
+  const [labourImporting, setLabourImporting] = useState(false);
   const [timesheetReferenceOptions, setTimesheetReferenceOptions] = useState({
     employees: [],
     project_managers: [],
@@ -352,6 +353,47 @@ const DiaryPage = () => {
       toast.error('Failed to save labour rows');
     } finally {
       setLabourSaving(false);
+    }
+  };
+
+  const importLabourRowsToTimesheet = async () => {
+    if (!selectedProject || !selectedDate) {
+      toast.error('Select a project and date first');
+      return;
+    }
+
+    if (!Array.isArray(labourRows) || labourRows.length === 0) {
+      toast.error('Save at least one labour row before importing to Timesheet');
+      return;
+    }
+
+    setLabourImporting(true);
+    try {
+      const res = await diaryApi.importLabourToTimesheet(selectedProject, {
+        date: selectedDate
+      });
+
+      const result = res.data?.timesheet_result || {};
+      const createdCount = Number(result.created_timesheet_count || 0);
+      const entryCount = Number(result.created_entry_count || 0);
+      const issueCount = Number(result.issue_count || 0);
+      const skippedCount = Number(result.skipped_count || 0);
+
+      if (createdCount > 0 || entryCount > 0) {
+        toast.success(`Imported ${entryCount} labour row${entryCount === 1 ? '' : 's'} to Timesheet review`);
+      } else if (skippedCount > 0 && issueCount === 0) {
+        toast.info('No new Timesheet rows imported. Saved rows may already be imported.');
+      } else if (issueCount > 0) {
+        toast.warning(`Timesheet import returned ${issueCount} issue${issueCount === 1 ? '' : 's'}`);
+      } else {
+        toast.info('Timesheet import completed with no new rows created');
+      }
+    } catch (error) {
+      console.error('Failed to import labour rows to Timesheet:', error);
+      const detail = error?.response?.data?.detail;
+      toast.error(detail || 'Failed to import labour rows to Timesheet');
+    } finally {
+      setLabourImporting(false);
     }
   };
   const fetchDiary = useCallback(async () => {
@@ -846,7 +888,7 @@ const DiaryPage = () => {
               <div>
                 <CardTitle className="font-heading text-xl font-black uppercase tracking-[0.14em]">Labour / Staff Onsite</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Timesheet-compatible daily rows. Local-only in LLD until Timesheet draft import is added. Add and prove staff rows here before pushing broader Timesheet sync.
+                  Timesheet-compatible daily rows. Save locally first, then manually import saved rows to Timesheet review when ready. Keep proving staff one at a time.
                 </p>
               </div>
               <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
@@ -962,10 +1004,19 @@ const DiaryPage = () => {
               <Button type="button" onClick={saveLabourRows} disabled={labourSaving || !selectedProject} data-testid="daily-labour-save">
                 {labourSaving ? 'Saving...' : 'Save labour rows'}
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={importLabourRowsToTimesheet}
+                disabled={labourImporting || labourSaving || labourLoading || !selectedProject || labourRows.length === 0}
+                data-testid="daily-labour-import-timesheet"
+              >
+                {labourImporting ? 'Importing...' : 'Import saved rows to Timesheet review'}
+              </Button>
             </div>
 
             <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
-              Fields match Timesheet Manager row shape: employee, start, lunch, finish, hours, job number, task code, PM, description.
+              Fields match Timesheet Manager row shape: employee, start, lunch, finish, hours, job number, task code, PM, description. Timesheet import creates review records only; it does not approve payroll.
             </p>
           </CardContent>
         </Card>
