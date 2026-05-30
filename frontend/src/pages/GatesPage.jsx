@@ -370,7 +370,7 @@ export default function GatesPage() {
       cancelForm();
       await loadData();
     } catch (e) {
-      setActionError(e?.response?.data?.detail || "Failed to save gate.");
+      setActionError(e?.response?.data?.detail || "Failed to save roadblock / concern.");
     } finally {
       setSaving(false);
     }
