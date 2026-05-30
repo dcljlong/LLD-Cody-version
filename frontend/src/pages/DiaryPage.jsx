@@ -490,8 +490,8 @@ const DiaryPage = () => {
     <div className="space-y-6" data-testid="diary-page">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="font-heading text-2xl font-bold tracking-tight uppercase">Daily Diary</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="font-heading text-4xl font-black uppercase tracking-[0.08em]" data-testid="daily-heading-polish-v1-marker">Daily Diary</h2>
+          <p className="mt-1 text-base font-medium text-muted-foreground">
             Project summary by day{currentProject ? ` • ${currentProject.job_number ? `${currentProject.job_number} - ` : ''}${currentProject.name}` : ''}
           </p>
         </div>
@@ -537,7 +537,7 @@ const DiaryPage = () => {
       {showQuickEntry && selectedDate === today && (
         <Card className="ops-card border-primary/50">
           <CardHeader className="ops-card-header py-3 bg-primary/10">
-            <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2">
+            <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
               <Plus className="w-4 h-4" />
               Quick Diary Entry
             </CardTitle>
@@ -695,7 +695,7 @@ const DiaryPage = () => {
         <CardContent className="py-3">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="font-heading text-sm font-semibold uppercase tracking-wide">Daily Report Ready</p>
+              <p className="font-heading text-base font-black uppercase tracking-[0.14em]">Daily Report Ready</p>
               <p className="text-xs text-muted-foreground">
                 {currentProject ? `${currentProject.job_number ? `${currentProject.job_number} - ` : ''}${currentProject.name}` : 'No project selected'} • {selectedDateLabel}
               </p>
@@ -737,7 +737,7 @@ const DiaryPage = () => {
             </Button>
 
             <div className="text-center">
-              <p className="font-heading text-xl font-semibold uppercase">{formatDate(selectedDate)}</p>
+              <p className="font-heading text-2xl font-black uppercase tracking-[0.08em]">{formatDate(selectedDate)}</p>
               {selectedDate === today && (
                 <span className="text-xs text-primary uppercase">Today</span>
               )}
@@ -762,43 +762,43 @@ const DiaryPage = () => {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
             <Card className="ops-card">
               <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-2xl font-heading font-bold">{diary.summary?.entries_count || 0}</p>
-                <p className="text-[10px] text-muted-foreground uppercase">Entries</p>
+                <p className="text-3xl font-heading font-black">{diary.summary?.entries_count || 0}</p>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Entries</p>
               </CardContent>
             </Card>
 
             <Card className="ops-card">
               <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-2xl font-heading font-bold">{diary.summary?.items_opened || 0}</p>
-                <p className="text-[10px] text-muted-foreground uppercase">Opened</p>
+                <p className="text-3xl font-heading font-black">{diary.summary?.items_opened || 0}</p>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Opened</p>
               </CardContent>
             </Card>
 
             <Card className="ops-card">
               <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-2xl font-heading font-bold text-emerald-500">{diary.summary?.items_closed || 0}</p>
-                <p className="text-[10px] text-muted-foreground uppercase">Closed</p>
+                <p className="text-3xl font-heading font-black text-emerald-500">{diary.summary?.items_closed || 0}</p>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Closed</p>
               </CardContent>
             </Card>
 
             <Card className="ops-card">
               <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-2xl font-heading font-bold text-red-500">{diary.summary?.blocked_gates || 0}</p>
-                <p className="text-[10px] text-muted-foreground uppercase">Blocked</p>
+                <p className="text-3xl font-heading font-black text-red-500">{diary.summary?.blocked_gates || 0}</p>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Blocked</p>
               </CardContent>
             </Card>
 
             <Card className="ops-card">
               <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-2xl font-heading font-bold text-amber-500">{diary.summary?.at_risk_gates || 0}</p>
-                <p className="text-[10px] text-muted-foreground uppercase">At Risk</p>
+                <p className="text-3xl font-heading font-black text-amber-500">{diary.summary?.at_risk_gates || 0}</p>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">At Risk</p>
               </CardContent>
             </Card>
 
             <Card className="ops-card">
               <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-2xl font-heading font-bold text-red-400">{diary.summary?.overdue_items || 0}</p>
-                <p className="text-[10px] text-muted-foreground uppercase">Overdue</p>
+                <p className="text-3xl font-heading font-black text-red-400">{diary.summary?.overdue_items || 0}</p>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Overdue</p>
               </CardContent>
             </Card>
           </div>
@@ -809,7 +809,7 @@ const DiaryPage = () => {
           <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-6" data-testid="daily-labour-polish-v1-marker">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <CardTitle className="font-heading text-lg uppercase tracking-[0.14em]">Labour / Staff Onsite</CardTitle>
+                <CardTitle className="font-heading text-xl font-black uppercase tracking-[0.14em]">Labour / Staff Onsite</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Timesheet-compatible daily rows. Local-only in LLD until Timesheet draft import is added. Add and prove staff rows here before pushing broader Timesheet sync.
                 </p>
@@ -937,8 +937,8 @@ const DiaryPage = () => {
 
         {/* Site Notes */}
             <Card className="ops-card">
-              <CardHeader className="ops-card-header py-3">
-                <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   Site Notes ({diary.walkaround_entries?.length || 0})
                 </CardTitle>
@@ -986,8 +986,8 @@ const DiaryPage = () => {
 
             {/* Items Opened */}
             <Card className="ops-card">
-              <CardHeader className="ops-card-header py-3">
-                <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <ListTodo className="w-4 h-4" />
                   Items Opened ({diary.action_items_opened?.length || 0})
                 </CardTitle>
@@ -1021,8 +1021,8 @@ const DiaryPage = () => {
 
             {/* Items Closed */}
             <Card className="ops-card">
-              <CardHeader className="ops-card-header py-3">
-                <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2 text-emerald-500">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-emerald-500">
                   <CheckCircle2 className="w-4 h-4" />
                   Items Closed ({diary.action_items_closed?.length || 0})
                 </CardTitle>
@@ -1045,8 +1045,8 @@ const DiaryPage = () => {
 
             {/* Blocked Roadblocks / Concerns */}
             <Card className="ops-card">
-              <CardHeader className="ops-card-header py-3">
-                <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2 text-red-500">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-500">
                   <AlertTriangle className="w-4 h-4" />
                   Blocked / Delayed Roadblocks ({diary.blocked_gates?.length || 0})
                 </CardTitle>
@@ -1076,8 +1076,8 @@ const DiaryPage = () => {
 
             {/* Overdue Items */}
             <Card className="ops-card lg:col-span-2">
-              <CardHeader className="ops-card-header py-3">
-                <CardTitle className="font-heading text-sm uppercase tracking-wide flex items-center gap-2 text-red-400">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-400">
                   <Target className="w-4 h-4" />
                   Overdue Items ({diary.overdue_items?.length || 0})
                 </CardTitle>
