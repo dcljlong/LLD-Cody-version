@@ -402,16 +402,16 @@ const WalkaroundPage = () => {
                 {/* Gate Link */}
                 {gates.length > 0 && (
                   <div>
-                    <Label className="mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">Link to Gate (optional)</Label>
+                    <Label className="mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">Link to Roadblock / Concern (optional)</Label>
                     <Select
                       value={formData.gate_id}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, gate_id: value }))}
                     >
-                      <SelectTrigger className="h-10 rounded-xl text-sm font-medium shadow-sm" data-testid="gate-select">
-                        <SelectValue placeholder="No gate linked" />
+                      <SelectTrigger className="h-10 rounded-xl text-sm font-medium shadow-sm" data-polish="walkaround-roadblock-label-polish-v2" data-testid="gate-select">
+                        <SelectValue placeholder="No roadblock / concern linked" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No gate linked</SelectItem>
+                        <SelectItem value="">No roadblock / concern linked</SelectItem>
                         {gates.map(g => (
                           <SelectItem key={g.id} value={g.id}>
                             {g.order ? `${g.order}. ` : ''}{g.name}
