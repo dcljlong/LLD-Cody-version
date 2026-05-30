@@ -109,13 +109,13 @@ const WalkaroundPage = () => {
 
   const handlePhotoUpload = (e) => {
     const files = Array.from(e.target.files);
-    
+
     files.forEach(file => {
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Photo must be under 5MB');
         return;
       }
-      
+
       const reader = new FileReader();
       reader.onload = () => {
         setFormData(prev => ({
@@ -136,13 +136,13 @@ const WalkaroundPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.note.trim()) {
       toast.error('Please enter a note');
       noteInputRef.current?.focus();
       return;
     }
-    
+
     if (!formData.project_id) {
       toast.error('Please select a project');
       return;
@@ -153,7 +153,7 @@ const WalkaroundPage = () => {
       await walkaroundApi.create(formData);
       localStorage.setItem('lld_last_project_id', formData.project_id);
       toast.success('Entry captured');
-      
+
       // Reset form but keep project and settings
       setFormData(prev => ({
         note: '',
@@ -166,7 +166,7 @@ const WalkaroundPage = () => {
         photos: [],
         create_action_item: true
       }));
-      
+
       fetchRecentEntries();
       setTimeout(() => noteInputRef.current?.focus(), 50);
     } catch (error) {
@@ -207,11 +207,32 @@ const WalkaroundPage = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 px-2 sm:px-0" data-testid="walkaround-page">
+    <div className="mx-auto max-w-4xl space-y-7 px-2 sm:px-0" data-testid="walkaround-page">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between" data-testid="walkaround-heading-polish-v1-marker">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+            Site Capture
+          </p>
+          <h2 className="font-heading text-4xl font-black uppercase tracking-[0.08em]">
+            Walkaround
+          </h2>
+          <p className="mt-1 max-w-3xl text-base font-medium leading-6 text-muted-foreground">
+            Capture observations, photos, priority, owner, and follow-up action from site.
+          </p>
+        </div>
+      </div>
       {/* Quick Capture Form */}
-      <Card className="ops-card">
-        <CardContent className="pt-4 pb-4 px-3 sm:px-6">
-          <form onSubmit={handleSubmit} className="space-y-3">
+      <Card className="ops-card overflow-hidden border-primary/40" data-testid="walkaround-form-polish-v1">
+        <CardContent className="px-4 py-4 sm:px-5">
+          <div className="mb-4 rounded-2xl border border-border/70 bg-secondary/20 px-4 py-4" data-testid="walkaround-form-heading-polish-v1">
+            <p className="font-heading text-xl font-black uppercase tracking-[0.14em]">
+              Quick Capture
+            </p>
+            <p className="mt-1 text-sm leading-5 text-muted-foreground">
+              Start with the project and observation, then add priority, owner, due date, photos, and optional roadblock link.
+            </p>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Project Selection - Compact */}
             <div>
               <Select
@@ -221,7 +242,7 @@ const WalkaroundPage = () => {
                   setFormData(prev => ({ ...prev, project_id: value, gate_id: '' }));
                 }}
               >
-                <SelectTrigger className="h-10 text-sm" data-testid="project-select">
+                <SelectTrigger className="h-10 rounded-xl text-sm font-medium shadow-sm" data-testid="project-select">
                   <SelectValue placeholder="Select project">{getProjectName(formData.project_id)}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -241,14 +262,14 @@ const WalkaroundPage = () => {
                 placeholder="What did you observe? Type here..."
                 value={formData.note}
                 onChange={(e) => setFormData(prev => ({ ...prev, note: e.target.value }))}
-                className="min-h-[100px] text-base bg-secondary/50 border-border focus:ring-1 focus:ring-primary resize-none"
+                className="min-h-[130px] rounded-2xl border-border bg-secondary/40 text-base font-medium leading-6 shadow-sm focus:ring-1 focus:ring-primary resize-none"
                 data-testid="walkaround-note"
               />
             </div>
 
             {/* Quick Priority Buttons - Always visible */}
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Priority</Label>
+              <Label className="mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">Priority</Label>
               <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-5">
                 {priorityOptions.map((p) => {
                   const active = formData.priority === p.value;
@@ -274,7 +295,7 @@ const WalkaroundPage = () => {
 
             {/* Quick Owner Selection - Always visible */}
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Owner</Label>
+              <Label className="mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">Owner</Label>
               <div className="flex flex-wrap gap-1.5">
                 {ownerOptions.map(o => (
                   <button
@@ -301,7 +322,7 @@ const WalkaroundPage = () => {
 
             {/* Quick Due Date Buttons */}
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Due Date</Label>
+              <Label className="mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">Due Date</Label>
               <div className="flex flex-wrap gap-1.5">
                 {dueDateOptions.map(d => (
                   <button
@@ -338,7 +359,7 @@ const WalkaroundPage = () => {
                 multiple
                 className="hidden"
               />
-              
+
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -347,7 +368,7 @@ const WalkaroundPage = () => {
               >
                 <Camera className="w-5 h-5" />
               </button>
-              
+
               {formData.photos.map((photo, i) => (
                 <div key={i} className="relative group">
                   <img src={photo} alt={`Upload ${i + 1}`} className="w-12 h-12 object-cover rounded-lg" />
@@ -360,7 +381,7 @@ const WalkaroundPage = () => {
                   </button>
                 </div>
               ))}
-              
+
               {formData.photos.length === 0 && (
                 <span className="text-xs text-muted-foreground">Add photo (optional)</span>
               )}
@@ -377,16 +398,16 @@ const WalkaroundPage = () => {
             </button>
 
             {showAdvanced && (
-              <div className="space-y-3 pt-2 border-t border-border">
+              <div className="space-y-3 rounded-2xl border border-border/70 bg-secondary/20 p-4">
                 {/* Gate Link */}
                 {gates.length > 0 && (
                   <div>
-                    <Label className="text-xs text-muted-foreground mb-1.5 block">Link to Gate (optional)</Label>
+                    <Label className="mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">Link to Gate (optional)</Label>
                     <Select
                       value={formData.gate_id}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, gate_id: value }))}
                     >
-                      <SelectTrigger className="h-9 text-sm" data-testid="gate-select">
+                      <SelectTrigger className="h-10 rounded-xl text-sm font-medium shadow-sm" data-testid="gate-select">
                         <SelectValue placeholder="No gate linked" />
                       </SelectTrigger>
                       <SelectContent>
@@ -403,12 +424,12 @@ const WalkaroundPage = () => {
 
                 {/* Expected Complete Date */}
                 <div>
-                  <Label className="text-xs text-muted-foreground mb-1.5 block">Expected Complete Date</Label>
+                  <Label className="mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">Expected Complete Date</Label>
                   <Input
                     type="date"
                     value={formData.expected_complete_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, expected_complete_date: e.target.value }))}
-                    className="h-9 text-sm"
+                    className="h-10 rounded-xl text-sm font-medium shadow-sm"
                     data-testid="expected-date-input"
                   />
                 </div>
@@ -428,7 +449,7 @@ const WalkaroundPage = () => {
             {/* Submit Button - Large and prominent */}
             <Button
               type="submit"
-              className="w-full h-14 rounded-xl text-base font-bold"
+              className="h-14 w-full rounded-xl text-base font-black uppercase tracking-[0.08em]"
               disabled={submitting || !formData.note.trim() || !formData.project_id}
               data-testid="submit-walkaround"
             >
@@ -451,24 +472,24 @@ const WalkaroundPage = () => {
       {/* Recent Entries */}
       {recentEntries.length > 0 && (
         <div>
-          <h3 className="mb-2 font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground px-1">
+          <h3 className="mb-3 rounded-2xl border border-border/70 bg-secondary/20 px-4 py-4 font-heading text-xl font-black uppercase tracking-[0.14em]" data-testid="walkaround-recent-section-polish-v1">
             Recent Captures
           </h3>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {recentEntries.map(entry => (
-              <Card key={entry.id} className="ops-card" data-testid={`recent-entry-${entry.id}`}>
-                <CardContent className="px-3 py-3">
+              <Card key={entry.id} className="ops-card overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" data-polish="walkaround-recent-card-polish-v1" data-testid={`recent-entry-${entry.id}`}>
+                <CardContent className="px-4 py-4 sm:px-5">
                   <div className="flex items-start gap-3">
                     {entry.photos?.length > 0 ? (
-                      <img src={entry.photos[0]} alt="" className="w-10 h-10 object-cover rounded-md flex-shrink-0" />
+                      <img src={entry.photos[0]} alt="" className="h-12 w-12 flex-shrink-0 rounded-xl object-cover" />
                     ) : (
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-border bg-secondary/30">
+                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-border bg-secondary/30">
                         <ImageIcon className="w-4 h-4 text-muted-foreground" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm leading-5 text-foreground line-clamp-2">{entry.note}</p>
-                      <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                      <p className="text-base font-bold leading-6 text-foreground line-clamp-2">{entry.note}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <span>
                           {new Date(entry.created_at).toLocaleString('en-NZ', {
                             day: '2-digit',
@@ -480,7 +501,7 @@ const WalkaroundPage = () => {
                         {entry.owner && <span>• {entry.owner}</span>}
                       </div>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded font-medium ${
+                    <span className={`rounded-md px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] ${
                       entry.priority === 'critical' ? 'bg-red-600 text-white' :
                       entry.priority === 'high' ? 'bg-orange-600 text-white' :
                       entry.priority === 'medium' ? 'bg-amber-600 text-white' :
