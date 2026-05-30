@@ -219,65 +219,65 @@ const [showCreate, setShowCreate] = useState(false);
   }
 
   return (
-    <div className="space-y-6" data-testid="projects-page">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+    <div className="space-y-7" data-testid="projects-page">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-heading text-2xl font-bold tracking-tight uppercase">Projects</h2>
-          <p className="text-sm text-muted-foreground">
-            {filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''}
+          <h2 className="font-heading text-4xl font-black uppercase tracking-[0.08em]" data-testid="projects-heading-polish-v2-marker">Projects</h2>
+          <p className="mt-1 text-base font-medium text-muted-foreground">
+            {filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''} shown
           </p>
         </div>
 
-        <Button onClick={() => showCreate ? setShowCreate(false) : startCreateProject()}>
+        <Button className="h-11 px-5 font-bold uppercase tracking-[0.08em]" data-testid="projects-create-button-polish-v2" onClick={() => showCreate ? setShowCreate(false) : startCreateProject()}>
           {showCreate ? (editingId ? 'Hide Edit Project' : 'Hide Create Project') : 'Create Project'}
         </Button>
       </div>
 
       {showCreate && (
-      <Card className="ops-card">
-        <CardHeader className="ops-card-header py-3">
-          <CardTitle className="font-heading text-lg tracking-tight">{editingId ? 'Edit Project' : 'New Project'}</CardTitle>
+      <Card className="ops-card border-primary/40" data-testid="projects-form-polish-v2">
+        <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-5">
+          <CardTitle className="font-heading text-xl font-black uppercase tracking-[0.14em]">{editingId ? 'Edit Project' : 'Create Project'}</CardTitle>
         </CardHeader>
-        <CardContent className="py-4">
+        <CardContent className="px-4 py-4 sm:px-5">
           <form onSubmit={handleCreateProject} className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <input
-              className="w-full rounded-md border border-border bg-background px-3 py-2"
+              className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
               placeholder="Job number"
               value={form.job_number}
               onChange={(e) => setForm({ ...form, job_number: e.target.value })}
             />
             <input
-              className="w-full rounded-md border border-border bg-background px-3 py-2"
+              className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
               placeholder="Project name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
             <input
-              className="w-full rounded-md border border-border bg-background px-3 py-2"
+              className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
               placeholder="Client name"
               value={form.client_name}
               onChange={(e) => setForm({ ...form, client_name: e.target.value })}
             />
             <input
-              className="w-full rounded-md border border-border bg-background px-3 py-2"
+              className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
               placeholder="Location"
               value={form.location}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
             />
             <input
-              className="w-full rounded-md border border-border bg-background px-3 py-2"
+              className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
               placeholder="Main contractor"
               value={form.main_contractor}
               onChange={(e) => setForm({ ...form, main_contractor: e.target.value })}
             />
             <input
-              className="w-full rounded-md border border-border bg-background px-3 py-2"
+              className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
               placeholder="Site contact"
               value={form.site_contact}
               onChange={(e) => setForm({ ...form, site_contact: e.target.value })}
             />
             <input
-              className="w-full rounded-md border border-border bg-background px-3 py-2"
+              className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
               placeholder="Site phone"
               value={form.site_phone}
               onChange={(e) => setForm({ ...form, site_phone: e.target.value })}
@@ -285,7 +285,7 @@ const [showCreate, setShowCreate] = useState(false);
             <input
               type="number"
               min="1"
-              className="w-full rounded-md border border-border bg-background px-3 py-2"
+              className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
               placeholder="Display order"
               value={form.display_order}
               onChange={(e) => setForm({ ...form, display_order: e.target.value })}
@@ -293,7 +293,7 @@ const [showCreate, setShowCreate] = useState(false);
               <label className="mb-1 block text-sm text-muted-foreground">Start date</label>
               <input
                 type="date"
-                className="w-full rounded-md border border-border bg-background px-3 py-2"
+                className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
                 value={form.programme_start_date}
                 onChange={(e) => setForm({ ...form, programme_start_date: e.target.value })}
               />
@@ -302,13 +302,13 @@ const [showCreate, setShowCreate] = useState(false);
               <label className="mb-1 block text-sm text-muted-foreground">Completed by</label>
               <input
                 type="date"
-                className="w-full rounded-md border border-border bg-background px-3 py-2"
+                className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
                 value={form.required_finish_date}
                 onChange={(e) => setForm({ ...form, required_finish_date: e.target.value })}
               />
             </div>
             <select
-              className="w-full rounded-md border border-border bg-background px-3 py-2"
+              className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
               value={form.status}
               onChange={(e) => setForm({ ...form, status: e.target.value })}
             >
@@ -332,13 +332,13 @@ const [showCreate, setShowCreate] = useState(false);
       )}
 
       {filteredProjects.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3" data-testid="projects-grid-polish-v2">
           {filteredProjects.map((project) => (
-            <Card key={project.id} className="ops-card group" data-testid={`project-${project.id}`}>
-              <CardHeader className="ops-card-header py-3">
-                <CardTitle className="font-heading text-lg tracking-tight">
+            <Card key={project.id} className="ops-card group h-full overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" data-polish="projects-card-polish-v2" data-testid={`project-${project.id}`}>
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-5">
+                <CardTitle className="font-heading text-xl font-black tracking-tight">
                   <div className="flex flex-col">
-                    <span className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                    <span className="text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">
                       {project.job_number || 'No job number'}
                     </span>
                     <span className="truncate">
@@ -348,7 +348,7 @@ const [showCreate, setShowCreate] = useState(false);
                 </CardTitle>
               </CardHeader>
 
-              <CardContent className="py-4">
+              <CardContent className="px-4 py-4 sm:px-5">
                 <div className="space-y-2 text-sm">
                   {project.client_name && (
                     <div className="flex items-center gap-2 text-muted-foreground">
@@ -370,24 +370,24 @@ const [showCreate, setShowCreate] = useState(false);
                   </div>
 
                   {project.display_order !== null && project.display_order !== undefined && (
-                    <div className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+                    <div className="text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">
                       Order {project.display_order}
                     </div>
                   )}
                 </div>
 
                 {project.description && (
-                  <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
+                  <p className="mt-3 line-clamp-3 text-sm leading-5 text-muted-foreground">
                     {project.description}
                   </p>
                 )}
 
-                <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+                <div className="mt-4 flex flex-col gap-3 border-t border-border/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <span className={`status-badge ${project.status === 'active' ? 'status-on-track' : project.status === 'archived' ? 'status-blocked' : 'status-completed'}`}>
                     {project.status || 'unknown'}
                   </span>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Button variant="ghost" size="sm" onClick={() => startEditProject(project)}>
                       Edit
                     </Button>
