@@ -173,6 +173,8 @@ class ActionItemResponse(BaseModel):
 
 
 class DailyLabourRow(BaseModel):
+    id: Optional[str] = None
+    employee_id: Optional[str] = None
     employee_name: str
     work_date: Optional[str] = None
     day: Optional[str] = None
@@ -193,6 +195,11 @@ class DailyLabourRow(BaseModel):
 class DailyLabourSaveRequest(BaseModel):
     date: str
     rows: List[DailyLabourRow] = []
+
+class DailyLabourTimesheetImportRequest(BaseModel):
+    date: str
+    row_ids: Optional[List[str]] = None
+
 class WalkaroundEntryCreate(BaseModel):
     project_id: str
     gate_id: Optional[str] = None
@@ -1345,6 +1352,7 @@ async def save_daily_labour_rows(
             "id": data.get("id") or str(uuid.uuid4()),
             "row_index": index,
             "employee_name": employee_name,
+            "employee_id": data.get("employee_id") or "",
             "work_date": data.get("work_date") or date_value,
             "day": data.get("day") or "",
             "start_time": data.get("start_time") or "",
@@ -1406,6 +1414,122 @@ async def save_daily_labour_rows(
         "summary": doc["summary"],
         "rows": rows
     }
+
+@api_router.post("/diary/{project_id}/labour/import-timesheet")
+async def import_daily_labour_rows_to_timesheet(
+    project_id: str,
+    payload: DailyLabourTimesheetImportRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send saved LLD diary labour rows to Timesheet Manager draft import.
+
+    This is an explicit/manual proxy path only.
+    It does not approve Timesheet records and does not expose integration tokens to the browser.
+    """
+    import_url = (os.environ.get("TIMESHEET_LLD_IMPORT_URL") or "").strip()
+    integration_token = (os.environ.get("TIMESHEET_LLD_IMPORT_TOKEN") or "").strip()
+
+    if not import_url:
+        raise HTTPException(status_code=503, detail="Timesheet LLD import URL is not configured")
+    if not integration_token:
+        raise HTTPException(status_code=503, detail="Timesheet LLD import integration token is not configured")
+
+    date_value = (payload.date or "").strip()
+    if not date_value:
+        raise HTTPException(status_code=400, detail="Labour date is required")
+
+    project = await db.projects.find_one({"id": project_id, "user_id": current_user["id"]}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    labour_doc = await db.daily_labour_rows.find_one(
+        {"project_id": project_id, "date": date_value, "user_id": current_user["id"]},
+        {"_id": 0}
+    )
+
+    all_rows = labour_doc.get("rows", []) if labour_doc else []
+    row_ids = {str(row_id) for row_id in (payload.row_ids or []) if str(row_id).strip()}
+
+    if row_ids:
+        selected_rows = [row for row in all_rows if str(row.get("id") or "") in row_ids]
+    else:
+        selected_rows = all_rows
+
+    if not selected_rows:
+        raise HTTPException(status_code=400, detail="No saved LLD labour rows found for import")
+
+    import_rows = []
+    for row in selected_rows:
+        source_row_id = str(row.get("id") or "").strip()
+        import_rows.append({
+            "id": source_row_id,
+            "source_row_id": source_row_id,
+            "employee_id": row.get("employee_id") or "",
+            "employee_name": row.get("employee_name") or "",
+            "work_date": row.get("work_date") or date_value,
+            "day": row.get("day") or "",
+            "start_time": row.get("start_time") or "",
+            "lunch_duration": str(row.get("lunch_duration") or "0"),
+            "finish_time": row.get("finish_time") or "",
+            "total_hours": row.get("total_hours") or 0,
+            "job_number": row.get("job_number") or project.get("job_number") or "",
+            "task_code": row.get("task_code") or "",
+            "project_manager_id": row.get("project_manager_id") or "",
+            "description": row.get("description") or row.get("other") or "",
+            "other": row.get("other") or row.get("description") or "",
+            "source_diary_project_id": row.get("source_diary_project_id") or project_id,
+            "source_diary_date": row.get("source_diary_date") or date_value,
+            "source": "LLD",
+            "sync_status": row.get("sync_status") or "local_only"
+        })
+
+    headers = {
+        "X-LLS-Import-Token": integration_token,
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    }
+
+    outbound_payload = {
+        "source_diary_project_id": project_id,
+        "source_diary_date": date_value,
+        "rows": import_rows
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(import_url, headers=headers, json=outbound_payload)
+    except httpx.RequestError:
+        raise HTTPException(status_code=502, detail="Timesheet LLD import service is unreachable")
+
+    if response.status_code == 401 or response.status_code == 403:
+        raise HTTPException(status_code=502, detail="Timesheet LLD import integration auth failed")
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail="Timesheet LLD import service returned an error")
+
+    try:
+        timesheet_payload = response.json()
+    except Exception:
+        raise HTTPException(status_code=502, detail="Timesheet LLD import service returned invalid JSON")
+
+    return {
+        "source": "LLD",
+        "proxy": "timesheet_lld_draft_import",
+        "project_id": project_id,
+        "project_name": project.get("name"),
+        "job_number": project.get("job_number"),
+        "date": date_value,
+        "row_count_sent": len(import_rows),
+        "timesheet_result": timesheet_payload,
+        "honest_status": {
+            "manual_import": True,
+            "auto_import": False,
+            "token_exposed_to_browser": False,
+            "updates_lld_row_status": False,
+            "approves_timesheets": False,
+            "payroll_export_ready": False
+        }
+    }
+
 @api_router.get("/diary/{project_id}")
 async def get_project_diary(
     project_id: str,
