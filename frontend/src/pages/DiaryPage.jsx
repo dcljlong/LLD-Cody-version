@@ -288,9 +288,44 @@ const DiaryPage = () => {
 
     setLabourSaving(true);
     try {
-      const cleanRows = labourRows
-        .filter((row) => (row.employee_name || '').trim())
-        .map((row) => ({
+      const startedRows = labourRows
+        .map((row, index) => ({ row, rowNumber: index + 1 }))
+        .filter(({ row }) => [
+          row.employee_name,
+          row.start_time,
+          row.finish_time,
+          row.task_code,
+          row.project_manager_id,
+          row.description,
+          row.other
+        ].some((value) => String(value || '').trim()));
+
+      const incompleteRow = startedRows.find(({ row }) => (
+        !(row.employee_name || '').trim() ||
+        !row.start_time ||
+        !row.finish_time ||
+        !(row.task_code || '').trim() ||
+        !(row.project_manager_id || '').trim()
+      ));
+
+      if (incompleteRow) {
+        toast.error(`Complete employee, start, finish, task code, and PM for staff row ${incompleteRow.rowNumber}`);
+        return;
+      }
+
+      const invalidTimeRow = startedRows.find(({ row }) => {
+        const start = new Date(`1970-01-01T${row.start_time}`);
+        const finish = new Date(`1970-01-01T${row.finish_time}`);
+        return !Number.isNaN(start.getTime()) && !Number.isNaN(finish.getTime()) && finish <= start;
+      });
+
+      if (invalidTimeRow) {
+        toast.error(`Finish time must be after start time for staff row ${invalidTimeRow.rowNumber}`);
+        return;
+      }
+
+      const cleanRows = startedRows
+        .map(({ row }) => ({
           ...row,
           work_date: selectedDate,
           day: selectedDateLabel || '',
