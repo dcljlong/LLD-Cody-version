@@ -888,7 +888,7 @@ const DiaryPage = () => {
               <div>
                 <CardTitle className="font-heading text-xl font-black uppercase tracking-[0.14em]">Labour / Staff Onsite</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Timesheet-compatible daily rows. Save locally first, then manually import saved rows to Timesheet review when ready. Keep proving staff one at a time.
+                  Timesheet-compatible daily rows. Save to the diary first, then send saved rows to Timesheet review. Imported rows create review records only; they do not approve payroll.
                 </p>
               </div>
               <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
@@ -1011,12 +1011,12 @@ const DiaryPage = () => {
                 disabled={labourImporting || labourSaving || labourLoading || !selectedProject || labourRows.length === 0}
                 data-testid="daily-labour-import-timesheet"
               >
-                {labourImporting ? 'Importing...' : 'Import saved rows to Timesheet review'}
+                {labourImporting ? 'Sending...' : 'Send saved labour rows to Timesheet review'}
               </Button>
             </div>
 
             <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
-              Fields match Timesheet Manager row shape: employee, start, lunch, finish, hours, job number, task code, PM, description. Timesheet import creates review records only; it does not approve payroll.
+              Fields match Timesheet Manager row shape: employee, start, lunch, finish, hours, job number, task code, PM, description.
             </p>
           </CardContent>
         </Card>
