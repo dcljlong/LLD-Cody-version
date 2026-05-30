@@ -806,21 +806,21 @@ const DiaryPage = () => {
           {/* Content Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card className="ops-card lg:col-span-2" data-testid="daily-labour-card">
-          <CardHeader>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-6" data-testid="daily-labour-polish-v1-marker">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <CardTitle className="font-heading uppercase tracking-[0.12em]">Labour / Staff Onsite</CardTitle>
+                <CardTitle className="font-heading text-lg uppercase tracking-[0.14em]">Labour / Staff Onsite</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Timesheet-compatible daily rows. Local-only in LLD until Timesheet draft import is added.
+                  Timesheet-compatible daily rows. Local-only in LLD until Timesheet draft import is added. Add and prove staff rows here before pushing broader Timesheet sync.
                 </p>
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
                 <span data-testid="daily-labour-row-count">{labourRows.length}</span> rows •{' '}
                 <span data-testid="daily-labour-total-hours">{labourTotalHours.toFixed(2)}</span> hrs
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5 px-4 py-5 sm:px-6">
             {labourLoading ? (
               <p className="text-sm text-muted-foreground">Loading labour rows...</p>
             ) : labourRows.length === 0 ? (
@@ -828,11 +828,11 @@ const DiaryPage = () => {
                 No staff rows recorded for this diary day yet.
               </div>
             ) : (
-              <div className="space-y-3" data-testid="daily-labour-rows">
+              <div className="space-y-4" data-testid="daily-labour-rows">
                 {labourRows.map((row, index) => (
-                  <div key={row.id || index} className="grid gap-2 rounded-xl border p-3 sm:grid-cols-2 xl:grid-cols-12">
+                  <div key={row.id || index} className="grid gap-3 rounded-2xl border border-border/70 bg-background/60 p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12">
                     <select
-                      className="input sm:col-span-2 xl:col-span-2"
+                      className="input min-h-11 sm:col-span-2 lg:col-span-3 xl:col-span-2"
                       value={row.employee_name || ''}
                       onChange={(e) => updateLabourRow(index, 'employee_name', e.target.value)}
                       data-testid={`daily-labour-employee-${index}`}
@@ -843,14 +843,14 @@ const DiaryPage = () => {
                       ))}
                     </select>
                     <input
-                      className="input xl:col-span-1"
+                      className="input min-h-11 lg:col-span-2 xl:col-span-1"
                       type="time"
                       value={row.start_time || ''}
                       onChange={(e) => updateLabourRow(index, 'start_time', e.target.value)}
                       data-testid={`daily-labour-start-${index}`}
                     />
                     <select
-                      className="input xl:col-span-1"
+                      className="input min-h-11 lg:col-span-2 xl:col-span-1"
                       value={String(row.lunch_duration ?? '30')}
                       onChange={(e) => updateLabourRow(index, 'lunch_duration', e.target.value)}
                       data-testid={`daily-labour-lunch-${index}`}
@@ -860,24 +860,24 @@ const DiaryPage = () => {
                       ))}
                     </select>
                     <input
-                      className="input xl:col-span-1"
+                      className="input min-h-11 lg:col-span-2 xl:col-span-1"
                       type="time"
                       value={row.finish_time || ''}
                       onChange={(e) => updateLabourRow(index, 'finish_time', e.target.value)}
                       data-testid={`daily-labour-finish-${index}`}
                     />
-                    <div className="rounded-md border bg-secondary/30 px-3 py-2 text-sm font-semibold xl:col-span-1" data-testid={`daily-labour-hours-${index}`}>
+                    <div className="flex min-h-11 items-center rounded-md border bg-secondary/40 px-3 py-2 text-sm font-bold lg:col-span-2 xl:col-span-1" data-testid={`daily-labour-hours-${index}`}>
                       {(parseFloat(row.total_hours) || 0).toFixed(2)}h
                     </div>
                     <input
-                      className="input xl:col-span-1"
+                      className="input min-h-11 lg:col-span-2 xl:col-span-1"
                       placeholder="Job #"
                       value={row.job_number || ''}
                       onChange={(e) => updateLabourRow(index, 'job_number', e.target.value)}
                       data-testid={`daily-labour-job-${index}`}
                     />
                     <select
-                      className="input xl:col-span-1"
+                      className="input min-h-11 lg:col-span-2 xl:col-span-1"
                       value={row.task_code || ''}
                       onChange={(e) => updateLabourRow(index, 'task_code', e.target.value)}
                       data-testid={`daily-labour-task-${index}`}
@@ -888,7 +888,7 @@ const DiaryPage = () => {
                       ))}
                     </select>
                     <select
-                      className="input xl:col-span-1"
+                      className="input min-h-11 lg:col-span-2 xl:col-span-1"
                       value={row.project_manager_id || ''}
                       onChange={(e) => updateLabourRow(index, 'project_manager_id', e.target.value)}
                       data-testid={`daily-labour-pm-${index}`}
@@ -899,7 +899,7 @@ const DiaryPage = () => {
                       ))}
                     </select>
                     <input
-                      className="input sm:col-span-2 xl:col-span-2"
+                      className="input min-h-11 sm:col-span-2 lg:col-span-3 xl:col-span-2"
                       placeholder="Description / work done"
                       value={row.description || row.other || ''}
                       onChange={(e) => updateLabourRow(index, 'description', e.target.value)}
@@ -909,7 +909,7 @@ const DiaryPage = () => {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="sm:col-span-2 xl:col-span-1"
+                      className="h-11 justify-center sm:col-span-2 lg:col-span-2 xl:col-span-1"
                       onClick={() => removeLabourRow(index)}
                       data-testid={`daily-labour-remove-${index}`}
                     >
@@ -920,7 +920,7 @@ const DiaryPage = () => {
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2 border-t border-border/70 pt-4 sm:flex-row sm:flex-wrap">
               <Button type="button" variant="secondary" onClick={addLabourRow} data-testid="daily-labour-add-row">
                 Add staff row
               </Button>
@@ -929,7 +929,7 @@ const DiaryPage = () => {
               </Button>
             </div>
 
-            <p className="text-xs text-muted-foreground">
+            <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
               Fields match Timesheet Manager row shape: employee, start, lunch, finish, hours, job number, task code, PM, description.
             </p>
           </CardContent>
