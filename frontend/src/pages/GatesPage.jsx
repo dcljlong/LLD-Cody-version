@@ -551,14 +551,14 @@ export default function GatesPage() {
   ];
 
   return (
-    <div className="space-y-6" data-testid="gates-page">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="space-y-7" data-testid="gates-page">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
             Site control
           </p>
-          <h2 className="font-heading text-2xl font-bold tracking-tight uppercase">Roadblocks / Concerns</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h2 className="font-heading text-4xl font-black uppercase tracking-[0.08em]" data-testid="gates-heading-polish-v1-marker">Roadblocks / Concerns</h2>
+          <p className="mt-1 max-w-3xl text-base font-medium leading-6 text-muted-foreground">
             Track the job blockers, handover points, inspections, dependencies, and risk dates that need site attention.
           </p>
         </div>
@@ -575,7 +575,7 @@ export default function GatesPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <select
-          className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="h-10 rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
           value={selectedProject}
           onChange={(event) => {
             setSelectedProject(event.target.value);
@@ -591,7 +591,7 @@ export default function GatesPage() {
         </select>
 
         <select
-          className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="h-10 rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
           value={selectedStatus}
           onChange={(event) => setSelectedStatus(event.target.value)}
         >
@@ -605,7 +605,7 @@ export default function GatesPage() {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7" data-testid="gates-summary-polish-v1">
         {summaryCards.map((card) => (
           <button
             key={card.key}
@@ -613,12 +613,12 @@ export default function GatesPage() {
             onClick={() => setSelectedStatus(card.key)}
             className={`text-left ${selectedStatus === card.key ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
           >
-            <Card className="ops-card h-full">
-              <CardContent className="py-4">
-                <div className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+            <Card className="ops-card h-full overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+              <CardContent className="px-4 py-4">
+                <div className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                   {card.label}
                 </div>
-                <div className="mt-1 text-2xl font-semibold">{card.value}</div>
+                <div className="mt-2 font-heading text-4xl font-black leading-none">{card.value}</div>
               </CardContent>
             </Card>
           </button>
@@ -647,10 +647,10 @@ export default function GatesPage() {
       ) : null}
 
       {formOpen ? (
-        <Card className="ops-card">
-          <CardHeader className="ops-card-header">
-            <CardTitle className="font-heading text-lg tracking-tight">
-              {editingGateId ? "Edit Gate" : "Create Gate"}
+        <Card className="ops-card border-primary/40" data-testid="gates-form-polish-v1">
+          <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-5">
+            <CardTitle className="font-heading text-xl font-black uppercase tracking-[0.14em]">
+              {editingGateId ? "Edit Roadblock / Concern" : "Create Roadblock / Concern"}
             </CardTitle>
           </CardHeader>
 
@@ -862,21 +862,21 @@ export default function GatesPage() {
             if (section.gates.length === 0) return null;
 
             return (
-              <section key={section.key} className="space-y-3">
-                <div className="flex flex-wrap items-end justify-between gap-2">
-                  <div>
-                    <h3 className="font-heading text-lg font-semibold uppercase tracking-tight">
+              <section key={section.key} className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm" data-testid="gates-section-polish-v1">
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-5">
+                  <div className="min-w-0">
+                    <h3 className="font-heading text-xl font-black uppercase tracking-[0.14em]">
                       {section.title}
                     </h3>
-                    <p className="text-sm text-muted-foreground">{section.description}</p>
+                    <p className="mt-1 text-sm leading-5 text-muted-foreground">{section.description}</p>
                   </div>
 
-                  <span className="rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  <span className="inline-flex min-w-[2.25rem] items-center justify-center rounded-full border border-border bg-background/80 px-2.5 py-1 text-xs font-extrabold text-muted-foreground">
                     {section.gates.length}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 xl:grid-cols-2">
                   {section.gates.map((gate) => renderGateCard(gate))}
                 </div>
               </section>
