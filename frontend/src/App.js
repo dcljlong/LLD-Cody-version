@@ -85,6 +85,7 @@ function AppRoutes() {
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="projects/:id" element={<ProjectDetailPage />} />
         <Route path="gates" element={<GatesPage />} />
+        <Route path="roadblocks" element={<Navigate to="/gates" replace />} />
         <Route path="programme" element={<ProgrammePage />} />
         <Route path="action-items" element={<ActionItemsPage />} />
         <Route path="diary" element={<DiaryPage />} />
