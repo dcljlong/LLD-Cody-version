@@ -200,6 +200,19 @@ class DailyLabourTimesheetImportRequest(BaseModel):
     date: str
     row_ids: Optional[List[str]] = None
 
+class DailySiteResourceItem(BaseModel):
+    id: Optional[str] = None
+    item: str
+    supplier_or_reference: Optional[str] = None
+    quantity: Optional[str] = None
+    status: Optional[str] = "noted"
+    notes: Optional[str] = None
+
+class DailySiteResourcesSaveRequest(BaseModel):
+    date: str
+    materials: List[DailySiteResourceItem] = []
+    plant_equipment: List[DailySiteResourceItem] = []
+
 class WalkaroundEntryCreate(BaseModel):
     project_id: str
     gate_id: Optional[str] = None
@@ -1427,6 +1440,144 @@ async def save_daily_labour_rows(
         "rows": rows
     }
 
+@api_router.get("/diary/{project_id}/resources")
+async def get_daily_site_resources(
+    project_id: str,
+    date: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get daily site resource notes for materials, plant, equipment, and tool references.
+
+    This is diary capture only. Tool Tracker remains the asset register source of truth.
+    """
+    project = await db.projects.find_one({"id": project_id, "user_id": current_user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    doc = await db.daily_site_resources.find_one(
+        {"project_id": project_id, "date": date, "user_id": current_user["id"]},
+        {"_id": 0}
+    )
+
+    materials = doc.get("materials", []) if doc else []
+    plant_equipment = doc.get("plant_equipment", []) if doc else []
+
+    return {
+        "project_id": project_id,
+        "project_name": project.get("name"),
+        "job_number": project.get("job_number"),
+        "date": date,
+        "source": "LLD",
+        "sync_status": "local_only",
+        "tool_tracker_linked": False,
+        "honest_status": {
+            "diary_capture_only": True,
+            "creates_tool_tracker_assets": False,
+            "updates_tool_tracker_assets": False,
+            "tool_tracker_source_of_truth": True
+        },
+        "summary": {
+            "materials_count": len(materials),
+            "plant_equipment_count": len(plant_equipment)
+        },
+        "materials": materials,
+        "plant_equipment": plant_equipment
+    }
+
+@api_router.post("/diary/{project_id}/resources")
+async def save_daily_site_resources(
+    project_id: str,
+    payload: DailySiteResourcesSaveRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Save daily site resource notes locally in LLD.
+
+    This captures what was on site today. It does not create or update Tool Tracker assets.
+    """
+    project = await db.projects.find_one({"id": project_id, "user_id": current_user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    now = datetime.now(timezone.utc).isoformat()
+    date_value = payload.date
+
+    def normalise_resource_rows(rows, category):
+        clean_rows = []
+        for index, row in enumerate(rows or []):
+            data = row.model_dump()
+            item_name = str(data.get("item") or "").strip()
+            if not item_name:
+                continue
+
+            clean_rows.append({
+                "id": data.get("id") or str(uuid.uuid4()),
+                "row_index": index,
+                "category": category,
+                "item": item_name,
+                "supplier_or_reference": str(data.get("supplier_or_reference") or "").strip(),
+                "quantity": str(data.get("quantity") or "").strip(),
+                "status": str(data.get("status") or "noted").strip(),
+                "notes": str(data.get("notes") or "").strip(),
+                "source": "LLD",
+                "sync_status": "local_only",
+                "tool_tracker_linked": False,
+                "updated_at": now
+            })
+        return clean_rows
+
+    materials = normalise_resource_rows(payload.materials, "materials")
+    plant_equipment = normalise_resource_rows(payload.plant_equipment, "plant_equipment")
+
+    doc = {
+        "id": f"{project_id}:{date_value}:daily-site-resources",
+        "project_id": project_id,
+        "project_name": project.get("name"),
+        "job_number": project.get("job_number"),
+        "date": date_value,
+        "user_id": current_user["id"],
+        "source": "LLD",
+        "sync_status": "local_only",
+        "tool_tracker_linked": False,
+        "materials": materials,
+        "plant_equipment": plant_equipment,
+        "summary": {
+            "materials_count": len(materials),
+            "plant_equipment_count": len(plant_equipment)
+        },
+        "updated_at": now
+    }
+
+    existing = await db.daily_site_resources.find_one({"project_id": project_id, "date": date_value, "user_id": current_user["id"]})
+    if existing:
+        doc["created_at"] = existing.get("created_at", now)
+    else:
+        doc["created_at"] = now
+
+    await db.daily_site_resources.update_one(
+        {"project_id": project_id, "date": date_value, "user_id": current_user["id"]},
+        {"$set": doc},
+        upsert=True
+    )
+
+    return {
+        "project_id": project_id,
+        "project_name": project.get("name"),
+        "job_number": project.get("job_number"),
+        "date": date_value,
+        "source": "LLD",
+        "sync_status": "local_only",
+        "tool_tracker_linked": False,
+        "summary": doc["summary"],
+        "materials": materials,
+        "plant_equipment": plant_equipment,
+        "honest_status": {
+            "diary_capture_only": True,
+            "creates_tool_tracker_assets": False,
+            "updates_tool_tracker_assets": False,
+            "tool_tracker_source_of_truth": True
+        }
+    }
+
 @api_router.post("/diary/{project_id}/labour/import-timesheet")
 async def import_daily_labour_rows_to_timesheet(
     project_id: str,
@@ -1627,6 +1778,19 @@ async def get_project_diary(
         "due_date": {"$lt": start}
     }, {"_id": 0}).to_list(100)
 
+    resources_doc = await db.daily_site_resources.find_one(
+        {"project_id": project_id, "date": target_date, "user_id": current_user["id"]},
+        {"_id": 0}
+    )
+    site_resources = resources_doc or {
+        "materials": [],
+        "plant_equipment": [],
+        "summary": {
+            "materials_count": 0,
+            "plant_equipment_count": 0
+        }
+    }
+
     return {
         "project": project,
         "date": target_date,
@@ -1636,14 +1800,17 @@ async def get_project_diary(
             "items_closed": len(items_closed),
             "blocked_gates": len(blocked_gates),
             "at_risk_gates": len(at_risk_gates),
-            "overdue_items": len(overdue_items)
+            "overdue_items": len(overdue_items),
+            "materials_count": len(site_resources.get("materials", [])),
+            "plant_equipment_count": len(site_resources.get("plant_equipment", []))
         },
         "walkaround_entries": entries,
         "action_items_opened": items_opened,
         "action_items_closed": items_closed,
         "blocked_gates": blocked_gates,
         "at_risk_gates": at_risk_gates,
-        "overdue_items": overdue_items
+        "overdue_items": overdue_items,
+        "site_resources": site_resources
     }
 
 # ==================== SETTINGS ROUTES ====================
