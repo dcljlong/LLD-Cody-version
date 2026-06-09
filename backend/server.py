@@ -1125,10 +1125,22 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
     today = now.date().isoformat()
     week_end = (now + timedelta(days=7)).date().isoformat()
 
-    # Get all data
+    # Get active project data only. Dashboard should not surface stale/demo/deleted project records.
     projects = await db.projects.find({"user_id": current_user["id"], "status": "active"}, {"_id": 0}).to_list(100)
-    action_items = await db.action_items.find({"user_id": current_user["id"]}, {"_id": 0}).to_list(1000)
-    gates = await db.gates.find({"user_id": current_user["id"]}, {"_id": 0}).to_list(1000)
+    active_project_ids = {p["id"] for p in projects}
+
+    if active_project_ids:
+        action_items = await db.action_items.find(
+            {"user_id": current_user["id"], "project_id": {"$in": list(active_project_ids)}},
+            {"_id": 0}
+        ).to_list(1000)
+        gates = await db.gates.find(
+            {"user_id": current_user["id"], "project_id": {"$in": list(active_project_ids)}},
+            {"_id": 0}
+        ).to_list(1000)
+    else:
+        action_items = []
+        gates = []
 
     # Recalculate gate statuses
     for gate in gates:
