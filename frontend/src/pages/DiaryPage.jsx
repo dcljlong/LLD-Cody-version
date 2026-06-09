@@ -158,6 +158,32 @@ const DiaryPage = () => {
   };
 
   const labourTotalHours = labourRows.reduce((sum, row) => sum + (parseFloat(row.total_hours) || 0), 0);
+  const savedLabourEntries = labourRows
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => row?.id);
+  const editableLabourEntries = labourRows
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => !row?.id);
+
+  const formatTimeForDiary = (value) => {
+    const time = normaliseTimeValue(value);
+    if (!time) return '';
+    const [hourText, minuteText] = time.split(':');
+    const hour = parseInt(hourText, 10);
+    const suffix = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minuteText} ${suffix}`;
+  };
+
+  const formatStaffOnSiteLine = (row) => {
+    const start = formatTimeForDiary(row.start_time);
+    const finish = formatTimeForDiary(row.finish_time);
+    const timeRange = start && finish ? `${start} – ${finish}` : 'Time not set';
+    const lunch = formatLunchLabel(row.lunch_duration ?? '30');
+    const hours = `${(parseFloat(row.total_hours) || 0).toFixed(2)}h`;
+    return `${timeRange} • ${lunch} • ${hours}`;
+  };
+
   const getReferenceOptionText = (item, keys = []) => {
     if (item === null || item === undefined) return '';
     if (typeof item === 'string' || typeof item === 'number') return String(item);
@@ -955,8 +981,35 @@ const DiaryPage = () => {
               </div>
             ) : (
               <div className="space-y-4" data-testid="daily-labour-rows">
-                {labourRows.map((row, index) => (
-                  <div key={row.id || index} className="lld-daily-labour-row grid gap-3 rounded-2xl border border-border/70 bg-background/60 p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12">
+                {savedLabourEntries.length > 0 && (
+                  <div className="rounded-xl border border-border/70 bg-secondary/20 p-3" data-testid="staff-on-site-summary">
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">Staff on site</p>
+                      <p className="text-xs font-bold text-muted-foreground">{savedLabourEntries.length} saved • {labourTotalHours.toFixed(2)}h</p>
+                    </div>
+                    <div className="space-y-2">
+                      {savedLabourEntries.map(({ row, index }) => (
+                        <div key={row.id || index} className="rounded-lg border border-border/60 bg-background/70 px-3 py-2" data-testid={`staff-on-site-row-${index}`}>
+                          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-sm font-bold">
+                              {row.employee_name || 'Staff member'} <span className="text-muted-foreground">— {(parseFloat(row.total_hours) || 0).toFixed(2)}h</span>
+                            </p>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                              {row.job_number || currentProject?.job_number || 'No job #'}{row.task_code ? ` • ${row.task_code}` : ''}{row.project_manager_id ? ` • PM ${row.project_manager_id}` : ''}
+                            </p>
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">{formatStaffOnSiteLine(row)}</p>
+                          {(row.description || row.other) && (
+                            <p className="mt-1 text-sm text-foreground">{row.description || row.other}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {editableLabourEntries.map(({ row, index }) => (
+                  <div key={row.id || index} className="lld-daily-labour-row grid gap-3 rounded-2xl border border-border/70 bg-background/60 p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12" data-testid={`staff-on-site-edit-row-${index}`}>
                     <select
                       className="input lld-daily-labour-control min-h-11 w-full min-w-0 sm:col-span-2 lg:col-span-3 xl:col-span-2"
                       value={row.employee_name || ''}
