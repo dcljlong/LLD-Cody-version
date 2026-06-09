@@ -215,12 +215,31 @@ const DiaryPage = () => {
     ['name', 'full_name', 'employee_name', 'display_name', 'email', 'project_manager_id', 'id']
   );
 
-  const lunchOptionsForRow = (currentValue) => {
-    const configuredLunchOptions = Array.isArray(timesheetReferenceOptions.lunch_options) && timesheetReferenceOptions.lunch_options.length
-      ? timesheetReferenceOptions.lunch_options
-      : ['0', '30', '60'];
+  const jobNumberOptionsForRow = (currentValue) => {
+    const jobOptions = (Array.isArray(projects) ? projects : [])
+      .filter((project) => project?.job_number)
+      .map((project) => ({
+        value: String(project.job_number),
+        label: `${project.job_number}${project.name ? ` - ${project.name}` : ''}`
+      }));
 
-    return buildReferenceOptions(configuredLunchOptions, currentValue ?? '30');
+    return buildReferenceOptions(
+      jobOptions,
+      currentValue || currentProject?.job_number || '',
+      ['value'],
+      ['label', 'value']
+    );
+  };
+
+  const lunchOptionsForRow = (currentValue) => {
+    const configuredLunchOptions = Array.isArray(timesheetReferenceOptions.lunch_options)
+      ? timesheetReferenceOptions.lunch_options
+      : [];
+    const safeLunchOptions = ['0', '30', '60', ...configuredLunchOptions]
+      .map((value) => String(value ?? '').trim())
+      .filter(Boolean);
+
+    return buildReferenceOptions(safeLunchOptions, currentValue ?? '30');
   };
 
   const formatLunchLabel = (value) => {
@@ -333,7 +352,14 @@ const DiaryPage = () => {
       ));
 
       if (incompleteRow) {
-        toast.error(`Complete employee, start, finish, task code, and PM for staff row ${incompleteRow.rowNumber}`);
+        const missingFields = [
+          !(incompleteRow.row.employee_name || '').trim() ? 'employee' : '',
+          !incompleteRow.row.start_time ? 'start' : '',
+          !incompleteRow.row.finish_time ? 'finish' : '',
+          !(incompleteRow.row.task_code || '').trim() ? 'task code' : '',
+          !(incompleteRow.row.project_manager_id || '').trim() ? 'PM' : ''
+        ].filter(Boolean).join(', ');
+        toast.error(`Complete ${missingFields} for staff row ${incompleteRow.rowNumber}`);
         return;
       }
 
@@ -969,13 +995,17 @@ const DiaryPage = () => {
                     <div className="lld-daily-labour-hours flex min-h-11 w-full min-w-0 items-center rounded-md border bg-secondary/40 px-3 py-2 text-sm font-bold lg:col-span-2 xl:col-span-1" data-testid={`daily-labour-hours-${index}`}>
                       {(parseFloat(row.total_hours) || 0).toFixed(2)}h
                     </div>
-                    <input
+                    <select
                       className="input lld-daily-labour-control min-h-11 w-full min-w-0 lg:col-span-2 xl:col-span-1"
-                      placeholder="Job #"
-                      value={row.job_number || ''}
+                      value={row.job_number || currentProject?.job_number || ''}
                       onChange={(e) => updateLabourRow(index, 'job_number', e.target.value)}
                       data-testid={`daily-labour-job-${index}`}
-                    />
+                    >
+                      <option value="">Job #</option>
+                      {jobNumberOptionsForRow(row.job_number || currentProject?.job_number).map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
                     <select
                       className="input lld-daily-labour-control min-h-11 w-full min-w-0 lg:col-span-2 xl:col-span-1"
                       value={row.task_code || ''}
