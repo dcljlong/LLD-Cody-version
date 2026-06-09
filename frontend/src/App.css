@@ -3393,3 +3393,78 @@
   }
 }
 /* LLD / FINAL CIRCLED DETAIL COMPLETION V7H END */
+
+/* LLD DIARY LABOUR MOBILE CARD FIX V1 START
+   Keeps Daily Diary labour rows usable on phone and prevents row controls from forcing page-wide horizontal overflow. */
+.lld-daily-labour-row {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.lld-daily-labour-control,
+.lld-daily-labour-hours,
+.lld-daily-labour-remove {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.lld-daily-labour-control {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dark .lld-daily-labour-control {
+  color: #f8fafc !important;
+  background: rgba(15, 23, 42, 0.92) !important;
+  border-color: rgba(245, 190, 80, 0.22) !important;
+}
+
+.dark .lld-daily-labour-control::placeholder {
+  color: rgba(203, 213, 225, 0.78) !important;
+}
+
+.dark select.lld-daily-labour-control option {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+@media (max-width: 640px) {
+  [data-testid="daily-labour-card"] {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  [data-testid="daily-labour-card"] .ops-card-header,
+  [data-testid="daily-labour-card"] [data-testid="daily-labour-rows"],
+  [data-testid="daily-labour-card"] .space-y-5 {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .lld-daily-labour-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0.75rem !important;
+    padding: 0.85rem !important;
+  }
+
+  .lld-daily-labour-control,
+  .lld-daily-labour-hours,
+  .lld-daily-labour-remove {
+    grid-column: auto !important;
+    min-height: 2.85rem;
+    font-size: 1rem;
+  }
+
+  .lld-daily-labour-hours {
+    justify-content: flex-start;
+    color: #f8fafc;
+    background: rgba(15, 23, 42, 0.94);
+  }
+}
+/* LLD DIARY LABOUR MOBILE CARD FIX V1 END */
