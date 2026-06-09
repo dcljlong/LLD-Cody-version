@@ -16,7 +16,8 @@ import {
   Camera,
   X,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Package
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -67,6 +68,10 @@ const DiaryPage = () => {
   const [labourSaving, setLabourSaving] = useState(false);
   const [labourImporting, setLabourImporting] = useState(false);
   const [labourEditMode, setLabourEditMode] = useState(false);
+  const [siteResources, setSiteResources] = useState({ materials: [], plant_equipment: [] });
+  const [resourcesLoading, setResourcesLoading] = useState(false);
+  const [resourcesSaving, setResourcesSaving] = useState(false);
+  const [resourcesEditMode, setResourcesEditMode] = useState(false);
   const [timesheetReferenceOptions, setTimesheetReferenceOptions] = useState({
     employees: [],
     project_managers: [],
@@ -157,6 +162,46 @@ const DiaryPage = () => {
   const removeLabourRow = (index) => {
     setLabourRows((current) => current.filter((_, rowIndex) => rowIndex !== index));
   };
+
+  const createEmptyResourceRow = () => ({
+    item: '',
+    supplier_or_reference: '',
+    quantity: '',
+    status: 'noted',
+    notes: ''
+  });
+
+  const updateResourceRow = (category, index, field, value) => {
+    setSiteResources((current) => {
+      const rows = Array.isArray(current?.[category]) ? current[category] : [];
+      return {
+        ...current,
+        [category]: rows.map((row, rowIndex) => (
+          rowIndex === index ? { ...row, [field]: value } : row
+        ))
+      };
+    });
+  };
+
+  const addResourceRow = (category) => {
+    setSiteResources((current) => ({
+      ...current,
+      [category]: [...(Array.isArray(current?.[category]) ? current[category] : []), createEmptyResourceRow()]
+    }));
+    setResourcesEditMode(true);
+  };
+
+  const removeResourceRow = (category, index) => {
+    setSiteResources((current) => ({
+      ...current,
+      [category]: (Array.isArray(current?.[category]) ? current[category] : []).filter((_, rowIndex) => rowIndex !== index)
+    }));
+  };
+
+  const resourceMaterials = Array.isArray(siteResources?.materials) ? siteResources.materials : [];
+  const resourcePlantEquipment = Array.isArray(siteResources?.plant_equipment) ? siteResources.plant_equipment : [];
+  const resourcesTotalCount = resourceMaterials.length + resourcePlantEquipment.length;
+  const toolTrackerUrl = process.env.REACT_APP_TOOL_TRACKER_URL || 'https://tool-tracker-enterprise.vercel.app';
 
   const labourTotalHours = labourRows.reduce((sum, row) => sum + (parseFloat(row.total_hours) || 0), 0);
   const savedLabourEntries = labourRows
@@ -389,6 +434,68 @@ const DiaryPage = () => {
     }
   }, [selectedProject, selectedDate]);
 
+  const fetchSiteResources = useCallback(async () => {
+    if (!selectedProject || !selectedDate) {
+      setSiteResources({ materials: [], plant_equipment: [] });
+      return;
+    }
+
+    setResourcesLoading(true);
+    try {
+      const res = await diaryApi.getResources(selectedProject, selectedDate);
+      setSiteResources({
+        materials: Array.isArray(res.data?.materials) ? res.data.materials : [],
+        plant_equipment: Array.isArray(res.data?.plant_equipment) ? res.data.plant_equipment : []
+      });
+    } catch (error) {
+      console.error('Failed to load site resources:', error);
+      setSiteResources({ materials: [], plant_equipment: [] });
+    } finally {
+      setResourcesLoading(false);
+    }
+  }, [selectedProject, selectedDate]);
+
+  const saveSiteResources = async () => {
+    if (!selectedProject || !selectedDate) {
+      toast.error('Select a project and date first');
+      return;
+    }
+
+    setResourcesSaving(true);
+    try {
+      const cleanRows = (rows) => (Array.isArray(rows) ? rows : [])
+        .filter((row) => String(row.item || '').trim())
+        .map((row) => ({
+          id: row.id,
+          item: String(row.item || '').trim(),
+          supplier_or_reference: String(row.supplier_or_reference || '').trim(),
+          quantity: String(row.quantity || '').trim(),
+          status: String(row.status || 'noted').trim(),
+          notes: String(row.notes || '').trim()
+        }));
+
+      const res = await diaryApi.saveResources(selectedProject, {
+        date: selectedDate,
+        materials: cleanRows(resourceMaterials),
+        plant_equipment: cleanRows(resourcePlantEquipment)
+      });
+
+      setSiteResources({
+        materials: Array.isArray(res.data?.materials) ? res.data.materials : [],
+        plant_equipment: Array.isArray(res.data?.plant_equipment) ? res.data.plant_equipment : []
+      });
+      setResourcesEditMode(false);
+      toast.success('Site resources saved to diary');
+      fetchDiary();
+      fetchSiteResources();
+    } catch (error) {
+      console.error('Failed to save site resources:', error);
+      toast.error('Failed to save site resources');
+    } finally {
+      setResourcesSaving(false);
+    }
+  };
+
   const saveLabourRows = async () => {
     if (!selectedProject || !selectedDate) {
       toast.error('Select a project and date first');
@@ -543,10 +650,11 @@ const DiaryPage = () => {
   useEffect(() => {
     if (selectedProject) {
       fetchDiary();
-    fetchLabourRows();
+      fetchLabourRows();
+      fetchSiteResources();
       fetchGates();
     }
-  }, [selectedProject, selectedDate, fetchDiary, fetchLabourRows, fetchGates]);
+  }, [selectedProject, selectedDate, fetchDiary, fetchLabourRows, fetchSiteResources, fetchGates]);
 
   const changeDate = (days) => {
     const current = parseDateInput(selectedDate);
@@ -952,7 +1060,7 @@ const DiaryPage = () => {
       {diary && (
         <>
           {/* Summary Stats */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
             <Card className="ops-card">
               <CardContent className="pt-3 pb-3 text-center">
                 <p className="text-3xl font-heading font-black">{diary.summary?.entries_count || 0}</p>
@@ -992,6 +1100,20 @@ const DiaryPage = () => {
               <CardContent className="pt-3 pb-3 text-center">
                 <p className="text-3xl font-heading font-black text-red-400">{diary.summary?.overdue_items || 0}</p>
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Overdue</p>
+              </CardContent>
+            </Card>
+
+            <Card className="ops-card">
+              <CardContent className="pt-3 pb-3 text-center">
+                <p className="text-3xl font-heading font-black">{resourceMaterials.length}</p>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Materials</p>
+              </CardContent>
+            </Card>
+
+            <Card className="ops-card">
+              <CardContent className="pt-3 pb-3 text-center">
+                <p className="text-3xl font-heading font-black">{resourcePlantEquipment.length}</p>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Plant / Gear</p>
               </CardContent>
             </Card>
           </div>
@@ -1172,6 +1294,158 @@ const DiaryPage = () => {
             </p>
           </CardContent>
         </Card>
+
+        {/* Site Resources */}
+            <Card className="ops-card lg:col-span-2" data-testid="daily-site-resources-card">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
+                      <Package className="w-4 h-4" />
+                      Site Resources
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Simple diary capture for materials, plant, equipment, and tools on site today. Tool Tracker remains the asset register.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
+                      {resourceMaterials.length} materials • {resourcePlantEquipment.length} plant / gear
+                    </span>
+                    <Button type="button" variant="outline" size="sm" onClick={() => window.open(toolTrackerUrl, '_blank', 'noopener,noreferrer')} data-testid="open-tool-tracker">
+                      Open Tool Tracker
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-4 px-4 py-5 sm:px-6">
+                {resourcesLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading site resources...</p>
+                ) : resourcesTotalCount === 0 && !resourcesEditMode ? (
+                  <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground" data-testid="daily-site-resources-empty">
+                    No materials, plant, equipment, or tools recorded for this diary day yet.
+                  </div>
+                ) : !resourcesEditMode ? (
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2" data-testid="daily-site-resources-summary">
+                    <div className="rounded-xl border border-border/70 bg-secondary/20 p-3">
+                      <p className="mb-2 text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">Materials</p>
+                      {resourceMaterials.length > 0 ? (
+                        <div className="space-y-2">
+                          {resourceMaterials.map((row, index) => (
+                            <div key={row.id || index} className="rounded-lg border border-border/60 bg-background/70 px-3 py-2">
+                              <p className="text-sm font-bold">{row.item}</p>
+                              <p className="text-xs text-muted-foreground">{[row.quantity, row.supplier_or_reference, row.status].filter(Boolean).join(' • ')}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No materials recorded.</p>
+                      )}
+                    </div>
+
+                    <div className="rounded-xl border border-border/70 bg-secondary/20 p-3">
+                      <p className="mb-2 text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">Plant / Equipment / Tools</p>
+                      {resourcePlantEquipment.length > 0 ? (
+                        <div className="space-y-2">
+                          {resourcePlantEquipment.map((row, index) => (
+                            <div key={row.id || index} className="rounded-lg border border-border/60 bg-background/70 px-3 py-2">
+                              <p className="text-sm font-bold">{row.item}</p>
+                              <p className="text-xs text-muted-foreground">{[row.quantity, row.supplier_or_reference, row.status].filter(Boolean).join(' • ')}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No plant, equipment, or tools recorded.</p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-2" data-testid="daily-site-resources-edit">
+                    {[
+                      ['materials', 'Materials', resourceMaterials],
+                      ['plant_equipment', 'Plant / Equipment / Tools', resourcePlantEquipment]
+                    ].map(([category, title, rows]) => (
+                      <div key={category} className="rounded-xl border border-border/70 bg-secondary/20 p-3">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
+                          <Button type="button" size="sm" variant="secondary" onClick={() => addResourceRow(category)} data-testid={`daily-site-resources-add-${category}`}>
+                            Add row
+                          </Button>
+                        </div>
+
+                        {(rows.length === 0) ? (
+                          <p className="text-sm text-muted-foreground">No rows yet.</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {rows.map((row, index) => (
+                              <div key={row.id || index} className="grid grid-cols-1 gap-2 rounded-lg border border-border/60 bg-background/70 p-3 md:grid-cols-2">
+                                <Input
+                                  value={row.item || ''}
+                                  onChange={(e) => updateResourceRow(category, index, 'item', e.target.value)}
+                                  placeholder={category === 'materials' ? 'Material / item' : 'Plant / equipment / tool'}
+                                  data-testid={`daily-site-resources-item-${category}-${index}`}
+                                />
+                                <Input
+                                  value={row.quantity || ''}
+                                  onChange={(e) => updateResourceRow(category, index, 'quantity', e.target.value)}
+                                  placeholder="Qty / hours / count"
+                                  data-testid={`daily-site-resources-quantity-${category}-${index}`}
+                                />
+                                <Input
+                                  value={row.supplier_or_reference || ''}
+                                  onChange={(e) => updateResourceRow(category, index, 'supplier_or_reference', e.target.value)}
+                                  placeholder={category === 'materials' ? 'Supplier / docket' : 'Owned / hired / LLT ref'}
+                                  data-testid={`daily-site-resources-reference-${category}-${index}`}
+                                />
+                                <select
+                                  className="input min-h-11 w-full"
+                                  value={row.status || 'noted'}
+                                  onChange={(e) => updateResourceRow(category, index, 'status', e.target.value)}
+                                  data-testid={`daily-site-resources-status-${category}-${index}`}
+                                >
+                                  <option value="noted">Noted</option>
+                                  <option value="delivered">Delivered / on site</option>
+                                  <option value="used">Used today</option>
+                                  <option value="short">Short / missing</option>
+                                  <option value="damaged">Damaged / breakdown</option>
+                                  <option value="removed">Removed / off hire</option>
+                                </select>
+                                <Input
+                                  className="md:col-span-2"
+                                  value={row.notes || ''}
+                                  onChange={(e) => updateResourceRow(category, index, 'notes', e.target.value)}
+                                  placeholder="Notes"
+                                  data-testid={`daily-site-resources-notes-${category}-${index}`}
+                                />
+                                <div className="md:col-span-2">
+                                  <Button type="button" variant="ghost" size="sm" onClick={() => removeResourceRow(category, index)}>
+                                    Remove
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-2 border-t border-border/70 pt-4 sm:flex-row sm:flex-wrap">
+                  <Button type="button" variant="secondary" onClick={() => setResourcesEditMode(true)} data-testid="daily-site-resources-edit-button">
+                    Add / edit resources
+                  </Button>
+                  <Button type="button" onClick={saveSiteResources} disabled={resourcesSaving || !selectedProject} data-testid="daily-site-resources-save">
+                    {resourcesSaving ? 'Saving...' : 'Save resources'}
+                  </Button>
+                </div>
+
+                <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
+                  This is diary capture only. Tool Tracker remains the source of truth for asset ownership, movements, condition, and assignment history.
+                </p>
+              </CardContent>
+            </Card>
 
         {/* Site Notes */}
             <Card className="ops-card">
