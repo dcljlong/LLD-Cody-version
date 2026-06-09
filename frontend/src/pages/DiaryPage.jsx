@@ -198,6 +198,21 @@ const DiaryPage = () => {
     return '';
   };
 
+  const isCommercialProjectOption = (project = {}) => {
+    const status = String(project.status || '').trim().toLowerCase();
+    const jobNumber = String(project.job_number || '').trim().toLowerCase();
+    const name = String(project.name || project.project_name || '').trim().toLowerCase();
+    const combined = `${jobNumber} ${name}`;
+
+    if (status && !['active', 'open', 'current'].includes(status)) return false;
+    if (combined.includes('demo')) return false;
+    if (combined.includes('site coordination note')) return false;
+    if (combined.includes('sample')) return false;
+    if (combined.includes('test project')) return false;
+
+    return true;
+  };
+
   const buildReferenceOptions = (items, currentValue, valueKeys = [], labelKeys = []) => {
     const seen = new Set();
     const options = (Array.isArray(items) ? items : [])
@@ -287,14 +302,19 @@ const DiaryPage = () => {
     try {
       const res = await projectsApi.getAll();
       const items = Array.isArray(res.data) ? res.data : (res.data?.value || []);
-      setProjects(items);
-      if (items.length > 0) {
+      const commercialItems = items.filter(isCommercialProjectOption);
+      setProjects(commercialItems);
+      if (commercialItems.length > 0) {
         const savedProject = localStorage.getItem('lld_last_project_id');
-        if (savedProject && items.some(p => p.id === savedProject)) {
+        if (savedProject && commercialItems.some(p => p.id === savedProject)) {
           setSelectedProject(savedProject);
         } else {
-          setSelectedProject(items[0].id);
+          setSelectedProject(commercialItems[0].id);
+          localStorage.setItem('lld_last_project_id', commercialItems[0].id);
         }
+      } else {
+        setSelectedProject('');
+        localStorage.removeItem('lld_last_project_id');
       }
     } catch (error) {
       toast.error('Failed to load projects');
