@@ -355,31 +355,6 @@ const Layout = () => {
               </nav>
             </div>
 
-            {projects.length > 0 && (
-              <div className="lld-compact-project-row">
-                <div className="flex flex-wrap gap-1.5">
-                  {projects.map(project => {
-                    const isActive = currentJobId === project.id;
-                    const tabLabel = [project.job_number, project.name || 'Project'].filter(Boolean).join(' - ');
-
-                    return (
-                      <Link
-                        key={project.id}
-                        to={`/projects/${project.id}`}
-                        className={`
-                          lld-compact-project-link
-                          ${isActive ? 'active' : ''}
-                        `}
-                      >
-                        <span className="font-semibold break-words">
-                          {tabLabel}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
           </div>
 
