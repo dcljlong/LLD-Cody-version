@@ -203,6 +203,20 @@ const DiaryPage = () => {
   const resourcesTotalCount = resourceMaterials.length + resourcePlantEquipment.length;
   const toolTrackerUrl = process.env.REACT_APP_TOOL_TRACKER_URL || 'https://tool-tracker-enterprise.vercel.app';
 
+  const scrollToSiteResources = (target = 'card') => {
+    const targetId = target === 'materials'
+      ? 'daily-site-resources-materials'
+      : target === 'plant'
+        ? 'daily-site-resources-plant'
+        : 'daily-site-resources-card';
+
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    setResourcesEditMode(true);
+  };
+
   const labourTotalHours = labourRows.reduce((sum, row) => sum + (parseFloat(row.total_hours) || 0), 0);
   const savedLabourEntries = labourRows
     .map((row, index) => ({ row, index }))
@@ -1103,17 +1117,37 @@ const DiaryPage = () => {
               </CardContent>
             </Card>
 
-            <Card className="ops-card">
+            <Card
+              className="ops-card cursor-pointer focus-within:ring-2 focus-within:ring-primary/50"
+              onClick={() => scrollToSiteResources('materials')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') scrollToSiteResources('materials');
+              }}
+              data-testid="summary-materials-card"
+            >
               <CardContent className="pt-3 pb-3 text-center">
                 <p className="text-3xl font-heading font-black">{resourceMaterials.length}</p>
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Materials</p>
+                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Tap to edit</p>
               </CardContent>
             </Card>
 
-            <Card className="ops-card">
+            <Card
+              className="ops-card cursor-pointer focus-within:ring-2 focus-within:ring-primary/50"
+              onClick={() => scrollToSiteResources('plant')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') scrollToSiteResources('plant');
+              }}
+              data-testid="summary-plant-gear-card"
+            >
               <CardContent className="pt-3 pb-3 text-center">
                 <p className="text-3xl font-heading font-black">{resourcePlantEquipment.length}</p>
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Plant / Gear</p>
+                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Tap to edit</p>
               </CardContent>
             </Card>
           </div>
@@ -1328,12 +1362,12 @@ const DiaryPage = () => {
                   </div>
                 ) : !resourcesEditMode ? (
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2" data-testid="daily-site-resources-summary">
-                    <div className="rounded-xl border border-border/70 bg-secondary/20 p-3">
+                    <div id="daily-site-resources-materials" className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3">
                       <p className="mb-2 text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">Materials</p>
                       {resourceMaterials.length > 0 ? (
                         <div className="space-y-2">
                           {resourceMaterials.map((row, index) => (
-                            <div key={row.id || index} className="rounded-lg border border-border/60 bg-background/70 px-3 py-2">
+                            <div key={row.id || index} className="lld-resource-summary-row rounded-lg border border-border/60 bg-background/70 px-3 py-2">
                               <p className="text-sm font-bold">{row.item}</p>
                               <p className="text-xs text-muted-foreground">{[row.quantity, row.supplier_or_reference, row.status].filter(Boolean).join(' • ')}</p>
                             </div>
@@ -1344,12 +1378,12 @@ const DiaryPage = () => {
                       )}
                     </div>
 
-                    <div className="rounded-xl border border-border/70 bg-secondary/20 p-3">
+                    <div id="daily-site-resources-plant" className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3">
                       <p className="mb-2 text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">Plant / Equipment / Tools</p>
                       {resourcePlantEquipment.length > 0 ? (
                         <div className="space-y-2">
                           {resourcePlantEquipment.map((row, index) => (
-                            <div key={row.id || index} className="rounded-lg border border-border/60 bg-background/70 px-3 py-2">
+                            <div key={row.id || index} className="lld-resource-summary-row rounded-lg border border-border/60 bg-background/70 px-3 py-2">
                               <p className="text-sm font-bold">{row.item}</p>
                               <p className="text-xs text-muted-foreground">{[row.quantity, row.supplier_or_reference, row.status].filter(Boolean).join(' • ')}</p>
                             </div>
@@ -1366,7 +1400,7 @@ const DiaryPage = () => {
                       ['materials', 'Materials', resourceMaterials],
                       ['plant_equipment', 'Plant / Equipment / Tools', resourcePlantEquipment]
                     ].map(([category, title, rows]) => (
-                      <div key={category} className="rounded-xl border border-border/70 bg-secondary/20 p-3">
+                      <div key={category} id={category === 'materials' ? 'daily-site-resources-materials' : 'daily-site-resources-plant'} className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3">
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
                           <Button type="button" size="sm" variant="secondary" onClick={() => addResourceRow(category)} data-testid={`daily-site-resources-add-${category}`}>
@@ -1379,7 +1413,7 @@ const DiaryPage = () => {
                         ) : (
                           <div className="space-y-3">
                             {rows.map((row, index) => (
-                              <div key={row.id || index} className="grid grid-cols-1 gap-2 rounded-lg border border-border/60 bg-background/70 p-3 md:grid-cols-2">
+                              <div key={row.id || index} className="lld-resource-edit-row grid grid-cols-1 gap-2 rounded-lg border border-border/60 bg-background/70 p-3 md:grid-cols-2">
                                 <Input
                                   value={row.item || ''}
                                   onChange={(e) => updateResourceRow(category, index, 'item', e.target.value)}
@@ -1395,7 +1429,7 @@ const DiaryPage = () => {
                                 <Input
                                   value={row.supplier_or_reference || ''}
                                   onChange={(e) => updateResourceRow(category, index, 'supplier_or_reference', e.target.value)}
-                                  placeholder={category === 'materials' ? 'Supplier / docket' : 'Owned / hired / LLT ref'}
+                                  placeholder={category === 'materials' ? 'Supplier / docket' : 'Owned / hired / Tool Tracker ref'}
                                   data-testid={`daily-site-resources-reference-${category}-${index}`}
                                 />
                                 <select
