@@ -1212,6 +1212,83 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
 
     # Project lookup
     project_map = {p["id"]: p["name"] for p in projects}
+    project_job_map = {p["id"]: p.get("job_number") for p in projects}
+
+    # Daily site resources roll-up for dashboard.
+    # This is overview only: detailed add/edit remains in the Diary page.
+    if active_project_ids:
+        resource_docs = await db.daily_site_resources.find(
+            {
+                "user_id": current_user["id"],
+                "project_id": {"$in": list(active_project_ids)},
+                "date": today
+            },
+            {"_id": 0}
+        ).to_list(1000)
+    else:
+        resource_docs = []
+
+    resource_issue_statuses = {"short", "missing", "damaged", "breakdown", "removed", "off hire", "off-hire"}
+    resource_issues = []
+    materials_today = 0
+    plant_equipment_today = 0
+    jobs_with_materials = set()
+    jobs_with_plant_equipment = set()
+
+    for doc in resource_docs:
+        project_id = doc.get("project_id")
+        project_name = project_map.get(project_id, doc.get("project_name") or "Unknown")
+        job_number = project_job_map.get(project_id) or doc.get("job_number")
+        date_value = doc.get("date") or today
+
+        materials = doc.get("materials") or []
+        plant_equipment = doc.get("plant_equipment") or []
+
+        materials_today += len(materials)
+        plant_equipment_today += len(plant_equipment)
+
+        if materials:
+            jobs_with_materials.add(project_id)
+        if plant_equipment:
+            jobs_with_plant_equipment.add(project_id)
+
+        for category, rows in [("materials", materials), ("plant_equipment", plant_equipment)]:
+            for row in rows:
+                status = str(row.get("status") or "noted").strip().lower()
+                status_text = status.replace("_", " ")
+                is_issue = status in resource_issue_statuses or any(token in status_text for token in resource_issue_statuses)
+
+                if not is_issue:
+                    continue
+
+                resource_issues.append({
+                    "id": row.get("id") or f"{project_id}:{date_value}:{category}:{row.get('item')}",
+                    "type": "resource",
+                    "category": category,
+                    "project_id": project_id,
+                    "project_name": project_name,
+                    "job_number": job_number,
+                    "date": date_value,
+                    "item": row.get("item"),
+                    "title": row.get("item"),
+                    "status": row.get("status") or "noted",
+                    "quantity": row.get("quantity"),
+                    "supplier_or_reference": row.get("supplier_or_reference"),
+                    "notes": row.get("notes")
+                })
+
+    resource_rollup = {
+        "date": today,
+        "materials_today": materials_today,
+        "plant_equipment_today": plant_equipment_today,
+        "jobs_with_materials": len([item for item in jobs_with_materials if item]),
+        "jobs_with_plant_equipment": len([item for item in jobs_with_plant_equipment if item]),
+        "resource_issues_count": len(resource_issues),
+        "resource_issues": resource_issues[:20],
+        "source": "LLD",
+        "scope": "active_projects_today",
+        "detail_location": "diary"
+    }
 
     # Add project names to items
     def enrich_items(items):
@@ -1227,13 +1304,20 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
         "due_today": enrich_items(due_today),
         "due_this_week": enrich_items(due_this_week),
         "recently_completed": enrich_items(recently_completed),
+        "resource_rollup": resource_rollup,
+        "resource_issues": resource_issues[:20],
         "summary": {
             "total_action_items": len(action_items),
             "open_items": len([i for i in action_items if i["status"] == "open"]),
             "critical_items": len([i for i in action_items if i["status"] == "open" and i.get("priority") == "critical"]),
             "gates_blocked": len([g for g in gates if g["status"] == "BLOCKED"]),
             "gates_delayed": len([g for g in gates if g["status"] == "DELAYED"]),
-            "gates_at_risk": len([g for g in gates if g["status"] == "AT_RISK"])
+            "gates_at_risk": len([g for g in gates if g["status"] == "AT_RISK"]),
+            "materials_today": resource_rollup["materials_today"],
+            "plant_equipment_today": resource_rollup["plant_equipment_today"],
+            "resource_issues_count": resource_rollup["resource_issues_count"],
+            "jobs_with_materials": resource_rollup["jobs_with_materials"],
+            "jobs_with_plant_equipment": resource_rollup["jobs_with_plant_equipment"]
         }
     }
 
