@@ -85,6 +85,10 @@ const DiaryPage = () => {
   const [gates, setGates] = useState([]);
   const fileInputRef = useRef(null);
   const noteInputRef = useRef(null);
+  const labourDraftReadyRef = useRef('');
+  const resourcesDraftReadyRef = useRef('');
+  const quickEntryDraftReadyRef = useRef('');
+  const [draftStatus, setDraftStatus] = useState('');
 
   const today = getNzDateString();
   const tomorrow = getNzDateString(1);
@@ -202,6 +206,68 @@ const DiaryPage = () => {
   const resourcePlantEquipment = Array.isArray(siteResources?.plant_equipment) ? siteResources.plant_equipment : [];
   const resourcesTotalCount = resourceMaterials.length + resourcePlantEquipment.length;
   const toolTrackerUrl = process.env.REACT_APP_TOOL_TRACKER_URL || 'https://tool-tracker-enterprise.vercel.app';
+
+  const getDiaryDraftKey = (section) => {
+    if (!selectedProject || !selectedDate) return '';
+    return `lld_diary_draft_${section}_${selectedProject}_${selectedDate}`;
+  };
+
+  const readDiaryDraft = (section) => {
+    const key = getDiaryDraftKey(section);
+    if (!key) return null;
+
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      console.warn(`Failed to read ${section} diary draft`, error);
+      return null;
+    }
+  };
+
+  const writeDiaryDraft = (section, payload) => {
+    const key = getDiaryDraftKey(section);
+    if (!key) return;
+
+    try {
+      localStorage.setItem(key, JSON.stringify({
+        ...payload,
+        savedAt: new Date().toISOString(),
+        projectId: selectedProject,
+        date: selectedDate
+      }));
+      setDraftStatus('Draft autosaved on this device');
+    } catch (error) {
+      console.warn(`Failed to write ${section} diary draft`, error);
+    }
+  };
+
+  const clearDiaryDraft = (section) => {
+    const key = getDiaryDraftKey(section);
+    if (!key) return;
+    localStorage.removeItem(key);
+  };
+
+  const hasMeaningfulLabourRows = (rows = []) => rows.some((row) => [
+    row.employee_name,
+    row.start_time,
+    row.finish_time,
+    row.task_code,
+    row.project_manager_id,
+    row.description,
+    row.other
+  ].some((value) => String(value || '').trim()));
+
+  const hasMeaningfulResourceRows = (resources = {}) => [
+    ...(Array.isArray(resources.materials) ? resources.materials : []),
+    ...(Array.isArray(resources.plant_equipment) ? resources.plant_equipment : [])
+  ].some((row) => [
+    row.item,
+    row.supplier_or_reference,
+    row.quantity,
+    row.status,
+    row.notes
+  ].some((value) => String(value || '').trim()));
 
   const scrollToSiteResources = (target = 'card') => {
     const targetId = target === 'materials'
@@ -432,17 +498,37 @@ const DiaryPage = () => {
   const fetchLabourRows = useCallback(async () => {
     if (!selectedProject || !selectedDate) {
       setLabourRows([]);
+      labourDraftReadyRef.current = '';
       return;
     }
 
+    const draftKey = getDiaryDraftKey('labour');
     setLabourLoading(true);
     try {
       const res = await diaryApi.getLabour(selectedProject, selectedDate);
       const rows = Array.isArray(res.data?.rows) ? res.data.rows : [];
-      setLabourRows(rows.map(normaliseLabourRow));
+      const draft = readDiaryDraft('labour');
+
+      if (Array.isArray(draft?.rows) && hasMeaningfulLabourRows(draft.rows)) {
+        setLabourRows(draft.rows.map(normaliseLabourRow));
+        setLabourEditMode(true);
+        setDraftStatus('Staff draft restored on this device');
+      } else {
+        setLabourRows(rows.map(normaliseLabourRow));
+      }
+
+      labourDraftReadyRef.current = draftKey;
     } catch (error) {
       console.error('Failed to load labour rows:', error);
-      setLabourRows([]);
+      const draft = readDiaryDraft('labour');
+      if (Array.isArray(draft?.rows) && hasMeaningfulLabourRows(draft.rows)) {
+        setLabourRows(draft.rows.map(normaliseLabourRow));
+        setLabourEditMode(true);
+        setDraftStatus('Staff draft restored on this device');
+      } else {
+        setLabourRows([]);
+      }
+      labourDraftReadyRef.current = draftKey;
     } finally {
       setLabourLoading(false);
     }
@@ -451,19 +537,46 @@ const DiaryPage = () => {
   const fetchSiteResources = useCallback(async () => {
     if (!selectedProject || !selectedDate) {
       setSiteResources({ materials: [], plant_equipment: [] });
+      resourcesDraftReadyRef.current = '';
       return;
     }
 
+    const draftKey = getDiaryDraftKey('resources');
     setResourcesLoading(true);
     try {
       const res = await diaryApi.getResources(selectedProject, selectedDate);
-      setSiteResources({
+      const serverResources = {
         materials: Array.isArray(res.data?.materials) ? res.data.materials : [],
         plant_equipment: Array.isArray(res.data?.plant_equipment) ? res.data.plant_equipment : []
-      });
+      };
+      const draft = readDiaryDraft('resources');
+
+      if (draft?.resources && hasMeaningfulResourceRows(draft.resources)) {
+        setSiteResources({
+          materials: Array.isArray(draft.resources.materials) ? draft.resources.materials : [],
+          plant_equipment: Array.isArray(draft.resources.plant_equipment) ? draft.resources.plant_equipment : []
+        });
+        setResourcesEditMode(true);
+        setDraftStatus('Resources draft restored on this device');
+      } else {
+        setSiteResources(serverResources);
+      }
+
+      resourcesDraftReadyRef.current = draftKey;
     } catch (error) {
       console.error('Failed to load site resources:', error);
-      setSiteResources({ materials: [], plant_equipment: [] });
+      const draft = readDiaryDraft('resources');
+      if (draft?.resources && hasMeaningfulResourceRows(draft.resources)) {
+        setSiteResources({
+          materials: Array.isArray(draft.resources.materials) ? draft.resources.materials : [],
+          plant_equipment: Array.isArray(draft.resources.plant_equipment) ? draft.resources.plant_equipment : []
+        });
+        setResourcesEditMode(true);
+        setDraftStatus('Resources draft restored on this device');
+      } else {
+        setSiteResources({ materials: [], plant_equipment: [] });
+      }
+      resourcesDraftReadyRef.current = draftKey;
     } finally {
       setResourcesLoading(false);
     }
@@ -498,6 +611,8 @@ const DiaryPage = () => {
         materials: Array.isArray(res.data?.materials) ? res.data.materials : [],
         plant_equipment: Array.isArray(res.data?.plant_equipment) ? res.data.plant_equipment : []
       });
+      clearDiaryDraft('resources');
+      setDraftStatus('Resources saved to diary');
       setResourcesEditMode(false);
       toast.success('Site resources saved to diary');
       fetchDiary();
@@ -581,6 +696,8 @@ const DiaryPage = () => {
       });
 
       setLabourRows(Array.isArray(res.data?.rows) ? res.data.rows.map(normaliseLabourRow) : []);
+      clearDiaryDraft('labour');
+      setDraftStatus('Staff saved to diary');
       setLabourEditMode(false);
       toast.success('Labour rows saved locally in LLD');
       fetchDiary();
@@ -667,8 +784,40 @@ const DiaryPage = () => {
       fetchLabourRows();
       fetchSiteResources();
       fetchGates();
+
+      const quickKey = getDiaryDraftKey('quick_entry');
+      const draft = readDiaryDraft('quick_entry');
+      if (draft?.entryData && String(draft.entryData.note || '').trim()) {
+        setEntryData((current) => ({ ...current, ...draft.entryData }));
+        setDraftStatus('Quick entry draft restored on this device');
+      }
+      quickEntryDraftReadyRef.current = quickKey;
     }
   }, [selectedProject, selectedDate, fetchDiary, fetchLabourRows, fetchSiteResources, fetchGates]);
+
+  useEffect(() => {
+    const key = getDiaryDraftKey('labour');
+    if (!key || labourDraftReadyRef.current !== key || labourSaving || labourLoading) return;
+    if (hasMeaningfulLabourRows(labourRows)) {
+      writeDiaryDraft('labour', { rows: labourRows }); // diary-draft-autosave-v1-labour
+    }
+  }, [labourRows, selectedProject, selectedDate, labourSaving, labourLoading]);
+
+  useEffect(() => {
+    const key = getDiaryDraftKey('resources');
+    if (!key || resourcesDraftReadyRef.current !== key || resourcesSaving || resourcesLoading) return;
+    if (hasMeaningfulResourceRows(siteResources)) {
+      writeDiaryDraft('resources', { resources: siteResources }); // diary-draft-autosave-v1-resources
+    }
+  }, [siteResources, selectedProject, selectedDate, resourcesSaving, resourcesLoading]);
+
+  useEffect(() => {
+    const key = getDiaryDraftKey('quick_entry');
+    if (!key || quickEntryDraftReadyRef.current !== key || submitting) return;
+    if (String(entryData.note || '').trim() || (Array.isArray(entryData.photos) && entryData.photos.length > 0)) {
+      writeDiaryDraft('quick_entry', { entryData }); // diary-draft-autosave-v1-quick-entry
+    }
+  }, [entryData, selectedProject, selectedDate, submitting]);
 
   const changeDate = (days) => {
     const current = parseDateInput(selectedDate);
@@ -749,6 +898,8 @@ const DiaryPage = () => {
       });
 
       localStorage.setItem('lld_last_project_id', selectedProject);
+      clearDiaryDraft('quick_entry');
+      setDraftStatus('Diary entry saved');
       toast.success('Entry captured');
 
       // Reset form
@@ -1070,6 +1221,12 @@ const DiaryPage = () => {
           </div>
         </CardContent>
       </Card>
+
+      {draftStatus && (
+        <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary" data-testid="diary-draft-autosave-v1-status">
+          {draftStatus}
+        </div>
+      )}
 
       {diary && (
         <>
