@@ -163,7 +163,12 @@ const DashboardPage = () => {
       navigate('/gates');
       return;
     }
-    navigate('/action-items');
+
+    const params = new URLSearchParams();
+    if (item?.id) params.set('item', item.id);
+    if (item?.project_id || item?.job_id) params.set('project', item.project_id || item.job_id);
+
+    navigate(`/action-items?${params.toString()}`); // dashboard-action-clickthrough-v3
   };
 
   const handleStatClick = (route) => {

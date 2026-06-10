@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { actionItemsApi, projectsApi } from '../lib/api';
 import { toast } from 'sonner';
 import {
@@ -93,12 +94,14 @@ const ActionItemsPage = () => {
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterStatus, setFilterStatus] = useState('open');
   const [submitting, setSubmitting] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [formData, setFormData] = useState({
     project_id: '',
     title: '',
     description: '',
     priority: 'medium',
+    status: 'open',
     due_date: '',
     expected_complete_date: '',
     owner: ''
@@ -107,6 +110,22 @@ const ActionItemsPage = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const selectedId = searchParams.get('item');
+    const projectId = searchParams.get('project');
+
+    if (projectId) {
+      setFilterProject(projectId);
+    }
+
+    if (!selectedId || items.length === 0 || dialogOpen) return;
+
+    const matchedItem = items.find((item) => String(item.id) === String(selectedId));
+    if (matchedItem) {
+      openEditDialog(matchedItem);
+    }
+  }, [items, searchParams, dialogOpen]);
 
   const fetchData = async () => {
     try {
@@ -204,6 +223,7 @@ const ActionItemsPage = () => {
       title: item.title || item.task_name || item.name || '',
       description: item.description || item.note || item.details || '',
       priority: item.priority || 'medium',
+      status: item.status || 'open',
       due_date: item.due_date?.split('T')[0] || '',
       expected_complete_date: item.expected_complete_date?.split('T')[0] || '',
       owner: item.owner || ''
@@ -223,6 +243,7 @@ const ActionItemsPage = () => {
       title: '',
       description: '',
       priority: 'medium',
+      status: 'open',
       due_date: '',
       expected_complete_date: '',
       owner: ''
@@ -239,7 +260,8 @@ const ActionItemsPage = () => {
       formData.due_date ||
       formData.expected_complete_date ||
       formData.owner.trim() ||
-      formData.priority !== 'medium'
+      formData.priority !== 'medium' ||
+      formData.status !== 'open'
     );
   };
 
@@ -271,7 +293,45 @@ const ActionItemsPage = () => {
   const getNormalizedStatus = (status) => {
     const normalized = String(status || 'open').trim().toLowerCase();
     if (['completed', 'complete', 'done', 'closed'].includes(normalized)) return 'completed';
+    if (['blocked', 'hold', 'on_hold'].includes(normalized)) return 'blocked';
+    if (['in_progress', 'in progress', 'progress', 'doing', 'started'].includes(normalized)) return 'in_progress';
     return 'open';
+  };
+
+  const statusOptions = [
+    { value: 'open', label: 'Open' },
+    { value: 'in_progress', label: 'In Progress' },
+    { value: 'blocked', label: 'Blocked' },
+    { value: 'completed', label: 'Completed' }
+  ];
+
+  const getStatusLabel = (status) => {
+    const normalised = getNormalizedStatus(status);
+    return statusOptions.find((option) => option.value === normalised)?.label || 'Open';
+  };
+
+  const handleStatusChange = async (item, status) => {
+    if (!item?.id) return;
+
+    try {
+      if (status === 'completed') {
+        await actionItemsApi.complete(item.id);
+        toast.success('Item completed');
+      } else if (getNormalizedStatus(item.status) === 'completed' && status !== 'completed') {
+        await actionItemsApi.reopen(item.id);
+        if (status !== 'open') {
+          await actionItemsApi.update(item.id, { ...item, status });
+        }
+        toast.success(`Item set to ${getStatusLabel(status)}`);
+      } else {
+        await actionItemsApi.update(item.id, { ...item, status });
+        toast.success(`Item set to ${getStatusLabel(status)}`);
+      }
+
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to update item status');
+    }
   };
 
   const getDueDate = (item) => parseDate(item.due_date || item.expected_complete_date);
@@ -293,12 +353,17 @@ const ActionItemsPage = () => {
     if (filterProject !== 'all' && String(getItemProjectId(item)) !== String(filterProject)) return false;
     if (filterOwner !== 'all' && item.owner !== filterOwner) return false;
     if (filterPriority !== 'all' && item.priority !== filterPriority) return false;
-    if (filterStatus === 'open' && getNormalizedStatus(item.status) !== 'open') return false;
-    if (filterStatus === 'completed' && getNormalizedStatus(item.status) !== 'completed') return false;
+
+    const itemStatus = getNormalizedStatus(item.status);
+    if (filterStatus === 'open' && itemStatus === 'completed') return false;
+    if (filterStatus === 'completed' && itemStatus !== 'completed') return false;
+    if (filterStatus === 'blocked' && itemStatus !== 'blocked') return false;
+    if (filterStatus === 'in_progress' && itemStatus !== 'in_progress') return false;
+
     return true;
   });
 
-  const openItems = filteredItems.filter((item) => getNormalizedStatus(item.status) === 'open');
+  const openItems = filteredItems.filter((item) => getNormalizedStatus(item.status) !== 'completed');
   const completedItems = filteredItems.filter((item) => getNormalizedStatus(item.status) === 'completed');
 
   const todayStart = startOfToday();
@@ -513,7 +578,23 @@ const ActionItemsPage = () => {
             </div>
           </div>
 
-          <div className="flex shrink-0 items-start gap-2">
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            <div className="flex flex-wrap justify-end gap-1.5" data-testid={`action-status-workflow-v3-${item.id}`}>
+              {statusOptions.map((statusOption) => (
+                <button
+                  key={statusOption.value}
+                  type="button"
+                  onClick={() => handleStatusChange(item, statusOption.value)}
+                  className={`rounded-lg border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.1em] transition ${
+                    getNormalizedStatus(item.status) === statusOption.value
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:bg-white/[0.08] hover:text-foreground'
+                  }`}
+                >
+                  {statusOption.label}
+                </button>
+              ))}
+            </div>
             <Button
               size="sm"
               variant="ghost"
@@ -522,15 +603,6 @@ const ActionItemsPage = () => {
             >
               <Pencil className="mr-1.5 h-4 w-4" />
               Edit
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => handleComplete(item.id)}
-              className="h-9 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200"
-            >
-              <CheckCircle2 className="mr-1.5 h-4 w-4" />
-              Done
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -693,31 +765,26 @@ const ActionItemsPage = () => {
           </SelectContent>
         </Select>
 
-        <div className="grid w-full grid-cols-3 overflow-hidden rounded-md border border-border sm:w-auto">
-          <button
-            onClick={() => setFilterStatus('open')}
-            className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-              filterStatus === 'open' ? 'bg-primary text-primary-foreground' : 'bg-secondary/40 hover:bg-secondary'
-            }`}
-          >
-            Open
-          </button>
-          <button
-            onClick={() => setFilterStatus('completed')}
-            className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-              filterStatus === 'completed' ? 'bg-primary text-primary-foreground' : 'bg-secondary/40 hover:bg-secondary'
-            }`}
-          >
-            Completed
-          </button>
-          <button
-            onClick={() => setFilterStatus('all')}
-            className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-              filterStatus === 'all' ? 'bg-primary text-primary-foreground' : 'bg-secondary/40 hover:bg-secondary'
-            }`}
-          >
-            All
-          </button>
+        <div className="grid w-full grid-cols-5 overflow-hidden rounded-md border border-border sm:w-auto" data-testid="action-status-filter-tabs">
+          {[
+            { value: 'open', label: 'Active' },
+            { value: 'in_progress', label: 'Progress' },
+            { value: 'blocked', label: 'Blocked' },
+            { value: 'completed', label: 'Done' },
+            { value: 'all', label: 'All' }
+          ].map((statusFilter) => (
+            <button
+              key={statusFilter.value}
+              type="button"
+              onClick={() => setFilterStatus(statusFilter.value)}
+              className={`px-2 py-1.5 text-[11px] font-bold transition-colors sm:px-3 sm:text-xs ${
+                filterStatus === statusFilter.value ? 'bg-primary text-primary-foreground' : 'bg-secondary/40 hover:bg-secondary'
+              }`}
+              data-testid={`action-status-filter-${statusFilter.value}`}
+            >
+              {statusFilter.label}
+            </button>
+          ))}
         </div>
 
         {(filterProject !== 'all' || filterOwner !== 'all' || filterPriority !== 'all' || filterStatus !== 'open') && (
@@ -735,26 +802,38 @@ const ActionItemsPage = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4" data-testid="action-priority-tabs-top">
         {summaryCards.map((card) => (
-          <Card key={card.key} className={`ops-card overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl ${card.toneClass}`}>
-            <CardContent className="px-4 py-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                  {card.label}
-                </span>
-                <span className={`text-4xl leading-none font-black font-heading ${card.countClass}`}>
-                  {card.count}
-                </span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
-                <div
-                  className={`h-full rounded-full ${card.accentClass}`}
-                  style={{ width: `${Math.max(10, Math.min(100, card.count === 0 ? 10 : card.count * 14))}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <button
+            key={card.key}
+            type="button"
+            onClick={() => {
+              const target = document.getElementById(`action-section-${card.key}`);
+              if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+            className="text-left"
+            data-testid={`action-priority-tab-${card.key}`}
+          >
+            <Card className={`ops-card overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl ${card.toneClass}`}>
+              <CardContent className="px-4 py-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                    {card.label}
+                  </span>
+                  <span className={`text-4xl leading-none font-black font-heading ${card.countClass}`}>
+                    {card.count}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+                  <div
+                    className={`h-full rounded-full ${card.accentClass}`}
+                    style={{ width: `${Math.max(10, Math.min(100, card.count === 0 ? 10 : card.count * 14))}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Tap to view</p>
+              </CardContent>
+            </Card>
+          </button>
         ))}
       </div>
 
@@ -762,6 +841,7 @@ const ActionItemsPage = () => {
         {(blockedDelayedItems.length > 0 || atRiskItems.length > 0) && (
           <>
             {blockedDelayedItems.length > 0 && (
+              <div id="action-section-blocked" className="scroll-mt-28">
               <SectionCard
                 title="Blocked / Delayed"
                 count={blockedDelayedItems.length}
@@ -772,9 +852,11 @@ const ActionItemsPage = () => {
               >
                 <GroupedSectionItems items={blockedDelayedItems} />
               </SectionCard>
+            </div>
             )}
 
             {atRiskItems.length > 0 && (
+              <div id="action-section-risk" className="scroll-mt-28">
               <SectionCard
                 title="At Risk"
                 count={atRiskItems.length}
@@ -785,6 +867,7 @@ const ActionItemsPage = () => {
               >
                 <GroupedSectionItems items={atRiskItems} />
               </SectionCard>
+            </div>
             )}
           </>
         )}
@@ -792,6 +875,7 @@ const ActionItemsPage = () => {
         {(dueTodayItems.length > 0 || dueThisWeekItems.length > 0) && (
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             {dueTodayItems.length > 0 && (
+              <div id="action-section-today" className="scroll-mt-28">
               <SectionCard
                 title="Due Today"
                 count={dueTodayItems.length}
@@ -802,9 +886,11 @@ const ActionItemsPage = () => {
               >
                 <GroupedSectionItems items={dueTodayItems} />
               </SectionCard>
+            </div>
             )}
 
             {dueThisWeekItems.length > 0 && (
+              <div id="action-section-week" className="scroll-mt-28">
               <SectionCard
                 title="Due This Week"
                 count={dueThisWeekItems.length}
@@ -815,6 +901,7 @@ const ActionItemsPage = () => {
               >
                 <GroupedSectionItems items={dueThisWeekItems} />
               </SectionCard>
+            </div>
             )}
           </div>
         )}
@@ -919,6 +1006,23 @@ const ActionItemsPage = () => {
                   className="form-input"
                   data-testid="item-owner-input"
                 />
+              </div>
+
+              <div>
+                <Label className="form-label">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger data-testid="item-status-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
+                    {statusOptions.map((statusOption) => (
+                      <SelectItem key={statusOption.value} value={statusOption.value}>{statusOption.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
