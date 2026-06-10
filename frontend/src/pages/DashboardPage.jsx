@@ -403,6 +403,17 @@ const DashboardPage = () => {
   const resourceIssuesCount = resourceRollup.resource_issues_count || data?.summary?.resource_issues_count || 0;
   const jobsWithMaterialsCount = resourceRollup.jobs_with_materials || data?.summary?.jobs_with_materials || 0;
   const jobsWithPlantGearCount = resourceRollup.jobs_with_plant_equipment || data?.summary?.jobs_with_plant_equipment || 0;
+  const siteRealityProjects = Array.isArray(data?.site_reality_projects)
+    ? data.site_reality_projects
+    : Array.isArray(data?.resource_projects)
+      ? data.resource_projects
+      : Array.isArray(resourceRollup.resource_projects)
+        ? resourceRollup.resource_projects
+        : [];
+
+  const activeSiteRealityProjects = siteRealityProjects.slice(0, 8);
+  const resourcesTodayCount = materialsTodayCount + plantGearTodayCount;
+  const allClearToday = urgentTodayCount === 0 && roadblocksCount === 0 && resourceIssuesCount === 0;
 
   return (
     <div className="space-y-5 pt-8" data-testid="dashboard-page">
@@ -439,52 +450,86 @@ const DashboardPage = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <HeroMetric label="Urgent Today" value={urgentTodayCount} tone={urgentTodayCount > 0 ? 'danger' : 'default'} />
-            <HeroMetric label="Open Items" value={openItemsCount} tone={openItemsCount > 0 ? 'warning' : 'default'} />
-            <HeroMetric label="Critical" value={criticalItemsCount} tone={criticalItemsCount > 0 ? 'danger' : 'default'} />
+            <HeroMetric label="Active Jobs" value={data?.projects_count || 0} tone="default" />
+            <HeroMetric label="Resources" value={resourcesTodayCount} tone={resourcesTodayCount > 0 ? 'warning' : 'default'} />
+            <HeroMetric label="Issues" value={resourceIssuesCount} tone={resourceIssuesCount > 0 ? 'danger' : 'default'} />
             <HeroMetric label="Roadblocks" value={roadblocksCount} tone={roadblocksCount > 0 ? 'warning' : 'default'} />
           </div>
         </div>
       </section>
 
-      {widgets.stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
-          <StatCard
-            label="ACTIVE PROJECTS"
-            value={data?.projects_count || 0}
-            route="/projects"
-            tone="default"
-            icon={<Target className="w-9 h-9 text-primary" strokeWidth={1.75} />}
-          />
 
-          <StatCard
-            label="OPEN ITEMS"
-            value={data?.summary?.open_items || 0}
-            route="/action-items"
-            tone="warning"
-            icon={<Clock className="w-9 h-9 text-amber-500" strokeWidth={1.75} />}
-          />
+      <Card className="ops-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-primary/25 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-slate-900" data-testid="dashboard-site-reality-jobs">
+        <CardHeader className="ops-card-header flex flex-row items-start justify-between gap-3 px-5 py-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Today&apos;s Site Reality</p>
+            <CardTitle className="font-heading text-lg uppercase tracking-[0.12em]">Active Jobs Today</CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">A site-first view of active jobs, resources, and items needing attention.</p>
+          </div>
+          <span className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${allClearToday ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-600' : 'border-amber-400/35 bg-amber-500/10 text-amber-600'}`}>
+            {allClearToday ? 'All Clear' : 'Review'}
+          </span>
+        </CardHeader>
+        <CardContent className="bg-white px-5 py-5 dark:bg-slate-950/95">
+          {activeSiteRealityProjects.length > 0 ? (
+            <div className="space-y-3">
+              {activeSiteRealityProjects.map((project) => {
+                const jobLabel = project.job_number ? `${project.job_number} - ${project.project_name || project.name || 'Project'}` : (project.project_name || project.name || 'Project');
+                const hasProjectActivity = project.has_activity || project.materials_today > 0 || project.plant_equipment_today > 0 || project.resource_issues_count > 0 || project.roadblocks_count > 0 || project.open_items_count > 0;
 
-          <StatCard
-            label="CRITICAL"
-            value={data?.summary?.CRITICAL_items || 0}
-            route="/action-items"
-            tone="CRITICAL"
-            valueClassName="text-red-600"
-            icon={<AlertTriangle className="w-9 h-9 text-red-600" strokeWidth={1.75} />}
-          />
+                return (
+                  <button
+                    key={project.project_id || project.id}
+                    type="button"
+                    onClick={() => navigate('/diary')}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-left transition hover:border-primary/45 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/60"
+                    data-testid={`dashboard-site-reality-job-${project.project_id || project.id}`}
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-black uppercase tracking-[0.08em] text-foreground">{jobLabel}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {hasProjectActivity ? 'Diary activity recorded today' : 'No diary activity yet today'}
+                        </p>
+                      </div>
+                      <span className={`w-fit rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] ${project.resource_issues_count > 0 || project.roadblocks_count > 0 ? 'border-amber-400/35 bg-amber-500/10 text-amber-600' : 'border-emerald-400/35 bg-emerald-500/10 text-emerald-600'}`}>
+                        {project.resource_issues_count > 0 || project.roadblocks_count > 0 ? 'Needs Review' : 'OK'}
+                      </span>
+                    </div>
 
-          <StatCard
-            label="ROADBLOCKS / CONCERNS"
-            value={(data?.summary?.gates_blocked || 0) + (data?.summary?.gates_delayed || 0) + (data?.summary?.gates_at_risk || 0)}
-            route="/gates"
-            tone="warning"
-            valueClassName="text-amber-600"
-            icon={<Target className="w-9 h-9 text-amber-500" strokeWidth={1.75} />}
-          />
-
-        </div>
-      )}
+                    <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950/70">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Materials</p>
+                        <p className="text-lg font-black">{project.materials_today || 0}</p>
+                      </div>
+                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950/70">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Plant / Gear</p>
+                        <p className="text-lg font-black">{project.plant_equipment_today || 0}</p>
+                      </div>
+                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950/70">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Issues</p>
+                        <p className={`text-lg font-black ${project.resource_issues_count > 0 ? 'text-red-600' : ''}`}>{project.resource_issues_count || 0}</p>
+                      </div>
+                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950/70">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Roadblocks</p>
+                        <p className={`text-lg font-black ${project.roadblocks_count > 0 ? 'text-amber-600' : ''}`}>{project.roadblocks_count || 0}</p>
+                      </div>
+                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950/70">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Open Items</p>
+                        <p className={`text-lg font-black ${project.open_items_count > 0 ? 'text-amber-600' : ''}`}>{project.open_items_count || 0}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+              No active jobs found for today.
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {visibleSectionCount > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
@@ -579,93 +624,7 @@ const DashboardPage = () => {
           )}
         </div>
       )}
-      <Card className="ops-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-primary/25 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-slate-900" data-testid="dashboard-site-resources-today">
-        <CardHeader className="ops-card-header flex flex-row items-start justify-between gap-3 px-5 py-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Site Resources</p>
-            <CardTitle className="font-heading text-lg uppercase tracking-[0.12em]">Materials / Plant / Gear Today</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">Daily site resources across active jobs. Add or edit detail in Diary.</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate('/diary')}
-            className="rounded-full border border-primary/30 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-primary transition hover:bg-primary/10"
-            data-testid="dashboard-site-resources-open-diary"
-          >
-            Open Diary
-          </button>
-        </CardHeader>
-        <CardContent className="bg-white px-5 py-5 dark:bg-slate-950/95">
-          <div className="mb-4 grid grid-cols-3 gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/diary')}
-              className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-left transition hover:border-primary/45 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/60"
-              data-testid="dashboard-site-resources-materials-summary"
-            >
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Materials</p>
-              <p className="mt-1 font-heading text-3xl font-black">{materialsTodayCount}</p>
-              <p className="mt-1 text-[11px] text-muted-foreground">{jobsWithMaterialsCount} jobs</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/diary')}
-              className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-left transition hover:border-primary/45 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/60"
-              data-testid="dashboard-site-resources-plant-summary"
-            >
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Plant / Gear</p>
-              <p className="mt-1 font-heading text-3xl font-black">{plantGearTodayCount}</p>
-              <p className="mt-1 text-[11px] text-muted-foreground">{jobsWithPlantGearCount} jobs</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/diary')}
-              className={`rounded-xl border p-4 text-left transition ${resourceIssuesCount > 0 ? 'border-red-300 bg-red-50 hover:border-red-400 dark:border-red-400/40 dark:bg-red-950/20' : 'border-slate-200 bg-slate-50/80 hover:border-primary/45 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/60'}`}
-              data-testid="dashboard-site-resources-issues-summary"
-            >
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Issues</p>
-              <p className={`mt-1 font-heading text-3xl font-black ${resourceIssuesCount > 0 ? 'text-red-600' : ''}`}>{resourceIssuesCount}</p>
-              <p className="mt-1 text-[11px] text-muted-foreground">needs attention</p>
-            </button>
-          </div>
-
-          {resourceIssues.length > 0 ? (
-            <div className="space-y-3">
-              {resourceIssues.map((item, index) => (
-                <button
-                  key={item.id || index}
-                  type="button"
-                  onClick={() => navigate('/diary')}
-                  className="w-full rounded-xl border border-red-400/20 bg-red-500/5 p-3 text-left transition hover:border-red-400/45 hover:bg-red-500/10"
-                  data-testid={`dashboard-resource-issue-${index}`}
-                >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-black">{item.item || item.title || 'Resource issue'}</p>
-                      <p className="text-xs text-muted-foreground">{getResourceProjectLabel(item)}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {[formatResourceCategory(item.category), item.quantity, item.supplier_or_reference].filter(Boolean).join(' • ')}
-                      </p>
-                      {item.notes ? (
-                        <p className="mt-2 text-xs text-muted-foreground">{item.notes}</p>
-                      ) : null}
-                    </div>
-                    <span className="w-fit rounded-full border border-red-400/30 bg-red-500/10 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-red-400">
-                      {item.status || 'issue'}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-              No resource issues recorded today. Materials and plant/gear counts above are for daily visibility only.
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-          <Card className="ops-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-primary/25 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-slate-900" data-testid="daily-operations-suite-card">
+      <Card className="ops-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-primary/25 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-slate-900" data-testid="daily-operations-suite-card">
             <CardHeader className="ops-card-header flex flex-row items-start justify-between gap-3 px-5 py-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Daily Operations</p>
