@@ -170,6 +170,17 @@ const DashboardPage = () => {
     navigate(route);
   };
 
+  const formatResourceCategory = (category = '') => {
+    if (category === 'plant_equipment') return 'Plant / Gear';
+    if (category === 'materials') return 'Materials';
+    return category || 'Resource';
+  };
+
+  const getResourceProjectLabel = (item = {}) => {
+    const job = item.job_number ? `${item.job_number} - ` : '';
+    return `${job}${item.project_name || 'Unknown project'}`;
+  };
+
   const SectionCard = ({
     title,
     count,
@@ -234,7 +245,7 @@ const DashboardPage = () => {
     );
   };
 
-  const StatCard = ({ label, value, icon, route, valueClassName = '', tone = 'default' }) => {
+  const StatCard = ({ label, value, icon, route, valueClassName = '', tone = 'default', testId }) => {
     const toneClass =
       tone === 'CRITICAL'
         ? 'border-red-200 bg-red-50 hover:border-red-300 dark:border-red-400/45 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-red-950/15 dark:hover:border-red-300'
@@ -261,6 +272,7 @@ const DashboardPage = () => {
         type="button"
         onClick={() => handleStatClick(route)}
         className="w-full text-left"
+        data-testid={testId}
       >
         <Card className={`ops-card overflow-hidden rounded-xl border shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:shadow-[0_18px_50px_rgba(0,0,0,0.14)] dark:hover:shadow-[0_24px_70px_rgba(0,0,0,0.22)] ${toneClass}`}>
           <CardContent className="p-0">
@@ -384,6 +396,13 @@ const DashboardPage = () => {
   const criticalItemsCount = data?.summary?.CRITICAL_items || 0;
   const roadblocksCount = (data?.summary?.gates_blocked || 0) + (data?.summary?.gates_delayed || 0) + (data?.summary?.gates_at_risk || 0);
   const urgentTodayCount = overdueItems.length + dueTodayItems.length + blockedDelayedItems.length;
+  const resourceRollup = data?.resource_rollup || {};
+  const resourceIssues = Array.isArray(data?.resource_issues) ? data.resource_issues : [];
+  const materialsTodayCount = resourceRollup.materials_today || data?.summary?.materials_today || 0;
+  const plantGearTodayCount = resourceRollup.plant_equipment_today || data?.summary?.plant_equipment_today || 0;
+  const resourceIssuesCount = resourceRollup.resource_issues_count || data?.summary?.resource_issues_count || 0;
+  const jobsWithMaterialsCount = resourceRollup.jobs_with_materials || data?.summary?.jobs_with_materials || 0;
+  const jobsWithPlantGearCount = resourceRollup.jobs_with_plant_equipment || data?.summary?.jobs_with_plant_equipment || 0;
 
   return (
     <div className="space-y-5 pt-8" data-testid="dashboard-page">
@@ -462,6 +481,34 @@ const DashboardPage = () => {
             tone="warning"
             valueClassName="text-amber-600"
             icon={<Target className="w-9 h-9 text-amber-500" strokeWidth={1.75} />}
+          />
+
+          <StatCard
+            label="MATERIALS TODAY"
+            value={materialsTodayCount}
+            route="/diary"
+            tone="default"
+            icon={<CheckCircle2 className="w-9 h-9 text-amber-500" strokeWidth={1.75} />}
+            testId="dashboard-site-resources-materials-card"
+          />
+
+          <StatCard
+            label="PLANT / GEAR TODAY"
+            value={plantGearTodayCount}
+            route="/diary"
+            tone="default"
+            icon={<Target className="w-9 h-9 text-amber-500" strokeWidth={1.75} />}
+            testId="dashboard-site-resources-plant-card"
+          />
+
+          <StatCard
+            label="RESOURCE ISSUES"
+            value={resourceIssuesCount}
+            route="/diary"
+            tone="CRITICAL"
+            valueClassName="text-red-600"
+            icon={<AlertTriangle className="w-9 h-9 text-red-600" strokeWidth={1.75} />}
+            testId="dashboard-site-resources-issues-card"
           />
         </div>
       )}
@@ -559,6 +606,66 @@ const DashboardPage = () => {
           )}
         </div>
       )}
+      <Card className="ops-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-primary/25 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-slate-900" data-testid="dashboard-resource-issues">
+        <CardHeader className="ops-card-header flex flex-row items-start justify-between gap-3 px-5 py-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Site Resources</p>
+            <CardTitle className="font-heading text-lg uppercase tracking-[0.12em]">Resource Issues Today</CardTitle>
+          </div>
+          <span className="rounded-full border border-red-400/30 bg-red-500/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-red-400">
+            {resourceIssuesCount}
+          </span>
+        </CardHeader>
+        <CardContent className="bg-white px-5 py-5 dark:bg-slate-950/95">
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-muted-foreground">Materials Today</p>
+              <p className="mt-1 font-heading text-3xl font-black">{materialsTodayCount}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{jobsWithMaterialsCount} jobs with materials</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-muted-foreground">Plant / Gear Today</p>
+              <p className="mt-1 font-heading text-3xl font-black">{plantGearTodayCount}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{jobsWithPlantGearCount} jobs with plant / gear</p>
+            </div>
+          </div>
+
+          {resourceIssues.length > 0 ? (
+            <div className="space-y-3">
+              {resourceIssues.map((item, index) => (
+                <button
+                  key={item.id || index}
+                  type="button"
+                  onClick={() => navigate('/diary')}
+                  className="w-full rounded-xl border border-red-400/20 bg-red-500/5 p-3 text-left transition hover:border-red-400/45 hover:bg-red-500/10"
+                  data-testid={`dashboard-resource-issue-${index}`}
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-black">{item.item || item.title || 'Resource issue'}</p>
+                      <p className="text-xs text-muted-foreground">{getResourceProjectLabel(item)}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {[formatResourceCategory(item.category), item.quantity, item.supplier_or_reference].filter(Boolean).join(' • ')}
+                      </p>
+                      {item.notes ? (
+                        <p className="mt-2 text-xs text-muted-foreground">{item.notes}</p>
+                      ) : null}
+                    </div>
+                    <span className="w-fit rounded-full border border-red-400/30 bg-red-500/10 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-red-400">
+                      {item.status || 'issue'}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+              No material, plant, equipment, or tool issues recorded today.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
           <Card className="ops-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-primary/25 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-slate-900" data-testid="daily-operations-suite-card">
             <CardHeader className="ops-card-header flex flex-row items-start justify-between gap-3 px-5 py-4">
               <div>
