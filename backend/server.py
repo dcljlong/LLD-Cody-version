@@ -1214,6 +1214,63 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
     project_map = {p["id"]: p["name"] for p in projects}
     project_job_map = {p["id"]: p.get("job_number") for p in projects}
 
+    # Dashboard V2 per-job site reality roll-up.
+    # This gives the frontend natural job cards instead of loose KPI counters.
+    dashboard_project_rollup = {}
+    for project in projects:
+        project_id = project.get("id")
+        if not project_id:
+            continue
+
+        dashboard_project_rollup[project_id] = {
+            "id": project_id,
+            "project_id": project_id,
+            "project_name": project.get("name") or "Unknown",
+            "name": project.get("name") or "Unknown",
+            "job_number": project.get("job_number"),
+            "status": project.get("status"),
+            "date": today,
+            "materials_today": 0,
+            "plant_equipment_today": 0,
+            "resource_issues_count": 0,
+            "open_items_count": 0,
+            "overdue_items_count": 0,
+            "due_today_items_count": 0,
+            "roadblocks_count": 0,
+            "blocked_roadblocks_count": 0,
+            "at_risk_roadblocks_count": 0,
+            "has_activity": False
+        }
+
+    for item in action_items:
+        project_id = item.get("project_id")
+        project_rollup = dashboard_project_rollup.get(project_id)
+        if not project_rollup:
+            continue
+
+        if item.get("status") == "open":
+            project_rollup["open_items_count"] += 1
+
+        due_date = item.get("due_date", "")[:10] if item.get("due_date") else None
+        if due_date:
+            if due_date < today:
+                project_rollup["overdue_items_count"] += 1
+            elif due_date == today:
+                project_rollup["due_today_items_count"] += 1
+
+    for gate in gates:
+        project_id = gate.get("project_id")
+        project_rollup = dashboard_project_rollup.get(project_id)
+        if not project_rollup:
+            continue
+
+        if gate.get("status") in ["BLOCKED", "DELAYED", "AT_RISK"]:
+            project_rollup["roadblocks_count"] += 1
+        if gate.get("status") in ["BLOCKED", "DELAYED"]:
+            project_rollup["blocked_roadblocks_count"] += 1
+        if gate.get("status") == "AT_RISK":
+            project_rollup["at_risk_roadblocks_count"] += 1
+
     # Daily site resources roll-up for dashboard.
     # This is overview only: detailed add/edit remains in the Diary page.
     if active_project_ids:
@@ -1247,6 +1304,13 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
         materials_today += len(materials)
         plant_equipment_today += len(plant_equipment)
 
+        project_rollup = dashboard_project_rollup.get(project_id)
+        if project_rollup:
+            project_rollup["materials_today"] += len(materials)
+            project_rollup["plant_equipment_today"] += len(plant_equipment)
+            if materials or plant_equipment:
+                project_rollup["has_activity"] = True
+
         if materials:
             jobs_with_materials.add(project_id)
         if plant_equipment:
@@ -1260,6 +1324,10 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
 
                 if not is_issue:
                     continue
+
+                if project_rollup:
+                    project_rollup["resource_issues_count"] += 1
+                    project_rollup["has_activity"] = True
 
                 resource_issues.append({
                     "id": row.get("id") or f"{project_id}:{date_value}:{category}:{row.get('item')}",
@@ -1285,6 +1353,19 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
         "jobs_with_plant_equipment": len([item for item in jobs_with_plant_equipment if item]),
         "resource_issues_count": len(resource_issues),
         "resource_issues": resource_issues[:20],
+        "resource_projects": sorted(
+            dashboard_project_rollup.values(),
+            key=lambda item: (
+                0 if (
+                    item.get("has_activity")
+                    or item.get("resource_issues_count", 0) > 0
+                    or item.get("roadblocks_count", 0) > 0
+                    or item.get("open_items_count", 0) > 0
+                ) else 1,
+                str(item.get("job_number") or ""),
+                str(item.get("project_name") or "")
+            )
+        ),
         "source": "LLD",
         "scope": "active_projects_today",
         "detail_location": "diary"
@@ -1306,6 +1387,8 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
         "recently_completed": enrich_items(recently_completed),
         "resource_rollup": resource_rollup,
         "resource_issues": resource_issues[:20],
+        "resource_projects": resource_rollup["resource_projects"],
+        "site_reality_projects": resource_rollup["resource_projects"],
         "summary": {
             "total_action_items": len(action_items),
             "open_items": len([i for i in action_items if i["status"] == "open"]),
