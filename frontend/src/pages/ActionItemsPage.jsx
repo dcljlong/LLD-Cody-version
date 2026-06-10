@@ -114,9 +114,17 @@ const ActionItemsPage = () => {
   useEffect(() => {
     const selectedId = searchParams.get('item');
     const projectId = searchParams.get('project');
+    const section = searchParams.get('section');
 
     if (projectId) {
       setFilterProject(projectId);
+    }
+
+    if (section) {
+      window.requestAnimationFrame(() => {
+        const target = document.getElementById(`action-section-${section}`);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     }
 
     if (!selectedId || items.length === 0 || dialogOpen) return;
@@ -187,17 +195,17 @@ const ActionItemsPage = () => {
   const handleComplete = async (itemId) => {
     try {
       await actionItemsApi.complete(itemId);
-      toast.success('Item completed');
+      toast.success('Item marked complete');
       fetchData();
     } catch (error) {
       toast.error('Failed to complete item');
     }
   };
 
-  const handleReopen = async (itemId) => {
+  const handleMoveToDo = async (itemId) => {
     try {
       await actionItemsApi.reopen(itemId);
-      toast.success('Item reopened');
+      toast.success('Item moved back to To Do');
       fetchData();
     } catch (error) {
       toast.error('Failed to reopen item');
@@ -299,15 +307,15 @@ const ActionItemsPage = () => {
   };
 
   const statusOptions = [
-    { value: 'open', label: 'Open' },
+    { value: 'open', label: 'To Do' },
     { value: 'in_progress', label: 'In Progress' },
     { value: 'blocked', label: 'Blocked' },
-    { value: 'completed', label: 'Completed' }
-  ];
+    { value: 'completed', label: 'Complete' }
+  ]; // action-site-status-cleanup-v2
 
   const getStatusLabel = (status) => {
     const normalised = getNormalizedStatus(status);
-    return statusOptions.find((option) => option.value === normalised)?.label || 'Open';
+    return statusOptions.find((option) => option.value === normalised)?.label || 'To Do';
   };
 
   const handleStatusChange = async (item, status) => {
@@ -316,7 +324,7 @@ const ActionItemsPage = () => {
     try {
       if (status === 'completed') {
         await actionItemsApi.complete(item.id);
-        toast.success('Item completed');
+        toast.success('Item marked complete');
       } else if (getNormalizedStatus(item.status) === 'completed' && status !== 'completed') {
         await actionItemsApi.reopen(item.id);
         if (status !== 'open') {
@@ -524,7 +532,16 @@ const ActionItemsPage = () => {
   const OpenItemCard = ({ item }) => (
     <Card
       key={item.id}
-      className={`ops-card group overflow-hidden border border-l-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl ${
+      onClick={() => openEditDialog(item)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openEditDialog(item);
+        }
+      }}
+      className={`ops-card group cursor-pointer overflow-hidden border border-l-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl ${
         item.priority === 'critical' ? 'border-red-500/80 border-l-red-500 bg-gradient-to-br from-red-950/20 via-card to-card shadow-[0_16px_40px_rgba(127,29,29,0.18)]' :
         item.priority === 'high' ? 'border-orange-500/70 border-l-orange-500 bg-gradient-to-br from-orange-950/15 via-card to-card shadow-[0_16px_40px_rgba(124,45,18,0.16)]' :
         item.priority === 'medium' ? 'border-amber-500/70 border-l-amber-500 bg-gradient-to-br from-amber-950/15 via-card to-card shadow-[0_16px_40px_rgba(120,53,15,0.14)]' :
@@ -584,7 +601,10 @@ const ActionItemsPage = () => {
                 <button
                   key={statusOption.value}
                   type="button"
-                  onClick={() => handleStatusChange(item, statusOption.value)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleStatusChange(item, statusOption.value);
+                  }}
                   className={`rounded-lg border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.1em] transition ${
                     getNormalizedStatus(item.status) === statusOption.value
                       ? 'border-primary bg-primary text-primary-foreground'
@@ -598,7 +618,10 @@ const ActionItemsPage = () => {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => openEditDialog(item)}
+              onClick={(event) => {
+                event.stopPropagation();
+                openEditDialog(item);
+              }}
               className="h-9 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-muted-foreground hover:bg-white/[0.08] hover:text-foreground"
             >
               <Pencil className="mr-1.5 h-4 w-4" />
@@ -615,7 +638,10 @@ const ActionItemsPage = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(item.id)}>
+                <DropdownMenuItem className="text-destructive" onClick={(event) => {
+                  event.stopPropagation();
+                  handleDelete(item.id);
+                }}>
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete
                 </DropdownMenuItem>
@@ -655,11 +681,11 @@ const ActionItemsPage = () => {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => handleReopen(item.id)}
+            onClick={() => handleMoveToDo(item.id)}
             className="h-10 rounded-xl border border-white/10 bg-white/[0.03] px-3 opacity-70 transition-all hover:bg-white/[0.08] hover:opacity-100 group-hover:opacity-100"
           >
             <RotateCcw className="mr-1.5 h-4 w-4" />
-            Reopen
+            Move to To Do
           </Button>
         </div>
       </CardContent>
@@ -765,12 +791,12 @@ const ActionItemsPage = () => {
           </SelectContent>
         </Select>
 
-        <div className="grid w-full grid-cols-5 overflow-hidden rounded-md border border-border sm:w-auto" data-testid="action-status-filter-tabs">
+        <div className="grid w-full grid-cols-5 overflow-hidden rounded-md border border-border sm:w-auto" data-testid="action-site-status-tabs">
           {[
-            { value: 'open', label: 'Active' },
-            { value: 'in_progress', label: 'Progress' },
+            { value: 'open', label: 'To Do' },
+            { value: 'in_progress', label: 'In Progress' },
             { value: 'blocked', label: 'Blocked' },
-            { value: 'completed', label: 'Done' },
+            { value: 'completed', label: 'Complete' },
             { value: 'all', label: 'All' }
           ].map((statusFilter) => (
             <button
@@ -802,14 +828,19 @@ const ActionItemsPage = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4" data-testid="action-priority-tabs-top">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4" data-testid="action-page-nav-tabs">
         {summaryCards.map((card) => (
           <button
             key={card.key}
             type="button"
             onClick={() => {
-              const target = document.getElementById(`action-section-${card.key}`);
-              if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              const nextParams = new URLSearchParams(searchParams);
+              nextParams.set('section', card.key);
+              setSearchParams(nextParams);
+              window.requestAnimationFrame(() => {
+                const target = document.getElementById(`action-section-${card.key}`);
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              });
             }}
             className="text-left"
             data-testid={`action-priority-tab-${card.key}`}
@@ -830,7 +861,7 @@ const ActionItemsPage = () => {
                     style={{ width: `${Math.max(10, Math.min(100, card.count === 0 ? 10 : card.count * 14))}%` }}
                   />
                 </div>
-                <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Tap to view</p>
+                <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Open section</p>
               </CardContent>
             </Card>
           </button>

@@ -486,7 +486,14 @@ const DashboardPage = () => {
                   <button
                     key={project.project_id || project.id}
                     type="button"
-                    onClick={() => navigate('/diary')}
+                    onClick={() => {
+                      const projectId = project.project_id || project.id;
+                      if (project.open_items_count > 0) {
+                        navigate(`/action-items?project=${projectId}`);
+                      } else {
+                        navigate('/diary');
+                      }
+                    }} // dashboard-site-nav-cleanup-v2
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-left transition hover:border-primary/45 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/60"
                     data-testid={`dashboard-site-reality-job-${project.project_id || project.id}`}
                   >
