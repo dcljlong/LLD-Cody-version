@@ -1434,6 +1434,38 @@ const DiaryPage = () => {
         <>
           {/* Content Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Roadblocks / Critical Site Issues - diary-risk-first-layout-v1 */}
+            <Card className="ops-card">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-500">
+                  <AlertTriangle className="w-4 h-4" />
+                  Roadblocks / Critical Site Issues ({diary.blocked_gates?.length || 0})
+                </CardTitle>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">Review delays, blockers, and high-risk concerns before recording the rest of the day.</p>
+              </CardHeader>
+
+              <CardContent className="py-3 max-h-80 overflow-y-auto">
+                {diary.blocked_gates?.length > 0 ? (
+                  <div className="space-y-2">
+                    {diary.blocked_gates.map((gate) => (
+                      <div key={gate.id} className="p-2 bg-red-950/30 rounded-md border-l-4 border-l-red-500">
+                        <p className="text-sm font-medium">{gate.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Owner: {gate.owner_party} • Required:{' '}
+                          {new Date(gate.required_by_date).toLocaleDateString('en-NZ', {
+                            day: '2-digit',
+                            month: 'short'
+                          })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No roadblocks or critical site issues recorded</p>
+                )}
+              </CardContent>
+            </Card>
+
             <Card className="ops-card lg:col-span-2" data-testid="daily-labour-card">
           <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-6" data-testid="daily-labour-polish-v1-marker">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -1889,7 +1921,7 @@ const DiaryPage = () => {
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <ListTodo className="w-4 h-4" />
-                  Items Opened ({diary.action_items_opened?.length || 0})
+                  Action Items Raised Today ({diary.action_items_opened?.length || 0})
                 </CardTitle>
               </CardHeader>
 
@@ -1924,7 +1956,7 @@ const DiaryPage = () => {
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-emerald-500">
                   <CheckCircle2 className="w-4 h-4" />
-                  Items Closed ({diary.action_items_closed?.length || 0})
+                  Action Items Completed Today ({diary.action_items_closed?.length || 0})
                 </CardTitle>
               </CardHeader>
 
@@ -1943,43 +1975,12 @@ const DiaryPage = () => {
               </CardContent>
             </Card>
 
-            {/* Blocked Roadblocks / Concerns */}
-            <Card className="ops-card">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
-                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-500">
-                  <AlertTriangle className="w-4 h-4" />
-                  Blocked / Delayed Roadblocks ({diary.blocked_gates?.length || 0})
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent className="py-3 max-h-80 overflow-y-auto">
-                {diary.blocked_gates?.length > 0 ? (
-                  <div className="space-y-2">
-                    {diary.blocked_gates.map((gate) => (
-                      <div key={gate.id} className="p-2 bg-red-950/30 rounded-md border-l-4 border-l-red-500">
-                        <p className="text-sm font-medium">{gate.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Owner: {gate.owner_party} • Required:{' '}
-                          {new Date(gate.required_by_date).toLocaleDateString('en-NZ', {
-                            day: '2-digit',
-                            month: 'short'
-                          })}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No blocked roadblocks</p>
-                )}
-              </CardContent>
-            </Card>
-
             {/* Overdue Items */}
             <Card className="ops-card lg:col-span-2">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-400">
                   <Target className="w-4 h-4" />
-                  Overdue Items ({diary.overdue_items?.length || 0})
+                  Overdue Follow-ups ({diary.overdue_items?.length || 0})
                 </CardTitle>
               </CardHeader>
 

@@ -469,7 +469,7 @@ const DashboardPage = () => {
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Today&apos;s Site Reality</p>
             <CardTitle className="font-heading text-lg uppercase tracking-[0.12em]">Active Jobs Today</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">A site-first view of active jobs, resources, and items needing attention.</p>
+            <p className="mt-1 text-sm text-muted-foreground">A site-first view of active jobs, roadblocks, action follow-ups, and resources.</p>
           </div>
           <span className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${allClearToday ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-600' : 'border-amber-400/35 bg-amber-500/10 text-amber-600'}`}>
             {allClearToday ? 'All Clear' : 'Review'}
@@ -488,12 +488,14 @@ const DashboardPage = () => {
                     type="button"
                     onClick={() => {
                       const projectId = project.project_id || project.id;
-                      if (project.open_items_count > 0) {
+                      if (project.roadblocks_count > 0) {
+                        navigate('/roadblocks');
+                      } else if (project.open_items_count > 0) {
                         navigate(`/action-items?project=${projectId}`);
                       } else {
                         navigate('/diary');
                       }
-                    }} // dashboard-site-nav-cleanup-v2
+                    }} // dashboard-risk-first-layout-v1
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-left transition hover:border-primary/45 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/60"
                     data-testid={`dashboard-site-reality-job-${project.project_id || project.id}`}
                   >
@@ -504,8 +506,8 @@ const DashboardPage = () => {
                           {hasProjectActivity ? 'Diary activity recorded today' : 'No diary activity yet today'}
                         </p>
                       </div>
-                      <span className={`w-fit rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] ${project.resource_issues_count > 0 || project.roadblocks_count > 0 ? 'border-amber-400/35 bg-amber-500/10 text-amber-600' : 'border-emerald-400/35 bg-emerald-500/10 text-emerald-600'}`}>
-                        {project.resource_issues_count > 0 || project.roadblocks_count > 0 ? 'Needs Review' : 'OK'}
+                      <span className={`w-fit rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] ${project.roadblocks_count > 0 ? 'border-red-400/40 bg-red-500/10 text-red-600' : project.resource_issues_count > 0 || project.open_items_count > 0 ? 'border-amber-400/35 bg-amber-500/10 text-amber-600' : 'border-emerald-400/35 bg-emerald-500/10 text-emerald-600'}`}>
+                        {project.roadblocks_count > 0 ? 'Roadblock' : project.resource_issues_count > 0 || project.open_items_count > 0 ? 'Needs Review' : 'OK'}
                       </span>
                     </div>
 
@@ -527,7 +529,7 @@ const DashboardPage = () => {
                         <p className={`text-lg font-black ${project.roadblocks_count > 0 ? 'text-amber-600' : ''}`}>{project.roadblocks_count || 0}</p>
                       </div>
                       <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950/70">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Open Items</p>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Action Items</p>
                         <p className={`text-lg font-black ${project.open_items_count > 0 ? 'text-amber-600' : ''}`}>{project.open_items_count || 0}</p>
                       </div>
                     </div>
