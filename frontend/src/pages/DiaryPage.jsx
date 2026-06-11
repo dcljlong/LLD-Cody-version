@@ -1715,6 +1715,55 @@ const DiaryPage = () => {
           </CardContent>
         </Card>
 
+        {/* Work Done Today - diary-work-before-resources-v1 */}
+            <Card className="ops-card lg:col-span-2">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+                <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.14em] flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Work Done Today ({diary.walkaround_entries?.length || 0})
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="py-3 max-h-80 overflow-y-auto">
+                {diary.walkaround_entries?.length > 0 ? (
+                  <div className="space-y-3">
+                    {diary.walkaround_entries.map((entry) => (
+                      <div key={entry.id} className="p-3 bg-secondary/30 rounded-md space-y-1">
+                        <p className="text-sm">{entry.note}</p>
+
+                        {entry.linked_task && (
+                          <p className="text-xs text-primary">
+                            Task: {entry.linked_task.name}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>
+                            {new Date(entry.created_at).toLocaleTimeString('en-NZ', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                          {entry.owner && <span>• {entry.owner}</span>}
+                          {entry.priority && (
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              entry.priority === 'critical' ? 'bg-red-500/20 text-red-400' :
+                              entry.priority === 'high' ? 'bg-orange-500/20 text-orange-400' :
+                              'bg-slate-500/20 text-slate-400'
+                            }`}>
+                              {entry.priority}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No entries recorded</p>
+                )}
+              </CardContent>
+            </Card>
+
         {/* Site Resources */}
             <Card className="ops-card lg:col-span-2" data-testid="daily-site-resources-card">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
@@ -1864,55 +1913,6 @@ const DiaryPage = () => {
                 <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
                   Diary-only resource capture. Tool Tracker remains the full asset register.
                 </p>
-              </CardContent>
-            </Card>
-
-        {/* Work Done Today */}
-            <Card className="ops-card lg:col-span-2">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
-                <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.14em] flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  Work Done Today ({diary.walkaround_entries?.length || 0})
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent className="py-3 max-h-80 overflow-y-auto">
-                {diary.walkaround_entries?.length > 0 ? (
-                  <div className="space-y-3">
-                    {diary.walkaround_entries.map((entry) => (
-                      <div key={entry.id} className="p-3 bg-secondary/30 rounded-md space-y-1">
-                        <p className="text-sm">{entry.note}</p>
-
-                        {entry.linked_task && (
-                          <p className="text-xs text-primary">
-                            Task: {entry.linked_task.name}
-                          </p>
-                        )}
-
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>
-                            {new Date(entry.created_at).toLocaleTimeString('en-NZ', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                          {entry.owner && <span>• {entry.owner}</span>}
-                          {entry.priority && (
-                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
-                              entry.priority === 'critical' ? 'bg-red-500/20 text-red-400' :
-                              entry.priority === 'high' ? 'bg-orange-500/20 text-orange-400' :
-                              'bg-slate-500/20 text-slate-400'
-                            }`}>
-                              {entry.priority}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No entries recorded</p>
-                )}
               </CardContent>
             </Card>
 
