@@ -68,6 +68,7 @@ const DiaryPage = () => {
   const [labourSaving, setLabourSaving] = useState(false);
   const [labourImporting, setLabourImporting] = useState(false);
   const [labourEditMode, setLabourEditMode] = useState(false);
+  const [activeLabourIndex, setActiveLabourIndex] = useState(null);
   const [siteResources, setSiteResources] = useState({ materials: [], plant_equipment: [] });
   const [resourcesLoading, setResourcesLoading] = useState(false);
   const [resourcesSaving, setResourcesSaving] = useState(false);
@@ -93,6 +94,19 @@ const DiaryPage = () => {
   const today = getNzDateString();
   const tomorrow = getNzDateString(1);
 
+  const getDefaultProjectManagerId = () => {
+    const projectManagers = Array.isArray(timesheetReferenceOptions.project_managers)
+      ? timesheetReferenceOptions.project_managers
+      : [];
+
+    const davidOption = projectManagers.find((option) => {
+      const text = `${option.label || ''} ${option.name || ''} ${option.email || ''} ${option.value || ''}`.toLowerCase();
+      return text.includes('david') || text.includes('david.long') || text.includes('long');
+    });
+
+    return davidOption?.value || currentProject?.project_manager_id || projectManagers[0]?.value || '';
+  };
+
   const createEmptyLabourRow = () => ({
     employee_name: '',
     work_date: selectedDate,
@@ -103,7 +117,7 @@ const DiaryPage = () => {
     total_hours: 0,
     job_number: currentProject?.job_number || '',
     task_code: '',
-    project_manager_id: '',
+    project_manager_id: getDefaultProjectManagerId(),
     description: '',
     other: '',
     source: 'LLD',
@@ -160,11 +174,17 @@ const DiaryPage = () => {
   };
 
   const addLabourRow = () => {
-    setLabourRows((current) => [...current, createEmptyLabourRow()]);
+    setLabourRows((current) => {
+      const next = [...current, createEmptyLabourRow()];
+      setActiveLabourIndex(next.length - 1);
+      setLabourEditMode(true);
+      return next;
+    });
   };
 
   const removeLabourRow = (index) => {
     setLabourRows((current) => current.filter((_, rowIndex) => rowIndex !== index));
+    setActiveLabourIndex(null);
   };
 
   const createEmptyResourceRow = () => ({
@@ -287,9 +307,11 @@ const DiaryPage = () => {
   const savedLabourEntries = labourRows
     .map((row, index) => ({ row, index }))
     .filter(({ row }) => row?.id);
-  const editableLabourEntries = labourRows
-    .map((row, index) => ({ row, index }))
-    .filter(({ row }) => labourEditMode || !row?.id);
+  const activeLabourEntry = activeLabourIndex !== null && labourRows[activeLabourIndex]
+    ? { row: labourRows[activeLabourIndex], index: activeLabourIndex }
+    : null;
+
+  const editableLabourEntries = activeLabourEntry ? [activeLabourEntry] : [];
 
   const formatTimeForDiary = (value) => {
     const time = normaliseTimeValue(value);
@@ -1335,25 +1357,41 @@ const DiaryPage = () => {
               </div>
             ) : (
               <div className="space-y-4" data-testid="daily-labour-rows">
-                {savedLabourEntries.length > 0 && !labourEditMode && (
-                  <div className="rounded-xl border border-border/70 bg-secondary/20 p-3" data-testid="staff-on-site-summary">
+                {labourRows.length > 0 && (
+                  <div className="rounded-xl border border-border/70 bg-secondary/20 p-3" data-testid="diary-compact-staff-list-v3">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <div>
                         <p className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">Staff on site</p>
-                        <p className="text-xs font-bold text-muted-foreground">{savedLabourEntries.length} staff • {labourTotalHours.toFixed(2)}h total</p>
+                        <p className="text-xs font-bold text-muted-foreground">{labourRows.length} staff • {labourTotalHours.toFixed(2)}h total</p>
                       </div>
-                      <Button type="button" size="sm" variant="secondary" onClick={() => setLabourEditMode(true)} data-testid="daily-labour-edit-saved">
-                        Edit
+                      <Button type="button" size="sm" variant="secondary" onClick={addLabourRow} data-testid="daily-labour-add-staff-compact">
+                        + Add staff
                       </Button>
                     </div>
                     <div className="space-y-2">
-                      {savedLabourEntries.map(({ row, index }) => (
-                        <div key={row.id || index} className="rounded-lg border border-border/60 bg-background/70 px-3 py-2" data-testid={`staff-on-site-row-${index}`}>
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="text-sm font-bold">{row.employee_name || 'Staff member'}</p>
-                            <p className="text-sm font-black text-muted-foreground">{(parseFloat(row.total_hours) || 0).toFixed(2)}h</p>
-                          </div>
-                        </div>
+                      {labourRows.map((row, index) => (
+                        <button
+                          key={row.id || index}
+                          type="button"
+                          className={`flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-3 text-left transition ${
+                            activeLabourIndex === index
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border/60 bg-background/70 hover:border-primary/50 hover:bg-primary/5'
+                          }`}
+                          onClick={() => {
+                            setActiveLabourIndex(index);
+                            setLabourEditMode(true);
+                          }}
+                          data-testid={`staff-on-site-name-${index}`}
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-black">{row.employee_name || 'Tap to enter staff name'}</span>
+                            <span className="block truncate text-xs font-semibold text-muted-foreground">
+                              {formatTimeForDiary(row.start_time) || 'Start'} - {formatTimeForDiary(row.finish_time) || 'Finish'} • {(parseFloat(row.total_hours) || 0).toFixed(2)}h
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-[11px] font-black uppercase tracking-[0.14em] text-primary">Edit</span>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -1361,17 +1399,21 @@ const DiaryPage = () => {
 
                 {editableLabourEntries.map(({ row, index }) => (
                   <div key={row.id || index} className="lld-daily-labour-row grid gap-3 rounded-2xl border border-border/70 bg-background/60 p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12" data-testid={`staff-on-site-edit-row-${index}`}>
-                    <select
-                      className="input lld-daily-labour-control min-h-11 w-full min-w-0 sm:col-span-2 lg:col-span-3 xl:col-span-2"
-                      value={row.employee_name || ''}
-                      onChange={(e) => updateLabourRow(index, 'employee_name', e.target.value)}
-                      data-testid={`daily-labour-employee-${index}`}
-                    >
-                      <option value="">Employee</option>
-                      {employeeOptionsForRow(row.employee_name).map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
+                    <div className="sm:col-span-2 lg:col-span-3 xl:col-span-2">
+                      <input
+                        className="input lld-daily-labour-control min-h-11 w-full min-w-0"
+                        placeholder="Staff name"
+                        value={row.employee_name || ''}
+                        list={`daily-labour-employee-options-${index}`}
+                        onChange={(e) => updateLabourRow(index, 'employee_name', e.target.value)}
+                        data-testid={`daily-labour-employee-${index}`}
+                      />
+                      <datalist id={`daily-labour-employee-options-${index}`}>
+                        {employeeOptionsForRow(row.employee_name).map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </datalist>
+                    </div>
                     <select
                       className="input lld-daily-labour-control min-h-11 w-full min-w-0 lg:col-span-2 xl:col-span-1"
                       value={row.start_time || ''}
@@ -1464,7 +1506,7 @@ const DiaryPage = () => {
 
             <div className="flex flex-col gap-2 border-t border-border/70 pt-4 sm:flex-row sm:flex-wrap">
               <Button type="button" variant="secondary" onClick={addLabourRow} data-testid="daily-labour-add-row">
-                Add / edit staff
+                Add staff
               </Button>
               <Button type="button" onClick={saveLabourRows} disabled={labourSaving || !selectedProject} data-testid="daily-labour-save">
                 {labourSaving ? 'Saving...' : 'Save staff'}
@@ -1481,7 +1523,7 @@ const DiaryPage = () => {
             </div>
 
             <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
-              Fields match Timesheet Manager row shape: employee, start, lunch, finish, hours, job number, task code, PM, description.
+              Tap a staff name to edit details. Staff drafts autosave on this device. Save staff when ready to commit the diary record.
             </p>
           </CardContent>
         </Card>
