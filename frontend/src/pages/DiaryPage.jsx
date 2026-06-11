@@ -86,6 +86,8 @@ const DiaryPage = () => {
   const [gates, setGates] = useState([]);
   const fileInputRef = useRef(null);
   const noteInputRef = useRef(null);
+  const activeLabourEditorRef = useRef(null);
+  const activeLabourNameInputRef = useRef(null);
   const labourDraftReadyRef = useRef('');
   const resourcesDraftReadyRef = useRef('');
   const quickEntryDraftReadyRef = useRef('');
@@ -173,11 +175,23 @@ const DiaryPage = () => {
     }));
   };
 
+  const openLabourEditor = (index) => {
+    setActiveLabourIndex(index);
+    setLabourEditMode(true);
+
+    window.requestAnimationFrame(() => {
+      activeLabourEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      window.setTimeout(() => {
+        activeLabourNameInputRef.current?.focus();
+      }, 150);
+    });
+  };
+
   const addLabourRow = () => {
     setLabourRows((current) => {
       const next = [...current, createEmptyLabourRow()];
-      setActiveLabourIndex(next.length - 1);
-      setLabourEditMode(true);
+      const nextIndex = next.length - 1;
+      window.requestAnimationFrame(() => openLabourEditor(nextIndex)); // diary-staff-edit-focus-v2
       return next;
     });
   };
@@ -1378,10 +1392,7 @@ const DiaryPage = () => {
                               ? 'border-primary bg-primary/10'
                               : 'border-border/60 bg-background/70 hover:border-primary/50 hover:bg-primary/5'
                           }`}
-                          onClick={() => {
-                            setActiveLabourIndex(index);
-                            setLabourEditMode(true);
-                          }}
+                          onClick={() => openLabourEditor(index)}
                           data-testid={`staff-on-site-name-${index}`}
                         >
                           <span className="min-w-0">
@@ -1398,11 +1409,17 @@ const DiaryPage = () => {
                 )}
 
                 {editableLabourEntries.map(({ row, index }) => (
-                  <div key={row.id || index} className="lld-daily-labour-row grid gap-3 rounded-2xl border border-border/70 bg-background/60 p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12" data-testid={`staff-on-site-edit-row-${index}`}>
+                  <div
+                    key={row.id || index}
+                    ref={activeLabourEditorRef}
+                    className="lld-daily-labour-row grid gap-3 rounded-2xl border border-primary/60 bg-background/80 p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12"
+                    data-testid={`staff-on-site-edit-row-${index}`}
+                  >
                     <div className="sm:col-span-2 lg:col-span-3 xl:col-span-2">
                       <input
+                        ref={activeLabourNameInputRef}
                         className="input lld-daily-labour-control min-h-11 w-full min-w-0"
-                        placeholder="Staff name"
+                        placeholder="Type staff name here"
                         value={row.employee_name || ''}
                         list={`daily-labour-employee-options-${index}`}
                         onChange={(e) => updateLabourRow(index, 'employee_name', e.target.value)}
@@ -1523,7 +1540,7 @@ const DiaryPage = () => {
             </div>
 
             <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
-              Tap a staff name to edit details. Staff drafts autosave on this device. Save staff when ready to commit the diary record.
+              Tap + Add staff or tap a staff name. The edit box opens below and focuses the staff name field. Drafts autosave on this device. Save staff when ready.
             </p>
           </CardContent>
         </Card>
