@@ -200,7 +200,16 @@ const DiaryPage = () => {
   };
 
   const addStaffRowFromEmployee = (employeeOption) => {
-    if (!employeeOption?.employee_name) {
+    const staffName = String(
+      employeeOption?.employee_name ||
+      employeeOption?.display_name ||
+      employeeOption?.label ||
+      employeeOption?.name ||
+      employeeOption?.value ||
+      ''
+    ).trim();
+
+    if (!staffName) {
       toast.error('Select a staff member first');
       return;
     }
@@ -210,7 +219,7 @@ const DiaryPage = () => {
       {
         ...createEmptyLabourRow(),
         employee_id: employeeOption.employee_id || '',
-        employee_name: employeeOption.employee_name,
+        employee_name: staffName,
         sync_status: employeeOption.linked_to_timesheet ? 'local_only' : 'local_pending_timesheet_staff'
       }
     ]);
@@ -513,19 +522,20 @@ const DiaryPage = () => {
         employee.display_name ||
         employee.label ||
         employee.email ||
-        employeeId ||
         ''
       ).trim();
+      const displayName = employeeName || employeeId;
+      const value = employeeId || displayName;
 
-      const value = employeeId || employeeName;
       if (!value || seen.has(value)) return;
 
       seen.add(value);
       options.push({
         value,
-        label: employeeName,
+        label: displayName,
         employee_id: employeeId,
-        employee_name: employeeName || value,
+        employee_name: displayName,
+        display_name: displayName,
         linked_to_timesheet: Boolean(employeeId)
       });
     });
@@ -548,11 +558,23 @@ const DiaryPage = () => {
     const selectedValue = String(value || '').trim();
     if (!selectedValue) return null;
 
-    return employeePickerOptions(selectedValue).find((option) => option.value === selectedValue) || {
+    const matchedOption = employeePickerOptions(selectedValue).find((option) => option.value === selectedValue);
+    if (matchedOption) {
+      const displayName = String(matchedOption.employee_name || matchedOption.label || matchedOption.display_name || selectedValue).trim();
+      return {
+        ...matchedOption,
+        label: displayName,
+        employee_name: displayName,
+        display_name: displayName
+      };
+    }
+
+    return {
       value: selectedValue,
       label: selectedValue,
       employee_id: '',
       employee_name: selectedValue,
+      display_name: selectedValue,
       linked_to_timesheet: false
     };
   };
@@ -1422,7 +1444,16 @@ const DiaryPage = () => {
               <p className="text-sm text-muted-foreground">Loading staff...</p>
             ) : (
               <div className="space-y-4" data-testid="daily-labour-rows">
-                <div className="rounded-xl border border-primary/40 bg-primary/5 p-3" data-testid="staff-dropdown-timesheet-link-v1">
+                <div
+                  className="rounded-xl border border-primary/40 bg-primary/5 p-3"
+                  data-testid="staff-dropdown-timesheet-link-v1"
+                  onClick={(event) => {
+                    if (event.target === event.currentTarget) {
+                      setActiveLabourIndex(null);
+                      setLabourEditMode(false); // staff-name-resolve-click-away-v1
+                    }
+                  }}
+                >
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
                       <p className="text-[11px] font-black uppercase tracking-[0.16em] text-primary">Staff on Site</p>
@@ -1490,7 +1521,10 @@ const DiaryPage = () => {
                               ? 'border-primary bg-primary/10'
                               : 'border-border/60 bg-background/70 hover:border-primary/50 hover:bg-primary/5'
                           }`}
-                          onClick={() => openLabourEditor(index)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openLabourEditor(index);
+                          }}
                           data-testid={`staff-on-site-name-${index}`}
                         >
                           <span className="min-w-0">
@@ -1512,6 +1546,7 @@ const DiaryPage = () => {
                     ref={activeLabourEditorRef}
                     className="lld-daily-labour-row grid gap-3 rounded-2xl border border-primary/60 bg-background/80 p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12"
                     data-testid={`staff-on-site-edit-row-${index}`}
+                    onClick={(event) => event.stopPropagation()}
                   >
                     <div className="sm:col-span-2 lg:col-span-3 xl:col-span-2">
                       <select
@@ -1633,7 +1668,7 @@ const DiaryPage = () => {
             </div>
 
             <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
-              Staff names stay simple on the diary. LLD keeps the Timesheet link in the background where available.
+              Staff names stay simple on the diary. LLD keeps the Timesheet link in the background where available. Tap a blank area in Staff on Site to close the edit details.
             </p>
           </CardContent>
         </Card>
