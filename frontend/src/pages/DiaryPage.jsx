@@ -205,20 +205,18 @@ const DiaryPage = () => {
       return;
     }
 
-    setLabourRows((current) => {
-      const next = [
-        ...current,
-        {
-          ...createEmptyLabourRow(),
-          employee_id: employeeOption.employee_id || '',
-          employee_name: employeeOption.employee_name,
-          sync_status: employeeOption.linked_to_timesheet ? 'local_only' : 'local_pending_timesheet_staff'
-        }
-      ];
-      const nextIndex = next.length - 1;
-      window.requestAnimationFrame(() => openLabourEditor(nextIndex));
-      return next;
-    });
+    setLabourRows((current) => [
+      ...current,
+      {
+        ...createEmptyLabourRow(),
+        employee_id: employeeOption.employee_id || '',
+        employee_name: employeeOption.employee_name,
+        sync_status: employeeOption.linked_to_timesheet ? 'local_only' : 'local_pending_timesheet_staff'
+      }
+    ]);
+
+    setActiveLabourIndex(null);
+    setLabourEditMode(false);
   };
 
   const addSelectedStaffToDiary = () => {
@@ -525,7 +523,7 @@ const DiaryPage = () => {
       seen.add(value);
       options.push({
         value,
-        label: employeeName && employeeId && employeeName !== employeeId ? `${employeeName} (${employeeId})` : employeeName,
+        label: employeeName,
         employee_id: employeeId,
         employee_name: employeeName || value,
         linked_to_timesheet: Boolean(employeeId)
@@ -1410,7 +1408,7 @@ const DiaryPage = () => {
               <div>
                 <CardTitle className="font-heading text-xl font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Add staff from the Timesheet employee list so diary labour stays linked for Timesheet review.
+                  Tap a staff name to add them to today's diary. Tap a listed staff member only when you need to edit their times, task code, PM, or work done.
                 </p>
               </div>
               <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
@@ -1432,21 +1430,26 @@ const DiaryPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]" data-testid="staff-timesheet-picker">
+                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]" data-testid="staff-timesheet-picker">
                     <select
                       className="input min-h-11 w-full min-w-0"
                       value={selectedStaffEmployeeValue}
-                      onChange={(e) => setSelectedStaffEmployeeValue(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSelectedStaffEmployeeValue(value);
+                        const employeeOption = resolveEmployeeSelection(value);
+                        if (employeeOption) {
+                          addStaffRowFromEmployee(employeeOption); // staff-dropdown-simple-tap-add-v2
+                          window.requestAnimationFrame(() => setSelectedStaffEmployeeValue(''));
+                        }
+                      }}
                       data-testid="staff-timesheet-employee-select"
                     >
-                      <option value="">Select staff member from Timesheet</option>
+                      <option value="">Tap staff name to add to diary</option>
                       {employeePickerOptions().map((option) => (
                         <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
                     </select>
-                    <Button type="button" onClick={addSelectedStaffToDiary} disabled={!selectedStaffEmployeeValue} data-testid="staff-timesheet-add-selected">
-                      Add to diary
-                    </Button>
                     <Button type="button" variant="outline" onClick={() => setShowNewStaffForm((value) => !value)} data-testid="staff-timesheet-add-new-toggle">
                       + Add new staff
                     </Button>
@@ -1455,7 +1458,7 @@ const DiaryPage = () => {
                   {showNewStaffForm && (
                     <div className="mt-3 rounded-lg border border-dashed border-primary/50 bg-background/70 p-3" data-testid="staff-timesheet-add-new-form">
                       <p className="mb-2 text-xs font-bold text-muted-foreground">
-                        New staff is added to today's diary as pending. Link/create them in Timesheet Manager so future entries use the dropdown.
+                        Use this only if the person is not in the dropdown yet. They will be added to today's diary and can be linked in Timesheet Manager later.
                       </p>
                       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                         <input
@@ -1474,7 +1477,7 @@ const DiaryPage = () => {
 
                   {labourRows.length === 0 ? (
                     <div className="mt-3 rounded-lg border border-dashed border-border/70 bg-background/60 px-3 py-4 text-sm font-semibold text-muted-foreground" data-testid="staff-timesheet-empty">
-                      Select a staff member above to start today's Staff on Site list.
+                      Tap a staff name above to start today's Staff on Site list.
                     </div>
                   ) : (
                     <div className="mt-3 space-y-2" data-testid="staff-timesheet-selected-list">
@@ -1493,7 +1496,7 @@ const DiaryPage = () => {
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-black">{row.employee_name || 'Staff member'}</span>
                             <span className="block truncate text-xs font-semibold text-muted-foreground">
-                              {row.employee_id ? 'Timesheet linked' : 'Pending Timesheet link'} - {formatTimeForDiary(row.start_time) || 'Start'} to {formatTimeForDiary(row.finish_time) || 'Finish'} - {(parseFloat(row.total_hours) || 0).toFixed(2)}h
+                              {formatTimeForDiary(row.start_time) || 'Start'} to {formatTimeForDiary(row.finish_time) || 'Finish'} - {(parseFloat(row.total_hours) || 0).toFixed(2)}h
                             </span>
                           </span>
                           <span className="shrink-0 text-[11px] font-black uppercase tracking-[0.14em] text-primary">Edit</span>
@@ -1630,7 +1633,7 @@ const DiaryPage = () => {
             </div>
 
             <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
-              Use the Timesheet staff dropdown first. New names are marked pending until they are created or linked in Timesheet Manager.
+              Staff names stay simple on the diary. LLD keeps the Timesheet link in the background where available.
             </p>
           </CardContent>
         </Card>
