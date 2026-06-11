@@ -76,6 +76,7 @@ const DiaryPage = () => {
   const [resourcesLoading, setResourcesLoading] = useState(false);
   const [resourcesSaving, setResourcesSaving] = useState(false);
   const [resourcesEditMode, setResourcesEditMode] = useState(false);
+  const [activeResourceTab, setActiveResourceTab] = useState('materials'); // diary-command-header-tabs-v2
   const [timesheetReferenceOptions, setTimesheetReferenceOptions] = useState({
     employees: [],
     project_managers: [],
@@ -1049,6 +1050,35 @@ const DiaryPage = () => {
     )
   );
 
+  const openActionItems = Array.isArray(diary?.action_items_opened) ? diary.action_items_opened : [];
+  const overdueDiaryItems = Array.isArray(diary?.overdue_items) ? diary.overdue_items : [];
+  const forecastEndDate = (() => {
+    const date = parseDateInput(selectedDate);
+    date.setDate(date.getDate() + 21);
+    return formatDateInput(date);
+  })();
+
+  const getItemDueDateKey = (item = {}) => String(item.due_date || item.expected_complete_date || '').slice(0, 10);
+  const dueTodayItems = openActionItems.filter((item) => getItemDueDateKey(item) === selectedDate);
+  const nextThreeWeeksItems = openActionItems.filter((item) => {
+    const due = getItemDueDateKey(item);
+    return due && due > selectedDate && due <= forecastEndDate;
+  });
+
+  const openDiarySection = (sectionId, tab = null) => {
+    if (tab) setActiveResourceTab(tab);
+    window.requestAnimationFrame(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
+  const openActionItemsPage = (filter) => {
+    const params = new URLSearchParams();
+    if (selectedProject) params.set('project', selectedProject);
+    if (filter) params.set('filter', filter);
+    window.location.assign(`/action-items?${params.toString()}`);
+  };
+
   const handlePrintReport = () => {
     if (!diary) {
       toast.error('Load a diary day before printing');
@@ -1194,48 +1224,70 @@ const DiaryPage = () => {
 
   return (
     <div className="space-y-6" data-testid="diary-page">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="font-heading text-4xl font-black uppercase tracking-[0.08em]" data-testid="daily-heading-polish-v1-marker">Daily Diary</h2>
-          <p className="mt-1 text-base font-medium text-muted-foreground">
-            Project summary by day{currentProject ? ` • ${currentProject.job_number ? `${currentProject.job_number} - ` : ''}${currentProject.name}` : ''}
-          </p>
-        </div>
+      <div className="rounded-2xl border border-border bg-card/95 p-3 shadow-sm sm:p-4" data-testid="diary-command-header-v2">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Daily Diary</p>
+            <h2 className="font-heading text-2xl font-black uppercase tracking-[0.08em] sm:text-3xl" data-testid="daily-heading-polish-v1-marker">
+              {selectedDateLabel}
+            </h2>
+            <p className="mt-1 truncate text-sm font-semibold text-muted-foreground">
+              {currentProject ? `${currentProject.job_number ? `${currentProject.job_number} - ` : ''}${currentProject.name}` : 'No project selected'}
+              {selectedDate === today ? ' • Today' : ''}
+              {draftStatus ? ` • ${draftStatus}` : ''}
+            </p>
+          </div>
 
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handlePrintReport}
-            disabled={!diary}
-            data-testid="daily-report-print-button"
-          >
-            <Printer className="w-4 h-4 mr-2" />
-            Print Report
-          </Button>
-
-          <Select value={selectedProject} onValueChange={(val) => {
-            setSelectedProject(val);
-            localStorage.setItem('lld_last_project_id', val);
-          }}>
-            <SelectTrigger className="w-full sm:w-[220px]" data-testid="diary-project-select">
-              <SelectValue placeholder="Select project" />
-            </SelectTrigger>
-            <SelectContent>
-              {projects.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.job_number ? `${p.job_number} - ` : ''}{p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {selectedDate === today && (
-            <Button onClick={() => setShowQuickEntry(!showQuickEntry)} data-testid="quick-entry-btn">
-              <Plus className="w-4 h-4 mr-2" />
-              Quick Entry
+          <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 lg:flex lg:w-auto">
+            <Button variant="ghost" size="icon" onClick={() => changeDate(-1)} data-testid="prev-day">
+              <ChevronLeft className="w-5 h-5" />
             </Button>
-          )}
+
+            <Select value={selectedProject} onValueChange={(val) => {
+              setSelectedProject(val);
+              localStorage.setItem('lld_last_project_id', val);
+            }}>
+              <SelectTrigger className="w-full min-w-0 lg:w-[240px]" data-testid="diary-project-select">
+                <SelectValue placeholder="Select project" />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.job_number ? `${p.job_number} - ` : ''}{p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => changeDate(1)}
+              disabled={selectedDate >= today}
+              data-testid="next-day"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {selectedDate === today && (
+              <Button onClick={() => setShowQuickEntry(!showQuickEntry)} data-testid="quick-entry-btn">
+                <Plus className="w-4 h-4 mr-2" />
+                Quick Entry
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handlePrintReport}
+              disabled={!diary}
+              data-testid="daily-report-print-button"
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              Print
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -1396,69 +1448,86 @@ const DiaryPage = () => {
         </Card>
       )}
 
-      {/* Daily Report Readiness */}
+      {/* Diary Command Strip / Clickable Checklist - diary-command-header-tabs-v2 */}
       <Card className="ops-card" data-testid="daily-report-readiness">
-        <CardContent className="py-2" data-testid="diary-mobile-compression-v5">
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="font-heading text-base font-black uppercase tracking-[0.14em]">Today's Diary Checklist</p>
-              <p className="text-xs text-muted-foreground">
-                {currentProject ? `${currentProject.job_number ? `${currentProject.job_number} - ` : ''}${currentProject.name}` : 'No project selected'} • {selectedDateLabel}
-              </p>
+        <CardContent className="space-y-3 py-3" data-testid="diary-mobile-compression-v5">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4" data-testid="diary-attention-strip-v2">
+            <button
+              type="button"
+              onClick={() => openDiarySection('diary-overdue-followups')}
+              className="rounded-xl border border-red-400/40 bg-red-500/10 px-3 py-2 text-left transition hover:bg-red-500/15"
+              data-testid="diary-command-overdue"
+            >
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-red-400">Overdue</span>
+              <span className="block text-xl font-black">{overdueDiaryItems.length}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => openActionItemsPage('due-today')}
+              className="rounded-xl border border-orange-400/35 bg-orange-500/10 px-3 py-2 text-left transition hover:bg-orange-500/15"
+              data-testid="diary-command-due-today"
+            >
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-orange-400">Due Today</span>
+              <span className="block text-xl font-black">{dueTodayItems.length}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => openActionItemsPage('next-3-weeks')}
+              className="rounded-xl border border-primary/35 bg-primary/10 px-3 py-2 text-left transition hover:bg-primary/15"
+              data-testid="diary-command-forecast"
+            >
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-primary">Next 2–3 Weeks</span>
+              <span className="block text-xl font-black">{nextThreeWeeksItems.length}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => openDiarySection('diary-roadblocks-section')}
+              className="rounded-xl border border-red-500/35 bg-secondary/30 px-3 py-2 text-left transition hover:bg-secondary/45"
+              data-testid="diary-command-roadblocks"
+            >
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-red-400">Roadblocks</span>
+              <span className="block text-xl font-black">{diary?.summary?.blocked_gates || 0}</span>
+            </button>
+          </div>
+
+          <div>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <div>
+                <p className="font-heading text-sm font-black uppercase tracking-[0.14em]">Today's Diary Checklist</p>
+                <p className="text-xs text-muted-foreground">Tap a label to jump to that part of the diary.</p>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5 text-[11px] sm:grid-cols-5">
-              <span className="rounded border border-border bg-secondary/30 px-2 py-0.5">
-                Work records: {diary?.summary?.entries_count || 0}
-              </span>
-              <span className="rounded border border-border bg-secondary/30 px-2 py-0.5">
-                Follow-ups: {diary?.summary?.items_opened || 0}
-              </span>
-              <span className="rounded border border-border bg-secondary/30 px-2 py-0.5">
-                Completed: {diary?.summary?.items_closed || 0}
-              </span>
-              <span className="rounded border border-border bg-secondary/30 px-2 py-0.5">
+            <div className="grid grid-cols-2 gap-1.5 text-[11px] sm:grid-cols-4 lg:grid-cols-7" data-testid="diary-clickable-checklist-v2">
+              <button type="button" onClick={() => openDiarySection('diary-roadblocks-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
                 Roadblocks: {diary?.summary?.blocked_gates || 0}
-              </span>
-              <span className="rounded border border-border bg-secondary/30 px-2 py-0.5">
-                Overdue: {diary?.summary?.overdue_items || 0}
-              </span>
+              </button>
+              <button type="button" onClick={() => openDiarySection('diary-staff-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+                Staff: {labourRows.length}
+              </button>
+              <button type="button" onClick={() => openDiarySection('diary-work-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+                Work: {diary?.summary?.entries_count || 0}
+              </button>
+              <button type="button" onClick={() => openDiarySection('diary-resources-section', 'materials')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+                Materials: {resourceMaterials.length}
+              </button>
+              <button type="button" onClick={() => openDiarySection('diary-resources-section', 'plant_equipment')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+                Plant: {resourcePlantEquipment.length}
+              </button>
+              <button type="button" onClick={() => openDiarySection('diary-action-open-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+                Follow-ups: {diary?.summary?.items_opened || 0}
+              </button>
+              <button type="button" onClick={() => openDiarySection('diary-action-completed-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+                Completed: {diary?.summary?.items_closed || 0}
+              </button>
             </div>
           </div>
 
           {!hasDiaryContent && (
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               No reportable activity for this day yet. Add a quick entry or review another date before issuing a report.
             </p>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Date Navigation */}
-      <Card className="ops-card">
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => changeDate(-1)} data-testid="prev-day">
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-
-            <div className="text-center">
-              <p className="font-heading text-2xl font-black uppercase tracking-[0.08em]">{formatDate(selectedDate)}</p>
-              {selectedDate === today && (
-                <span className="text-xs text-primary uppercase">Today</span>
-              )}
-            </div>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => changeDate(1)}
-              disabled={selectedDate >= today}
-              data-testid="next-day"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </Button>
-          </div>
         </CardContent>
       </Card>
 
@@ -1473,7 +1542,7 @@ const DiaryPage = () => {
           {/* Content Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Roadblocks / Critical Site Issues - diary-field-sheet-layout-v1 */}
-            <Card className="ops-card">
+            <Card id="diary-roadblocks-section" className="ops-card">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-500">
                   <AlertTriangle className="w-4 h-4" />
@@ -1504,13 +1573,13 @@ const DiaryPage = () => {
               </CardContent>
             </Card>
 
-            <Card className="ops-card lg:col-span-2" data-testid="daily-labour-card">
-          <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-6" data-testid="daily-labour-polish-v1-marker">
+            <Card id="diary-staff-section" className="ops-card lg:col-span-2" data-testid="daily-labour-card">
+          <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-2 sm:px-4" data-testid="daily-labour-polish-v1-marker">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <CardTitle className="font-heading text-xl font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
+                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Select staff for today. Tap a name to edit or close details.
+                  Tap staff to add or edit.
                 </p>
               </div>
               <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
@@ -1519,13 +1588,13 @@ const DiaryPage = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-5 px-4 py-5 sm:px-6">
+          <CardContent className="space-y-3 px-3 py-3 sm:px-4">
             {labourLoading ? (
               <p className="text-sm text-muted-foreground">Loading staff...</p>
             ) : (
               <div className="space-y-4" data-testid="daily-labour-rows">
                 <div
-                  className="rounded-xl border border-primary/40 bg-primary/5 p-3"
+                  className="rounded-xl border border-primary/40 bg-primary/5 p-2"
                   data-testid="staff-dropdown-timesheet-link-v1"
                   onClick={(event) => {
                     if (event.target === event.currentTarget) {
@@ -1591,12 +1660,12 @@ const DiaryPage = () => {
                       Tap a staff name above to start today's Staff on Site list.
                     </div>
                   ) : (
-                    <div className="mt-3 space-y-2" data-testid="staff-timesheet-selected-list">
+                    <div className="mt-2 grid gap-1.5 sm:grid-cols-2" data-testid="staff-timesheet-selected-list">
                       {labourRows.map((row, index) => (
                         <button
                           key={row.id || index}
                           type="button"
-                          className={`flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-3 text-left transition ${
+                          className={`flex w-full items-center justify-between gap-2 rounded-lg border px-2 py-2 text-left transition ${
                             activeLabourIndex === index
                               ? 'border-primary bg-primary/10'
                               : 'border-border/60 bg-background/70 hover:border-primary/50 hover:bg-primary/5'
@@ -1754,7 +1823,7 @@ const DiaryPage = () => {
         </Card>
 
         {/* Work Done Today - diary-work-before-resources-v1 */}
-            <Card className="ops-card lg:col-span-2">
+            <Card id="diary-work-section" className="ops-card lg:col-span-2">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <FileText className="w-4 h-4" />
@@ -1803,7 +1872,7 @@ const DiaryPage = () => {
             </Card>
 
         {/* Site Resources */}
-            <Card className="ops-card lg:col-span-2" data-testid="daily-site-resources-card">
+            <Card id="diary-resources-section" className="ops-card lg:col-span-2" data-testid="daily-site-resources-card">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
@@ -1812,7 +1881,7 @@ const DiaryPage = () => {
                       Site Resources
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Materials, plant, equipment, and tools used or delivered today.
+                      Materials and plant are separated so the diary stays clean.
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -1827,6 +1896,29 @@ const DiaryPage = () => {
               </CardHeader>
 
               <CardContent className="space-y-4 px-4 py-5 sm:px-6">
+                <div className="grid grid-cols-2 gap-2" data-testid="diary-resource-tabs-v2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveResourceTab('materials')}
+                    className={`rounded-xl border px-3 py-2 text-left text-sm font-black uppercase tracking-[0.12em] transition ${
+                      activeResourceTab === 'materials' ? 'border-primary bg-primary/15 text-primary' : 'border-border bg-secondary/30 text-muted-foreground hover:bg-secondary/50'
+                    }`}
+                    data-testid="diary-resource-tab-materials"
+                  >
+                    Materials ({resourceMaterials.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveResourceTab('plant_equipment')}
+                    className={`rounded-xl border px-3 py-2 text-left text-sm font-black uppercase tracking-[0.12em] transition ${
+                      activeResourceTab === 'plant_equipment' ? 'border-primary bg-primary/15 text-primary' : 'border-border bg-secondary/30 text-muted-foreground hover:bg-secondary/50'
+                    }`}
+                    data-testid="diary-resource-tab-plant"
+                  >
+                    Plant ({resourcePlantEquipment.length})
+                  </button>
+                </div>
+
                 {resourcesLoading ? (
                   <p className="text-sm text-muted-foreground">Loading site resources...</p>
                 ) : resourcesTotalCount === 0 && !resourcesEditMode ? (
@@ -1852,7 +1944,7 @@ const DiaryPage = () => {
                     </div>
 
                     <div id="daily-site-resources-plant" className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3">
-                      <p className="mb-2 text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">Plant / Equipment / Tools</p>
+                      <p className="mb-2 text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">Plant</p>
                       {resourcePlantEquipment.length > 0 ? (
                         <div className="space-y-2">
                           {resourcePlantEquipment.map((row, index) => (
@@ -1871,8 +1963,8 @@ const DiaryPage = () => {
                   <div className="grid grid-cols-1 gap-4 xl:grid-cols-2" data-testid="daily-site-resources-edit">
                     {[
                       ['materials', 'Materials', resourceMaterials],
-                      ['plant_equipment', 'Plant / Equipment / Tools', resourcePlantEquipment]
-                    ].map(([category, title, rows]) => (
+                      ['plant_equipment', 'Plant', resourcePlantEquipment]
+                    ].filter(([category]) => category === activeResourceTab).map(([category, title, rows]) => (
                       <div key={category} id={category === 'materials' ? 'daily-site-resources-materials' : 'daily-site-resources-plant'} className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3">
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
@@ -1955,7 +2047,7 @@ const DiaryPage = () => {
             </Card>
 
             {/* Action Items Raised Today - action-wording-cleanup-v1 */}
-            <Card className="ops-card">
+            <Card id="diary-action-open-section" className="ops-card">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <ListTodo className="w-4 h-4" />
@@ -1996,7 +2088,7 @@ const DiaryPage = () => {
             </Card>
 
             {/* Action Items Completed Today */}
-            <Card className="ops-card">
+            <Card id="diary-action-completed-section" className="ops-card">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-emerald-500">
                   <CheckCircle2 className="w-4 h-4" />
@@ -2026,7 +2118,7 @@ const DiaryPage = () => {
             </Card>
 
             {/* Overdue Follow-ups */}
-            <Card className="ops-card lg:col-span-2">
+            <Card id="diary-overdue-followups" className="ops-card lg:col-span-2">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-400">
                   <Target className="w-4 h-4" />
