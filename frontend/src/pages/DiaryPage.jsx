@@ -1266,122 +1266,49 @@ const DiaryPage = () => {
 
       {diary && (
         <>
-          {/* Summary Stats */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
-            <Card className="ops-card">
-              <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-3xl font-heading font-black">{diary.summary?.entries_count || 0}</p>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Entries</p>
-              </CardContent>
-            </Card>
-
-            <Card className="ops-card">
-              <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-3xl font-heading font-black">{diary.summary?.items_opened || 0}</p>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Opened</p>
-              </CardContent>
-            </Card>
-
-            <Card className="ops-card">
-              <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-3xl font-heading font-black text-emerald-500">{diary.summary?.items_closed || 0}</p>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Closed</p>
-              </CardContent>
-            </Card>
-
-            <Card className="ops-card">
-              <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-3xl font-heading font-black text-red-500">{diary.summary?.blocked_gates || 0}</p>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Blocked</p>
-              </CardContent>
-            </Card>
-
-            <Card className="ops-card">
-              <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-3xl font-heading font-black text-amber-500">{diary.summary?.at_risk_gates || 0}</p>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">At Risk</p>
-              </CardContent>
-            </Card>
-
-            <Card className="ops-card">
-              <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-3xl font-heading font-black text-red-400">{diary.summary?.overdue_items || 0}</p>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Overdue</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="ops-card cursor-pointer focus-within:ring-2 focus-within:ring-primary/50"
-              onClick={() => scrollToSiteResources('materials')}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') scrollToSiteResources('materials');
-              }}
-              data-testid="summary-materials-card"
-            >
-              <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-3xl font-heading font-black">{resourceMaterials.length}</p>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Materials</p>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Tap to edit</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="ops-card cursor-pointer focus-within:ring-2 focus-within:ring-primary/50"
-              onClick={() => scrollToSiteResources('plant')}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') scrollToSiteResources('plant');
-              }}
-              data-testid="summary-plant-gear-card"
-            >
-              <CardContent className="pt-3 pb-3 text-center">
-                <p className="text-3xl font-heading font-black">{resourcePlantEquipment.length}</p>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.16em]">Plant / Gear</p>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Tap to edit</p>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* Content Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card className="ops-card lg:col-span-2" data-testid="daily-labour-card">
           <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-6" data-testid="daily-labour-polish-v1-marker">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <CardTitle className="font-heading text-xl font-black uppercase tracking-[0.14em]">Labour / Staff Onsite</CardTitle>
+                <CardTitle className="font-heading text-xl font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Timesheet-compatible daily rows. Save to the diary first, then send saved rows to Timesheet review. Imported rows create review records only; they do not approve payroll.
+                  Simple daily staff list for this diary. Tap + Add staff, type the name, then tap a name later to edit times, job, task code, PM, or work done.
                 </p>
               </div>
               <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
-                <span data-testid="daily-labour-row-count">{labourRows.length}</span> rows •{' '}
+                <span data-testid="daily-labour-row-count">{labourRows.length}</span> staff •{' '}
                 <span data-testid="daily-labour-total-hours">{labourTotalHours.toFixed(2)}</span> hrs
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-5 px-4 py-5 sm:px-6">
             {labourLoading ? (
-              <p className="text-sm text-muted-foreground">Loading labour rows...</p>
-            ) : labourRows.length === 0 ? (
-              <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground" data-testid="daily-labour-empty">
-                No staff rows recorded for this diary day yet.
-              </div>
+              <p className="text-sm text-muted-foreground">Loading staff...</p>
             ) : (
               <div className="space-y-4" data-testid="daily-labour-rows">
-                {labourRows.length > 0 && (
-                  <div className="rounded-xl border border-border/70 bg-secondary/20 p-3" data-testid="diary-compact-staff-list-v3">
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">Staff on site</p>
-                        <p className="text-xs font-bold text-muted-foreground">{labourRows.length} staff • {labourTotalHours.toFixed(2)}h total</p>
-                      </div>
-                      <Button type="button" size="sm" variant="secondary" onClick={addLabourRow} data-testid="daily-labour-add-staff-compact">
-                        + Add staff
-                      </Button>
+                <div className="rounded-xl border border-primary/40 bg-primary/5 p-3" data-testid="diary-real-layout-staff-top-v3">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-primary">Staff on Site</p>
+                      <p className="text-xs font-bold text-muted-foreground">{labourRows.length} staff • {labourTotalHours.toFixed(2)}h total</p>
                     </div>
+                    <Button type="button" size="sm" variant="secondary" onClick={addLabourRow} data-testid="daily-labour-add-staff-compact">
+                      + Add staff
+                    </Button>
+                  </div>
+
+                  {labourRows.length === 0 ? (
+                    <button
+                      type="button"
+                      className="w-full rounded-lg border border-dashed border-primary/50 bg-background/70 px-3 py-4 text-left text-sm font-bold text-primary"
+                      onClick={addLabourRow}
+                      data-testid="daily-labour-empty-add-staff"
+                    >
+                      + Add first staff member
+                    </button>
+                  ) : (
                     <div className="space-y-2">
                       {labourRows.map((row, index) => (
                         <button
@@ -1405,8 +1332,8 @@ const DiaryPage = () => {
                         </button>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {editableLabourEntries.map(({ row, index }) => (
                   <div
@@ -1522,9 +1449,6 @@ const DiaryPage = () => {
             )}
 
             <div className="flex flex-col gap-2 border-t border-border/70 pt-4 sm:flex-row sm:flex-wrap">
-              <Button type="button" variant="secondary" onClick={addLabourRow} data-testid="daily-labour-add-row">
-                Add staff
-              </Button>
               <Button type="button" onClick={saveLabourRows} disabled={labourSaving || !selectedProject} data-testid="daily-labour-save">
                 {labourSaving ? 'Saving...' : 'Save staff'}
               </Button>
@@ -1540,7 +1464,7 @@ const DiaryPage = () => {
             </div>
 
             <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
-              Tap + Add staff or tap a staff name. The edit box opens below and focuses the staff name field. Drafts autosave on this device. Save staff when ready.
+              Staff on Site stays at the top of the diary. Draft staff stay visible on this device; press Save staff when the staff list is ready for the official diary record.
             </p>
           </CardContent>
         </Card>
