@@ -190,6 +190,16 @@ const DiaryPage = () => {
     });
   };
 
+  const toggleLabourEditor = (index) => {
+    if (labourEditMode && activeLabourIndex === index) {
+      setActiveLabourIndex(null);
+      setLabourEditMode(false); // staff-row-tap-toggle-details-v1
+      return;
+    }
+
+    openLabourEditor(index);
+  };
+
   const addLabourRow = () => {
     setLabourRows((current) => {
       const next = [...current, createEmptyLabourRow()];
@@ -1523,7 +1533,7 @@ const DiaryPage = () => {
                           }`}
                           onClick={(event) => {
                             event.stopPropagation();
-                            openLabourEditor(index);
+                            toggleLabourEditor(index);
                           }}
                           data-testid={`staff-on-site-name-${index}`}
                         >
@@ -1668,7 +1678,7 @@ const DiaryPage = () => {
             </div>
 
             <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
-              Staff names stay simple on the diary. LLD keeps the Timesheet link in the background where available. Tap a blank area in Staff on Site to close the edit details.
+              Staff names stay simple on the diary. Tap a staff name to edit, tap the same name again to close, or tap a blank area in Staff on Site to close the edit details.
             </p>
           </CardContent>
         </Card>
