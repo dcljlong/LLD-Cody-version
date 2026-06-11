@@ -1916,7 +1916,7 @@ const DiaryPage = () => {
               </CardContent>
             </Card>
 
-            {/* Items Opened */}
+            {/* Action Items Raised Today - action-wording-cleanup-v1 */}
             <Card className="ops-card">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
@@ -1946,12 +1946,12 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No items opened</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No action items raised today</p>
                 )}
               </CardContent>
             </Card>
 
-            {/* Items Closed */}
+            {/* Action Items Completed Today */}
             <Card className="ops-card">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-emerald-500">
@@ -1970,12 +1970,12 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No items closed</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No action items completed today</p>
                 )}
               </CardContent>
             </Card>
 
-            {/* Overdue Items */}
+            {/* Overdue Follow-ups */}
             <Card className="ops-card lg:col-span-2">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-400">
@@ -2003,7 +2003,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No overdue items</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No overdue follow-ups</p>
                 )}
               </CardContent>
             </Card>

@@ -264,7 +264,7 @@ export default function ProjectDetailPage() {
       return {
         label: "Needs Attention",
         className: "bg-red-500/20 text-red-400 border border-red-500/30",
-        helper: "There are overdue items, blocked roadblocks, or delayed concerns."
+        helper: "There are overdue follow-ups, blocked roadblocks, or delayed concerns."
       };
     }
 
@@ -312,7 +312,7 @@ export default function ProjectDetailPage() {
 
   const statCards = [
     {
-      label: "Open Items",
+      label: "Action Items", // action-wording-cleanup-v1
       value: openItems.length,
       helper: overdueItems.length > 0 ? `${overdueItems.length} overdue` : `${completedItems.length} completed`,
       icon: ListTodo,

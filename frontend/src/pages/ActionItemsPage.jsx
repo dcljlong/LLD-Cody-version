@@ -744,7 +744,7 @@ const ActionItemsPage = () => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="font-heading text-4xl font-black uppercase tracking-[0.08em]" data-testid="action-heading-polish-v1-marker">Action Items</h2>
-          <p className="mt-1 text-base font-medium text-muted-foreground">{openItems.length} open, {completedItems.length} completed</p>
+          <p className="mt-1 text-base font-medium text-muted-foreground">{openItems.length} active, {completedItems.length} completed</p>
         </div>
         <Button className="btn-primary h-11 px-5 font-bold uppercase tracking-[0.08em]" onClick={openCreateDialog} data-testid="create-item-btn">
           <Plus className="w-4 h-4 mr-2" />
@@ -861,7 +861,7 @@ const ActionItemsPage = () => {
                     style={{ width: `${Math.max(10, Math.min(100, card.count === 0 ? 10 : card.count * 14))}%` }}
                   />
                 </div>
-                <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Open section</p>
+                <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">To Do / active section</p>
               </CardContent>
             </Card>
           </button>
@@ -938,11 +938,11 @@ const ActionItemsPage = () => {
         )}
 
         <SectionCard
-          title="Other Open"
+          title="Other Follow-ups"
           count={otherOpenItems.length}
           icon={<FolderKanban className="w-4 h-4" />}
           tone="neutral"
-          emptyText="No other open items."
+          emptyText="No other follow-ups."
           testId="other-open-section"
         >
           <GroupedSectionItems items={otherOpenItems} />

@@ -583,7 +583,7 @@ const DashboardPage = () => {
               count={overdueItems.length}
               icon={<Clock className="w-4 h-4" />}
               tone="warning"
-              emptyText="No overdue items"
+              emptyText="No overdue follow-ups"
               testId="overdue-section"
             >
               {overdueItems.map(item => (

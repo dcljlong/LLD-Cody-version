@@ -10,7 +10,7 @@ const DASHBOARD_WIDGETS = [
   {
     key: 'stats',
     label: 'Summary tiles',
-    helper: 'Active projects, open items, critical items, and roadblocks / concerns.'
+    helper: 'Active projects, action items, critical priorities, and roadblocks / concerns.'
   },
   {
     key: 'blockedDelayed',
