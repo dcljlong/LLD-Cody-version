@@ -1363,7 +1363,7 @@ const DiaryPage = () => {
         <CardContent className="py-3">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="font-heading text-base font-black uppercase tracking-[0.14em]">Daily Report Ready</p>
+              <p className="font-heading text-base font-black uppercase tracking-[0.14em]">Today's Diary Checklist</p>
               <p className="text-xs text-muted-foreground">
                 {currentProject ? `${currentProject.job_number ? `${currentProject.job_number} - ` : ''}${currentProject.name}` : 'No project selected'} • {selectedDateLabel}
               </p>
@@ -1371,16 +1371,16 @@ const DiaryPage = () => {
 
             <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-5">
               <span className="rounded border border-border bg-secondary/30 px-2 py-1">
-                Entries: {diary?.summary?.entries_count || 0}
+                Work records: {diary?.summary?.entries_count || 0}
               </span>
               <span className="rounded border border-border bg-secondary/30 px-2 py-1">
-                Opened: {diary?.summary?.items_opened || 0}
+                Follow-ups: {diary?.summary?.items_opened || 0}
               </span>
               <span className="rounded border border-border bg-secondary/30 px-2 py-1">
-                Closed: {diary?.summary?.items_closed || 0}
+                Completed: {diary?.summary?.items_closed || 0}
               </span>
               <span className="rounded border border-border bg-secondary/30 px-2 py-1">
-                Blocked: {diary?.summary?.blocked_gates || 0}
+                Roadblocks: {diary?.summary?.blocked_gates || 0}
               </span>
               <span className="rounded border border-border bg-secondary/30 px-2 py-1">
                 Overdue: {diary?.summary?.overdue_items || 0}
@@ -1434,14 +1434,14 @@ const DiaryPage = () => {
         <>
           {/* Content Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Roadblocks / Critical Site Issues - diary-risk-first-layout-v1 */}
+            {/* Roadblocks / Critical Site Issues - diary-field-sheet-layout-v1 */}
             <Card className="ops-card">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-500">
                   <AlertTriangle className="w-4 h-4" />
                   Roadblocks / Critical Site Issues ({diary.blocked_gates?.length || 0})
                 </CardTitle>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">Review delays, blockers, and high-risk concerns before recording the rest of the day.</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">Check blockers first. If nothing is stopping progress, keep moving through the diary.</p>
               </CardHeader>
 
               <CardContent className="py-3 max-h-80 overflow-y-auto">
@@ -1461,7 +1461,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No roadblocks or critical site issues recorded</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No roadblocks recorded for this diary day.</p>
                 )}
               </CardContent>
             </Card>
@@ -1472,7 +1472,7 @@ const DiaryPage = () => {
               <div>
                 <CardTitle className="font-heading text-xl font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Tap a staff name to add them to today's diary. Tap a listed staff member only when you need to edit their times, task code, PM, or work done.
+                  Select staff for today. Tap a listed name to edit times, task code, PM, or work done.
                 </p>
               </div>
               <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
@@ -1705,12 +1705,12 @@ const DiaryPage = () => {
                 disabled={labourImporting || labourSaving || labourLoading || !selectedProject || labourRows.length === 0}
                 data-testid="daily-labour-import-timesheet"
               >
-                {labourImporting ? 'Sending...' : 'Send saved labour rows to Timesheet review'}
+                {labourImporting ? 'Sending...' : 'Send staff rows to Timesheet review'}
               </Button>
             </div>
 
             <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
-              Staff names stay simple on the diary. Tap a staff name to edit, tap the same name again to close, or tap a blank area in Staff on Site to close the edit details.
+              Tap a staff name once to edit. Tap the same name again to close.
             </p>
           </CardContent>
         </Card>
@@ -1725,7 +1725,7 @@ const DiaryPage = () => {
                       Site Resources
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Simple diary capture for materials, plant, equipment, and tools on site today. Tool Tracker remains the asset register.
+                      Materials, plant, equipment, and tools used or delivered today.
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -1744,7 +1744,7 @@ const DiaryPage = () => {
                   <p className="text-sm text-muted-foreground">Loading site resources...</p>
                 ) : resourcesTotalCount === 0 && !resourcesEditMode ? (
                   <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground" data-testid="daily-site-resources-empty">
-                    No materials, plant, equipment, or tools recorded for this diary day yet.
+                    No resources recorded for this diary day.
                   </div>
                 ) : !resourcesEditMode ? (
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2" data-testid="daily-site-resources-summary">
@@ -1862,17 +1862,17 @@ const DiaryPage = () => {
                 </div>
 
                 <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
-                  This is diary capture only. Tool Tracker remains the source of truth for asset ownership, movements, condition, and assignment history.
+                  Diary-only resource capture. Tool Tracker remains the full asset register.
                 </p>
               </CardContent>
             </Card>
 
-        {/* Site Notes */}
+        {/* Work Done Today */}
             <Card className="ops-card">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <FileText className="w-4 h-4" />
-                  Site Notes ({diary.walkaround_entries?.length || 0})
+                  Work Done Today ({diary.walkaround_entries?.length || 0})
                 </CardTitle>
               </CardHeader>
 
