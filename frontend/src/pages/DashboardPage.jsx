@@ -79,12 +79,12 @@ const PriorityBadge = ({ priority }) => {
 };
 
 const priorityRank = {
-  CRITICAL: 0,
+  critical: 0,
   high: 1,
   medium: 2,
   low: 3,
   deferred: 4
-};
+}; // dashboard-priority-normalise-v2
 
 const gateStatusRank = {
   BLOCKED: 0,
@@ -102,7 +102,7 @@ const getDateValue = (value) => {
 
 const sortActionItems = (items = []) => {
   return [...items].sort((a, b) => {
-    const priorityDiff = (priorityRank[a.priority] ?? 99) - (priorityRank[b.priority] ?? 99);
+    const priorityDiff = (priorityRank[String(a.priority || '').toLowerCase()] ?? 99) - (priorityRank[String(b.priority || '').toLowerCase()] ?? 99);
     if (priorityDiff !== 0) return priorityDiff;
 
     const dueDiff = getDateValue(a.due_date) - getDateValue(b.due_date);
@@ -308,13 +308,13 @@ const DashboardPage = () => {
 
   const ItemCard = ({ item, type }) => {
     const cardTone =
-      item.priority === 'CRITICAL' ? 'bg-card border-red-500 shadow-[0_0_0_1px_rgba(220,38,38,0.12)]' :
+      String(item.priority || '').toLowerCase() === 'critical' ? 'bg-card border-red-500 shadow-[0_0_0_1px_rgba(220,38,38,0.12)]' :
       item.priority === 'high' ? 'bg-card border-orange-500 shadow-[0_0_0_1px_rgba(249,115,22,0.12)]' :
       item.priority === 'medium' ? 'bg-card border-amber-500' :
       'bg-card border-slate-700';
 
     const leftBorder =
-      item.priority === 'CRITICAL' ? 'border-l-red-600' :
+      String(item.priority || '').toLowerCase() === 'critical' ? 'border-l-red-600' :
       item.priority === 'high' ? 'border-l-orange-500' :
       item.priority === 'medium' ? 'border-l-amber-500' :
       'border-l-blue-500';

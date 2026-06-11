@@ -1136,6 +1136,44 @@ const DiaryPage = () => {
 
   const ownerOptions = ['Me', 'Site', 'MC', 'Subbies', 'Client'];
 
+  const diaryPriorityRank = {
+    critical: 0,
+    high: 1,
+    medium: 2,
+    low: 3,
+    deferred: 4
+  }; // priority-sort-clickthrough-v2
+
+  const getDiaryPriorityRank = (priority) => diaryPriorityRank[String(priority || '').trim().toLowerCase()] ?? 99;
+
+  const getDiaryDateRank = (value, fallback = Number.MAX_SAFE_INTEGER) => {
+    if (!value) return fallback;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? fallback : date.getTime();
+  };
+
+  const sortDiaryPriorityFirst = (items = []) => {
+    return [...(Array.isArray(items) ? items : [])].sort((a, b) => {
+      const priorityDiff = getDiaryPriorityRank(a.priority) - getDiaryPriorityRank(b.priority);
+      if (priorityDiff !== 0) return priorityDiff;
+
+      const dueDiff = getDiaryDateRank(a.due_date || a.expected_complete_date) - getDiaryDateRank(b.due_date || b.expected_complete_date);
+      if (dueDiff !== 0) return dueDiff;
+
+      return getDiaryDateRank(b.created_at, 0) - getDiaryDateRank(a.created_at, 0);
+    });
+  };
+
+  const openDiaryActionItem = (item) => {
+    if (!item?.id) return;
+    const params = new URLSearchParams();
+    params.set('item', item.id);
+    if (item.project_id || item.job_id || selectedProject) {
+      params.set('project', item.project_id || item.job_id || selectedProject);
+    }
+    window.location.assign(`/action-items?${params.toString()}`);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -1727,7 +1765,7 @@ const DiaryPage = () => {
               <CardContent className="py-3 max-h-80 overflow-y-auto">
                 {diary.walkaround_entries?.length > 0 ? (
                   <div className="space-y-3">
-                    {diary.walkaround_entries.map((entry) => (
+                    {sortDiaryPriorityFirst(diary.walkaround_entries).map((entry) => (
                       <div key={entry.id} className="p-3 bg-secondary/30 rounded-md space-y-1">
                         <p className="text-sm">{entry.note}</p>
 
@@ -1928,8 +1966,14 @@ const DiaryPage = () => {
               <CardContent className="py-3 max-h-80 overflow-y-auto">
                 {diary.action_items_opened?.length > 0 ? (
                   <div className="space-y-2">
-                    {diary.action_items_opened.map((item) => (
-                      <div key={item.id} className="p-2 bg-secondary/30 rounded-md border-l-4 border-l-amber-500">
+                    {sortDiaryPriorityFirst(diary.action_items_opened).map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => openDiaryActionItem(item)}
+                        className="w-full p-2 bg-secondary/30 rounded-md border-l-4 border-l-amber-500 text-left transition hover:border-primary/50 hover:bg-primary/5"
+                        data-testid={`diary-action-open-clickthrough-${item.id}`}
+                      >
                         <p className="text-sm font-medium">{item.title}</p>
                         <span
                           className={`text-xs ${
@@ -1942,7 +1986,7 @@ const DiaryPage = () => {
                         >
                           {item.priority}
                         </span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 ) : (
@@ -1963,10 +2007,16 @@ const DiaryPage = () => {
               <CardContent className="py-3 max-h-80 overflow-y-auto">
                 {diary.action_items_closed?.length > 0 ? (
                   <div className="space-y-2">
-                    {diary.action_items_closed.map((item) => (
-                      <div key={item.id} className="p-2 bg-secondary/30 rounded-md border-l-4 border-l-emerald-500">
+                    {sortDiaryPriorityFirst(diary.action_items_closed).map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => openDiaryActionItem(item)}
+                        className="w-full p-2 bg-secondary/30 rounded-md border-l-4 border-l-emerald-500 text-left transition hover:border-primary/50 hover:bg-primary/5"
+                        data-testid={`diary-action-closed-clickthrough-${item.id}`}
+                      >
                         <p className="text-sm font-medium">{item.title}</p>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 ) : (
@@ -1987,8 +2037,14 @@ const DiaryPage = () => {
               <CardContent className="py-3">
                 {diary.overdue_items?.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {diary.overdue_items.map((item) => (
-                      <div key={item.id} className="p-2 bg-red-950/20 rounded-md border-l-4 border-l-red-400">
+                    {sortDiaryPriorityFirst(diary.overdue_items).map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => openDiaryActionItem(item)}
+                        className="w-full p-2 bg-red-950/20 rounded-md border-l-4 border-l-red-400 text-left transition hover:border-red-400/70 hover:bg-red-500/10"
+                        data-testid={`diary-overdue-clickthrough-${item.id}`}
+                      >
                         <p className="text-sm font-medium">{item.title}</p>
                         {item.due_date && (
                           <p className="text-xs text-red-400">
@@ -1999,7 +2055,7 @@ const DiaryPage = () => {
                             })}
                           </p>
                         )}
-                      </div>
+                      </button>
                     ))}
                   </div>
                 ) : (
