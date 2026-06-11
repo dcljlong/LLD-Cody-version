@@ -97,6 +97,28 @@ function cleanDateForInput(value) {
   return date.toISOString().slice(0, 10);
 }
 
+function normaliseGateRow(gate = {}) {
+  const status = gate.status || "OPEN";
+  const ownerParty = gate.owner_party || "YOU";
+
+  return {
+    ...gate,
+    id: gate.id || gate._id || `unsaved-${gate.project_id || "project"}-${gate.name || "roadblock"}`,
+    project_id: gate.project_id || "",
+    name: gate.name || gate.title || "Untitled Roadblock / Concern",
+    description: gate.description || "",
+    order: gate.order === undefined || gate.order === null ? 0 : Number(gate.order) || 0,
+    owner_party: ownerParty,
+    status,
+    required_by_date: cleanDateForInput(gate.required_by_date),
+    expected_complete_date: cleanDateForInput(gate.expected_complete_date),
+    buffer_days: gate.buffer_days === undefined || gate.buffer_days === null ? 2 : Number(gate.buffer_days) || 0,
+    depends_on_gate_ids: Array.isArray(gate.depends_on_gate_ids) ? gate.depends_on_gate_ids.filter(Boolean) : [],
+    is_hard_gate: Boolean(gate.is_hard_gate),
+    is_optional: Boolean(gate.is_optional)
+  };
+} // roadblock-create-white-screen-guard-v1
+
 function formatDate(value) {
   if (!value) return "-";
 
@@ -158,7 +180,7 @@ export default function GatesPage() {
       ]);
 
       const nextProjects = normaliseList(projectsRes);
-      const nextGates = normaliseList(gatesRes);
+      const nextGates = normaliseList(gatesRes).map(normaliseGateRow);
 
       setProjects(nextProjects);
       setGates(nextGates);
@@ -361,10 +383,10 @@ export default function GatesPage() {
 
       if (editingGateId) {
         await gatesApi.update(editingGateId, payload);
-        setMessage("Gate updated.");
+        setMessage("Roadblock / concern updated.");
       } else {
         await gatesApi.create(payload);
-        setMessage("Gate created.");
+        setMessage("Roadblock / concern created.");
       }
 
       cancelForm();
@@ -384,25 +406,25 @@ export default function GatesPage() {
 
       if (action === "complete") {
         await gatesApi.complete(gate.id);
-        setMessage("Gate marked complete.");
+        setMessage("Roadblock / concern marked complete.");
       }
 
       if (action === "reopen") {
         await gatesApi.reopen(gate.id);
-        setMessage("Gate reopened.");
+        setMessage("Roadblock / concern reopened.");
       }
 
       if (action === "delete") {
-        const ok = window.confirm(`Delete gate "${gate.name || "Untitled Gate"}"?`);
+        const ok = window.confirm(`Delete roadblock / concern "${gate.name || "Untitled Roadblock / Concern"}"?`);
         if (!ok) return;
 
         await gatesApi.delete(gate.id);
-        setMessage("Gate deleted.");
+        setMessage("Roadblock / concern deleted.");
       }
 
       await loadData();
     } catch (e) {
-      setActionError(e?.response?.data?.detail || "Gate action failed.");
+      setActionError(e?.response?.data?.detail || "Roadblock / concern action failed.");
     } finally {
       setBusyGateId("");
     }
