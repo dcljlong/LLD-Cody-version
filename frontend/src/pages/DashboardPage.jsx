@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { dashboardApi } from '../lib/api';
+import { dashboardApi, programmesApi } from '../lib/api';
 import { toast } from 'sonner';
 import {
   AlertTriangle,
@@ -25,7 +25,7 @@ const DEFAULT_DASHBOARD_LAYOUT = {
     dueToday: true,
     dueThisWeek: true,
     recentlyCompleted: false,
-    quickActions: true
+    quickActions: false
   }
 };
 
@@ -124,10 +124,28 @@ const sortGateItems = (items = []) => {
   });
 };
 
+
+const normaliseApiItems = (res) => {
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.data?.value)) return res.data.value;
+  if (Array.isArray(res?.data?.items)) return res.data.items;
+  if (Array.isArray(res?.data?.programmes)) return res.data.programmes;
+  if (Array.isArray(res?.data?.tasks)) return res.data.tasks;
+  return [];
+};
+
+const getTaskWindowDate = (task = {}) => {
+  return task.programme_start_date || task.start_date || task.start || task.end_date || task.due_date || '';
+};
+
 const DashboardPage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dashboardLayout, setDashboardLayout] = useState(readDashboardLayout);
+  const [lookaheadWeeks, setLookaheadWeeks] = useState(3); // dashboard-control-board-certification-v2
+  const [programmeLookaheadItems, setProgrammeLookaheadItems] = useState([]);
+  const [programmeLookaheadLoading, setProgrammeLookaheadLoading] = useState(false);
+  const [programmeLookaheadError, setProgrammeLookaheadError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -145,6 +163,107 @@ const DashboardPage = () => {
       window.removeEventListener('lld-dashboard-layout-updated', refreshLayout);
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProgrammeLookahead = async () => {
+      const projectRows = Array.isArray(data?.site_reality_projects)
+        ? data.site_reality_projects
+        : Array.isArray(data?.resource_projects)
+          ? data.resource_projects
+          : Array.isArray(data?.resource_rollup?.resource_projects)
+            ? data.resource_rollup.resource_projects
+            : [];
+
+      const projectsForLookahead = projectRows
+        .map((project) => ({
+          id: project.project_id || project.id,
+          label: project.job_number
+            ? `${project.job_number} - ${project.project_name || project.name || 'Project'}`
+            : (project.project_name || project.name || 'Project')
+        }))
+        .filter((project) => !!project.id)
+        .slice(0, 6);
+
+      if (projectsForLookahead.length === 0) {
+        setProgrammeLookaheadItems([]);
+        setProgrammeLookaheadError('');
+        return;
+      }
+
+      try {
+        setProgrammeLookaheadLoading(true);
+        setProgrammeLookaheadError('');
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const windowEnd = new Date(today);
+        windowEnd.setDate(today.getDate() + (lookaheadWeeks * 7));
+
+        const rows = [];
+
+        for (const project of projectsForLookahead) {
+          try {
+            const programmeRes = await programmesApi.getAll(project.id);
+            const programmes = normaliseApiItems(programmeRes).slice(0, 3);
+
+            for (const programme of programmes) {
+              if (!programme?.id) continue;
+
+              const tasksRes = await programmesApi.getTasks(programme.id);
+              const tasks = normaliseApiItems(tasksRes);
+
+              tasks.forEach((task) => {
+                const dateValue = getTaskWindowDate(task);
+                if (!dateValue) return;
+
+                const date = new Date(dateValue);
+                if (Number.isNaN(date.getTime())) return;
+                date.setHours(0, 0, 0, 0);
+
+                if (date < today || date > windowEnd) return;
+
+                rows.push({
+                  id: task.id || `${programme.id}-${task.name || task.title || rows.length}`,
+                  title: task.name || task.title || task.task_name || 'Programme task',
+                  projectLabel: project.label,
+                  programmeLabel: programme.filename || programme.name || 'Programme',
+                  dateValue,
+                  dateTime: date.getTime(),
+                  status: task.is_tracked ? 'Tracked' : (task.status || task.owner_tag || 'Upcoming')
+                });
+              });
+            }
+          } catch (err) {
+            console.warn('Programme lookahead skipped project', project.id, err);
+          }
+        }
+
+        rows.sort((a, b) => a.dateTime - b.dateTime || a.title.localeCompare(b.title));
+
+        if (!cancelled) {
+          setProgrammeLookaheadItems(rows.slice(0, 12));
+        }
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) {
+          setProgrammeLookaheadItems([]);
+          setProgrammeLookaheadError('Programme lookahead unavailable');
+        }
+      } finally {
+        if (!cancelled) {
+          setProgrammeLookaheadLoading(false);
+        }
+      }
+    };
+
+    loadProgrammeLookahead();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data, lookaheadWeeks]);
 
   const fetchData = async () => {
     try {
@@ -323,7 +442,7 @@ const DashboardPage = () => {
       <button
         type="button"
         onClick={() => handleItemClick(item, type)}
-        className={`action-card p-4 mb-3 border border-l-4 rounded-md w-full text-left transition-all hover:scale-[1.01] hover:shadow-xl ${cardTone} ${leftBorder}`}
+        className={`action-card p-3 mb-0 border border-l-4 rounded-md w-full text-left transition-all hover:scale-[1.01] hover:shadow-xl ${cardTone} ${leftBorder}`}
         data-testid={`item-${item.id}`}
       >
         <div className="flex items-start justify-between gap-3">
@@ -418,226 +537,244 @@ const DashboardPage = () => {
 
   const activeSiteRealityProjects = siteRealityProjects.slice(0, 8);
   const resourcesTodayCount = materialsTodayCount + plantGearTodayCount;
+  const dueThisWeekCount = dueThisWeekItems.length;
+  const programmeLookaheadCount = programmeLookaheadItems.length;
   const allClearToday = urgentTodayCount === 0 && roadblocksCount === 0 && resourceIssuesCount === 0;
 
   return (
-    <div className="space-y-5 pt-8" data-testid="dashboard-page">
-      <section className="relative z-0 rounded-none border-0 bg-transparent shadow-none dark:overflow-hidden dark:rounded-[1.6rem] dark:border dark:border-primary/35 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-black dark:shadow-[0_28px_90px_rgba(0,0,0,0.30)]">
-        <div className="grid grid-cols-1 gap-5 p-0 dark:p-5 lg:grid-cols-[1fr_1.15fr]">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.26em] text-primary">
-              Long Line Diary
-            </p>
-            <h1 className="mt-2 font-heading text-2xl font-black uppercase tracking-[0.08em] text-foreground sm:text-3xl">
+    <div className="space-y-4 pt-5" data-testid="dashboard-page">
+      <section className="rounded-2xl border border-primary/25 bg-card/95 p-4 shadow-sm dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-black" data-testid="dashboard-control-board-certification-v2">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-primary">Long Line Diary</p>
+            <h1 className="mt-1 font-heading text-2xl font-black uppercase tracking-[0.08em] text-foreground sm:text-3xl">
               Today&apos;s Site Reality
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-              Capture the day, review roadblocks, and keep action items moving from one clear operations dashboard.
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
+              Critical roadblocks, due follow-ups, active jobs, and programme lookahead in one operations board.
             </p>
-
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Link to="/diary">
-                <Button className="btn-primary">
-                  Open Diary <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/walkaround">
-                <Button variant="secondary">
-                  Quick Capture
-                </Button>
-              </Link>
-              <Link to="/gates">
-                <Button variant="secondary">
-                  Roadblocks / Concerns
-                </Button>
-              </Link>
-            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <HeroMetric label="Active Jobs" value={data?.projects_count || 0} tone="default" />
-            <HeroMetric label="Resources" value={resourcesTodayCount} tone={resourcesTodayCount > 0 ? 'warning' : 'default'} />
-            <HeroMetric label="Issues" value={resourceIssuesCount} tone={resourceIssuesCount > 0 ? 'danger' : 'default'} />
-            <HeroMetric label="Roadblocks" value={roadblocksCount} tone={roadblocksCount > 0 ? 'warning' : 'default'} />
+          <div className="flex flex-wrap gap-2">
+            <Link to="/diary">
+              <Button className="btn-primary">
+                Open Diary <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link to="/walkaround">
+              <Button variant="secondary">Quick Capture</Button>
+            </Link>
+            <Link to="/roadblocks">
+              <Button variant="secondary">Roadblocks</Button>
+            </Link>
+            <Link to="/action-items">
+              <Button variant="secondary">Action Items</Button>
+            </Link>
           </div>
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5" data-testid="dashboard-critical-control-strip-v2">
+          <button type="button" onClick={() => navigate('/roadblocks')} className="rounded-xl border border-red-400/40 bg-red-500/10 p-3 text-left transition hover:bg-red-500/15">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-red-500">Roadblocks</p>
+            <p className="mt-1 text-2xl font-black">{roadblocksCount}</p>
+            <p className="text-xs text-muted-foreground">Blocked, delayed, at risk</p>
+          </button>
+          <button type="button" onClick={() => navigate('/action-items')} className="rounded-xl border border-orange-400/40 bg-orange-500/10 p-3 text-left transition hover:bg-orange-500/15">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-orange-500">Overdue</p>
+            <p className="mt-1 text-2xl font-black">{overdueItems.length}</p>
+            <p className="text-xs text-muted-foreground">Past due follow-ups</p>
+          </button>
+          <button type="button" onClick={() => navigate('/action-items')} className="rounded-xl border border-primary/35 bg-primary/10 p-3 text-left transition hover:bg-primary/15">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">Due Today</p>
+            <p className="mt-1 text-2xl font-black">{dueTodayItems.length}</p>
+            <p className="text-xs text-muted-foreground">Must be dealt with today</p>
+          </button>
+          <button type="button" onClick={() => navigate('/action-items')} className="rounded-xl border border-slate-300 bg-white p-3 text-left transition hover:border-primary/45 hover:bg-primary/5 dark:border-slate-700 dark:bg-slate-900/70">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Due This Week</p>
+            <p className="mt-1 text-2xl font-black">{dueThisWeekCount}</p>
+            <p className="text-xs text-muted-foreground">Next short window</p>
+          </button>
+          <button type="button" onClick={() => navigate('/programme')} className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 p-3 text-left transition hover:bg-emerald-500/15">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-600">Programme</p>
+            <p className="mt-1 text-2xl font-black">{programmeLookaheadCount}</p>
+            <p className="text-xs text-muted-foreground">{lookaheadWeeks} week lookahead</p>
+          </button>
         </div>
       </section>
 
+      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]" data-testid="dashboard-certified-primary-grid-v2">
+        <Card className="ops-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-primary/25 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-slate-900" data-testid="dashboard-site-reality-jobs">
+          <CardHeader className="ops-card-header flex flex-row items-start justify-between gap-3 px-4 py-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Active Jobs</p>
+              <CardTitle className="font-heading text-base uppercase tracking-[0.12em]">Compact Site Summary</CardTitle>
+              <p className="mt-1 text-xs text-muted-foreground">Small job rows. Tap a row to open roadblocks, action items, or diary.</p>
+            </div>
+            <span className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${allClearToday ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-600' : 'border-amber-400/35 bg-amber-500/10 text-amber-600'}`}>
+              {allClearToday ? 'All Clear' : 'Review'}
+            </span>
+          </CardHeader>
+          <CardContent className="bg-white px-4 py-3 dark:bg-slate-950/95">
+            {activeSiteRealityProjects.length > 0 ? (
+              <div className="divide-y divide-border overflow-hidden rounded-xl border border-border" data-testid="dashboard-compact-job-summary-v2">
+                {activeSiteRealityProjects.map((project) => {
+                  const projectId = project.project_id || project.id;
+                  const jobLabel = project.job_number ? `${project.job_number} - ${project.project_name || project.name || 'Project'}` : (project.project_name || project.name || 'Project');
+                  const hasProjectActivity = project.has_activity || project.materials_today > 0 || project.plant_equipment_today > 0 || project.resource_issues_count > 0 || project.roadblocks_count > 0 || project.open_items_count > 0;
 
-      <Card className="ops-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-primary/25 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-slate-900" data-testid="dashboard-site-reality-jobs">
-        <CardHeader className="ops-card-header flex flex-row items-start justify-between gap-3 px-5 py-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Today&apos;s Site Reality</p>
-            <CardTitle className="font-heading text-lg uppercase tracking-[0.12em]">Active Jobs Today</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">A site-first view of active jobs, roadblocks, action follow-ups, and resources.</p>
-          </div>
-          <span className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${allClearToday ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-600' : 'border-amber-400/35 bg-amber-500/10 text-amber-600'}`}>
-            {allClearToday ? 'All Clear' : 'Review'}
-          </span>
-        </CardHeader>
-        <CardContent className="bg-white px-5 py-5 dark:bg-slate-950/95">
-          {activeSiteRealityProjects.length > 0 ? (
-            <div className="space-y-3">
-              {activeSiteRealityProjects.map((project) => {
-                const jobLabel = project.job_number ? `${project.job_number} - ${project.project_name || project.name || 'Project'}` : (project.project_name || project.name || 'Project');
-                const hasProjectActivity = project.has_activity || project.materials_today > 0 || project.plant_equipment_today > 0 || project.resource_issues_count > 0 || project.roadblocks_count > 0 || project.open_items_count > 0;
-
-                return (
-                  <button
-                    key={project.project_id || project.id}
-                    type="button"
-                    onClick={() => {
-                      const projectId = project.project_id || project.id;
-                      if (project.roadblocks_count > 0) {
-                        navigate('/roadblocks');
-                      } else if (project.open_items_count > 0) {
-                        navigate(`/action-items?project=${projectId}`);
-                      } else {
-                        navigate('/diary');
-                      }
-                    }} // dashboard-risk-first-layout-v1
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-left transition hover:border-primary/45 hover:bg-primary/5 dark:border-slate-800 dark:bg-slate-900/60"
-                    data-testid={`dashboard-site-reality-job-${project.project_id || project.id}`}
-                  >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-black uppercase tracking-[0.08em] text-foreground">{jobLabel}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {hasProjectActivity ? 'Diary activity recorded today' : 'No diary activity yet today'}
-                        </p>
+                  return (
+                    <button
+                      key={projectId}
+                      type="button"
+                      onClick={() => {
+                        if (project.roadblocks_count > 0) {
+                          navigate('/roadblocks');
+                        } else if (project.open_items_count > 0) {
+                          navigate(`/action-items?project=${projectId}`);
+                        } else {
+                          navigate('/diary');
+                        }
+                      }}
+                      className="grid w-full gap-2 bg-white px-3 py-2 text-left transition hover:bg-primary/5 dark:bg-slate-950/60 dark:hover:bg-primary/10 md:grid-cols-[minmax(180px,1fr)_repeat(5,82px)_110px] md:items-center"
+                      data-testid={`dashboard-compact-job-${projectId}`}
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black uppercase tracking-[0.06em] text-foreground">{jobLabel}</p>
+                        <p className="text-xs text-muted-foreground">{hasProjectActivity ? 'Activity recorded today' : 'No diary activity yet'}</p>
                       </div>
-                      <span className={`w-fit rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] ${project.roadblocks_count > 0 ? 'border-red-400/40 bg-red-500/10 text-red-600' : project.resource_issues_count > 0 || project.open_items_count > 0 ? 'border-amber-400/35 bg-amber-500/10 text-amber-600' : 'border-emerald-400/35 bg-emerald-500/10 text-emerald-600'}`}>
-                        {project.roadblocks_count > 0 ? 'Roadblock' : project.resource_issues_count > 0 || project.open_items_count > 0 ? 'Needs Review' : 'OK'}
+
+                      {[
+                        ['Mat', project.materials_today || 0],
+                        ['Plant', project.plant_equipment_today || 0],
+                        ['Issues', project.resource_issues_count || 0],
+                        ['Road', project.roadblocks_count || 0],
+                        ['Actions', project.open_items_count || 0]
+                      ].map(([label, value]) => (
+                        <div key={label} className="flex items-center justify-between rounded-lg border border-border bg-secondary/25 px-2 py-1 md:block">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
+                          <p className={`text-sm font-black ${value > 0 && (label === 'Issues' || label === 'Road') ? 'text-red-600' : value > 0 ? 'text-amber-600' : ''}`}>{value}</p>
+                        </div>
+                      ))}
+
+                      <span className={`w-fit rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${project.roadblocks_count > 0 ? 'border-red-400/40 bg-red-500/10 text-red-600' : project.resource_issues_count > 0 || project.open_items_count > 0 ? 'border-amber-400/35 bg-amber-500/10 text-amber-600' : 'border-emerald-400/35 bg-emerald-500/10 text-emerald-600'}`}>
+                        {project.roadblocks_count > 0 ? 'Roadblock' : project.resource_issues_count > 0 || project.open_items_count > 0 ? 'Review' : 'OK'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+                No active jobs found for today.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="ops-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-primary/25 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-slate-900" data-testid="dashboard-programme-lookahead-v2">
+          <CardHeader className="ops-card-header flex flex-row items-start justify-between gap-3 px-4 py-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Programme Lookahead</p>
+              <CardTitle className="font-heading text-base uppercase tracking-[0.12em]">Next Work Window</CardTitle>
+              <p className="mt-1 text-xs text-muted-foreground">Programme tasks from uploaded LLD programmes where available.</p>
+            </div>
+            <Link to="/programme">
+              <Button variant="secondary" size="sm">Programme</Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="space-y-3 bg-white px-4 py-3 dark:bg-slate-950/95">
+            <div className="grid grid-cols-5 gap-1.5" data-testid="dashboard-lookahead-week-selector-v2">
+              {[1, 2, 3, 4, 6].map((weeks) => (
+                <button
+                  key={weeks}
+                  type="button"
+                  onClick={() => setLookaheadWeeks(weeks)}
+                  className={`rounded-lg border px-2 py-1.5 text-xs font-black uppercase tracking-[0.08em] transition ${lookaheadWeeks === weeks ? 'border-primary bg-primary/15 text-primary' : 'border-border bg-secondary/30 text-muted-foreground hover:bg-secondary/50'}`}
+                  data-testid={`dashboard-lookahead-${weeks}-weeks`}
+                >
+                  {weeks}w
+                </button>
+              ))}
+            </div>
+
+            {programmeLookaheadLoading ? (
+              <div className="rounded-xl border border-border bg-secondary/30 p-3 text-sm text-muted-foreground">Loading programme lookahead...</div>
+            ) : programmeLookaheadError ? (
+              <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 p-3 text-sm text-amber-700">{programmeLookaheadError}</div>
+            ) : programmeLookaheadItems.length > 0 ? (
+              <div className="space-y-2">
+                {programmeLookaheadItems.slice(0, 6).map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => navigate('/programme')}
+                    className="w-full rounded-xl border border-border bg-secondary/25 px-3 py-2 text-left transition hover:bg-primary/5"
+                    data-testid={`dashboard-programme-lookahead-item-${item.id}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold">{item.title}</p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.projectLabel}</p>
+                      </div>
+                      <span className="shrink-0 rounded border border-primary/30 bg-primary/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-primary">
+                        {new Date(item.dateValue).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}
                       </span>
                     </div>
-
-                    <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
-                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950/70">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Materials</p>
-                        <p className="text-lg font-black">{project.materials_today || 0}</p>
-                      </div>
-                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950/70">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Plant / Gear</p>
-                        <p className="text-lg font-black">{project.plant_equipment_today || 0}</p>
-                      </div>
-                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950/70">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Issues</p>
-                        <p className={`text-lg font-black ${project.resource_issues_count > 0 ? 'text-red-600' : ''}`}>{project.resource_issues_count || 0}</p>
-                      </div>
-                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950/70">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Roadblocks</p>
-                        <p className={`text-lg font-black ${project.roadblocks_count > 0 ? 'text-amber-600' : ''}`}>{project.roadblocks_count || 0}</p>
-                      </div>
-                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950/70">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Action Items</p>
-                        <p className={`text-lg font-black ${project.open_items_count > 0 ? 'text-amber-600' : ''}`}>{project.open_items_count || 0}</p>
-                      </div>
-                    </div>
                   </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-              No active jobs found for today.
-            </div>
-          )}
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-border bg-secondary/20 p-3 text-sm text-muted-foreground">
+                No programme tasks found in the selected {lookaheadWeeks} week window.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <Card className="ops-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-primary/25 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-slate-900" data-testid="dashboard-attention-board-v2">
+        <CardHeader className="ops-card-header flex flex-row items-start justify-between gap-3 px-4 py-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Critical Attention Board</p>
+            <CardTitle className="font-heading text-base uppercase tracking-[0.12em]">Roadblocks, Overdue, Due Now</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">One compact board. No dead gaps. Critical and overdue stay visible.</p>
+          </div>
+        </CardHeader>
+        <CardContent className="bg-white px-4 py-3 dark:bg-slate-950/95">
+          <div className="grid gap-3 xl:grid-cols-4" data-testid="dashboard-attention-lanes-v2">
+            {[
+              ['Blocked / Delayed', blockedDelayedItems, 'gate', 'No blocked roadblocks'],
+              ['Overdue', overdueItems, 'action', 'No overdue follow-ups'],
+              ['Due Today', dueTodayItems, 'action', 'Nothing due today'],
+              ['Due This Week', dueThisWeekItems, 'action', 'Nothing due this week']
+            ].map(([title, items, type, emptyText]) => (
+              <div key={title} className="rounded-xl border border-border bg-secondary/20 p-2">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-black uppercase tracking-[0.14em]">{title}</p>
+                  <span className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] font-black">{items.length}</span>
+                </div>
+                {items.length > 0 ? (
+                  <div className="space-y-2">
+                    {items.slice(0, 3).map((item) => (
+                      <ItemCard key={item.id} item={item} type={type} />
+                    ))}
+                    {items.length > 3 && (
+                      <button type="button" onClick={() => navigate(type === 'gate' ? '/roadblocks' : '/action-items')} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs font-bold text-muted-foreground hover:bg-primary/5">
+                        View {items.length - 3} more
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border bg-background/60 p-3 text-center text-sm text-muted-foreground">
+                    {emptyText}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
-      {visibleSectionCount > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-          {widgets.blockedDelayed && (
-            <SectionCard
-              title="Blocked / Delayed Roadblocks"
-              count={blockedDelayedItems.length}
-              icon={<AlertTriangle className="w-4 h-4" />}
-              tone="critical"
-              emptyText="No blocked roadblocks"
-              testId="blocked-delayed-section"
-            >
-              {blockedDelayedItems.map(item => (
-                <ItemCard key={item.id} item={item} type={item.type} />
-              ))}
-            </SectionCard>
-          )}
-
-          {widgets.concernsAtRisk && (
-            <SectionCard
-              title="Concerns / At Risk"
-              count={atRiskItems.length}
-              icon={<AlertTriangle className="w-4 h-4" />}
-              tone="risk"
-              emptyText="No concerns at risk"
-              testId="at-risk-section"
-            >
-              {atRiskItems.map(item => (
-                <ItemCard key={item.id} item={item} type={item.type} />
-              ))}
-            </SectionCard>
-          )}
-
-          {widgets.overdue && (
-            <SectionCard
-              title="Overdue"
-              count={overdueItems.length}
-              icon={<Clock className="w-4 h-4" />}
-              tone="warning"
-              emptyText="No overdue follow-ups"
-              testId="overdue-section"
-            >
-              {overdueItems.map(item => (
-                <ItemCard key={item.id} item={item} type="action" />
-              ))}
-            </SectionCard>
-          )}
-
-          {widgets.dueToday && (
-            <SectionCard
-              title="Due Today"
-              count={dueTodayItems.length}
-              icon={<Calendar className="w-4 h-4" />}
-              tone="neutral"
-              emptyText="Nothing due today"
-              testId="due-today-section"
-            >
-              {dueTodayItems.map(item => (
-                <ItemCard key={item.id} item={item} type="action" />
-              ))}
-            </SectionCard>
-          )}
-
-          {widgets.dueThisWeek && (
-            <SectionCard
-              title="Due This Week"
-              count={dueThisWeekItems.length}
-              icon={<Calendar className="w-4 h-4" />}
-              tone="neutral"
-              emptyText="Nothing due this week"
-              testId="due-week-section"
-            >
-              {dueThisWeekItems.map(item => (
-                <ItemCard key={item.id} item={item} type="action" />
-              ))}
-            </SectionCard>
-          )}
-
-          {widgets.recentlyCompleted && (
-            <SectionCard
-              title="Recently Completed"
-              count={completedItems.length}
-              icon={<CheckCircle2 className="w-4 h-4" />}
-              tone="success"
-              emptyText="No recent completions"
-              testId="completed-section"
-            >
-              {completedItems.map(item => (
-                <ItemCard key={item.id} item={item} type="action" />
-              ))}
-            </SectionCard>
-          )}
-        </div>
-      )}
       <Card className="ops-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-primary/25 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-slate-900" data-testid="daily-operations-suite-card">
             <CardHeader className="ops-card-header flex flex-row items-start justify-between gap-3 px-5 py-4">
               <div>
@@ -697,37 +834,7 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
 
-      {widgets.quickActions && (
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:rounded-2xl dark:border-primary/30 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-primary/10 dark:shadow-[0_18px_60px_rgba(0,0,0,0.16)]">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-primary">
-                Quick Actions
-              </p>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                Jump straight into today&apos;s diary workflow.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Link to="/diary">
-                <Button className="btn-primary">
-                  Open Diary <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-              <Link to="/walkaround">
-                <Button variant="secondary" data-testid="quick-walkaround">
-                  Quick Capture
-                </Button>
-              </Link>
-              <Link to="/projects">
-                <Button variant="secondary" data-testid="view-projects">
-                  View Projects
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Bottom duplicate command strip removed - dashboard-control-board-certification-v2 */}
     </div>
   );
 };
