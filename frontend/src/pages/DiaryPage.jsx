@@ -1360,7 +1360,7 @@ const DiaryPage = () => {
 
       {/* Daily Report Readiness */}
       <Card className="ops-card" data-testid="daily-report-readiness">
-        <CardContent className="py-3">
+        <CardContent className="py-2" data-testid="diary-mobile-compression-v5">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="font-heading text-base font-black uppercase tracking-[0.14em]">Today's Diary Checklist</p>
@@ -1369,20 +1369,20 @@ const DiaryPage = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-5">
-              <span className="rounded border border-border bg-secondary/30 px-2 py-1">
+            <div className="grid grid-cols-2 gap-1.5 text-[11px] sm:grid-cols-5">
+              <span className="rounded border border-border bg-secondary/30 px-2 py-0.5">
                 Work records: {diary?.summary?.entries_count || 0}
               </span>
-              <span className="rounded border border-border bg-secondary/30 px-2 py-1">
+              <span className="rounded border border-border bg-secondary/30 px-2 py-0.5">
                 Follow-ups: {diary?.summary?.items_opened || 0}
               </span>
-              <span className="rounded border border-border bg-secondary/30 px-2 py-1">
+              <span className="rounded border border-border bg-secondary/30 px-2 py-0.5">
                 Completed: {diary?.summary?.items_closed || 0}
               </span>
-              <span className="rounded border border-border bg-secondary/30 px-2 py-1">
+              <span className="rounded border border-border bg-secondary/30 px-2 py-0.5">
                 Roadblocks: {diary?.summary?.blocked_gates || 0}
               </span>
-              <span className="rounded border border-border bg-secondary/30 px-2 py-1">
+              <span className="rounded border border-border bg-secondary/30 px-2 py-0.5">
                 Overdue: {diary?.summary?.overdue_items || 0}
               </span>
             </div>
@@ -1436,7 +1436,7 @@ const DiaryPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Roadblocks / Critical Site Issues - diary-field-sheet-layout-v1 */}
             <Card className="ops-card">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-500">
                   <AlertTriangle className="w-4 h-4" />
                   Roadblocks / Critical Site Issues ({diary.blocked_gates?.length || 0})
@@ -1461,7 +1461,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No roadblocks recorded for this diary day.</p>
+                  <p className="rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300">No roadblocks recorded for this diary day.</p>
                 )}
               </CardContent>
             </Card>
@@ -1472,7 +1472,7 @@ const DiaryPage = () => {
               <div>
                 <CardTitle className="font-heading text-xl font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Select staff for today. Tap a listed name to edit times, task code, PM, or work done.
+                  Select staff for today. Tap a name to edit or close details.
                 </p>
               </div>
               <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
@@ -1698,20 +1698,20 @@ const DiaryPage = () => {
               <Button type="button" onClick={saveLabourRows} disabled={labourSaving || !selectedProject} data-testid="daily-labour-save">
                 {labourSaving ? 'Saving...' : 'Save staff'}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={importLabourRowsToTimesheet}
-                disabled={labourImporting || labourSaving || labourLoading || !selectedProject || labourRows.length === 0}
-                data-testid="daily-labour-import-timesheet"
-              >
-                {labourImporting ? 'Sending...' : 'Send staff rows to Timesheet review'}
-              </Button>
+              {labourRows.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={importLabourRowsToTimesheet}
+                  disabled={labourImporting || labourSaving || labourLoading || !selectedProject}
+                  data-testid="daily-labour-import-timesheet"
+                >
+                  {labourImporting ? 'Sending...' : 'Send staff rows to Timesheet review'}
+                </Button>
+              )}
             </div>
 
-            <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
-              Tap a staff name once to edit. Tap the same name again to close.
-            </p>
+            <p className="text-xs font-medium text-muted-foreground">Tap the same staff name again to close details.</p>
           </CardContent>
         </Card>
 
@@ -1743,7 +1743,7 @@ const DiaryPage = () => {
                 {resourcesLoading ? (
                   <p className="text-sm text-muted-foreground">Loading site resources...</p>
                 ) : resourcesTotalCount === 0 && !resourcesEditMode ? (
-                  <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground" data-testid="daily-site-resources-empty">
+                  <div className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground" data-testid="daily-site-resources-empty">
                     No resources recorded for this diary day.
                   </div>
                 ) : !resourcesEditMode ? (
@@ -1868,9 +1868,9 @@ const DiaryPage = () => {
             </Card>
 
         {/* Work Done Today */}
-            <Card className="ops-card">
+            <Card className="ops-card lg:col-span-2">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
-                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
+                <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   Work Done Today ({diary.walkaround_entries?.length || 0})
                 </CardTitle>
