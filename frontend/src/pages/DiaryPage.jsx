@@ -1451,7 +1451,7 @@ const DiaryPage = () => {
       {/* Diary Command Strip / Clickable Checklist - diary-command-header-tabs-v2 */}
       <Card className="ops-card" data-testid="daily-report-readiness">
         <CardContent className="space-y-3 py-3" data-testid="diary-mobile-compression-v5">
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4" data-testid="diary-attention-strip-v2">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-5" data-testid="diary-attention-strip-v2">
             <button
               type="button"
               onClick={() => openDiarySection('diary-overdue-followups')}
@@ -1488,6 +1488,15 @@ const DiaryPage = () => {
               <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-red-400">Roadblocks</span>
               <span className="block text-xl font-black">{diary?.summary?.blocked_gates || 0}</span>
             </button>
+            <button
+              type="button"
+              onClick={() => openDiarySection('diary-queries-section')}
+              className="rounded-xl border border-sky-400/35 bg-sky-500/10 px-3 py-2 text-left transition hover:bg-sky-500/15"
+              data-testid="diary-command-queries-rfis"
+            >
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-sky-500">Queries / RFIs</span>
+              <span className="block text-xl font-black">0</span>
+            </button>
           </div>
 
           <div>
@@ -1498,7 +1507,7 @@ const DiaryPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5 text-[11px] sm:grid-cols-4 lg:grid-cols-7" data-testid="diary-clickable-checklist-v2">
+            <div className="grid grid-cols-2 gap-1.5 text-[11px] sm:grid-cols-4 lg:grid-cols-8" data-testid="diary-clickable-checklist-v2">
               <button type="button" onClick={() => openDiarySection('diary-roadblocks-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
                 Roadblocks: {diary?.summary?.blocked_gates || 0}
               </button>
@@ -1513,6 +1522,9 @@ const DiaryPage = () => {
               </button>
               <button type="button" onClick={() => openDiarySection('diary-resources-section', 'plant_equipment')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
                 Plant: {resourcePlantEquipment.length}
+              </button>
+              <button type="button" onClick={() => openDiarySection('diary-queries-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50" data-testid="diary-checklist-queries-rfis">
+                Queries/RFIs: 0
               </button>
               <button type="button" onClick={() => openDiarySection('diary-action-open-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
                 Follow-ups: {diary?.summary?.items_opened || 0}
@@ -1573,13 +1585,104 @@ const DiaryPage = () => {
               </CardContent>
             </Card>
 
-            <Card id="diary-staff-section" className="ops-card lg:col-span-2" data-testid="daily-labour-card">
+            {/* Overdue Follow-ups - moved into critical hierarchy - diary-critical-hierarchy-staff-compact-v1 */}
+            <Card id="diary-overdue-followups" className="ops-card" data-testid="diary-overdue-top-section">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-400">
+                  <Target className="w-4 h-4" />
+                  Overdue Follow-ups ({diary.overdue_items?.length || 0})
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="py-3">
+                {diary.overdue_items?.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {sortDiaryPriorityFirst(diary.overdue_items).map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => openDiaryActionItem(item)}
+                        className="w-full p-2 bg-red-950/20 rounded-md border-l-4 border-l-red-400 text-left transition hover:border-red-400/70 hover:bg-red-500/10"
+                        data-testid={`diary-overdue-clickthrough-${item.id}`}
+                      >
+                        <p className="text-sm font-medium">{item.title}</p>
+                        {item.due_date && (
+                          <p className="text-xs text-red-400">
+                            Due:{' '}
+                            {new Date(item.due_date).toLocaleDateString('en-NZ', {
+                              day: '2-digit',
+                              month: 'short'
+                            })}
+                          </p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No overdue follow-ups</p>
+                )}
+              </CardContent>
+            </Card>
+
+
+            {/* Due Today Follow-ups - diary-critical-hierarchy-staff-compact-v1 */}
+            <Card id="diary-due-today-section" className="ops-card" data-testid="diary-due-today-section">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-orange-500">
+                  <Target className="w-4 h-4" />
+                  Due Today ({dueTodayItems.length})
+                </CardTitle>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">Follow-ups due today. Critical and high priority stay at the top.</p>
+              </CardHeader>
+
+              <CardContent className="py-3">
+                {dueTodayItems.length > 0 ? (
+                  <div className="space-y-2">
+                    {sortDiaryPriorityFirst(dueTodayItems).map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => openDiaryActionItem(item)}
+                        className="w-full p-2 bg-orange-500/10 rounded-md border-l-4 border-l-orange-400 text-left transition hover:border-orange-400/70 hover:bg-orange-500/15"
+                        data-testid={`diary-due-today-clickthrough-${item.id}`}
+                      >
+                        <p className="text-sm font-medium">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {[item.project_name || item.project?.name, item.owner, item.priority].filter(Boolean).join(' • ')}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nothing due today</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Queries / RFIs - diary-critical-hierarchy-staff-compact-v1 */}
+            <Card id="diary-queries-section" className="ops-card" data-testid="diary-queries-rfis-section">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-sky-500">
+                  <ListTodo className="w-4 h-4" />
+                  Queries / RFIs (0)
+                </CardTitle>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">Questions needing answers. Keep these separate from roadblocks until they start blocking work.</p>
+              </CardHeader>
+
+              <CardContent className="py-3">
+                <div className="rounded-lg border border-dashed border-sky-400/35 bg-sky-500/10 px-3 py-3 text-sm text-muted-foreground">
+                  No Queries / RFIs recorded for this diary day yet. Next feature: raise a query, assign it, set answer required date, then convert to Roadblock if it blocks work.
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card id="diary-staff-section" className="ops-card" data-testid="daily-labour-card">
           <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-2 sm:px-4" data-testid="daily-labour-polish-v1-marker">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Tap staff to add or edit.
+                <p className="text-xs text-muted-foreground">
+                  Compact labour summary. Expand only when editing names, times, task code, PM, or Timesheet send.
                 </p>
               </div>
               <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
@@ -1588,11 +1691,11 @@ const DiaryPage = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3 px-3 py-3 sm:px-4">
+          <CardContent className="max-h-[34rem] space-y-3 overflow-y-auto px-3 py-3 sm:px-4" data-testid="diary-staff-compact-panel-v1">
             {labourLoading ? (
               <p className="text-sm text-muted-foreground">Loading staff...</p>
             ) : (
-              <div className="space-y-4" data-testid="daily-labour-rows">
+              <div className="space-y-2" data-testid="daily-labour-rows">
                 <div
                   className="rounded-xl border border-primary/40 bg-primary/5 p-2"
                   data-testid="staff-dropdown-timesheet-link-v1"
@@ -1660,12 +1763,12 @@ const DiaryPage = () => {
                       Tap a staff name above to start today's Staff on Site list.
                     </div>
                   ) : (
-                    <div className="mt-2 grid gap-1.5 sm:grid-cols-2" data-testid="staff-timesheet-selected-list">
+                    <div className="mt-2 grid max-h-56 gap-1.5 overflow-y-auto pr-1" data-testid="staff-timesheet-selected-list">
                       {labourRows.map((row, index) => (
                         <button
                           key={row.id || index}
                           type="button"
-                          className={`flex w-full items-center justify-between gap-2 rounded-lg border px-2 py-2 text-left transition ${
+                          className={`flex w-full items-center justify-between gap-2 rounded-lg border px-2 py-1.5 text-left transition ${
                             activeLabourIndex === index
                               ? 'border-primary bg-primary/10'
                               : 'border-border/60 bg-background/70 hover:border-primary/50 hover:bg-primary/5'
@@ -1822,7 +1925,7 @@ const DiaryPage = () => {
           </CardContent>
         </Card>
 
-        {/* Work Done Today - diary-work-before-resources-v1 */}
+        {/* Work Done Today - diary-work-before-resources-v1 - diary-critical-hierarchy-staff-compact-v1 */}
             <Card id="diary-work-section" className="ops-card lg:col-span-2">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.14em] flex items-center gap-2">
@@ -2117,44 +2220,6 @@ const DiaryPage = () => {
               </CardContent>
             </Card>
 
-            {/* Overdue Follow-ups */}
-            <Card id="diary-overdue-followups" className="ops-card lg:col-span-2">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
-                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-400">
-                  <Target className="w-4 h-4" />
-                  Overdue Follow-ups ({diary.overdue_items?.length || 0})
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent className="py-3">
-                {diary.overdue_items?.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {sortDiaryPriorityFirst(diary.overdue_items).map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => openDiaryActionItem(item)}
-                        className="w-full p-2 bg-red-950/20 rounded-md border-l-4 border-l-red-400 text-left transition hover:border-red-400/70 hover:bg-red-500/10"
-                        data-testid={`diary-overdue-clickthrough-${item.id}`}
-                      >
-                        <p className="text-sm font-medium">{item.title}</p>
-                        {item.due_date && (
-                          <p className="text-xs text-red-400">
-                            Due:{' '}
-                            {new Date(item.due_date).toLocaleDateString('en-NZ', {
-                              day: '2-digit',
-                              month: 'short'
-                            })}
-                          </p>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No overdue follow-ups</p>
-                )}
-              </CardContent>
-            </Card>
           </div>
         </>
       )}
