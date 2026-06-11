@@ -69,6 +69,9 @@ const DiaryPage = () => {
   const [labourImporting, setLabourImporting] = useState(false);
   const [labourEditMode, setLabourEditMode] = useState(false);
   const [activeLabourIndex, setActiveLabourIndex] = useState(null);
+  const [selectedStaffEmployeeValue, setSelectedStaffEmployeeValue] = useState('');
+  const [showNewStaffForm, setShowNewStaffForm] = useState(false);
+  const [newStaffName, setNewStaffName] = useState('');
   const [siteResources, setSiteResources] = useState({ materials: [], plant_equipment: [] });
   const [resourcesLoading, setResourcesLoading] = useState(false);
   const [resourcesSaving, setResourcesSaving] = useState(false);
@@ -194,6 +197,78 @@ const DiaryPage = () => {
       window.requestAnimationFrame(() => openLabourEditor(nextIndex)); // diary-staff-edit-focus-v2
       return next;
     });
+  };
+
+  const addStaffRowFromEmployee = (employeeOption) => {
+    if (!employeeOption?.employee_name) {
+      toast.error('Select a staff member first');
+      return;
+    }
+
+    setLabourRows((current) => {
+      const next = [
+        ...current,
+        {
+          ...createEmptyLabourRow(),
+          employee_id: employeeOption.employee_id || '',
+          employee_name: employeeOption.employee_name,
+          sync_status: employeeOption.linked_to_timesheet ? 'local_only' : 'local_pending_timesheet_staff'
+        }
+      ];
+      const nextIndex = next.length - 1;
+      window.requestAnimationFrame(() => openLabourEditor(nextIndex));
+      return next;
+    });
+  };
+
+  const addSelectedStaffToDiary = () => {
+    const employeeOption = resolveEmployeeSelection(selectedStaffEmployeeValue);
+    if (!employeeOption) {
+      toast.error('Select a staff member first');
+      return;
+    }
+
+    addStaffRowFromEmployee(employeeOption);
+    setSelectedStaffEmployeeValue('');
+  };
+
+  const addNewStaffToDiary = () => {
+    const name = newStaffName.trim();
+    if (!name) {
+      toast.error('Enter the staff member name first');
+      return;
+    }
+
+    addStaffRowFromEmployee({
+      value: name,
+      label: `${name} (pending Timesheet link)`,
+      employee_id: '',
+      employee_name: name,
+      linked_to_timesheet: false
+    });
+
+    setNewStaffName('');
+    setShowNewStaffForm(false);
+    toast.info('Staff added to this diary. Add/link them in Timesheet Manager next so future entries use the dropdown.');
+  };
+
+  const updateLabourRowEmployee = (index, selectedValue) => {
+    const employeeOption = resolveEmployeeSelection(selectedValue);
+    if (!employeeOption) {
+      updateLabourRow(index, 'employee_name', '');
+      updateLabourRow(index, 'employee_id', '');
+      return;
+    }
+
+    setLabourRows((current) => current.map((row, rowIndex) => {
+      if (rowIndex !== index) return row;
+      return calculateLabourHours({
+        ...row,
+        employee_id: employeeOption.employee_id || '',
+        employee_name: employeeOption.employee_name,
+        sync_status: employeeOption.linked_to_timesheet ? (row.sync_status || 'local_only') : 'local_pending_timesheet_staff'
+      });
+    }));
   };
 
   const removeLabourRow = (index) => {
@@ -422,6 +497,67 @@ const DiaryPage = () => {
     ['employee_name', 'name', 'full_name', 'display_name', 'email', 'id'],
     ['employee_name', 'name', 'full_name', 'display_name', 'email', 'id']
   );
+
+  const employeePickerOptions = (currentValue = '') => {
+    const sourceEmployees = Array.isArray(timesheetReferenceOptions.employees)
+      ? timesheetReferenceOptions.employees
+      : [];
+
+    const options = [];
+    const seen = new Set();
+
+    sourceEmployees.forEach((employee) => {
+      const employeeId = String(employee.employee_id || employee.id || employee.value || '').trim();
+      const employeeName = String(
+        employee.employee_name ||
+        employee.name ||
+        employee.full_name ||
+        employee.display_name ||
+        employee.label ||
+        employee.email ||
+        employeeId ||
+        ''
+      ).trim();
+
+      const value = employeeId || employeeName;
+      if (!value || seen.has(value)) return;
+
+      seen.add(value);
+      options.push({
+        value,
+        label: employeeName && employeeId && employeeName !== employeeId ? `${employeeName} (${employeeId})` : employeeName,
+        employee_id: employeeId,
+        employee_name: employeeName || value,
+        linked_to_timesheet: Boolean(employeeId)
+      });
+    });
+
+    const current = String(currentValue || '').trim();
+    if (current && !seen.has(current)) {
+      options.unshift({
+        value: current,
+        label: `${current} (pending Timesheet link)`,
+        employee_id: '',
+        employee_name: current,
+        linked_to_timesheet: false
+      });
+    }
+
+    return options;
+  };
+
+  const resolveEmployeeSelection = (value) => {
+    const selectedValue = String(value || '').trim();
+    if (!selectedValue) return null;
+
+    return employeePickerOptions(selectedValue).find((option) => option.value === selectedValue) || {
+      value: selectedValue,
+      label: selectedValue,
+      employee_id: '',
+      employee_name: selectedValue,
+      linked_to_timesheet: false
+    };
+  };
 
   const taskCodeOptionsForRow = (currentValue) => buildReferenceOptions(
     timesheetReferenceOptions.task_codes,
@@ -1274,7 +1410,7 @@ const DiaryPage = () => {
               <div>
                 <CardTitle className="font-heading text-xl font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Simple daily staff list for this diary. Tap + Add staff, type the name, then tap a name later to edit times, job, task code, PM, or work done.
+                  Add staff from the Timesheet employee list so diary labour stays linked for Timesheet review.
                 </p>
               </div>
               <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
@@ -1288,28 +1424,60 @@ const DiaryPage = () => {
               <p className="text-sm text-muted-foreground">Loading staff...</p>
             ) : (
               <div className="space-y-4" data-testid="daily-labour-rows">
-                <div className="rounded-xl border border-primary/40 bg-primary/5 p-3" data-testid="diary-real-layout-staff-top-v3">
+                <div className="rounded-xl border border-primary/40 bg-primary/5 p-3" data-testid="staff-dropdown-timesheet-link-v1">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
                       <p className="text-[11px] font-black uppercase tracking-[0.16em] text-primary">Staff on Site</p>
-                      <p className="text-xs font-bold text-muted-foreground">{labourRows.length} staff • {labourTotalHours.toFixed(2)}h total</p>
+                      <p className="text-xs font-bold text-muted-foreground">{labourRows.length} staff - {labourTotalHours.toFixed(2)}h total</p>
                     </div>
-                    <Button type="button" size="sm" variant="secondary" onClick={addLabourRow} data-testid="daily-labour-add-staff-compact">
-                      + Add staff
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]" data-testid="staff-timesheet-picker">
+                    <select
+                      className="input min-h-11 w-full min-w-0"
+                      value={selectedStaffEmployeeValue}
+                      onChange={(e) => setSelectedStaffEmployeeValue(e.target.value)}
+                      data-testid="staff-timesheet-employee-select"
+                    >
+                      <option value="">Select staff member from Timesheet</option>
+                      {employeePickerOptions().map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                    <Button type="button" onClick={addSelectedStaffToDiary} disabled={!selectedStaffEmployeeValue} data-testid="staff-timesheet-add-selected">
+                      Add to diary
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => setShowNewStaffForm((value) => !value)} data-testid="staff-timesheet-add-new-toggle">
+                      + Add new staff
                     </Button>
                   </div>
 
+                  {showNewStaffForm && (
+                    <div className="mt-3 rounded-lg border border-dashed border-primary/50 bg-background/70 p-3" data-testid="staff-timesheet-add-new-form">
+                      <p className="mb-2 text-xs font-bold text-muted-foreground">
+                        New staff is added to today's diary as pending. Link/create them in Timesheet Manager so future entries use the dropdown.
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                        <input
+                          className="input min-h-11 w-full min-w-0"
+                          placeholder="New staff member name"
+                          value={newStaffName}
+                          onChange={(e) => setNewStaffName(e.target.value)}
+                          data-testid="staff-timesheet-new-name"
+                        />
+                        <Button type="button" onClick={addNewStaffToDiary} disabled={!newStaffName.trim()} data-testid="staff-timesheet-add-new-confirm">
+                          Add new staff
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   {labourRows.length === 0 ? (
-                    <button
-                      type="button"
-                      className="w-full rounded-lg border border-dashed border-primary/50 bg-background/70 px-3 py-4 text-left text-sm font-bold text-primary"
-                      onClick={addLabourRow}
-                      data-testid="daily-labour-empty-add-staff"
-                    >
-                      + Add first staff member
-                    </button>
+                    <div className="mt-3 rounded-lg border border-dashed border-border/70 bg-background/60 px-3 py-4 text-sm font-semibold text-muted-foreground" data-testid="staff-timesheet-empty">
+                      Select a staff member above to start today's Staff on Site list.
+                    </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="mt-3 space-y-2" data-testid="staff-timesheet-selected-list">
                       {labourRows.map((row, index) => (
                         <button
                           key={row.id || index}
@@ -1323,9 +1491,9 @@ const DiaryPage = () => {
                           data-testid={`staff-on-site-name-${index}`}
                         >
                           <span className="min-w-0">
-                            <span className="block truncate text-sm font-black">{row.employee_name || 'Tap to enter staff name'}</span>
+                            <span className="block truncate text-sm font-black">{row.employee_name || 'Staff member'}</span>
                             <span className="block truncate text-xs font-semibold text-muted-foreground">
-                              {formatTimeForDiary(row.start_time) || 'Start'} - {formatTimeForDiary(row.finish_time) || 'Finish'} • {(parseFloat(row.total_hours) || 0).toFixed(2)}h
+                              {row.employee_id ? 'Timesheet linked' : 'Pending Timesheet link'} - {formatTimeForDiary(row.start_time) || 'Start'} to {formatTimeForDiary(row.finish_time) || 'Finish'} - {(parseFloat(row.total_hours) || 0).toFixed(2)}h
                             </span>
                           </span>
                           <span className="shrink-0 text-[11px] font-black uppercase tracking-[0.14em] text-primary">Edit</span>
@@ -1343,20 +1511,18 @@ const DiaryPage = () => {
                     data-testid={`staff-on-site-edit-row-${index}`}
                   >
                     <div className="sm:col-span-2 lg:col-span-3 xl:col-span-2">
-                      <input
+                      <select
                         ref={activeLabourNameInputRef}
                         className="input lld-daily-labour-control min-h-11 w-full min-w-0"
-                        placeholder="Type staff name here"
-                        value={row.employee_name || ''}
-                        list={`daily-labour-employee-options-${index}`}
-                        onChange={(e) => updateLabourRow(index, 'employee_name', e.target.value)}
+                        value={row.employee_id || row.employee_name || ''}
+                        onChange={(e) => updateLabourRowEmployee(index, e.target.value)}
                         data-testid={`daily-labour-employee-${index}`}
-                      />
-                      <datalist id={`daily-labour-employee-options-${index}`}>
-                        {employeeOptionsForRow(row.employee_name).map((option) => (
+                      >
+                        <option value="">Staff member</option>
+                        {employeePickerOptions(row.employee_id || row.employee_name).map((option) => (
                           <option key={option.value} value={option.value}>{option.label}</option>
                         ))}
-                      </datalist>
+                      </select>
                     </div>
                     <select
                       className="input lld-daily-labour-control min-h-11 w-full min-w-0 lg:col-span-2 xl:col-span-1"
@@ -1464,7 +1630,7 @@ const DiaryPage = () => {
             </div>
 
             <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
-              Staff on Site stays at the top of the diary. Draft staff stay visible on this device; press Save staff when the staff list is ready for the official diary record.
+              Use the Timesheet staff dropdown first. New names are marked pending until they are created or linked in Timesheet Manager.
             </p>
           </CardContent>
         </Card>
