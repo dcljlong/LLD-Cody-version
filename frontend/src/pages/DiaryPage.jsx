@@ -86,6 +86,7 @@ const DiaryPage = () => {
   const [selectedDate, setSelectedDate] = useState(() => getNzDateString());
   const [loading, setLoading] = useState(true);
   const [showQuickEntry, setShowQuickEntry] = useState(false);
+  const [selectedDiaryActionItem, setSelectedDiaryActionItem] = useState(null); // diary-action-inline-close-panel-v1
   const [submitting, setSubmitting] = useState(false);
   const [gates, setGates] = useState([]);
   const fileInputRef = useRef(null);
@@ -1194,14 +1195,41 @@ const DiaryPage = () => {
     });
   };
 
-  const openDiaryActionItem = (item) => {
-    if (!item?.id) return;
+  const getDiaryActionItemUrl = (item = selectedDiaryActionItem) => {
+    if (!item?.id) return '/action-items';
+
     const params = new URLSearchParams();
     params.set('item', item.id);
+
     if (item.project_id || item.job_id || selectedProject) {
       params.set('project', item.project_id || item.job_id || selectedProject);
     }
-    window.location.assign(`/action-items?${params.toString()}`);
+
+    return `/action-items?${params.toString()}`;
+  };
+
+  const openDiaryActionItem = (item) => {
+    if (!item?.id) return;
+
+    setSelectedDiaryActionItem((current) => (
+      current?.id === item.id ? null : item
+    ));
+
+    window.requestAnimationFrame(() => {
+      document.getElementById('diary-action-detail-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }; // diary-action-inline-close-panel-v1
+
+  const openSelectedDiaryActionInActionItems = () => {
+    const url = getDiaryActionItemUrl(selectedDiaryActionItem);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const closeDiaryActionItem = () => {
+    setSelectedDiaryActionItem(null);
+    window.requestAnimationFrame(() => {
+      document.getElementById('daily-report-readiness')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   };
 
   if (loading) {
@@ -1463,7 +1491,7 @@ const DiaryPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => openActionItemsPage('due-today')}
+              onClick={() => openDiarySection('diary-due-today-section')}
               className="rounded-xl border border-orange-400/35 bg-orange-500/10 px-3 py-2 text-left transition hover:bg-orange-500/15"
               data-testid="diary-command-due-today"
             >
@@ -1472,7 +1500,7 @@ const DiaryPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => openActionItemsPage('next-3-weeks')}
+              onClick={() => openDiarySection('diary-action-open-section')}
               className="rounded-xl border border-primary/35 bg-primary/10 px-3 py-2 text-left transition hover:bg-primary/15"
               data-testid="diary-command-forecast"
             >
@@ -1543,6 +1571,62 @@ const DiaryPage = () => {
         </CardContent>
       </Card>
 
+      {selectedDiaryActionItem && (
+        <Card id="diary-action-detail-panel" className="ops-card border-primary/40" data-testid="diary-action-inline-close-panel-v1">
+          <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Selected Follow-up</p>
+                <CardTitle className="mt-1 font-heading text-base font-black uppercase tracking-[0.12em]">
+                  {selectedDiaryActionItem.title || 'Untitled action item'}
+                </CardTitle>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {[selectedDiaryActionItem.project_name || selectedDiaryActionItem.project?.name, selectedDiaryActionItem.owner, selectedDiaryActionItem.priority].filter(Boolean).join(' • ') || 'Diary follow-up'}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={openSelectedDiaryActionInActionItems} data-testid="diary-action-open-full">
+                  Open full Action Items
+                </Button>
+                <Button type="button" variant="secondary" size="sm" onClick={closeDiaryActionItem} data-testid="diary-action-close-inline">
+                  Close
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-3 px-4 py-3">
+            <div className="grid gap-2 sm:grid-cols-3">
+              <div className="rounded-lg border border-border bg-secondary/20 px-3 py-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Status</p>
+                <p className="text-sm font-bold">{selectedDiaryActionItem.status || 'Open'}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-secondary/20 px-3 py-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Priority</p>
+                <p className="text-sm font-bold">{selectedDiaryActionItem.priority || 'Not set'}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-secondary/20 px-3 py-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Due</p>
+                <p className="text-sm font-bold">
+                  {selectedDiaryActionItem.due_date || selectedDiaryActionItem.expected_complete_date || 'Not set'}
+                </p>
+              </div>
+            </div>
+
+            {(selectedDiaryActionItem.description || selectedDiaryActionItem.note || selectedDiaryActionItem.notes) && (
+              <div className="rounded-lg border border-border bg-background/70 px-3 py-3 text-sm text-muted-foreground">
+                {selectedDiaryActionItem.description || selectedDiaryActionItem.note || selectedDiaryActionItem.notes}
+              </div>
+            )}
+
+            <p className="text-xs font-medium text-muted-foreground">
+              This keeps you inside the Diary. Use “Open full Action Items” only when you need the full edit/complete workflow.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {draftStatus && (
         <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary" data-testid="diary-draft-autosave-v1-status">
           {draftStatus}
@@ -1602,7 +1686,7 @@ const DiaryPage = () => {
                         key={item.id}
                         type="button"
                         onClick={() => openDiaryActionItem(item)}
-                        className="w-full p-2 bg-red-950/20 rounded-md border-l-4 border-l-red-400 text-left transition hover:border-red-400/70 hover:bg-red-500/10"
+                        className={`w-full p-2 rounded-md border-l-4 text-left transition ${selectedDiaryActionItem?.id === item.id ? 'border-l-red-300 bg-red-500/20 ring-2 ring-red-400/30' : 'border-l-red-400 bg-red-950/20 hover:border-red-400/70 hover:bg-red-500/10'}`}
                         data-testid={`diary-overdue-clickthrough-${item.id}`}
                       >
                         <p className="text-sm font-medium">{item.title}</p>
@@ -1643,7 +1727,7 @@ const DiaryPage = () => {
                         key={item.id}
                         type="button"
                         onClick={() => openDiaryActionItem(item)}
-                        className="w-full p-2 bg-orange-500/10 rounded-md border-l-4 border-l-orange-400 text-left transition hover:border-orange-400/70 hover:bg-orange-500/15"
+                        className={`w-full p-2 rounded-md border-l-4 text-left transition ${selectedDiaryActionItem?.id === item.id ? 'border-l-orange-300 bg-orange-500/20 ring-2 ring-orange-400/30' : 'border-l-orange-400 bg-orange-500/10 hover:border-orange-400/70 hover:bg-orange-500/15'}`}
                         data-testid={`diary-due-today-clickthrough-${item.id}`}
                       >
                         <p className="text-sm font-medium">{item.title}</p>
@@ -2166,7 +2250,7 @@ const DiaryPage = () => {
                         key={item.id}
                         type="button"
                         onClick={() => openDiaryActionItem(item)}
-                        className="w-full p-2 bg-secondary/30 rounded-md border-l-4 border-l-amber-500 text-left transition hover:border-primary/50 hover:bg-primary/5"
+                        className={`w-full p-2 rounded-md border-l-4 text-left transition ${selectedDiaryActionItem?.id === item.id ? 'border-l-primary bg-primary/15 ring-2 ring-primary/25' : 'border-l-amber-500 bg-secondary/30 hover:border-primary/50 hover:bg-primary/5'}`}
                         data-testid={`diary-action-open-clickthrough-${item.id}`}
                       >
                         <p className="text-sm font-medium">{item.title}</p>
@@ -2207,7 +2291,7 @@ const DiaryPage = () => {
                         key={item.id}
                         type="button"
                         onClick={() => openDiaryActionItem(item)}
-                        className="w-full p-2 bg-secondary/30 rounded-md border-l-4 border-l-emerald-500 text-left transition hover:border-primary/50 hover:bg-primary/5"
+                        className={`w-full p-2 rounded-md border-l-4 text-left transition ${selectedDiaryActionItem?.id === item.id ? 'border-l-emerald-300 bg-emerald-500/15 ring-2 ring-emerald-400/25' : 'border-l-emerald-500 bg-secondary/30 hover:border-primary/50 hover:bg-primary/5'}`}
                         data-testid={`diary-action-closed-clickthrough-${item.id}`}
                       >
                         <p className="text-sm font-medium">{item.title}</p>
