@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { diaryApi, integrationsApi, projectsApi, walkaroundApi, gatesApi } from '../lib/api';
+import { actionItemsApi, diaryApi, integrationsApi, projectsApi, walkaroundApi, gatesApi } from '../lib/api';
 import { toast } from 'sonner';
 import {
   BookOpen,
@@ -87,6 +87,8 @@ const DiaryPage = () => {
   const [loading, setLoading] = useState(true);
   const [showQuickEntry, setShowQuickEntry] = useState(false);
   const [selectedDiaryActionItem, setSelectedDiaryActionItem] = useState(null); // diary-action-inline-close-panel-v1
+  const [selectedDiaryActionDraft, setSelectedDiaryActionDraft] = useState(null); // diary-inline-action-edit-panel-v1
+  const [diaryActionSaving, setDiaryActionSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [gates, setGates] = useState([]);
   const fileInputRef = useRef(null);
@@ -1195,42 +1197,119 @@ const DiaryPage = () => {
     });
   };
 
-  const getDiaryActionItemUrl = (item = selectedDiaryActionItem) => {
-    if (!item?.id) return '/action-items';
-
-    const params = new URLSearchParams();
-    params.set('item', item.id);
-
-    if (item.project_id || item.job_id || selectedProject) {
-      params.set('project', item.project_id || item.job_id || selectedProject);
-    }
-
-    return `/action-items?${params.toString()}`;
-  };
+  const normaliseDiaryActionDraft = (item = {}) => ({
+    title: item.title || item.task_name || item.name || '',
+    description: item.description || item.note || item.details || '',
+    priority: String(item.priority || 'medium').toLowerCase(),
+    status: String(item.status || 'open').toLowerCase(),
+    due_date: String(item.due_date || '').slice(0, 10),
+    expected_complete_date: String(item.expected_complete_date || '').slice(0, 10),
+    owner: item.owner || ''
+  });
 
   const openDiaryActionItem = (item) => {
     if (!item?.id) return;
 
-    setSelectedDiaryActionItem((current) => (
-      current?.id === item.id ? null : item
-    ));
+    if (selectedDiaryActionItem?.id === item.id) {
+      closeDiaryActionItem();
+      return;
+    }
+
+    setSelectedDiaryActionItem(item);
+    setSelectedDiaryActionDraft(normaliseDiaryActionDraft(item));
 
     window.requestAnimationFrame(() => {
       document.getElementById('diary-action-detail-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }; // diary-action-inline-close-panel-v1
 
-  const openSelectedDiaryActionInActionItems = () => {
-    const url = getDiaryActionItemUrl(selectedDiaryActionItem);
-    window.open(url, '_blank', 'noopener,noreferrer');
+  const updateSelectedDiaryActionDraft = (field, value) => {
+    setSelectedDiaryActionDraft((current) => ({
+      ...(current || normaliseDiaryActionDraft(selectedDiaryActionItem || {})),
+      [field]: value
+    }));
+  };
+
+  const saveSelectedDiaryActionItem = async () => {
+    if (!selectedDiaryActionItem?.id || !selectedDiaryActionDraft) return;
+
+    const title = String(selectedDiaryActionDraft.title || '').trim();
+    if (!title) {
+      toast.error('Action item title is required');
+      return;
+    }
+
+    setDiaryActionSaving(true);
+    try {
+      const payload = {
+        project_id: selectedDiaryActionItem.project_id || selectedDiaryActionItem.job_id || selectedProject,
+        title,
+        description: String(selectedDiaryActionDraft.description || '').trim(),
+        priority: selectedDiaryActionDraft.priority || 'medium',
+        status: selectedDiaryActionDraft.status || 'open',
+        due_date: selectedDiaryActionDraft.due_date || null,
+        expected_complete_date: selectedDiaryActionDraft.expected_complete_date || null,
+        owner: String(selectedDiaryActionDraft.owner || '').trim()
+      };
+
+      const res = await actionItemsApi.update(selectedDiaryActionItem.id, payload);
+      const updated = res.data || { ...selectedDiaryActionItem, ...payload };
+
+      setSelectedDiaryActionItem(updated);
+      setSelectedDiaryActionDraft(normaliseDiaryActionDraft(updated));
+      toast.success('Follow-up updated');
+      fetchDiary();
+    } catch (error) {
+      console.error('Failed to update diary follow-up:', error);
+      toast.error('Failed to update follow-up');
+    } finally {
+      setDiaryActionSaving(false);
+    }
+  };
+
+  const completeSelectedDiaryActionItem = async () => {
+    if (!selectedDiaryActionItem?.id) return;
+
+    setDiaryActionSaving(true);
+    try {
+      await actionItemsApi.complete(selectedDiaryActionItem.id);
+      toast.success('Follow-up marked complete');
+      setSelectedDiaryActionItem(null);
+      setSelectedDiaryActionDraft(null);
+      fetchDiary();
+    } catch (error) {
+      console.error('Failed to complete diary follow-up:', error);
+      toast.error('Failed to complete follow-up');
+    } finally {
+      setDiaryActionSaving(false);
+    }
+  };
+
+  const reopenSelectedDiaryActionItem = async () => {
+    if (!selectedDiaryActionItem?.id) return;
+
+    setDiaryActionSaving(true);
+    try {
+      await actionItemsApi.reopen(selectedDiaryActionItem.id);
+      toast.success('Follow-up reopened');
+      fetchDiary();
+      setSelectedDiaryActionItem((current) => current ? { ...current, status: 'open' } : current);
+      setSelectedDiaryActionDraft((current) => current ? { ...current, status: 'open' } : current);
+    } catch (error) {
+      console.error('Failed to reopen diary follow-up:', error);
+      toast.error('Failed to reopen follow-up');
+    } finally {
+      setDiaryActionSaving(false);
+    }
   };
 
   const closeDiaryActionItem = () => {
     setSelectedDiaryActionItem(null);
+    setSelectedDiaryActionDraft(null);
     window.requestAnimationFrame(() => {
       document.getElementById('daily-report-readiness')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
-  };
+  }; // diary-inline-action-edit-panel-v1
 
   if (loading) {
     return (
@@ -1571,58 +1650,132 @@ const DiaryPage = () => {
         </CardContent>
       </Card>
 
-      {selectedDiaryActionItem && (
-        <Card id="diary-action-detail-panel" className="ops-card border-primary/40" data-testid="diary-action-inline-close-panel-v1">
-          <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-3">
+      {selectedDiaryActionItem && selectedDiaryActionDraft && (
+        <Card id="diary-action-detail-panel" className="ops-card border-primary/60 bg-card shadow-lg" data-testid="diary-inline-action-edit-panel-v1">
+          <CardHeader className="ops-card-header border-b border-primary/25 bg-primary/10 px-4 py-3">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Selected Follow-up</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Edit Follow-up In Diary</p>
                 <CardTitle className="mt-1 font-heading text-base font-black uppercase tracking-[0.12em]">
-                  {selectedDiaryActionItem.title || 'Untitled action item'}
+                  {selectedDiaryActionDraft.title || 'Untitled action item'}
                 </CardTitle>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {[selectedDiaryActionItem.project_name || selectedDiaryActionItem.project?.name, selectedDiaryActionItem.owner, selectedDiaryActionItem.priority].filter(Boolean).join(' • ') || 'Diary follow-up'}
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                  Stay in the Diary. Edit, save, complete, reopen, or close from this panel.
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={openSelectedDiaryActionInActionItems} data-testid="diary-action-open-full">
-                  Open full Action Items
-                </Button>
-                <Button type="button" variant="secondary" size="sm" onClick={closeDiaryActionItem} data-testid="diary-action-close-inline">
+                <Button type="button" variant="secondary" size="sm" onClick={closeDiaryActionItem} disabled={diaryActionSaving} data-testid="diary-action-close-inline">
                   Close
                 </Button>
               </div>
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-3 px-4 py-3">
-            <div className="grid gap-2 sm:grid-cols-3">
-              <div className="rounded-lg border border-border bg-secondary/20 px-3 py-2">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Status</p>
-                <p className="text-sm font-bold">{selectedDiaryActionItem.status || 'Open'}</p>
-              </div>
-              <div className="rounded-lg border border-border bg-secondary/20 px-3 py-2">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Priority</p>
-                <p className="text-sm font-bold">{selectedDiaryActionItem.priority || 'Not set'}</p>
-              </div>
-              <div className="rounded-lg border border-border bg-secondary/20 px-3 py-2">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Due</p>
-                <p className="text-sm font-bold">
-                  {selectedDiaryActionItem.due_date || selectedDiaryActionItem.expected_complete_date || 'Not set'}
-                </p>
-              </div>
+          <CardContent className="space-y-4 px-4 py-4">
+            <div className="grid gap-3 lg:grid-cols-2">
+              <label className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Title</span>
+                <Input
+                  className="min-h-11 border-primary/45 bg-background text-foreground shadow-inner"
+                  value={selectedDiaryActionDraft.title}
+                  onChange={(e) => updateSelectedDiaryActionDraft('title', e.target.value)}
+                  data-testid="diary-action-title-input"
+                />
+              </label>
+
+              <label className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Owner</span>
+                <Input
+                  className="min-h-11 border-primary/45 bg-background text-foreground shadow-inner"
+                  value={selectedDiaryActionDraft.owner}
+                  onChange={(e) => updateSelectedDiaryActionDraft('owner', e.target.value)}
+                  placeholder="Responsible person"
+                  data-testid="diary-action-owner-input"
+                />
+              </label>
             </div>
 
-            {(selectedDiaryActionItem.description || selectedDiaryActionItem.note || selectedDiaryActionItem.notes) && (
-              <div className="rounded-lg border border-border bg-background/70 px-3 py-3 text-sm text-muted-foreground">
-                {selectedDiaryActionItem.description || selectedDiaryActionItem.note || selectedDiaryActionItem.notes}
-              </div>
-            )}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Priority</span>
+                <select
+                  className="input min-h-11 w-full border-primary/45 bg-background text-foreground shadow-inner"
+                  value={selectedDiaryActionDraft.priority}
+                  onChange={(e) => updateSelectedDiaryActionDraft('priority', e.target.value)}
+                  data-testid="diary-action-priority-select"
+                >
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                  <option value="deferred">Deferred</option>
+                </select>
+              </label>
 
-            <p className="text-xs font-medium text-muted-foreground">
-              This keeps you inside the Diary. Use “Open full Action Items” only when you need the full edit/complete workflow.
-            </p>
+              <label className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Status</span>
+                <select
+                  className="input min-h-11 w-full border-primary/45 bg-background text-foreground shadow-inner"
+                  value={selectedDiaryActionDraft.status}
+                  onChange={(e) => updateSelectedDiaryActionDraft('status', e.target.value)}
+                  data-testid="diary-action-status-select"
+                >
+                  <option value="open">To Do</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="blocked">Blocked</option>
+                  <option value="completed">Complete</option>
+                </select>
+              </label>
+
+              <label className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Due</span>
+                <Input
+                  type="date"
+                  className="min-h-11 border-primary/45 bg-background text-foreground shadow-inner"
+                  value={selectedDiaryActionDraft.due_date}
+                  onChange={(e) => updateSelectedDiaryActionDraft('due_date', e.target.value)}
+                  data-testid="diary-action-due-date-input"
+                />
+              </label>
+
+              <label className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Expected Complete</span>
+                <Input
+                  type="date"
+                  className="min-h-11 border-primary/45 bg-background text-foreground shadow-inner"
+                  value={selectedDiaryActionDraft.expected_complete_date}
+                  onChange={(e) => updateSelectedDiaryActionDraft('expected_complete_date', e.target.value)}
+                  data-testid="diary-action-expected-date-input"
+                />
+              </label>
+            </div>
+
+            <label className="space-y-1">
+              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Details</span>
+              <Textarea
+                className="min-h-[90px] border-primary/45 bg-background text-foreground shadow-inner"
+                value={selectedDiaryActionDraft.description}
+                onChange={(e) => updateSelectedDiaryActionDraft('description', e.target.value)}
+                placeholder="Notes, instruction, required response, or site detail..."
+                data-testid="diary-action-description-input"
+              />
+            </label>
+
+            <div className="flex flex-col gap-2 border-t border-border/70 pt-3 sm:flex-row sm:flex-wrap">
+              <Button type="button" className="btn-primary" onClick={saveSelectedDiaryActionItem} disabled={diaryActionSaving} data-testid="diary-action-save-inline">
+                {diaryActionSaving ? 'Saving...' : 'Save Follow-up'}
+              </Button>
+              <Button type="button" variant="outline" onClick={completeSelectedDiaryActionItem} disabled={diaryActionSaving} data-testid="diary-action-complete-inline">
+                Mark Complete
+              </Button>
+              <Button type="button" variant="outline" onClick={reopenSelectedDiaryActionItem} disabled={diaryActionSaving} data-testid="diary-action-reopen-inline">
+                Reopen
+              </Button>
+              <Button type="button" variant="secondary" onClick={closeDiaryActionItem} disabled={diaryActionSaving}>
+                Close
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
