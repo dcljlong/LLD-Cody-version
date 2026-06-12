@@ -44,6 +44,9 @@ const STATUS_CONFIG = {
   }
 };
 
+const ROADBLOCK_FIELD_CLASS = "min-h-11 w-full rounded-lg border border-primary/45 bg-background px-3 py-2 text-sm font-semibold text-foreground shadow-inner outline-none focus:border-primary focus:ring-2 focus:ring-primary/25";
+const ROADBLOCK_PANEL_CLASS = "rounded-lg border border-primary/25 bg-background/80 px-3 py-3 shadow-inner"; // roadblock-mobile-create-containment-v1
+
 const STATUS_SECTIONS = [
   {
     key: "blockedDelayed",
@@ -304,6 +307,9 @@ export default function GatesPage() {
       order: projectId ? String(nextOrderForProject(projectId)) : ""
     });
     setFormOpen(true);
+    window.requestAnimationFrame(() => {
+      document.getElementById('gates-create-edit-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   function startEdit(gate) {
@@ -324,6 +330,9 @@ export default function GatesPage() {
       is_optional: Boolean(gate.is_optional)
     });
     setFormOpen(true);
+    window.requestAnimationFrame(() => {
+      document.getElementById('gates-create-edit-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   function cancelForm() {
@@ -443,9 +452,9 @@ export default function GatesPage() {
     const isBusy = busyGateId === gate.id;
 
     return (
-      <Card key={gate.id} className="ops-card">
+      <Card key={gate.id} className="ops-card min-w-0 overflow-hidden">
         <CardHeader className="ops-card-header py-3">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
             <div className="min-w-0">
               <CardTitle className="font-heading text-lg tracking-tight">
                 {gate.order ? `${gate.order}. ` : ""}{gate.name || "Untitled Gate"}
@@ -573,30 +582,45 @@ export default function GatesPage() {
   ];
 
   return (
-    <div className="space-y-7" data-testid="gates-page">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="w-full max-w-full space-y-4 overflow-x-hidden px-0" data-testid="gates-page" data-roadblock-mobile-create-containment="v1">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
             Site control
           </p>
-          <h2 className="font-heading text-4xl font-black uppercase tracking-[0.08em]" data-testid="gates-heading-polish-v1-marker">Roadblocks / Concerns</h2>
-          <p className="mt-1 max-w-3xl text-base font-medium leading-6 text-muted-foreground">
-            Track the job blockers, handover points, inspections, dependencies, and risk dates that need site attention.
+          <h2 className="font-heading text-2xl font-black uppercase tracking-[0.06em] sm:text-4xl sm:tracking-[0.08em]" data-testid="gates-heading-polish-v1-marker">Roadblocks / Concerns</h2>
+          <p className="mt-1 max-w-3xl text-sm font-medium leading-5 text-muted-foreground sm:text-base sm:leading-6">
+            {formOpen
+              ? "Create or edit the roadblock first. Summary cards are hidden while the form is open."
+              : "Track job blockers, handover points, inspections, dependencies, and risk dates that need site attention."}
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={startCreate}
-          disabled={projects.length === 0}
-          data-testid="gates-new-roadblock-label-polish-v2"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          New Roadblock / Concern
-        </button>
+        {!formOpen ? (
+          <button
+            type="button"
+            onClick={startCreate}
+            disabled={projects.length === 0}
+            data-testid="gates-new-roadblock-label-polish-v2"
+            className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          >
+            New Roadblock / Concern
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={cancelForm}
+            data-testid="gates-form-top-cancel-v1"
+            className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold hover:bg-muted sm:w-auto"
+            disabled={saving}
+          >
+            Back to Roadblocks
+          </button>
+        )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      {!formOpen ? (
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <select
           className="h-10 rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm"
           value={selectedProject}
@@ -626,9 +650,11 @@ export default function GatesPage() {
           <option value="COMPLETED">Completed only</option>
           <option value="ALL">All roadblocks / concerns</option>
         </select>
-      </div>
+        </div>
+      ) : null}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7" data-testid="gates-summary-polish-v1">
+      {!formOpen ? (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7" data-testid="gates-summary-polish-v1">
         {summaryCards.map((card) => (
           <button
             key={card.key}
@@ -637,16 +663,17 @@ export default function GatesPage() {
             className={`text-left ${selectedStatus === card.key ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
           >
             <Card className="ops-card h-full overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
-              <CardContent className="px-4 py-4">
+              <CardContent className="px-3 py-3 sm:px-4 sm:py-4">
                 <div className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                   {card.label}
                 </div>
-                <div className="mt-2 font-heading text-4xl font-black leading-none">{card.value}</div>
+                <div className="mt-1 font-heading text-2xl font-black leading-none sm:mt-2 sm:text-4xl">{card.value}</div>
               </CardContent>
             </Card>
           </button>
         ))}
-      </div>
+        </div>
+      ) : null}
 
       {actionError ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -670,22 +697,36 @@ export default function GatesPage() {
       ) : null}
 
       {formOpen ? (
-        <Card className="ops-card border-primary/40" data-testid="gates-form-polish-v1">
-          <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-5">
-            <CardTitle className="font-heading text-xl font-black uppercase tracking-[0.14em]">
-              {editingGateId ? "Edit Roadblock / Concern" : "Create Roadblock / Concern"}
-            </CardTitle>
+        <Card id="gates-create-edit-form" className="ops-card w-full max-w-full overflow-hidden border-primary/60 shadow-lg" data-testid="gates-form-polish-v1" data-testid-roadblock-create-focus="v1">
+          <CardHeader className="ops-card-header border-b border-primary/30 bg-primary/10 px-3 py-3 sm:px-5 sm:py-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Roadblock Entry</p>
+                <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.10em] sm:text-xl sm:tracking-[0.14em]">
+                  {editingGateId ? "Edit Roadblock / Concern" : "Create Roadblock / Concern"}
+                </CardTitle>
+              </div>
+              <button
+                type="button"
+                onClick={cancelForm}
+                className="rounded-md border border-border bg-background px-3 py-2 text-sm font-semibold hover:bg-muted"
+                disabled={saving}
+                data-testid="gates-form-inline-cancel-v1"
+              >
+                Cancel
+              </button>
+            </div>
           </CardHeader>
 
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <CardContent className="px-3 py-4 sm:px-5">
+            <form onSubmit={handleSubmit} className="space-y-3" data-testid="gates-mobile-contained-form-v1">
+              <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
                 <label className="space-y-1">
                   <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                     Project
                   </span>
                   <select
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    className={ROADBLOCK_FIELD_CLASS}
                     value={form.project_id}
                     onChange={(event) => {
                       const projectId = event.target.value;
@@ -711,7 +752,7 @@ export default function GatesPage() {
                     Gate Name
                   </span>
                   <input
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    className={ROADBLOCK_FIELD_CLASS}
                     value={form.name}
                     onChange={(event) => setField("name", event.target.value)}
                     placeholder="e.g. Council preline signed off"
@@ -723,7 +764,7 @@ export default function GatesPage() {
                     Owner
                   </span>
                   <select
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    className={ROADBLOCK_FIELD_CLASS}
                     value={form.owner_party}
                     onChange={(event) => setField("owner_party", event.target.value)}
                   >
@@ -742,7 +783,7 @@ export default function GatesPage() {
                   </span>
                   <input
                     type="number"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    className={ROADBLOCK_FIELD_CLASS}
                     value={form.order}
                     onChange={(event) => setField("order", event.target.value)}
                   />
@@ -754,7 +795,7 @@ export default function GatesPage() {
                   </span>
                   <input
                     type="date"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    className={ROADBLOCK_FIELD_CLASS}
                     value={form.required_by_date}
                     onChange={(event) => setField("required_by_date", event.target.value)}
                   />
@@ -766,7 +807,7 @@ export default function GatesPage() {
                   </span>
                   <input
                     type="date"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    className={ROADBLOCK_FIELD_CLASS}
                     value={form.expected_complete_date}
                     onChange={(event) => setField("expected_complete_date", event.target.value)}
                   />
@@ -779,13 +820,13 @@ export default function GatesPage() {
                   <input
                     type="number"
                     min="0"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    className={ROADBLOCK_FIELD_CLASS}
                     value={form.buffer_days}
                     onChange={(event) => setField("buffer_days", event.target.value)}
                   />
                 </label>
 
-                <div className="space-y-2 rounded-md border border-border bg-background px-3 py-2">
+                <div className={ROADBLOCK_PANEL_CLASS}>
                   <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                     Flags
                   </div>
@@ -815,14 +856,14 @@ export default function GatesPage() {
                   Description / Site Note
                 </span>
                 <textarea
-                  className="min-h-[90px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  className={`${ROADBLOCK_FIELD_CLASS} min-h-[110px]`}
                   value={form.description}
                   onChange={(event) => setField("description", event.target.value)}
                   placeholder="What needs to be true before this gate can be closed?"
                 />
               </label>
 
-              <div className="space-y-2 rounded-md border border-border bg-background p-3">
+              <div className={ROADBLOCK_PANEL_CLASS}>
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                     Dependencies
@@ -833,9 +874,9 @@ export default function GatesPage() {
                 </div>
 
                 {eligibleDependencies.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                  <div className="grid min-w-0 grid-cols-1 gap-2 md:grid-cols-2">
                     {eligibleDependencies.map((gate) => (
-                      <label key={gate.id} className="flex items-start gap-2 rounded-md border border-border px-3 py-2 text-sm">
+                      <label key={gate.id} className="flex min-w-0 items-start gap-2 rounded-md border border-primary/25 bg-background/80 px-3 py-2 text-sm">
                         <input
                           type="checkbox"
                           className="mt-1"
@@ -879,13 +920,13 @@ export default function GatesPage() {
         </Card>
       ) : null}
 
-      {visibleGates.length > 0 ? (
+      {!formOpen && visibleGates.length > 0 ? (
         <div className="space-y-5">
           {sectionedGates.map((section) => {
             if (section.gates.length === 0) return null;
 
             return (
-              <section key={section.key} className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm" data-testid="gates-section-polish-v1">
+              <section key={section.key} className="min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm" data-testid="gates-section-polish-v1">
                 <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-5">
                   <div className="min-w-0">
                     <h3 className="font-heading text-xl font-black uppercase tracking-[0.14em]">
@@ -899,21 +940,21 @@ export default function GatesPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 xl:grid-cols-2">
+                <div className="grid min-w-0 grid-cols-1 gap-3 px-3 py-3 sm:px-5 sm:py-4 xl:grid-cols-2">
                   {section.gates.map((gate) => renderGateCard(gate))}
                 </div>
               </section>
             );
           })}
         </div>
-      ) : (
+      ) : !formOpen ? (
         <div className="empty-state py-20">
           <p className="empty-state-title">No Roadblocks / Concerns Found</p>
           <p className="empty-state-description">
             No roadblocks / concerns match the current project/status filter.
           </p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
