@@ -196,12 +196,16 @@ const DiaryPage = () => {
 
   const toggleLabourEditor = (index) => {
     if (labourEditMode && activeLabourIndex === index) {
-      setActiveLabourIndex(null);
-      setLabourEditMode(false); // staff-row-tap-toggle-details-v1
+      closeLabourEditor();
       return;
     }
 
     openLabourEditor(index);
+  };
+
+  const closeLabourEditor = () => {
+    setActiveLabourIndex(null);
+    setLabourEditMode(false); // diary-staff-timesheet-popout-editor-v1
   };
 
   const addLabourRow = () => {
@@ -904,7 +908,7 @@ const DiaryPage = () => {
       setLabourRows(Array.isArray(res.data?.rows) ? res.data.rows.map(normaliseLabourRow) : []);
       clearDiaryDraft('labour');
       setDraftStatus('Staff saved to diary');
-      setLabourEditMode(false);
+      closeLabourEditor();
       toast.success('Labour rows saved locally in LLD');
       fetchDiary();
     fetchLabourRows();
@@ -1919,7 +1923,7 @@ const DiaryPage = () => {
               <div>
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  Compact labour summary. Expand only when editing names, times, task code, PM, or Timesheet send.
+                  Compact staff list. Tap a name to open the timesheet-style pop-out editor.
                 </p>
               </div>
               <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
@@ -1997,7 +2001,7 @@ const DiaryPage = () => {
 
                   {labourRows.length === 0 ? (
                     <div className="mt-3 rounded-lg border border-dashed border-border/70 bg-background/60 px-3 py-4 text-sm font-semibold text-muted-foreground" data-testid="staff-timesheet-empty">
-                      Tap a staff name above to start today's Staff on Site list.
+                      Tap a staff name above to start today's compact Staff on Site list.
                     </div>
                   ) : (
                     <div className="mt-2 grid max-h-56 gap-1.5 overflow-y-auto pr-1" data-testid="staff-timesheet-selected-list">
@@ -2033,109 +2037,172 @@ const DiaryPage = () => {
                   <div
                     key={row.id || index}
                     ref={activeLabourEditorRef}
-                    className="lld-daily-labour-row grid gap-3 rounded-2xl border border-primary/60 bg-background/80 p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12"
-                    data-testid={`staff-on-site-edit-row-${index}`}
+                    className="fixed inset-x-2 bottom-3 z-40 max-h-[88vh] overflow-y-auto rounded-2xl border border-primary/70 bg-card p-3 shadow-2xl sm:inset-x-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:w-[min(760px,calc(100vw-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:p-4"
+                    data-testid="diary-staff-timesheet-popout-editor-v1"
                     onClick={(event) => event.stopPropagation()}
                   >
-                    <div className="sm:col-span-2 lg:col-span-3 xl:col-span-2">
-                      <select
-                        ref={activeLabourNameInputRef}
-                        className="input lld-daily-labour-control min-h-11 w-full min-w-0"
-                        value={row.employee_id || row.employee_name || ''}
-                        onChange={(e) => updateLabourRowEmployee(index, e.target.value)}
-                        data-testid={`daily-labour-employee-${index}`}
+                    <div className="mb-3 flex items-start justify-between gap-3 border-b border-primary/25 pb-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Timesheet Entry</p>
+                        <h3 className="truncate font-heading text-base font-black uppercase tracking-[0.10em]">
+                          {row.employee_name || 'Staff member'}
+                        </h3>
+                        <p className="text-xs font-semibold text-muted-foreground">
+                          Edit time, lunch, job, task code, PM and work done without leaving the Diary.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={closeLabourEditor}
+                        data-testid="diary-staff-popout-close"
                       >
-                        <option value="">Staff member</option>
-                        {employeePickerOptions(row.employee_id || row.employee_name).map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </select>
+                        Close
+                      </Button>
                     </div>
-                    <select
-                      className="input lld-daily-labour-control min-h-11 w-full min-w-0 lg:col-span-2 xl:col-span-1"
-                      value={row.start_time || ''}
-                      onChange={(e) => updateLabourRow(index, 'start_time', e.target.value)}
-                      data-testid={`daily-labour-start-${index}`}
-                    >
-                      <option value="">Start</option>
-                      {timeOptionsForRow(row.start_time).map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                    <select
-                      className="input lld-daily-labour-control min-h-11 w-full min-w-0 lg:col-span-2 xl:col-span-1"
-                      value={String(row.lunch_duration ?? '30')}
-                      onChange={(e) => updateLabourRow(index, 'lunch_duration', e.target.value)}
-                      data-testid={`daily-labour-lunch-${index}`}
-                    >
-                      {lunchOptionsForRow(row.lunch_duration).map((option) => (
-                        <option key={option.value} value={option.value}>{formatLunchLabel(option.value)}</option>
-                      ))}
-                    </select>
-                    <select
-                      className="input lld-daily-labour-control min-h-11 w-full min-w-0 lg:col-span-2 xl:col-span-1"
-                      value={row.finish_time || ''}
-                      onChange={(e) => updateLabourRow(index, 'finish_time', e.target.value)}
-                      data-testid={`daily-labour-finish-${index}`}
-                    >
-                      <option value="">Finish</option>
-                      {timeOptionsForRow(row.finish_time).map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                    <div className="lld-daily-labour-hours flex min-h-11 w-full min-w-0 items-center rounded-md border bg-secondary/40 px-3 py-2 text-sm font-bold lg:col-span-2 xl:col-span-1" data-testid={`daily-labour-hours-${index}`}>
-                      {(parseFloat(row.total_hours) || 0).toFixed(2)}h
+
+                    <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+                      <label className="space-y-1 sm:col-span-2">
+                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Staff member</span>
+                        <select
+                          ref={activeLabourNameInputRef}
+                          className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
+                          value={row.employee_id || row.employee_name || ''}
+                          onChange={(e) => updateLabourRowEmployee(index, e.target.value)}
+                          data-testid={`daily-labour-employee-${index}`}
+                        >
+                          <option value="">Staff member</option>
+                          {employeePickerOptions(row.employee_id || row.employee_name).map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Start</span>
+                        <select
+                          className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
+                          value={row.start_time || ''}
+                          onChange={(e) => updateLabourRow(index, 'start_time', e.target.value)}
+                          data-testid={`daily-labour-start-${index}`}
+                        >
+                          <option value="">Start</option>
+                          {timeOptionsForRow(row.start_time).map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Finish</span>
+                        <select
+                          className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
+                          value={row.finish_time || ''}
+                          onChange={(e) => updateLabourRow(index, 'finish_time', e.target.value)}
+                          data-testid={`daily-labour-finish-${index}`}
+                        >
+                          <option value="">Finish</option>
+                          {timeOptionsForRow(row.finish_time).map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Lunch</span>
+                        <select
+                          className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
+                          value={String(row.lunch_duration ?? '30')}
+                          onChange={(e) => updateLabourRow(index, 'lunch_duration', e.target.value)}
+                          data-testid={`daily-labour-lunch-${index}`}
+                        >
+                          {lunchOptionsForRow(row.lunch_duration).map((option) => (
+                            <option key={option.value} value={option.value}>{formatLunchLabel(option.value)}</option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <div className="space-y-1">
+                        <span className="block text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Hours</span>
+                        <div className="lld-daily-labour-hours flex min-h-11 w-full min-w-0 items-center rounded-md border border-primary/35 bg-secondary/40 px-3 py-2 text-sm font-black" data-testid={`daily-labour-hours-${index}`}>
+                          {(parseFloat(row.total_hours) || 0).toFixed(2)}h
+                        </div>
+                      </div>
+
+                      <label className="space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Job #</span>
+                        <select
+                          className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
+                          value={row.job_number || currentProject?.job_number || ''}
+                          onChange={(e) => updateLabourRow(index, 'job_number', e.target.value)}
+                          data-testid={`daily-labour-job-${index}`}
+                        >
+                          <option value="">Job #</option>
+                          {jobNumberOptionsForRow(row.job_number || currentProject?.job_number).map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Task code</span>
+                        <select
+                          className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
+                          value={row.task_code || ''}
+                          onChange={(e) => updateLabourRow(index, 'task_code', e.target.value)}
+                          data-testid={`daily-labour-task-${index}`}
+                        >
+                          <option value="">Task code</option>
+                          {taskCodeOptionsForRow(row.task_code).map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="space-y-1 sm:col-span-2">
+                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">PM</span>
+                        <select
+                          className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
+                          value={row.project_manager_id || ''}
+                          onChange={(e) => updateLabourRow(index, 'project_manager_id', e.target.value)}
+                          data-testid={`daily-labour-pm-${index}`}
+                        >
+                          <option value="">PM</option>
+                          {projectManagerOptionsForRow(row.project_manager_id).map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="space-y-1 sm:col-span-2">
+                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Work done</span>
+                        <Textarea
+                          className="min-h-[90px] w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
+                          placeholder="Description / work done"
+                          value={row.description || row.other || ''}
+                          onChange={(e) => updateLabourRow(index, 'description', e.target.value)}
+                          data-testid={`daily-labour-description-${index}`}
+                        />
+                      </label>
                     </div>
-                    <select
-                      className="input lld-daily-labour-control min-h-11 w-full min-w-0 lg:col-span-2 xl:col-span-1"
-                      value={row.job_number || currentProject?.job_number || ''}
-                      onChange={(e) => updateLabourRow(index, 'job_number', e.target.value)}
-                      data-testid={`daily-labour-job-${index}`}
-                    >
-                      <option value="">Job #</option>
-                      {jobNumberOptionsForRow(row.job_number || currentProject?.job_number).map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                    <select
-                      className="input lld-daily-labour-control min-h-11 w-full min-w-0 lg:col-span-2 xl:col-span-1"
-                      value={row.task_code || ''}
-                      onChange={(e) => updateLabourRow(index, 'task_code', e.target.value)}
-                      data-testid={`daily-labour-task-${index}`}
-                    >
-                      <option value="">Task code</option>
-                      {taskCodeOptionsForRow(row.task_code).map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                    <select
-                      className="input lld-daily-labour-control min-h-11 w-full min-w-0 lg:col-span-2 xl:col-span-1"
-                      value={row.project_manager_id || ''}
-                      onChange={(e) => updateLabourRow(index, 'project_manager_id', e.target.value)}
-                      data-testid={`daily-labour-pm-${index}`}
-                    >
-                      <option value="">PM</option>
-                      {projectManagerOptionsForRow(row.project_manager_id).map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                    <input
-                      className="input lld-daily-labour-control min-h-11 w-full min-w-0 sm:col-span-2 lg:col-span-3 xl:col-span-2"
-                      placeholder="Description / work done"
-                      value={row.description || row.other || ''}
-                      onChange={(e) => updateLabourRow(index, 'description', e.target.value)}
-                      data-testid={`daily-labour-description-${index}`}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="lld-daily-labour-remove h-11 w-full min-w-0 justify-center sm:col-span-2 lg:col-span-2 xl:col-span-1"
-                      onClick={() => removeLabourRow(index)}
-                      data-testid={`daily-labour-remove-${index}`}
-                    >
-                      Remove
-                    </Button>
+
+                    <div className="mt-4 flex flex-col gap-2 border-t border-border/70 pt-3 sm:flex-row sm:flex-wrap">
+                      <Button type="button" onClick={saveLabourRows} disabled={labourSaving || !selectedProject} data-testid="diary-staff-popout-save">
+                        {labourSaving ? 'Saving...' : 'Save staff'}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={closeLabourEditor} data-testid="diary-staff-popout-close-bottom">
+                        Close
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => removeLabourRow(index)}
+                        data-testid={`daily-labour-remove-${index}`}
+                      >
+                        Remove
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -2158,7 +2225,7 @@ const DiaryPage = () => {
               )}
             </div>
 
-            <p className="text-xs font-medium text-muted-foreground">Tap the same staff name again to close details.</p>
+            <p className="text-xs font-medium text-muted-foreground">Tap a staff name to open the pop-out editor. Use Save staff or Close when finished.</p>
           </CardContent>
         </Card>
 
