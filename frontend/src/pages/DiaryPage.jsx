@@ -66,6 +66,7 @@ const DiaryPage = () => {
   const [labourRows, setLabourRows] = useState([]);
   const [labourLoading, setLabourLoading] = useState(false);
   const [labourSaving, setLabourSaving] = useState(false);
+  const [labourSaveStatus, setLabourSaveStatus] = useState(''); // staff-diary-backend-autosave-v4
   const [labourImporting, setLabourImporting] = useState(false);
   const [labourEditMode, setLabourEditMode] = useState(false);
   const [activeLabourIndex, setActiveLabourIndex] = useState(null);
@@ -96,6 +97,8 @@ const DiaryPage = () => {
   const activeLabourEditorRef = useRef(null);
   const activeLabourNameInputRef = useRef(null);
   const labourDraftReadyRef = useRef('');
+  const labourServerAutosaveTimerRef = useRef(null);
+  const labourLastSavedPayloadRef = useRef('');
   const resourcesDraftReadyRef = useRef('');
   const quickEntryDraftReadyRef = useRef('');
   const [draftStatus, setDraftStatus] = useState('');
@@ -187,7 +190,6 @@ const DiaryPage = () => {
     setLabourEditMode(true);
 
     window.requestAnimationFrame(() => {
-      activeLabourEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       window.setTimeout(() => {
         activeLabourNameInputRef.current?.focus();
       }, 150);
@@ -242,8 +244,7 @@ const DiaryPage = () => {
       }
     ]);
 
-    setActiveLabourIndex(null);
-    setLabourEditMode(false);
+    window.requestAnimationFrame(() => openLabourEditor(labourRows.length));
   };
 
   const addSelectedStaffToDiary = () => {
@@ -836,7 +837,7 @@ const DiaryPage = () => {
     }
   };
 
-  const saveLabourRows = async () => {
+  const saveLabourRows = async ({ silent = false } = {}) => {
     if (!selectedProject || !selectedDate) {
       toast.error('Select a project and date first');
       return;
@@ -890,21 +891,25 @@ const DiaryPage = () => {
   other: row.other || row.description || ''
         }));
 
+      const cleanRowsPayload = JSON.stringify(cleanRows);
       const res = await diaryApi.saveLabour(selectedProject, {
         date: selectedDate,
         rows: cleanRows
       });
 
-      setLabourRows(Array.isArray(res.data?.rows) ? res.data.rows.map(normaliseLabourRow) : []);
+      const savedRows = Array.isArray(res.data?.rows) ? res.data.rows.map(normaliseLabourRow) : [];
+      setLabourRows(savedRows);
+      labourLastSavedPayloadRef.current = cleanRowsPayload;
       clearDiaryDraft('labour');
-      setDraftStatus('Staff saved to diary');
-      closeLabourEditor();
-      toast.success('Staff diary check saved');
+      setDraftStatus('Staff diary check autosaved');
+      setLabourSaveStatus('Saved');
       fetchDiary();
-    fetchLabourRows();
     } catch (error) {
       console.error('Failed to save labour rows:', error);
-      toast.error('Failed to save labour rows');
+      setLabourSaveStatus('Save failed');
+      if (!silent) {
+        toast.error('Failed to autosave staff diary check');
+      }
     } finally {
       setLabourSaving(false);
     }
@@ -1012,12 +1017,74 @@ const DiaryPage = () => {
   }, [siteResources, selectedProject, selectedDate, resourcesSaving, resourcesLoading]);
 
   useEffect(() => {
+    if (!labourEditMode || activeLabourIndex === null) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+    };
+  }, [labourEditMode, activeLabourIndex]); // staff-diary-modal-scroll-lock-v1
+
+  useEffect(() => {
     const key = getDiaryDraftKey('quick_entry');
     if (!key || quickEntryDraftReadyRef.current !== key || submitting) return;
     if (String(entryData.note || '').trim() || (Array.isArray(entryData.photos) && entryData.photos.length > 0)) {
       writeDiaryDraft('quick_entry', { entryData }); // diary-draft-autosave-v1-quick-entry
     }
   }, [entryData, selectedProject, selectedDate, submitting]);
+
+  useEffect(() => {
+    const key = getDiaryDraftKey('labour');
+    if (!key || labourDraftReadyRef.current !== key || labourLoading || labourSaving) return undefined;
+    if (!selectedProject || !selectedDate || !hasMeaningfulLabourRows(labourRows)) return undefined;
+
+    const pendingRows = labourRows
+      .filter((row) => [
+        row.employee_name,
+        row.start_time,
+        row.finish_time,
+        row.job_number,
+        row.task_code,
+        row.description,
+        row.other
+      ].some((value) => String(value || '').trim()))
+      .map((row) => normaliseLabourRow({
+        ...row,
+        source: 'LLD',
+        source_diary_project_id: selectedProject,
+        source_diary_date: selectedDate,
+        sync_status: 'diary_check_only',
+        project_manager_id: ''
+      }));
+
+    const pendingPayload = JSON.stringify(pendingRows);
+    if (pendingPayload === labourLastSavedPayloadRef.current) {
+      setLabourSaveStatus('Saved');
+      return undefined;
+    }
+
+    setLabourSaveStatus('Auto-saving...');
+
+    if (labourServerAutosaveTimerRef.current) {
+      window.clearTimeout(labourServerAutosaveTimerRef.current);
+    }
+
+    labourServerAutosaveTimerRef.current = window.setTimeout(() => {
+      saveLabourRows({ silent: true });
+    }, 900);
+
+    return () => {
+      if (labourServerAutosaveTimerRef.current) {
+        window.clearTimeout(labourServerAutosaveTimerRef.current);
+      }
+    };
+  }, [labourRows, selectedProject, selectedDate, labourLoading, labourSaving]); // staff-diary-backend-autosave-v4
 
   const changeDate = (days) => {
     const current = parseDateInput(selectedDate);
@@ -2058,7 +2125,7 @@ const DiaryPage = () => {
                   <div
                     key={row.id || index}
                     ref={activeLabourEditorRef}
-                    className="fixed inset-x-2 bottom-3 z-40 max-h-[88vh] overflow-y-auto rounded-2xl border border-primary/70 bg-card p-3 shadow-2xl sm:inset-x-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:w-[min(760px,calc(100vw-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:p-4"
+                    className="fixed inset-x-2 bottom-3 z-50 max-h-[88dvh] overscroll-contain overflow-y-auto rounded-2xl border border-primary/70 bg-card p-3 shadow-2xl sm:inset-x-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:w-[min(760px,calc(100vw-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:p-4"
                     data-testid="diary-staff-timesheet-popout-editor-v1"
                     onClick={(event) => event.stopPropagation()}
                   >
@@ -2180,9 +2247,9 @@ const DiaryPage = () => {
                     </div>
 
                     <div className="mt-4 flex flex-col gap-2 border-t border-border/70 pt-3 sm:flex-row sm:flex-wrap">
-                      <Button type="button" onClick={saveLabourRows} disabled={labourSaving || !selectedProject} data-testid="diary-staff-popout-save">
-                        {labourSaving ? 'Saving...' : 'Save diary check'}
-                      </Button>
+               <div className="flex min-h-10 items-center rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-primary" data-testid="staff-diary-autosave-status">
+                 {labourSaving ? 'Auto-saving...' : (labourSaveStatus || 'Saved locally')}
+               </div>
                       <Button type="button" variant="outline" onClick={closeLabourEditor} data-testid="diary-staff-popout-close-bottom">
                         Close
                       </Button>
@@ -2199,13 +2266,6 @@ const DiaryPage = () => {
                 ))}
               </div>
             )}
-
-            <div className="flex flex-col gap-2 border-t border-border/70 pt-4 sm:flex-row sm:flex-wrap">
-              <Button type="button" onClick={saveLabourRows} disabled={labourSaving || !selectedProject} data-testid="daily-labour-save">
-                {labourSaving ? 'Saving...' : 'Save diary check'}
-              </Button>
-
-            </div>
 
             <p className="text-xs font-medium text-muted-foreground">Tap a staff name to edit the diary check. This does not push to Timesheet Manager.</p>
           </CardContent>
