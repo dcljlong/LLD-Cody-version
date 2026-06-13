@@ -120,8 +120,8 @@ const DiaryPage = () => {
     employee_name: '',
     work_date: selectedDate,
     day: selectedDateLabel || '',
-    start_time: '07:00',
-    finish_time: '16:30',
+    start_time: '', // diary-staff-manual-time-entry-v1
+    finish_time: '',
     lunch_duration: '30',
     total_hours: 0,
     job_number: currentProject?.job_number || '',
@@ -287,7 +287,7 @@ const DiaryPage = () => {
 
     setLabourRows((current) => current.map((row, rowIndex) => {
       if (rowIndex !== index) return row;
-      return calculateLabourHours({
+      return normaliseLabourRow({
         ...row,
         employee_id: employeeOption.employee_id || '',
         employee_name: employeeOption.employee_name,
@@ -1086,6 +1086,13 @@ const DiaryPage = () => {
     window.location.assign(`/action-items?${params.toString()}`);
   };
 
+  const openRoadblockCreateFlow = () => {
+    const params = new URLSearchParams();
+    params.set('create', '1');
+    if (selectedProject) params.set('project', selectedProject);
+    window.location.assign(`/roadblocks?${params.toString()}`); // diary-direct-roadblock-create-v1
+  };
+
   const handlePrintReport = () => {
     if (!diary) {
       toast.error('Load a diary day before printing');
@@ -1592,9 +1599,9 @@ const DiaryPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => openDiarySection('diary-roadblocks-section')}
+              onClick={openRoadblockCreateFlow}
               className="rounded-xl border border-red-500/35 bg-secondary/30 px-3 py-2 text-left transition hover:bg-secondary/45"
-              data-testid="diary-command-roadblocks"
+              data-testid="diary-command-roadblocks-create"
             >
               <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-red-400">Roadblocks</span>
               <span className="block text-xl font-black">{diary?.summary?.blocked_gates || 0}</span>
@@ -1797,11 +1804,23 @@ const DiaryPage = () => {
             {/* Roadblocks / Critical Site Issues - diary-field-sheet-layout-v1 */}
             <Card id="diary-roadblocks-section" className="ops-card">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
-                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-500">
-                  <AlertTriangle className="w-4 h-4" />
-                  Roadblocks / Critical Site Issues ({diary.blocked_gates?.length || 0})
-                </CardTitle>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">Check blockers first. If nothing is stopping progress, keep moving through the diary.</p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-500">
+                      <AlertTriangle className="w-4 h-4" />
+                      Roadblocks / Critical Site Issues ({diary.blocked_gates?.length || 0})
+                    </CardTitle>
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">Check blockers first. If nothing is stopping progress, keep moving through the diary.</p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={openRoadblockCreateFlow}
+                    data-testid="diary-add-roadblock-direct"
+                  >
+                    Add Roadblock / Concern
+                  </Button>
+                </div>
               </CardHeader>
 
               <CardContent className="py-3 max-h-80 overflow-y-auto">
@@ -1821,7 +1840,17 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300">No roadblocks recorded for this diary day.</p>
+                  <div className="space-y-2">
+                    <p className="rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300">No roadblocks recorded for this diary day.</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={openRoadblockCreateFlow}
+                      data-testid="diary-add-roadblock-empty"
+                    >
+                      Add Roadblock / Concern
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>

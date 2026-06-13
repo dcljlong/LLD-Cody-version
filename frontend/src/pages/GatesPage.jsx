@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import React, { useEffect, useMemo, useState } from "react";
 import { gatesApi, projectsApi } from "../lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -159,6 +160,7 @@ function toNumber(value, fallback = 0) {
 export default function GatesPage() {
   const [projects, setProjects] = useState([]);
   const [gates, setGates] = useState([]);
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [busyGateId, setBusyGateId] = useState("");
@@ -294,6 +296,26 @@ export default function GatesPage() {
     const maxOrder = projectGates.reduce((max, gate) => Math.max(max, gate.order || 0), 0);
     return maxOrder + 1;
   }
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || '');
+    const shouldCreate = params.get('create') === '1' || params.get('new') === '1';
+
+    if (!shouldCreate) return;
+
+    const projectParam = params.get('project') || params.get('project_id');
+    if (projectParam && projectParam !== selectedProject) {
+      setSelectedProject(projectParam);
+    }
+
+    window.requestAnimationFrame(() => {
+      startCreate(); // gates-create-from-query-v1
+      window.setTimeout(() => {
+        document.getElementById('gates-create-edit-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    });
+  }, [location.search, selectedProject]);
+
+
 
   function startCreate() {
     const projectId = selectedProject || projects[0]?.id || "";
