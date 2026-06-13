@@ -2167,35 +2167,55 @@ const DiaryPage = () => {
                         </select>
                       </label>
 
-                      <label className="space-y-1">
-                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Start</span>
-                        <select
-                          className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
-                          value={row.start_time || ''}
-                          onChange={(e) => updateLabourRow(index, 'start_time', e.target.value)}
-                          data-testid={`daily-labour-start-${index}`}
-                        >
-                          <option value="">Start</option>
-                          {timeOptionsForRow(row.start_time).map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
-                      </label>
+                      <label className="space-y-1" data-testid={`daily-labour-start-combo-${index}`}>
+                 <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Start</span>
+                 <div className="grid gap-2 sm:grid-cols-2">
+                   <select
+                     className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
+                     value={row.start_time || ''}
+                     onChange={(e) => updateLabourRow(index, 'start_time', e.target.value)}
+                     data-testid={`daily-labour-start-${index}`}
+                   >
+                     <option value="">Default start</option>
+                     {timeOptionsForRow(row.start_time).map((option) => (
+                       <option key={option.value} value={option.value}>{option.label}</option>
+                     ))}
+                   </select>
+                   <Input
+                     type="time"
+                     step="60"
+                     className="lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
+                     value={row.start_time || ''}
+                     onChange={(e) => updateLabourRow(index, 'start_time', e.target.value)}
+                     data-testid={`daily-labour-start-manual-${index}`} // staff-default-plus-manual-time-v2
+                   />
+                 </div>
+               </label>
 
-                      <label className="space-y-1">
-                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Finish</span>
-                        <select
-                          className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
-                          value={row.finish_time || ''}
-                          onChange={(e) => updateLabourRow(index, 'finish_time', e.target.value)}
-                          data-testid={`daily-labour-finish-${index}`}
-                        >
-                          <option value="">Finish</option>
-                          {timeOptionsForRow(row.finish_time).map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
-                      </label>
+                      <label className="space-y-1" data-testid={`daily-labour-finish-combo-${index}`}>
+                 <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Finish</span>
+                 <div className="grid gap-2 sm:grid-cols-2">
+                   <select
+                     className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
+                     value={row.finish_time || ''}
+                     onChange={(e) => updateLabourRow(index, 'finish_time', e.target.value)}
+                     data-testid={`daily-labour-finish-${index}`}
+                   >
+                     <option value="">Default finish</option>
+                     {timeOptionsForRow(row.finish_time).map((option) => (
+                       <option key={option.value} value={option.value}>{option.label}</option>
+                     ))}
+                   </select>
+                   <Input
+                     type="time"
+                     step="60"
+                     className="lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
+                     value={row.finish_time || ''}
+                     onChange={(e) => updateLabourRow(index, 'finish_time', e.target.value)}
+                     data-testid={`daily-labour-finish-manual-${index}`}
+                   />
+                 </div>
+               </label>
 
                       <div className="space-y-1">
                         <span className="block text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Hours</span>
@@ -2247,9 +2267,6 @@ const DiaryPage = () => {
                     </div>
 
                     <div className="mt-4 flex flex-col gap-2 border-t border-border/70 pt-3 sm:flex-row sm:flex-wrap">
-               <div className="flex min-h-10 items-center rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-primary" data-testid="staff-diary-autosave-status">
-                 {labourSaving ? 'Auto-saving...' : (labourSaveStatus || 'Saved locally')}
-               </div>
                       <Button type="button" variant="outline" onClick={closeLabourEditor} data-testid="diary-staff-popout-close-bottom">
                         Close
                       </Button>
