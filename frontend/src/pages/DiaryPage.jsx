@@ -126,13 +126,13 @@ const DiaryPage = () => {
     total_hours: 0,
     job_number: currentProject?.job_number || '',
     task_code: '',
-    project_manager_id: getDefaultProjectManagerId(),
+    project_manager_id: '',
     description: '',
-    other: '',
+    other: '', // staff-diary-check-notes-v1
     source: 'LLD',
     source_diary_project_id: selectedProject || '',
     source_diary_date: selectedDate,
-    sync_status: 'local_only'
+    sync_status: 'diary_check_only'
   });
 
   const normaliseTimeValue = (value) => {
@@ -266,7 +266,7 @@ const DiaryPage = () => {
 
     addStaffRowFromEmployee({
       value: name,
-      label: `${name} (pending Timesheet link)`,
+      label: `${name} (manual diary staff)`,
       employee_id: '',
       employee_name: name,
       linked_to_timesheet: false
@@ -274,7 +274,7 @@ const DiaryPage = () => {
 
     setNewStaffName('');
     setShowNewStaffForm(false);
-    toast.info('Staff added to this diary. Add/link them in Timesheet Manager next so future entries use the dropdown.');
+    toast.info('Staff added to this diary check. Timesheet Manager stays separate.');
   };
 
   const updateLabourRowEmployee = (index, selectedValue) => {
@@ -386,8 +386,8 @@ const DiaryPage = () => {
     row.employee_name,
     row.start_time,
     row.finish_time,
+    row.job_number,
     row.task_code,
-    row.project_manager_id,
     row.description,
     row.other
   ].some((value) => String(value || '').trim()));
@@ -438,12 +438,13 @@ const DiaryPage = () => {
   };
 
   const formatStaffOnSiteLine = (row) => {
-    const start = formatTimeForDiary(row.start_time);
-    const finish = formatTimeForDiary(row.finish_time);
-    const timeRange = start && finish ? `${start} – ${finish}` : 'Time not set';
-    const lunch = formatLunchLabel(row.lunch_duration ?? '30');
+    const start = formatTimeForDiary(row.start_time) || 'Start';
+    const finish = formatTimeForDiary(row.finish_time) || 'Finish';
+    const job = row.job_number || currentProject?.job_number || 'Job #';
+    const code = row.task_code || 'Code';
     const hours = `${(parseFloat(row.total_hours) || 0).toFixed(2)}h`;
-    return `${timeRange} • ${lunch} • ${hours}`;
+    const hasNotes = Boolean(String(row.description || row.other || '').trim());
+    return `${start} to ${finish} â€¢ ${job} â€¢ ${code} â€¢ ${hours}${hasNotes ? ' â€¢ Notes' : ''}`;
   };
 
   const getReferenceOptionText = (item, keys = []) => {
@@ -849,33 +850,21 @@ const DiaryPage = () => {
           row.employee_name,
           row.start_time,
           row.finish_time,
+          row.job_number,
           row.task_code,
-          row.project_manager_id,
           row.description,
           row.other
         ].some((value) => String(value || '').trim()));
 
-      const incompleteRow = startedRows.find(({ row }) => (
-        !(row.employee_name || '').trim() ||
-        !row.start_time ||
-        !row.finish_time ||
-        !(row.task_code || '').trim() ||
-        !(row.project_manager_id || '').trim()
-      ));
+      const incompleteRow = startedRows.find(({ row }) => !(row.employee_name || '').trim());
 
       if (incompleteRow) {
-        const missingFields = [
-          !(incompleteRow.row.employee_name || '').trim() ? 'employee' : '',
-          !incompleteRow.row.start_time ? 'start' : '',
-          !incompleteRow.row.finish_time ? 'finish' : '',
-          !(incompleteRow.row.task_code || '').trim() ? 'task code' : '',
-          !(incompleteRow.row.project_manager_id || '').trim() ? 'PM' : ''
-        ].filter(Boolean).join(', ');
-        toast.error(`Complete ${missingFields} for staff row ${incompleteRow.rowNumber}`);
+        toast.error(`Add staff name for diary check row ${incompleteRow.rowNumber}`);
         return;
       }
 
       const invalidTimeRow = startedRows.find(({ row }) => {
+        if (!row.start_time || !row.finish_time) return false;
         const start = new Date(`1970-01-01T${row.start_time}`);
         const finish = new Date(`1970-01-01T${row.finish_time}`);
         return !Number.isNaN(start.getTime()) && !Number.isNaN(finish.getTime()) && finish <= start;
@@ -895,9 +884,10 @@ const DiaryPage = () => {
           source: 'LLD',
           source_diary_project_id: selectedProject,
           source_diary_date: selectedDate,
-          sync_status: 'local_only',
-          description: row.description || row.other || '',
-          other: row.other || row.description || ''
+  sync_status: 'diary_check_only',
+  project_manager_id: '',
+  description: row.description || row.other || '',
+  other: row.other || row.description || ''
         }));
 
       const res = await diaryApi.saveLabour(selectedProject, {
@@ -909,7 +899,7 @@ const DiaryPage = () => {
       clearDiaryDraft('labour');
       setDraftStatus('Staff saved to diary');
       closeLabourEditor();
-      toast.success('Labour rows saved locally in LLD');
+      toast.success('Staff diary check saved');
       fetchDiary();
     fetchLabourRows();
     } catch (error) {
@@ -944,7 +934,7 @@ const DiaryPage = () => {
       const skippedCount = Number(result.skipped_count || 0);
 
       if (createdCount > 0 || entryCount > 0) {
-        toast.success(`Imported ${entryCount} labour row${entryCount === 1 ? '' : 's'} to Timesheet review`);
+        toast.success(`Imported ${entryCount} labour row${entryCount === 1 ? '' : 's'} to Timesheet Manager`);
       } else if (skippedCount > 0 && issueCount === 0) {
         toast.info('No new Timesheet rows imported. Saved rows may already be imported.');
       } else if (issueCount > 0) {
@@ -1351,8 +1341,8 @@ const DiaryPage = () => {
             </h2>
             <p className="mt-1 truncate text-sm font-semibold text-muted-foreground">
               {currentProject ? `${currentProject.job_number ? `${currentProject.job_number} - ` : ''}${currentProject.name}` : 'No project selected'}
-              {selectedDate === today ? ' • Today' : ''}
-              {draftStatus ? ` • ${draftStatus}` : ''}
+              {selectedDate === today ? ' â€¢ Today' : ''}
+              {draftStatus ? ` â€¢ ${draftStatus}` : ''}
             </p>
           </div>
 
@@ -1594,7 +1584,7 @@ const DiaryPage = () => {
               className="rounded-xl border border-primary/35 bg-primary/10 px-3 py-2 text-left transition hover:bg-primary/15"
               data-testid="diary-command-forecast"
             >
-              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-primary">Next 2–3 Weeks</span>
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-primary">Next 2â€“3 Weeks</span>
               <span className="block text-xl font-black">{nextThreeWeeksItems.length}</span>
             </button>
             <button
@@ -1830,7 +1820,7 @@ const DiaryPage = () => {
                       <div key={gate.id} className="p-2 bg-red-950/30 rounded-md border-l-4 border-l-red-500">
                         <p className="text-sm font-medium">{gate.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          Owner: {gate.owner_party} • Required:{' '}
+                          Owner: {gate.owner_party} â€¢ Required:{' '}
                           {new Date(gate.required_by_date).toLocaleDateString('en-NZ', {
                             day: '2-digit',
                             month: 'short'
@@ -1918,7 +1908,7 @@ const DiaryPage = () => {
                       >
                         <p className="text-sm font-medium">{item.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {[item.project_name || item.project?.name, item.owner, item.priority].filter(Boolean).join(' • ')}
+                          {[item.project_name || item.project?.name, item.owner, item.priority].filter(Boolean).join(' â€¢ ')}
                         </p>
                       </button>
                     ))}
@@ -1952,12 +1942,12 @@ const DiaryPage = () => {
               <div>
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  Compact staff list. Tap a name to open the timesheet-style pop-out editor.
+                  Diary check only. Staff complete and sign timesheets separately in Timesheet Manager.
                 </p>
               </div>
               <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
-                <span data-testid="daily-labour-row-count">{labourRows.length}</span> staff •{' '}
-                <span data-testid="daily-labour-total-hours">{labourTotalHours.toFixed(2)}</span> hrs
+                <span data-testid="daily-labour-row-count">{labourRows.length}</span> staff â€¢{' '}
+                <span data-testid="daily-labour-total-hours">{labourTotalHours.toFixed(2)}</span> check hrs
               </div>
             </div>
           </CardHeader>
@@ -1968,7 +1958,7 @@ const DiaryPage = () => {
               <div className="space-y-2" data-testid="daily-labour-rows">
                 <div
                   className="rounded-xl border border-primary/40 bg-primary/5 p-2"
-                  data-testid="staff-dropdown-timesheet-link-v1"
+                  data-testid="staff-diary-check-picker-v1"
                   onClick={(event) => {
                     if (event.target === event.currentTarget) {
                       setActiveLabourIndex(null);
@@ -2052,7 +2042,7 @@ const DiaryPage = () => {
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-black">{row.employee_name || 'Staff member'}</span>
                             <span className="block truncate text-xs font-semibold text-muted-foreground">
-                              {formatTimeForDiary(row.start_time) || 'Start'} to {formatTimeForDiary(row.finish_time) || 'Finish'} - {(parseFloat(row.total_hours) || 0).toFixed(2)}h
+                              {formatStaffOnSiteLine(row)}
                             </span>
                           </span>
                           <span className="shrink-0 text-[11px] font-black uppercase tracking-[0.14em] text-primary">Edit</span>
@@ -2072,12 +2062,12 @@ const DiaryPage = () => {
                   >
                     <div className="mb-3 flex items-start justify-between gap-3 border-b border-primary/25 pb-3">
                       <div className="min-w-0">
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Timesheet Entry</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Staff Diary Check</p>
                         <h3 className="truncate font-heading text-base font-black uppercase tracking-[0.10em]">
                           {row.employee_name || 'Staff member'}
                         </h3>
                         <p className="text-xs font-semibold text-muted-foreground">
-                          Edit time, lunch, job, task code, PM and work done without leaving the Diary.
+                          Name, start, finish, job, code, hours and staff-specific notes only.
                         </p>
                       </div>
                       <Button
@@ -2138,20 +2128,6 @@ const DiaryPage = () => {
                         </select>
                       </label>
 
-                      <label className="space-y-1">
-                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Lunch</span>
-                        <select
-                          className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
-                          value={String(row.lunch_duration ?? '30')}
-                          onChange={(e) => updateLabourRow(index, 'lunch_duration', e.target.value)}
-                          data-testid={`daily-labour-lunch-${index}`}
-                        >
-                          {lunchOptionsForRow(row.lunch_duration).map((option) => (
-                            <option key={option.value} value={option.value}>{formatLunchLabel(option.value)}</option>
-                          ))}
-                        </select>
-                      </label>
-
                       <div className="space-y-1">
                         <span className="block text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Hours</span>
                         <div className="lld-daily-labour-hours flex min-h-11 w-full min-w-0 items-center rounded-md border border-primary/35 bg-secondary/40 px-3 py-2 text-sm font-black" data-testid={`daily-labour-hours-${index}`}>
@@ -2190,35 +2166,20 @@ const DiaryPage = () => {
                       </label>
 
                       <label className="space-y-1 sm:col-span-2">
-                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">PM</span>
-                        <select
-                          className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
-                          value={row.project_manager_id || ''}
-                          onChange={(e) => updateLabourRow(index, 'project_manager_id', e.target.value)}
-                          data-testid={`daily-labour-pm-${index}`}
-                        >
-                          <option value="">PM</option>
-                          {projectManagerOptionsForRow(row.project_manager_id).map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <label className="space-y-1 sm:col-span-2">
-                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Work done</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Staff notes</span>
                         <Textarea
                           className="min-h-[90px] w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
-                          placeholder="Description / work done"
+                          placeholder="Notes for this staff member, e.g. left early, induction, worked L4 only..."
                           value={row.description || row.other || ''}
                           onChange={(e) => updateLabourRow(index, 'description', e.target.value)}
-                          data-testid={`daily-labour-description-${index}`}
+                          data-testid={`daily-labour-notes-${index}`}
                         />
                       </label>
                     </div>
 
                     <div className="mt-4 flex flex-col gap-2 border-t border-border/70 pt-3 sm:flex-row sm:flex-wrap">
                       <Button type="button" onClick={saveLabourRows} disabled={labourSaving || !selectedProject} data-testid="diary-staff-popout-save">
-                        {labourSaving ? 'Saving...' : 'Save staff'}
+                        {labourSaving ? 'Saving...' : 'Save diary check'}
                       </Button>
                       <Button type="button" variant="outline" onClick={closeLabourEditor} data-testid="diary-staff-popout-close-bottom">
                         Close
@@ -2239,22 +2200,12 @@ const DiaryPage = () => {
 
             <div className="flex flex-col gap-2 border-t border-border/70 pt-4 sm:flex-row sm:flex-wrap">
               <Button type="button" onClick={saveLabourRows} disabled={labourSaving || !selectedProject} data-testid="daily-labour-save">
-                {labourSaving ? 'Saving...' : 'Save staff'}
+                {labourSaving ? 'Saving...' : 'Save diary check'}
               </Button>
-              {labourRows.length > 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={importLabourRowsToTimesheet}
-                  disabled={labourImporting || labourSaving || labourLoading || !selectedProject}
-                  data-testid="daily-labour-import-timesheet"
-                >
-                  {labourImporting ? 'Sending...' : 'Send staff rows to Timesheet review'}
-                </Button>
-              )}
+
             </div>
 
-            <p className="text-xs font-medium text-muted-foreground">Tap a staff name to open the pop-out editor. Use Save staff or Close when finished.</p>
+            <p className="text-xs font-medium text-muted-foreground">Tap a staff name to edit the diary check. This does not push to Timesheet Manager.</p>
           </CardContent>
         </Card>
 
@@ -2287,7 +2238,7 @@ const DiaryPage = () => {
                               minute: '2-digit'
                             })}
                           </span>
-                          {entry.owner && <span>• {entry.owner}</span>}
+                          {entry.owner && <span>â€¢ {entry.owner}</span>}
                           {entry.priority && (
                             <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
                               entry.priority === 'critical' ? 'bg-red-500/20 text-red-400' :
@@ -2322,7 +2273,7 @@ const DiaryPage = () => {
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
-                      {resourceMaterials.length} materials • {resourcePlantEquipment.length} plant / gear
+                      {resourceMaterials.length} materials â€¢ {resourcePlantEquipment.length} plant / gear
                     </span>
                     <Button type="button" variant="outline" size="sm" onClick={() => window.open(toolTrackerUrl, '_blank', 'noopener,noreferrer')} data-testid="open-tool-tracker">
                       Open Tool Tracker
@@ -2370,7 +2321,7 @@ const DiaryPage = () => {
                           {resourceMaterials.map((row, index) => (
                             <div key={row.id || index} className="lld-resource-summary-row rounded-lg border border-border/60 bg-background/70 px-3 py-2">
                               <p className="text-sm font-bold">{row.item}</p>
-                              <p className="text-xs text-muted-foreground">{[row.quantity, row.supplier_or_reference, row.status].filter(Boolean).join(' • ')}</p>
+                              <p className="text-xs text-muted-foreground">{[row.quantity, row.supplier_or_reference, row.status].filter(Boolean).join(' â€¢ ')}</p>
                             </div>
                           ))}
                         </div>
@@ -2386,7 +2337,7 @@ const DiaryPage = () => {
                           {resourcePlantEquipment.map((row, index) => (
                             <div key={row.id || index} className="lld-resource-summary-row rounded-lg border border-border/60 bg-background/70 px-3 py-2">
                               <p className="text-sm font-bold">{row.item}</p>
-                              <p className="text-xs text-muted-foreground">{[row.quantity, row.supplier_or_reference, row.status].filter(Boolean).join(' • ')}</p>
+                              <p className="text-xs text-muted-foreground">{[row.quantity, row.supplier_or_reference, row.status].filter(Boolean).join(' â€¢ ')}</p>
                             </div>
                           ))}
                         </div>
