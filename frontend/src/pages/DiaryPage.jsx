@@ -444,7 +444,7 @@ const DiaryPage = () => {
     const code = row.task_code || 'Code';
     const hours = `${(parseFloat(row.total_hours) || 0).toFixed(2)}h`;
     const hasNotes = Boolean(String(row.description || row.other || '').trim());
-    return `${start} to ${finish} â€¢ ${job} â€¢ ${code} â€¢ ${hours}${hasNotes ? ' â€¢ Notes' : ''}`;
+    return `${start} to ${finish} | ${job} | ${code} | ${hours}${hasNotes ? ' | Notes' : ''}`; // staff-diary-check-mobile-text-cleanup-v2
   };
 
   const getReferenceOptionText = (item, keys = []) => {
@@ -1341,8 +1341,8 @@ const DiaryPage = () => {
             </h2>
             <p className="mt-1 truncate text-sm font-semibold text-muted-foreground">
               {currentProject ? `${currentProject.job_number ? `${currentProject.job_number} - ` : ''}${currentProject.name}` : 'No project selected'}
-              {selectedDate === today ? ' â€¢ Today' : ''}
-              {draftStatus ? ` â€¢ ${draftStatus}` : ''}
+              {selectedDate === today ? ' | Today' : ''}
+              {draftStatus ? ` | ${draftStatus}` : ''}
             </p>
           </div>
 
@@ -1820,7 +1820,7 @@ const DiaryPage = () => {
                       <div key={gate.id} className="p-2 bg-red-950/30 rounded-md border-l-4 border-l-red-500">
                         <p className="text-sm font-medium">{gate.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          Owner: {gate.owner_party} â€¢ Required:{' '}
+                          Owner: {gate.owner_party} | Required:{' '}
                           {new Date(gate.required_by_date).toLocaleDateString('en-NZ', {
                             day: '2-digit',
                             month: 'short'
@@ -1908,7 +1908,7 @@ const DiaryPage = () => {
                       >
                         <p className="text-sm font-medium">{item.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {[item.project_name || item.project?.name, item.owner, item.priority].filter(Boolean).join(' â€¢ ')}
+                          {[item.project_name || item.project?.name, item.owner, item.priority].filter(Boolean).join(' | ')}
                         </p>
                       </button>
                     ))}
@@ -1946,8 +1946,10 @@ const DiaryPage = () => {
                 </p>
               </div>
               <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
-                <span data-testid="daily-labour-row-count">{labourRows.length}</span> staff â€¢{' '}
-                <span data-testid="daily-labour-total-hours">{labourTotalHours.toFixed(2)}</span> check hrs
+                <span data-testid="daily-labour-row-count">{labourRows.length}</span>{' '}
+                staff |{' '}
+                <span data-testid="daily-labour-total-hours">{labourTotalHours.toFixed(2)}</span>{' '}
+                check hrs
               </div>
             </div>
           </CardHeader>
@@ -1988,7 +1990,7 @@ const DiaryPage = () => {
                       }}
                       data-testid="staff-timesheet-employee-select"
                     >
-                      <option value="">Tap staff name to add to diary</option>
+                      <option value="">Select staff to add</option>
                       {employeePickerOptions().map((option) => (
                         <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
@@ -2238,7 +2240,7 @@ const DiaryPage = () => {
                               minute: '2-digit'
                             })}
                           </span>
-                          {entry.owner && <span>â€¢ {entry.owner}</span>}
+                          {entry.owner && <span>| {entry.owner}</span>}
                           {entry.priority && (
                             <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
                               entry.priority === 'critical' ? 'bg-red-500/20 text-red-400' :
@@ -2273,7 +2275,7 @@ const DiaryPage = () => {
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
-                      {resourceMaterials.length} materials â€¢ {resourcePlantEquipment.length} plant / gear
+                      {resourceMaterials.length} materials | {resourcePlantEquipment.length} plant / gear
                     </span>
                     <Button type="button" variant="outline" size="sm" onClick={() => window.open(toolTrackerUrl, '_blank', 'noopener,noreferrer')} data-testid="open-tool-tracker">
                       Open Tool Tracker
@@ -2321,7 +2323,7 @@ const DiaryPage = () => {
                           {resourceMaterials.map((row, index) => (
                             <div key={row.id || index} className="lld-resource-summary-row rounded-lg border border-border/60 bg-background/70 px-3 py-2">
                               <p className="text-sm font-bold">{row.item}</p>
-                              <p className="text-xs text-muted-foreground">{[row.quantity, row.supplier_or_reference, row.status].filter(Boolean).join(' â€¢ ')}</p>
+                              <p className="text-xs text-muted-foreground">{[row.quantity, row.supplier_or_reference, row.status].filter(Boolean).join(' | ')}</p>
                             </div>
                           ))}
                         </div>
@@ -2337,7 +2339,7 @@ const DiaryPage = () => {
                           {resourcePlantEquipment.map((row, index) => (
                             <div key={row.id || index} className="lld-resource-summary-row rounded-lg border border-border/60 bg-background/70 px-3 py-2">
                               <p className="text-sm font-bold">{row.item}</p>
-                              <p className="text-xs text-muted-foreground">{[row.quantity, row.supplier_or_reference, row.status].filter(Boolean).join(' â€¢ ')}</p>
+                              <p className="text-xs text-muted-foreground">{[row.quantity, row.supplier_or_reference, row.status].filter(Boolean).join(' | ')}</p>
                             </div>
                           ))}
                         </div>
