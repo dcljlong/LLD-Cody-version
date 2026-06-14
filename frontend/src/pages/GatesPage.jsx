@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import React, { useEffect, useMemo, useState } from "react";
-import { gatesApi, projectsApi } from "../lib/api";
+import { gatesApi, programmesApi, projectsApi } from "../lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 
 const EMPTY_FORM = {
@@ -13,6 +13,7 @@ const EMPTY_FORM = {
   expected_complete_date: "",
   buffer_days: 2,
   depends_on_gate_ids: [],
+  linked_task_id: "",
   is_hard_gate: false,
   is_optional: false
 };
@@ -118,6 +119,7 @@ function normaliseGateRow(gate = {}) {
     expected_complete_date: cleanDateForInput(gate.expected_complete_date),
     buffer_days: gate.buffer_days === undefined || gate.buffer_days === null ? 2 : Number(gate.buffer_days) || 0,
     depends_on_gate_ids: Array.isArray(gate.depends_on_gate_ids) ? gate.depends_on_gate_ids.filter(Boolean) : [],
+    linked_task_id: gate.linked_task_id || "",
     is_hard_gate: Boolean(gate.is_hard_gate),
     is_optional: Boolean(gate.is_optional)
   };
@@ -160,6 +162,7 @@ function toNumber(value, fallback = 0) {
 export default function GatesPage() {
   const [projects, setProjects] = useState([]);
   const [gates, setGates] = useState([]);
+  const [programmeTasks, setProgrammeTasks] = useState([]);
   const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -187,8 +190,42 @@ export default function GatesPage() {
       const nextProjects = normaliseList(projectsRes);
       const nextGates = normaliseList(gatesRes).map(normaliseGateRow);
 
+      const programmeResults = await Promise.all(
+        nextProjects.map(async (project) => {
+          try {
+            const programmesRes = await programmesApi.getAll(project.id);
+            return normaliseList(programmesRes).map((programme) => ({
+              ...programme,
+              project_id: programme.project_id || project.id
+            }));
+          } catch {
+            return [];
+          }
+        })
+      );
+
+      const nextProgrammes = programmeResults.flat();
+
+      const taskResults = await Promise.all(
+        nextProgrammes.map(async (programme) => {
+          try {
+            const tasksRes = await programmesApi.getTasks(programme.id);
+            return normaliseList(tasksRes).map((task) => ({
+              ...task,
+              programme_id: task.programme_id || programme.id,
+              project_id: task.project_id || programme.project_id
+            }));
+          } catch {
+            return [];
+          }
+        })
+      );
+
+      const nextProgrammeTasks = taskResults.flat();
+
       setProjects(nextProjects);
       setGates(nextGates);
+      setProgrammeTasks(nextProgrammeTasks);
 
       setForm((current) => {
         if (current.project_id || nextProjects.length === 0) return current;
@@ -215,6 +252,20 @@ export default function GatesPage() {
   const gatesById = useMemo(() => {
     return Object.fromEntries(gates.map((gate) => [gate.id, gate]));
   }, [gates]);
+
+  const programmeTasksById = useMemo(() => {
+    return Object.fromEntries(programmeTasks.map((task) => [task.id, task]));
+  }, [programmeTasks]);
+
+  const selectedProjectProgrammeTasks = useMemo(() => {
+    return programmeTasks
+      .filter((task) => !form.project_id || task.project_id === form.project_id)
+      .sort((a, b) => {
+        const aDate = a.programme_start_date || a.end_date || "";
+        const bDate = b.programme_start_date || b.end_date || "";
+        return aDate.localeCompare(bDate) || String(a.task_name || "").localeCompare(String(b.task_name || ""));
+      });
+  }, [programmeTasks, form.project_id]);
 
   const scopedGates = useMemo(() => {
     return selectedProject
@@ -326,6 +377,7 @@ export default function GatesPage() {
     setForm({
       ...EMPTY_FORM,
       project_id: projectId,
+      linked_task_id: "",
       order: projectId ? String(nextOrderForProject(projectId)) : ""
     });
     setFormOpen(true);
@@ -348,6 +400,7 @@ export default function GatesPage() {
       expected_complete_date: cleanDateForInput(gate.expected_complete_date),
       buffer_days: gate.buffer_days ?? 2,
       depends_on_gate_ids: Array.isArray(gate.depends_on_gate_ids) ? gate.depends_on_gate_ids : [],
+      linked_task_id: gate.linked_task_id || "",
       is_hard_gate: Boolean(gate.is_hard_gate),
       is_optional: Boolean(gate.is_optional)
     });
@@ -412,12 +465,22 @@ export default function GatesPage() {
 
       const payload = buildPayload();
 
+      let savedGateId = editingGateId;
+
       if (editingGateId) {
         await gatesApi.update(editingGateId, payload);
         setMessage("Roadblock / concern updated.");
       } else {
-        await gatesApi.create(payload);
+        const createRes = await gatesApi.create(payload);
+        const createdGate = createRes?.data || createRes || {};
+        savedGateId = createdGate.id || createdGate.gate?.id || null;
         setMessage("Roadblock / concern created.");
+      }
+
+      if (savedGateId) {
+        await gatesApi.linkTask(savedGateId, {
+          linked_task_id: form.linked_task_id || null
+        });
       }
 
       cancelForm();
@@ -471,6 +534,7 @@ export default function GatesPage() {
 
   function renderGateCard(gate) {
     const dependencies = dependencyNames(gate);
+    const linkedTask = gate.linked_task_id ? programmeTasksById[gate.linked_task_id] : null;
     const isBusy = busyGateId === gate.id;
 
     return (
@@ -529,6 +593,21 @@ export default function GatesPage() {
               </div>
             </div>
           </div>
+
+          {linkedTask || gate.linked_task_id ? (
+            <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2" data-testid="roadblock-linked-task-code-delay-v1">
+              <div className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Delay / Programme Impact</div>
+              <div className="mt-1 text-sm font-semibold">
+                {linkedTask?.task_name || gate.linked_task_id}
+              </div>
+              {linkedTask ? (
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {linkedTask.programme_start_date || "-"} to {linkedTask.end_date || "-"}
+                  {linkedTask.owner_tag ? ` | ${linkedTask.owner_tag}` : ""}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           {dependencies.length > 0 ? (
             <div className="rounded-md border border-border bg-background px-3 py-2">
@@ -756,7 +835,8 @@ export default function GatesPage() {
                         ...current,
                         project_id: projectId,
                         order: String(nextOrderForProject(projectId)),
-                        depends_on_gate_ids: []
+                        depends_on_gate_ids: [],
+                        linked_task_id: ""
                       }));
                     }}
                   >
@@ -885,13 +965,45 @@ export default function GatesPage() {
                 />
               </label>
 
+              <div className={ROADBLOCK_PANEL_CLASS} data-testid="roadblock-task-code-delay-link-v1">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                    Delay / Programme Impact
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Link this roadblock to the programme task or code it is delaying.
+                  </p>
+                </div>
+
+                <select
+                  className={`${ROADBLOCK_FIELD_CLASS} mt-2`}
+                  value={form.linked_task_id}
+                  onChange={(event) => setField("linked_task_id", event.target.value)}
+                  disabled={!form.project_id || selectedProjectProgrammeTasks.length === 0}
+                  data-testid="roadblock-linked-programme-task-select"
+                >
+                  <option value="">No linked programme task/code</option>
+                  {selectedProjectProgrammeTasks.map((task) => (
+                    <option key={task.id} value={task.id}>
+                      {task.task_name || "Untitled task"}{task.end_date ? ` - due ${task.end_date}` : ""}{task.owner_tag ? ` - ${task.owner_tag}` : ""}
+                    </option>
+                  ))}
+                </select>
+
+                {form.project_id && selectedProjectProgrammeTasks.length === 0 ? (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    No programme tasks found for this project yet.
+                  </p>
+                ) : null}
+              </div>
+
               <div className={ROADBLOCK_PANEL_CLASS}>
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                     Related Roadblocks
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Use this only if this item depends on another roadblock being cleared. Task/code delay linking is separate.
+                    Use this only if this item depends on another roadblock being cleared.
                   </p>
                 </div>
 

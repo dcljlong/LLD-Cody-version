@@ -87,10 +87,12 @@ export const gatesApi = {
   get: (gateId) => api.get(`/gates/${gateId}`),
   create: (data) => api.post('/gates', data),
   update: (gateId, data) => api.put(`/gates/${gateId}`, data),
+  linkTask: (gateId, data) => api.put(`/gates/${gateId}/link-task`, data),
+  getLinkedTaskImpact: (gateId) => api.get(`/gates/${gateId}/linked-task-impact`),
   complete: (gateId) => api.post(`/gates/${gateId}/complete`),
   reopen: (gateId) => api.post(`/gates/${gateId}/reopen`),
   delete: (gateId) => api.delete(`/gates/${gateId}`)
-};
+}; // roadblock-task-code-delay-link-v1
 
 export const walkaroundApi = {
   getAll: (params) => api.get('/walkaround', { params }),
