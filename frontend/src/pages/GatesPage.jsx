@@ -21,7 +21,7 @@ const STATUS_CONFIG = {
   BLOCKED: {
     label: "Blocked",
     className: "status-badge status-blocked",
-    helper: "Dependency not complete"
+    helper: "Related roadblock not complete"
   },
   DELAYED: {
     label: "Delayed",
@@ -53,7 +53,7 @@ const STATUS_SECTIONS = [
     key: "blockedDelayed",
     title: "Blocked / Delayed",
     statuses: ["BLOCKED", "DELAYED"],
-    description: "Needs immediate action or a dependency cleared."
+    description: "Needs immediate action or a related roadblock cleared."
   },
   {
     key: "atRisk",
@@ -532,7 +532,7 @@ export default function GatesPage() {
 
           {dependencies.length > 0 ? (
             <div className="rounded-md border border-border bg-background px-3 py-2">
-              <div className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Depends on</div>
+              <div className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Related roadblocks</div>
               <div className="mt-1 text-sm">{dependencies.join(", ")}</div>
             </div>
           ) : null}
@@ -604,7 +604,7 @@ export default function GatesPage() {
   ];
 
   return (
-    <div className="w-full max-w-full space-y-4 overflow-x-hidden px-0" data-testid="gates-page" data-roadblock-mobile-create-containment="v1">
+    <div className="w-full max-w-full min-w-0 space-y-4 overflow-x-hidden px-0" data-testid="gates-page" data-roadblock-mobile-create-containment="v1" data-roadblock-mobile-hard-lock="roadblock-mobile-hard-lock-related-roadblocks-v1">
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
@@ -614,7 +614,7 @@ export default function GatesPage() {
           <p className="mt-1 max-w-3xl text-sm font-medium leading-5 text-muted-foreground sm:text-base sm:leading-6">
             {formOpen
               ? "Create or edit the roadblock first. Summary cards are hidden while the form is open."
-              : "Track job blockers, handover points, inspections, dependencies, and risk dates that need site attention."}
+              : "Track job blockers, handover points, inspections, related roadblocks, and risk dates that need site attention."}
           </p>
         </div>
 
@@ -719,9 +719,9 @@ export default function GatesPage() {
       ) : null}
 
       {formOpen ? (
-        <Card id="gates-create-edit-form" className="ops-card w-full max-w-full overflow-hidden border-primary/60 shadow-lg" data-testid="gates-form-polish-v1" data-testid-roadblock-create-focus="v1">
+        <Card id="gates-create-edit-form" className="ops-card w-full max-w-full min-w-0 overflow-hidden border-primary/60 shadow-lg" data-testid="gates-form-polish-v1" data-testid-roadblock-create-focus="v1">
           <CardHeader className="ops-card-header border-b border-primary/30 bg-primary/10 px-3 py-3 sm:px-5 sm:py-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Roadblock Entry</p>
                 <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.10em] sm:text-xl sm:tracking-[0.14em]">
@@ -731,7 +731,7 @@ export default function GatesPage() {
               <button
                 type="button"
                 onClick={cancelForm}
-                className="rounded-md border border-border bg-background px-3 py-2 text-sm font-semibold hover:bg-muted"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-semibold hover:bg-muted sm:w-auto"
                 disabled={saving}
                 data-testid="gates-form-inline-cancel-v1"
               >
@@ -741,8 +741,8 @@ export default function GatesPage() {
           </CardHeader>
 
           <CardContent className="px-3 py-4 sm:px-5">
-            <form onSubmit={handleSubmit} className="space-y-3" data-testid="gates-mobile-contained-form-v1">
-              <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
+            <form onSubmit={handleSubmit} className="w-full max-w-full min-w-0 space-y-3 overflow-x-hidden" data-testid="gates-mobile-contained-form-v1">
+              <div className="grid w-full max-w-full min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
                 <label className="space-y-1">
                   <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                     Project
@@ -888,24 +888,24 @@ export default function GatesPage() {
               <div className={ROADBLOCK_PANEL_CLASS}>
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                    Dependencies
+                    Related Roadblocks
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Select roadblocks / concerns that must be complete before this item is clear.
+                    Use this only if this item depends on another roadblock being cleared. Task/code delay linking is separate.
                   </p>
                 </div>
 
                 {eligibleDependencies.length > 0 ? (
-                  <div className="grid min-w-0 grid-cols-1 gap-2 md:grid-cols-2">
+                  <div className="grid w-full max-w-full min-w-0 grid-cols-1 gap-2 md:grid-cols-2">
                     {eligibleDependencies.map((gate) => (
-                      <label key={gate.id} className="flex min-w-0 items-start gap-2 rounded-md border border-primary/25 bg-background/80 px-3 py-2 text-sm">
+                      <label key={gate.id} className="flex w-full max-w-full min-w-0 items-start gap-2 overflow-hidden rounded-md border border-primary/25 bg-background/80 px-3 py-2 text-sm">
                         <input
                           type="checkbox"
                           className="mt-1"
                           checked={form.depends_on_gate_ids.includes(gate.id)}
                           onChange={(event) => toggleDependency(gate.id, event.target.checked)}
                         />
-                        <span>
+                        <span className="min-w-0 break-words">
                           <span className="font-medium">{gate.order ? `${gate.order}. ` : ""}{gate.name}</span>
                           <span className="ml-2 text-xs text-muted-foreground">{formatStatus(gate.status)}</span>
                         </span>
@@ -914,16 +914,16 @@ export default function GatesPage() {
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    No other roadblocks / concerns available for this project yet.
+                    No related roadblocks available for this project yet.
                   </p>
                 )}
               </div>
 
-              <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-4">
+              <div className="flex flex-col justify-end gap-2 border-t border-border pt-4 sm:flex-row sm:flex-wrap">
                 <button
                   type="button"
                   onClick={cancelForm}
-                  className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+                  className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted sm:w-auto"
                   disabled={saving}
                 >
                   Cancel
@@ -931,7 +931,7 @@ export default function GatesPage() {
 
                 <button
                   type="submit"
-                  className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                   disabled={saving}
                 >
                   {saving ? "Saving..." : editingGateId ? "Save Roadblock / Concern" : "Create Roadblock / Concern"}
