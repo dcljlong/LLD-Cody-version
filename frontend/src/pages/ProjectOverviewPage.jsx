@@ -34,6 +34,26 @@ function isCompletedStatus(status) {
 function getProjectName(project) {
   return project?.job_name || project?.name || project?.project_name || "Selected project";
 }
+function isCommercialProjectOption(project = {}) {
+  const name = String(getProjectName(project) || "").trim().toLowerCase();
+  const combined = [
+    project?.job_name,
+    project?.name,
+    project?.project_name,
+    project?.job_number,
+    project?.description,
+    project?.notes
+  ].filter(Boolean).join(" ").toLowerCase();
+
+  if (!combined.trim()) return true;
+  if (name === "2 dev") return false;
+  if (combined.includes("demo")) return false;
+  if (combined.includes("sample")) return false;
+  if (combined.includes("test project")) return false;
+  if (combined.includes("site coordination note")) return false;
+
+  return true;
+}
 
 function StatCard({ label, value, helper, tone = "default", testId }) {
   const toneClass = {
@@ -84,7 +104,7 @@ export default function ProjectOverviewPage() {
 
         if (cancelled) return;
 
-        const loadedProjects = normaliseList(projectsRes);
+        const loadedProjects = normaliseList(projectsRes).filter(isCommercialProjectOption);
         const loadedGates = normaliseList(gatesRes);
         const loadedActions = normaliseList(actionsRes);
 
@@ -212,7 +232,7 @@ export default function ProjectOverviewPage() {
   ];
 
   return (
-    <div className="space-y-5" data-testid="project-overview-page" data-commercial-readiness="project-overview-v2-live-snapshot">
+    <div className="space-y-5" data-testid="project-overview-page" data-commercial-readiness="project-overview-v3-commercial-project-filter">
       <section className="ops-card overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-sm" data-testid="project-overview-live-header">
         <div className="border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-5">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Project control</p>

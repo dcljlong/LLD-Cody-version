@@ -1019,17 +1019,14 @@ const DiaryPage = () => {
   useEffect(() => {
     if (!labourEditMode || activeLabourIndex === null) return undefined;
 
-    const previousOverflow = document.body.style.overflow;
-    const previousTouchAction = document.body.style.touchAction;
-
-    document.body.style.overflow = 'hidden';
-    document.body.style.touchAction = 'none';
+    document.body.style.overflow = '';
+    document.body.style.touchAction = '';
 
     return () => {
-      document.body.style.overflow = previousOverflow;
-      document.body.style.touchAction = previousTouchAction;
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
     };
-  }, [labourEditMode, activeLabourIndex]); // staff-diary-modal-scroll-lock-v1
+  }, [labourEditMode, activeLabourIndex]); // staff-diary-mobile-scroll-unlocked-v2
 
   useEffect(() => {
     const key = getDiaryDraftKey('quick_entry');
@@ -1651,7 +1648,7 @@ const DiaryPage = () => {
               className="rounded-xl border border-primary/35 bg-primary/10 px-3 py-2 text-left transition hover:bg-primary/15"
               data-testid="diary-command-forecast"
             >
-              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-primary">Next 2â€“3 Weeks</span>
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-primary">Next 2Ã¢â‚¬â€œ3 Weeks</span>
               <span className="block text-xl font-black">{nextThreeWeeksItems.length}</span>
             </button>
             <button
@@ -2126,7 +2123,7 @@ const DiaryPage = () => {
                     key={row.id || index}
                     ref={activeLabourEditorRef}
                     className="fixed inset-x-2 bottom-3 z-50 max-h-[88dvh] overscroll-contain overflow-y-auto rounded-2xl border border-primary/70 bg-card p-3 shadow-2xl sm:inset-x-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:w-[min(760px,calc(100vw-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:p-4"
-                    data-testid="diary-staff-timesheet-popout-editor-v1"
+                    data-testid="diary-staff-timesheet-popout-editor-v1" data-commercial-readiness="staff-diary-scroll-unlocked-v2"
                     onClick={(event) => event.stopPropagation()}
                   >
                     <div className="mb-3 flex items-start justify-between gap-3 border-b border-primary/25 pb-3">
