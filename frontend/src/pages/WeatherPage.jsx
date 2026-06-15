@@ -228,7 +228,7 @@ export default function WeatherPage() {
     setSiteLocation(null);
     setWeather(null);
     setWeatherStatus("idle");
-    setLocationStatus("Weather location cleared.");
+    setLocationStatus("Site weather location cleared. Tap Use my location to set it again.");
   }
 
   const currentWeather = weather?.current || weather?.today || {};
@@ -256,7 +256,7 @@ export default function WeatherPage() {
     : "Tap Use my location on site.";
 
   return (
-    <div className="space-y-4" data-testid="weather-page" data-commercial-readiness="weather-v8-nz-area-fallback">
+    <div className="space-y-4" data-testid="weather-page" data-commercial-readiness="weather-v9-clear-location-polish">
       <section className="overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-sm">
         <div className="border-b border-border/70 px-4 py-4">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
@@ -294,10 +294,10 @@ export default function WeatherPage() {
                 <button
                   type="button"
                   onClick={clearLocation}
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-bold text-foreground"
+                  className="rounded-lg border border-border bg-background/80 px-4 py-2 text-sm font-bold text-muted-foreground shadow-sm"
                   data-testid="weather-clear-site-location"
                 >
-                  Clear
+                  Clear location
                 </button>
               ) : null}
             </div>
