@@ -22,6 +22,7 @@ import {
   Clock,
   FileText,
   Briefcase,
+  CloudSun,
 } from 'lucide-react';
 import { Button } from './ui/button';
 
@@ -54,6 +55,7 @@ const Layout = () => {
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/diary', icon: BookOpen, label: 'Diary' },
     { to: '/projects/overview', icon: Briefcase, label: 'Project Overview' },
+    { to: '/weather', icon: CloudSun, label: 'Weather' },
     { to: '/projects', icon: FolderOpen, label: 'Projects' },
     { to: '/action-items', icon: ListTodo, label: 'Action Items' },
     { to: '/walkaround', icon: Route, label: 'Walkaround' },
