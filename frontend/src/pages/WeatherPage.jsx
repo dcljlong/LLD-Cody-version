@@ -62,6 +62,37 @@ function saveLocation(location) {
     // Ignore storage failure; weather can still load for this session.
   }
 }
+async function reverseGeocodeSiteLocation(lat, lon) {
+  try {
+    const response = await axios.get("https://api.bigdatacloud.net/data/reverse-geocode-client", {
+      params: {
+        latitude: lat,
+        longitude: lon,
+        localityLanguage: "en"
+      }
+    });
+
+    const data = response.data || {};
+    const locality = data.locality || data.city || data.localityName || "";
+    const subdivision = data.principalSubdivision || "";
+    const country = data.countryName || "";
+
+    const parts = [];
+    [locality, subdivision].forEach((part) => {
+      if (part && !parts.includes(part)) {
+        parts.push(part);
+      }
+    });
+
+    if (parts.length > 0) {
+      return parts.join(", ");
+    }
+
+    return country || "";
+  } catch {
+    return "";
+  }
+}
 
 function formatCoordinate(value) {
   if (typeof value !== "number") return "";
@@ -137,16 +168,22 @@ export default function WeatherPage() {
     setWeatherError("");
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const nextLocation = {
+      async (position) => {
+        const baseLocation = {
           lat: position.coords.latitude,
-          lon: position.coords.longitude,
-          label: "Device site location"
+          lon: position.coords.longitude
+        };
+
+        const areaLabel = await reverseGeocodeSiteLocation(baseLocation.lat, baseLocation.lon);
+
+        const nextLocation = {
+          ...baseLocation,
+          label: areaLabel || "Site weather location"
         };
 
         setSiteLocation(nextLocation);
         saveLocation(nextLocation);
-        setLocationStatus("Using this device's site location.");
+        setLocationStatus(areaLabel ? `Using ${areaLabel} as the site weather area.` : "Using this device's site coordinates.");
         loadWeatherForLocation(nextLocation);
       },
       (error) => {
@@ -192,14 +229,14 @@ export default function WeatherPage() {
     ? `${formatCoordinate(siteLocation.lat)}, ${formatCoordinate(siteLocation.lon)}`
     : "";
   const locationLabel = siteLocation
-    ? weatherAreaName || siteLocation.label || "Site weather location"
+    ? siteLocation.label || weatherAreaName || "Site weather location"
     : "No site weather location set";
   const locationMeta = siteLocation
     ? `Coordinates ${locationCoordinates}`
     : "Tap Use my location on site.";
 
   return (
-    <div className="space-y-4" data-testid="weather-page" data-commercial-readiness="weather-v6-area-name-location">
+    <div className="space-y-4" data-testid="weather-page" data-commercial-readiness="weather-v7-frontend-area-name">
       <section className="overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-sm">
         <div className="border-b border-border/70 px-4 py-4">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
