@@ -281,11 +281,11 @@ export default function WeatherPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Now on site</div>
-                <p className="mt-2 text-4xl font-black">{formatWeatherValue(temperature, "Â°C")}</p>
+                <p className="mt-2 text-4xl font-black">{formatWeatherValue(temperature, "\u00b0C")}</p>
                 <p className="mt-1 text-base font-semibold text-muted-foreground">{String(condition)}</p>
               </div>
               <div className="rounded-xl border border-border bg-card/70 px-4 py-3 text-sm text-muted-foreground">
-                Feels like <span className="font-bold text-foreground">{formatWeatherValue(feelsLike, "Â°C")}</span>
+                Feels like <span className="font-bold text-foreground">{formatWeatherValue(feelsLike, "\u00b0C")}</span>
                 <br />
                 Humidity <span className="font-bold text-foreground">{formatWeatherValue(humidity, "%")}</span>
               </div>
@@ -315,7 +315,7 @@ export default function WeatherPage() {
                     <div className="text-sm font-bold">{formatDateLabel(day.date)}</div>
                     <div className="mt-1 text-xs text-muted-foreground">{String(day.description || "Forecast")}</div>
                     <div className="mt-3 text-sm font-semibold">
-                      {formatWeatherValue(day.temp_min, "Â°C")} / {formatWeatherValue(day.temp_max, "Â°C")}
+                      {formatWeatherValue(day.temp_min, "\u00b0C")} / {formatWeatherValue(day.temp_max, "\u00b0C")}
                     </div>
                   </div>
                 ))}
