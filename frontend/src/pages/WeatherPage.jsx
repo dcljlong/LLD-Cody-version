@@ -12,28 +12,36 @@ function pickWeatherValue(source, keys) {
   return null;
 }
 
-function formatWeatherValue(value, suffix) {
+function formatWeatherValue(value, suffix, emptyLabel = "Not supplied") {
   if (value === undefined || value === null || value === "") {
-    return "Not recorded";
+    return emptyLabel;
   }
 
   if (typeof value === "number") {
     return `${Math.round(value * 10) / 10}${suffix || ""}`;
   }
 
-  if (typeof value === "object") {
-    if (value.lat !== undefined && value.lon !== undefined) {
-      return `${Math.round(Number(value.lat) * 10000) / 10000}, ${Math.round(Number(value.lon) * 10000) / 10000}`;
-    }
+  return `${value}${suffix || ""}`;
+}
 
+function formatLocation(value, weather) {
+  if (weather?.is_mock) {
+    return "Auckland, NZ";
+  }
+
+  if (value && typeof value === "object") {
     if (value.name) {
       return String(value.name);
     }
 
-    return "Location recorded";
+    if (value.lat !== undefined && value.lon !== undefined) {
+      return `Lat ${Math.round(Number(value.lat) * 10000) / 10000}, Lon ${Math.round(Number(value.lon) * 10000) / 10000}`;
+    }
+
+    return "Current site";
   }
 
-  return `${value}${suffix || ""}`;
+  return value ? String(value) : "Auckland, NZ";
 }
 
 function formatDateLabel(value) {
@@ -48,6 +56,19 @@ function formatDateLabel(value) {
   } catch {
     return String(value);
   }
+}
+
+function findRainOutlook(forecast) {
+  const rainyDay = forecast.find((day) => {
+    const description = String(day.description || "").toLowerCase();
+    return description.includes("rain") || description.includes("shower");
+  });
+
+  if (!rainyDay) {
+    return "No rain in fallback forecast";
+  }
+
+  return `${formatDateLabel(rainyDay.date)} - ${rainyDay.description}`;
 }
 
 export default function WeatherPage() {
@@ -87,17 +108,19 @@ export default function WeatherPage() {
   const currentWeather = weather?.current || weather?.today || {};
   const forecast = Array.isArray(weather?.forecast) ? weather.forecast : [];
   const rawLocation = pickWeatherValue(currentWeather, ["location", "name", "city", "site", "project_location"]) || pickWeatherValue(weather, ["location", "name", "city"]);
-  const location = rawLocation ? formatWeatherValue(rawLocation) : "Auckland / current site";
-  const condition = pickWeatherValue(currentWeather, ["condition", "description", "summary", "weather"]) || "Condition not recorded";
+  const location = formatLocation(rawLocation, weather);
+  const condition = pickWeatherValue(currentWeather, ["condition", "description", "summary", "weather"]) || "Condition not supplied";
   const temperature = pickWeatherValue(currentWeather, ["temperature", "temp", "temp_c", "temperature_c"]);
   const feelsLike = pickWeatherValue(currentWeather, ["feels_like", "feelsLike", "feels_like_c"]);
   const humidity = pickWeatherValue(currentWeather, ["humidity", "humidity_percent"]);
   const rain = pickWeatherValue(currentWeather, ["rain", "rain_mm", "precipitation", "precipitation_mm"]);
   const wind = pickWeatherValue(currentWeather, ["wind", "wind_speed", "wind_kph", "wind_speed_kph"]);
   const updatedAt = pickWeatherValue(currentWeather, ["updated_at", "updatedAt", "time", "timestamp"]) || pickWeatherValue(weather, ["updated_at", "updatedAt", "time", "timestamp"]);
+  const rainOutlook = rain === null ? findRainOutlook(forecast) : formatWeatherValue(rain, " mm");
+  const windLabel = formatWeatherValue(wind, " km/h", "Not supplied by fallback weather");
 
   return (
-    <div className="space-y-5" data-testid="weather-page" data-commercial-readiness="weather-v3-display-hotfix">
+    <div className="space-y-5" data-testid="weather-page" data-commercial-readiness="weather-v4-display-polish">
       <section className="ops-card rounded-xl border border-primary/20 bg-card p-5 shadow-sm">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Site conditions
@@ -143,14 +166,14 @@ export default function WeatherPage() {
             </div>
 
             <div className="rounded-xl border border-border bg-background/80 p-4">
-              <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Rain</div>
-              <p className="mt-2 text-lg font-black">{formatWeatherValue(rain, " mm")}</p>
+              <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Rain outlook</div>
+              <p className="mt-2 text-lg font-black">{rainOutlook}</p>
               <p className="mt-1 text-sm text-muted-foreground">Record weather delay against diary notes and roadblocks.</p>
             </div>
 
             <div className="rounded-xl border border-border bg-background/80 p-4">
               <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Wind / Humidity</div>
-              <p className="mt-2 text-lg font-black">{formatWeatherValue(wind, " km/h")}</p>
+              <p className="mt-2 text-lg font-black">{windLabel}</p>
               <p className="mt-1 text-sm text-muted-foreground">Humidity {formatWeatherValue(humidity, "%")}</p>
             </div>
           </section>
@@ -182,7 +205,7 @@ export default function WeatherPage() {
 
       {weather?.is_mock ? (
         <p className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground" data-testid="weather-mock-data-note">
-          Weather is using fallback data because the live OpenWeather key is not configured.
+          Weather is using Auckland fallback data because the live OpenWeather key is not configured yet.
         </p>
       ) : null}
     </div>
