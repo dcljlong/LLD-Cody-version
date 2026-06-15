@@ -98,6 +98,26 @@ function formatCoordinate(value) {
   if (typeof value !== "number") return "";
   return Math.round(value * 10000) / 10000;
 }
+function inferNzAreaFromCoordinates(lat, lon) {
+  if (typeof lat !== "number" || typeof lon !== "number") {
+    return "";
+  }
+
+  const knownAreas = [
+    { name: "Te Puke, Bay of Plenty", lat: -37.8064, lon: 176.3570, radius: 0.35 },
+    { name: "Tauranga, Bay of Plenty", lat: -37.6878, lon: 176.1651, radius: 0.35 },
+    { name: "Mount Maunganui, Bay of Plenty", lat: -37.6410, lon: 176.1860, radius: 0.25 },
+    { name: "Rotorua, Bay of Plenty", lat: -38.1368, lon: 176.2497, radius: 0.35 },
+    { name: "Whakatane, Bay of Plenty", lat: -37.9534, lon: 176.9908, radius: 0.35 },
+    { name: "Auckland", lat: -36.8485, lon: 174.7633, radius: 0.45 }
+  ];
+
+  const match = knownAreas.find((area) => {
+    return Math.abs(lat - area.lat) <= area.radius && Math.abs(lon - area.lon) <= area.radius;
+  });
+
+  return match ? match.name : "";
+}
 
 function getRainOutlook(forecast, rain) {
   if (rain !== null && rain !== undefined && rain !== "") {
@@ -174,7 +194,7 @@ export default function WeatherPage() {
           lon: position.coords.longitude
         };
 
-        const areaLabel = await reverseGeocodeSiteLocation(baseLocation.lat, baseLocation.lon);
+        const areaLabel = await reverseGeocodeSiteLocation(baseLocation.lat, baseLocation.lon) || inferNzAreaFromCoordinates(baseLocation.lat, baseLocation.lon);
 
         const nextLocation = {
           ...baseLocation,
@@ -236,7 +256,7 @@ export default function WeatherPage() {
     : "Tap Use my location on site.";
 
   return (
-    <div className="space-y-4" data-testid="weather-page" data-commercial-readiness="weather-v7-frontend-area-name">
+    <div className="space-y-4" data-testid="weather-page" data-commercial-readiness="weather-v8-nz-area-fallback">
       <section className="overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-sm">
         <div className="border-b border-border/70 px-4 py-4">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
