@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || "https://lld-cody-version.onrender.com";
+const WEATHER_LOCATION_STORAGE_KEY = "lld_weather_site_location_v1";
 
 function pickWeatherValue(source, keys) {
   for (const key of keys) {
@@ -24,26 +25,6 @@ function formatWeatherValue(value, suffix, emptyLabel = "Not supplied") {
   return `${value}${suffix || ""}`;
 }
 
-function formatLocation(value, weather) {
-  if (weather?.is_mock) {
-    return "Auckland, NZ";
-  }
-
-  if (value && typeof value === "object") {
-    if (value.name) {
-      return String(value.name);
-    }
-
-    if (value.lat !== undefined && value.lon !== undefined) {
-      return `Lat ${Math.round(Number(value.lat) * 10000) / 10000}, Lon ${Math.round(Number(value.lon) * 10000) / 10000}`;
-    }
-
-    return "Current site";
-  }
-
-  return value ? String(value) : "Auckland, NZ";
-}
-
 function formatDateLabel(value) {
   if (!value) return "Forecast";
 
@@ -58,14 +39,47 @@ function formatDateLabel(value) {
   }
 }
 
-function findRainOutlook(forecast) {
+function loadSavedLocation() {
+  try {
+    const raw = window.localStorage.getItem(WEATHER_LOCATION_STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.lat === "number" && typeof parsed?.lon === "number") {
+      return parsed;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function saveLocation(location) {
+  try {
+    window.localStorage.setItem(WEATHER_LOCATION_STORAGE_KEY, JSON.stringify(location));
+  } catch {
+    // Ignore storage failure; weather can still load for this session.
+  }
+}
+
+function formatCoordinate(value) {
+  if (typeof value !== "number") return "";
+  return Math.round(value * 10000) / 10000;
+}
+
+function getRainOutlook(forecast, rain) {
+  if (rain !== null && rain !== undefined && rain !== "") {
+    return formatWeatherValue(rain, " mm");
+  }
+
   const rainyDay = forecast.find((day) => {
     const description = String(day.description || "").toLowerCase();
     return description.includes("rain") || description.includes("shower");
   });
 
   if (!rainyDay) {
-    return "No rain in fallback forecast";
+    return "No rain shown";
   }
 
   return `${formatDateLabel(rainyDay.date)} - ${rainyDay.description}`;
@@ -73,42 +87,95 @@ function findRainOutlook(forecast) {
 
 export default function WeatherPage() {
   const [weather, setWeather] = useState(null);
-  const [weatherStatus, setWeatherStatus] = useState("loading");
+  const [weatherStatus, setWeatherStatus] = useState("idle");
   const [weatherError, setWeatherError] = useState("");
+  const [siteLocation, setSiteLocation] = useState(() => loadSavedLocation());
+  const [locationStatus, setLocationStatus] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadWeather() {
-      setWeatherStatus("loading");
-      setWeatherError("");
-
-      try {
-        const response = await axios.get(API_BASE_URL + "/api/weather");
-        if (cancelled) return;
-
-        setWeather(response.data || {});
-        setWeatherStatus("ready");
-      } catch (error) {
-        if (cancelled) return;
-
-        setWeather(null);
-        setWeatherStatus("error");
-        setWeatherError(error?.response?.data?.detail || error?.message || "Weather could not be loaded.");
-      }
+  async function loadWeatherForLocation(location) {
+    if (!location?.lat || !location?.lon) {
+      setWeather(null);
+      setWeatherStatus("idle");
+      return;
     }
 
-    loadWeather();
+    setWeatherStatus("loading");
+    setWeatherError("");
 
-    return () => {
-      cancelled = true;
-    };
+    try {
+      const response = await axios.get(API_BASE_URL + "/api/weather", {
+        params: {
+          lat: location.lat,
+          lon: location.lon
+        }
+      });
+
+      setWeather(response.data || {});
+      setWeatherStatus("ready");
+    } catch (error) {
+      setWeather(null);
+      setWeatherStatus("error");
+      setWeatherError(error?.response?.data?.detail || error?.message || "Weather could not be loaded.");
+    }
+  }
+
+  useEffect(() => {
+    if (siteLocation) {
+      loadWeatherForLocation(siteLocation);
+    }
   }, []);
+
+  function useDeviceLocation() {
+    setLocationStatus("");
+
+    if (!navigator.geolocation) {
+      setLocationStatus("Location is not available on this device/browser.");
+      return;
+    }
+
+    setWeatherStatus("loading");
+    setWeatherError("");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextLocation = {
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+          label: "Device site location"
+        };
+
+        setSiteLocation(nextLocation);
+        saveLocation(nextLocation);
+        setLocationStatus("Using this device's site location.");
+        loadWeatherForLocation(nextLocation);
+      },
+      (error) => {
+        setWeatherStatus(siteLocation ? "ready" : "idle");
+        setLocationStatus(error?.message || "Could not access location. Allow location permission and try again.");
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 12000,
+        maximumAge: 1000 * 60 * 30
+      }
+    );
+  }
+
+  function clearLocation() {
+    try {
+      window.localStorage.removeItem(WEATHER_LOCATION_STORAGE_KEY);
+    } catch {
+      // Ignore storage failure.
+    }
+
+    setSiteLocation(null);
+    setWeather(null);
+    setWeatherStatus("idle");
+    setLocationStatus("Weather location cleared.");
+  }
 
   const currentWeather = weather?.current || weather?.today || {};
   const forecast = Array.isArray(weather?.forecast) ? weather.forecast : [];
-  const rawLocation = pickWeatherValue(currentWeather, ["location", "name", "city", "site", "project_location"]) || pickWeatherValue(weather, ["location", "name", "city"]);
-  const location = formatLocation(rawLocation, weather);
   const condition = pickWeatherValue(currentWeather, ["condition", "description", "summary", "weather"]) || "Condition not supplied";
   const temperature = pickWeatherValue(currentWeather, ["temperature", "temp", "temp_c", "temperature_c"]);
   const feelsLike = pickWeatherValue(currentWeather, ["feels_like", "feelsLike", "feels_like_c"]);
@@ -116,27 +183,88 @@ export default function WeatherPage() {
   const rain = pickWeatherValue(currentWeather, ["rain", "rain_mm", "precipitation", "precipitation_mm"]);
   const wind = pickWeatherValue(currentWeather, ["wind", "wind_speed", "wind_kph", "wind_speed_kph"]);
   const updatedAt = pickWeatherValue(currentWeather, ["updated_at", "updatedAt", "time", "timestamp"]) || pickWeatherValue(weather, ["updated_at", "updatedAt", "time", "timestamp"]);
-  const rainOutlook = rain === null ? findRainOutlook(forecast) : formatWeatherValue(rain, " mm");
-  const windLabel = formatWeatherValue(wind, " km/h", "Not supplied by fallback weather");
+
+  const rainOutlook = useMemo(() => getRainOutlook(forecast, rain), [forecast, rain]);
+  const locationLabel = siteLocation
+    ? `${siteLocation.label || "Site location"} (${formatCoordinate(siteLocation.lat)}, ${formatCoordinate(siteLocation.lon)})`
+    : "No site weather location set";
 
   return (
-    <div className="space-y-5" data-testid="weather-page" data-commercial-readiness="weather-v4-display-polish">
-      <section className="ops-card rounded-xl border border-primary/20 bg-card p-5 shadow-sm">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          Site conditions
-        </p>
-        <h2 className="mt-1 font-heading text-2xl font-black uppercase tracking-[0.06em] sm:text-4xl sm:tracking-[0.08em]">
-          Weather
-        </h2>
-        <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-muted-foreground">
-          Commercial V1 weather checkpoint for rain, wind, temperature, delays, access constraints, exterior works, deliveries, and diary evidence.
-        </p>
+    <div className="space-y-4" data-testid="weather-page" data-commercial-readiness="weather-v5-site-location-ux">
+      <section className="overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-sm">
+        <div className="border-b border-border/70 px-4 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+            Site conditions
+          </p>
+          <h2 className="mt-1 font-heading text-3xl font-black uppercase tracking-[0.08em]">
+            Weather
+          </h2>
+          <p className="mt-2 text-sm font-medium leading-6 text-muted-foreground">
+            Set the site location from this phone, then use the weather snapshot as diary evidence for rain, wind, temperature, access constraints, exterior works, deliveries, and delay notes.
+          </p>
+        </div>
+
+        <div className="grid gap-3 px-4 py-4 md:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-xl border border-border bg-background/70 p-4" data-testid="weather-site-location-control">
+            <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              Site weather location
+            </div>
+            <p className="mt-2 text-lg font-black">{locationLabel}</p>
+            {locationStatus ? (
+              <p className="mt-1 text-xs text-muted-foreground">{locationStatus}</p>
+            ) : null}
+
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={useDeviceLocation}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm"
+                data-testid="weather-use-device-location"
+              >
+                Use my location
+              </button>
+              {siteLocation ? (
+                <button
+                  type="button"
+                  onClick={clearLocation}
+                  className="rounded-lg border border-border px-4 py-2 text-sm font-bold text-foreground"
+                  data-testid="weather-clear-site-location"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-background/70 p-4">
+            <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              Status
+            </div>
+            <p className="mt-2 text-lg font-black">
+              {weatherStatus === "ready" ? "Weather loaded" : weatherStatus === "loading" ? "Loading..." : "Set location"}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {weather?.is_mock
+                ? "Fallback data is being used until the live OpenWeather key is configured."
+                : "Live weather will use the selected site coordinates."}
+            </p>
+          </div>
+        </div>
       </section>
+
+      {weatherStatus === "idle" ? (
+        <section className="rounded-xl border border-border bg-background/80 p-4" data-testid="weather-set-location-empty-state">
+          <div className="text-sm font-bold">Set this job/site weather location first.</div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            This avoids using Auckland or any other default location. Tap Use my location on site, then the forecast will load for that coordinate.
+          </p>
+        </section>
+      ) : null}
 
       {weatherStatus === "loading" ? (
         <section className="rounded-xl border border-border bg-background/80 p-4" data-testid="weather-live-loading">
-          <div className="text-sm font-semibold">Loading live weather...</div>
-          <p className="mt-1 text-sm text-muted-foreground">Checking the live LLD weather API.</p>
+          <div className="text-sm font-semibold">Loading site weather...</div>
+          <p className="mt-1 text-sm text-muted-foreground">Checking the LLD weather API for the selected site coordinates.</p>
         </section>
       ) : null}
 
@@ -144,50 +272,50 @@ export default function WeatherPage() {
         <section className="rounded-xl border border-destructive/30 bg-destructive/10 p-4" data-testid="weather-live-error">
           <div className="text-sm font-bold text-destructive">Weather data unavailable</div>
           <p className="mt-1 text-sm text-muted-foreground">{weatherError}</p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Keep recording rain, wind, temperature, and site-condition impacts in the diary until the weather service responds.
-          </p>
         </section>
       ) : null}
 
       {weatherStatus === "ready" ? (
         <>
-          <section className="grid gap-3 md:grid-cols-4" data-testid="weather-live-summary">
-            <div className="rounded-xl border border-border bg-background/80 p-4">
-              <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Location</div>
-              <p className="mt-2 text-lg font-black">{location}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{String(condition)}</p>
+          <section className="rounded-2xl border border-border bg-background/80 p-4" data-testid="weather-live-summary">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Now on site</div>
+                <p className="mt-2 text-4xl font-black">{formatWeatherValue(temperature, "Â°C")}</p>
+                <p className="mt-1 text-base font-semibold text-muted-foreground">{String(condition)}</p>
+              </div>
+              <div className="rounded-xl border border-border bg-card/70 px-4 py-3 text-sm text-muted-foreground">
+                Feels like <span className="font-bold text-foreground">{formatWeatherValue(feelsLike, "Â°C")}</span>
+                <br />
+                Humidity <span className="font-bold text-foreground">{formatWeatherValue(humidity, "%")}</span>
+              </div>
             </div>
 
-            <div className="rounded-xl border border-border bg-background/80 p-4">
-              <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Temperature</div>
-              <p className="mt-2 text-lg font-black">{formatWeatherValue(temperature, "°C")}</p>
-              <p className="mt-1 text-sm text-muted-foreground">Feels like {formatWeatherValue(feelsLike, "°C")}</p>
-            </div>
-
-            <div className="rounded-xl border border-border bg-background/80 p-4">
-              <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Rain outlook</div>
-              <p className="mt-2 text-lg font-black">{rainOutlook}</p>
-              <p className="mt-1 text-sm text-muted-foreground">Record weather delay against diary notes and roadblocks.</p>
-            </div>
-
-            <div className="rounded-xl border border-border bg-background/80 p-4">
-              <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Wind / Humidity</div>
-              <p className="mt-2 text-lg font-black">{windLabel}</p>
-              <p className="mt-1 text-sm text-muted-foreground">Humidity {formatWeatherValue(humidity, "%")}</p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <div className="rounded-xl border border-border bg-card/70 p-3">
+                <div className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">Rain outlook</div>
+                <p className="mt-1 text-lg font-black">{rainOutlook}</p>
+              </div>
+              <div className="rounded-xl border border-border bg-card/70 p-3">
+                <div className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">Wind</div>
+                <p className="mt-1 text-lg font-black">{formatWeatherValue(wind, " km/h", "Not supplied")}</p>
+              </div>
             </div>
           </section>
 
           {forecast.length > 0 ? (
-            <section className="rounded-xl border border-border bg-background/80 p-4" data-testid="weather-live-forecast">
-              <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">7-day forecast</div>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <section className="rounded-2xl border border-border bg-background/80 p-4" data-testid="weather-live-forecast">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">7-day forecast</div>
+                <div className="text-xs text-muted-foreground">Site weather</div>
+              </div>
+              <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
                 {forecast.map((day, index) => (
-                  <div key={`${day.date || "forecast"}-${index}`} className="rounded-lg border border-border bg-card/70 p-3">
+                  <div key={`${day.date || "forecast"}-${index}`} className="min-w-[150px] rounded-xl border border-border bg-card/70 p-3">
                     <div className="text-sm font-bold">{formatDateLabel(day.date)}</div>
                     <div className="mt-1 text-xs text-muted-foreground">{String(day.description || "Forecast")}</div>
-                    <div className="mt-2 text-sm font-semibold">
-                      {formatWeatherValue(day.temp_min, "°C")} / {formatWeatherValue(day.temp_max, "°C")}
+                    <div className="mt-3 text-sm font-semibold">
+                      {formatWeatherValue(day.temp_min, "Â°C")} / {formatWeatherValue(day.temp_max, "Â°C")}
                     </div>
                   </div>
                 ))}
@@ -200,12 +328,6 @@ export default function WeatherPage() {
       {weatherStatus === "ready" && updatedAt ? (
         <p className="text-xs text-muted-foreground" data-testid="weather-live-updated-at">
           Last weather update: {String(updatedAt)}
-        </p>
-      ) : null}
-
-      {weather?.is_mock ? (
-        <p className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground" data-testid="weather-mock-data-note">
-          Weather is using Auckland fallback data because the live OpenWeather key is not configured yet.
         </p>
       ) : null}
     </div>

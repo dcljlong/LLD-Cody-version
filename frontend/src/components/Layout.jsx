@@ -31,6 +31,9 @@ const Layout = () => {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  function closeMobileSidebar() {
+    setSidebarOpen(false);
+  }
   const [projects, setProjects] = useState([]);
 
   useEffect(() => {
@@ -323,6 +326,8 @@ const Layout = () => {
                     <NavLink
                       key={item.to}
                       to={item.to}
+              onClick={closeMobileSidebar}
+              data-testid="lld-sidebar-nav-link"
                       end={item.to === '/dashboard'}
                       onClick={() => setSidebarOpen(false)}
                       className={({ isActive }) =>
