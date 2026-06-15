@@ -2034,86 +2034,102 @@ async def update_settings(settings_data: SettingsUpdate, current_user: dict = De
 
 # ==================== WEATHER ROUTES ====================
 
+def describe_open_meteo_weather(code: int) -> str:
+    weather_codes = {
+        0: "Clear",
+        1: "Mostly clear",
+        2: "Partly cloudy",
+        3: "Overcast",
+        45: "Fog",
+        48: "Depositing rime fog",
+        51: "Light drizzle",
+        53: "Drizzle",
+        55: "Heavy drizzle",
+        56: "Light freezing drizzle",
+        57: "Freezing drizzle",
+        61: "Light rain",
+        63: "Rain",
+        65: "Heavy rain",
+        66: "Light freezing rain",
+        67: "Freezing rain",
+        71: "Light snow",
+        73: "Snow",
+        75: "Heavy snow",
+        77: "Snow grains",
+        80: "Light showers",
+        81: "Showers",
+        82: "Heavy showers",
+        85: "Light snow showers",
+        86: "Snow showers",
+        95: "Thunderstorm",
+        96: "Thunderstorm with hail",
+        99: "Severe thunderstorm with hail"
+    }
+    return weather_codes.get(code, "Weather data")
+
+
 @api_router.get("/weather")
 async def get_weather(lat: float = -36.8485, lon: float = 174.7633):
-    """Get 7-day weather forecast. Default is Auckland, NZ"""
-    if not OPENWEATHER_API_KEY:
-        # Return mock data if no API key
+    """Get real 7-day weather forecast using Open-Meteo. Defaults retained for compatibility only."""
+    try:
+        async with httpx.AsyncClient(timeout=12.0) as client:
+            response = await client.get(
+                "https://api.open-meteo.com/v1/forecast",
+                params={
+                    "latitude": lat,
+                    "longitude": lon,
+                    "current": "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,rain,weather_code,wind_speed_10m",
+                    "daily": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,rain_sum,wind_speed_10m_max",
+                    "timezone": "Pacific/Auckland",
+                    "forecast_days": 7
+                }
+            )
+            response.raise_for_status()
+            data = response.json()
+
+        current = data.get("current", {}) or {}
+        daily = data.get("daily", {}) or {}
+        dates = daily.get("time", []) or []
+        daily_codes = daily.get("weather_code", []) or []
+        temp_max = daily.get("temperature_2m_max", []) or []
+        temp_min = daily.get("temperature_2m_min", []) or []
+        precipitation_sum = daily.get("precipitation_sum", []) or []
+        rain_sum = daily.get("rain_sum", []) or []
+        wind_max = daily.get("wind_speed_10m_max", []) or []
+
+        forecast = []
+        for index, date in enumerate(dates[:7]):
+            code = daily_codes[index] if index < len(daily_codes) else None
+            forecast.append({
+                "date": date,
+                "temp_max": temp_max[index] if index < len(temp_max) else None,
+                "temp_min": temp_min[index] if index < len(temp_min) else None,
+                "description": describe_open_meteo_weather(code) if code is not None else "Forecast",
+                "weather_code": code,
+                "precipitation_sum": precipitation_sum[index] if index < len(precipitation_sum) else None,
+                "rain_sum": rain_sum[index] if index < len(rain_sum) else None,
+                "wind_speed_max": wind_max[index] if index < len(wind_max) else None
+            })
+
+        current_code = current.get("weather_code")
+
         return {
             "current": {
-                "temp": 18,
-                "feels_like": 17,
-                "humidity": 65,
-                "description": "Partly cloudy",
-                "icon": "02d"
+                "temp": current.get("temperature_2m"),
+                "feels_like": current.get("apparent_temperature"),
+                "humidity": current.get("relative_humidity_2m"),
+                "precipitation": current.get("precipitation"),
+                "rain": current.get("rain"),
+                "wind_speed": current.get("wind_speed_10m"),
+                "description": describe_open_meteo_weather(current_code) if current_code is not None else "Weather data",
+                "weather_code": current_code,
+                "time": current.get("time")
             },
-            "forecast": [
-                {"date": (datetime.now(timezone.utc) + timedelta(days=i)).strftime("%Y-%m-%d"),
-                 "temp_max": 20 + i % 3, "temp_min": 12 + i % 2,
-                 "description": ["Sunny", "Cloudy", "Rain", "Partly cloudy", "Overcast", "Light rain", "Clear"][i % 7],
-                 "icon": ["01d", "03d", "10d", "02d", "04d", "09d", "01d"][i % 7]}
-                for i in range(7)
-            ],
+            "forecast": forecast,
             "location": {"lat": lat, "lon": lon},
-            "is_mock": True
+            "source": "open-meteo",
+            "is_mock": False
         }
-
-    try:
-        async with httpx.AsyncClient() as client:
-            # Get current weather
-            current_res = await client.get(
-                "https://api.openweathermap.org/data/2.5/weather",
-                params={
-                    "lat": lat,
-                    "lon": lon,
-                    "appid": OPENWEATHER_API_KEY,
-                    "units": "metric"
-                },
-                timeout=10
-            )
-            current_data = current_res.json()
-
-            # Get forecast
-            forecast_res = await client.get(
-                "https://api.openweathermap.org/data/2.5/forecast",
-                params={
-                    "lat": lat,
-                    "lon": lon,
-                    "appid": OPENWEATHER_API_KEY,
-                    "units": "metric"
-                },
-                timeout=10
-            )
-            forecast_data = forecast_res.json()
-
-            # Process forecast to daily
-            daily_forecast = {}
-            for item in forecast_data.get("list", []):
-                date = item["dt_txt"][:10]
-                if date not in daily_forecast:
-                    daily_forecast[date] = {
-                        "date": date,
-                        "temp_max": item["main"]["temp_max"],
-                        "temp_min": item["main"]["temp_min"],
-                        "description": item["weather"][0]["description"],
-                        "icon": item["weather"][0]["icon"]
-                    }
-                else:
-                    daily_forecast[date]["temp_max"] = max(daily_forecast[date]["temp_max"], item["main"]["temp_max"])
-                    daily_forecast[date]["temp_min"] = min(daily_forecast[date]["temp_min"], item["main"]["temp_min"])
-
-            return {
-                "current": {
-                    "temp": current_data["main"]["temp"],
-                    "feels_like": current_data["main"]["feels_like"],
-                    "humidity": current_data["main"]["humidity"],
-                    "description": current_data["weather"][0]["description"],
-                    "icon": current_data["weather"][0]["icon"]
-                },
-                "forecast": list(daily_forecast.values())[:7],
-                "location": {"lat": lat, "lon": lon},
-                "is_mock": False
-            }
     except Exception as e:
         logger.error(f"Weather API error: {e}")
         raise HTTPException(status_code=502, detail="Weather service unavailable")
