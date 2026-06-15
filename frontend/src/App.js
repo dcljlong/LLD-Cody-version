@@ -10,12 +10,14 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import WalkaroundPage from './pages/WalkaroundPage';
 import ProjectsPage from './pages/ProjectsPage';
+import ProjectOverviewPage from './pages/ProjectOverviewPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import GatesPage from './pages/GatesPage';
 import ActionItemsPage from './pages/ActionItemsPage';
 import DiaryPage from './pages/DiaryPage';
 import SettingsPage from './pages/SettingsPage';
 import ProgrammePage from './pages/ProgrammePage';
+import WeatherPage from './pages/WeatherPage';
 import Layout from './components/Layout';
 
 import './App.css';
@@ -93,6 +95,8 @@ function AppRoutes() {
       </Route>
       
       {/* Catch all */}
+      <Route path="projects/overview" element={<ProjectOverviewPage />} />
+      <Route path="weather" element={<WeatherPage />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );

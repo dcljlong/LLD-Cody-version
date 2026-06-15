@@ -53,6 +53,11 @@ const Layout = () => {
   const operationsNav = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/diary', icon: BookOpen, label: 'Diary' },
+    {
+      label: 'Project Overview',
+      href: '/projects/overview',
+      description: 'Commercial job snapshot'
+    },
     { to: '/projects', icon: FolderOpen, label: 'Projects' },
     { to: '/action-items', icon: ListTodo, label: 'Action Items' },
     { to: '/walkaround', icon: Route, label: 'Walkaround' },
@@ -372,7 +377,6 @@ const Layout = () => {
 };
 
 export default Layout;
-
 
 
 
