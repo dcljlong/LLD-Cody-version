@@ -2087,6 +2087,38 @@ async def get_weather(lat: float = -36.8485, lon: float = 174.7633):
             response.raise_for_status()
             data = response.json()
 
+            location_name = None
+            try:
+                location_response = await client.get(
+                    "https://api.bigdatacloud.net/data/reverse-geocode-client",
+                    params={
+                        "latitude": lat,
+                        "longitude": lon,
+                        "localityLanguage": "en"
+                    }
+                )
+                if location_response.status_code == 200:
+                    location_data = location_response.json()
+                    locality = (
+                        location_data.get("locality")
+                        or location_data.get("city")
+                        or location_data.get("localityName")
+                    )
+                    subdivision = location_data.get("principalSubdivision")
+                    country = location_data.get("countryName")
+
+                    name_parts = []
+                    for part in [locality, subdivision]:
+                        if part and part not in name_parts:
+                            name_parts.append(part)
+
+                    if name_parts:
+                        location_name = ", ".join(name_parts)
+                    elif country:
+                        location_name = country
+            except Exception as location_error:
+                logger.warning(f"Weather reverse geocode unavailable: {location_error}")
+
         current = data.get("current", {}) or {}
         daily = data.get("daily", {}) or {}
         dates = daily.get("time", []) or []
@@ -2126,7 +2158,7 @@ async def get_weather(lat: float = -36.8485, lon: float = 174.7633):
                 "time": current.get("time")
             },
             "forecast": forecast,
-            "location": {"lat": lat, "lon": lon},
+            "location": {"lat": lat, "lon": lon, "name": location_name},
             "source": "open-meteo",
             "is_mock": False
         }

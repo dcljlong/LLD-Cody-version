@@ -185,12 +185,21 @@ export default function WeatherPage() {
   const updatedAt = pickWeatherValue(currentWeather, ["updated_at", "updatedAt", "time", "timestamp"]) || pickWeatherValue(weather, ["updated_at", "updatedAt", "time", "timestamp"]);
 
   const rainOutlook = useMemo(() => getRainOutlook(forecast, rain), [forecast, rain]);
+  const weatherAreaName = typeof weather?.location?.name === "string" && weather.location.name.trim()
+    ? weather.location.name.trim()
+    : "";
+  const locationCoordinates = siteLocation
+    ? `${formatCoordinate(siteLocation.lat)}, ${formatCoordinate(siteLocation.lon)}`
+    : "";
   const locationLabel = siteLocation
-    ? `${siteLocation.label || "Site location"} (${formatCoordinate(siteLocation.lat)}, ${formatCoordinate(siteLocation.lon)})`
+    ? weatherAreaName || siteLocation.label || "Site weather location"
     : "No site weather location set";
+  const locationMeta = siteLocation
+    ? `Coordinates ${locationCoordinates}`
+    : "Tap Use my location on site.";
 
   return (
-    <div className="space-y-4" data-testid="weather-page" data-commercial-readiness="weather-v5-site-location-ux">
+    <div className="space-y-4" data-testid="weather-page" data-commercial-readiness="weather-v6-area-name-location">
       <section className="overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-sm">
         <div className="border-b border-border/70 px-4 py-4">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
@@ -210,6 +219,7 @@ export default function WeatherPage() {
               Site weather location
             </div>
             <p className="mt-2 text-lg font-black">{locationLabel}</p>
+            <p className="mt-1 text-xs text-muted-foreground" data-testid="weather-location-meta">{locationMeta}</p>
             {locationStatus ? (
               <p className="mt-1 text-xs text-muted-foreground">{locationStatus}</p>
             ) : null}
