@@ -7,6 +7,7 @@ const EMPTY_FORM = {
   project_id: "",
   name: "",
   description: "",
+  task_code_reference: "",
   order: "",
   owner_party: "YOU",
   required_by_date: "",
@@ -48,6 +49,46 @@ const STATUS_CONFIG = {
 
 const ROADBLOCK_FIELD_CLASS = "min-h-11 w-full rounded-lg border border-primary/45 bg-background px-3 py-2 text-sm font-semibold text-foreground shadow-inner outline-none focus:border-primary focus:ring-2 focus:ring-primary/25";
 const ROADBLOCK_PANEL_CLASS = "rounded-lg border border-primary/25 bg-background/80 px-3 py-3 shadow-inner"; // roadblock-mobile-create-containment-v1
+const TASK_CODE_REFERENCE_PREFIX = "Task/code reference:";
+
+function splitTaskCodeReference(description = "") {
+  const raw = String(description || "");
+  const lines = raw.split(/\r?\n/);
+  const referenceIndex = lines.findIndex((line) => line.trim().startsWith(TASK_CODE_REFERENCE_PREFIX));
+
+  if (referenceIndex === -1) {
+    return {
+      description: raw,
+      task_code_reference: ""
+    };
+  }
+
+  const reference = lines[referenceIndex].trim().slice(TASK_CODE_REFERENCE_PREFIX.length).trim();
+  const cleanDescription = lines
+    .filter((_, index) => index !== referenceIndex)
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return {
+    description: cleanDescription,
+    task_code_reference: reference
+  };
+}
+
+function buildDescriptionWithTaskCodeReference(description, reference) {
+  const cleanDescription = String(description || "").trim();
+  const cleanReference = String(reference || "").trim();
+
+  if (!cleanReference) {
+    return cleanDescription || null;
+  }
+
+  return [
+    cleanDescription,
+    `${TASK_CODE_REFERENCE_PREFIX} ${cleanReference}`
+  ].filter(Boolean).join("\n\n");
+}
 
 const STATUS_SECTIONS = [
   {
@@ -105,13 +146,15 @@ function cleanDateForInput(value) {
 function normaliseGateRow(gate = {}) {
   const status = gate.status || "OPEN";
   const ownerParty = gate.owner_party || "YOU";
+  const splitDescription = splitTaskCodeReference(gate.description || "");
 
   return {
     ...gate,
     id: gate.id || gate._id || `unsaved-${gate.project_id || "project"}-${gate.name || "roadblock"}`,
     project_id: gate.project_id || "",
     name: gate.name || gate.title || "Untitled Roadblock / Concern",
-    description: gate.description || "",
+    description: splitDescription.description,
+    task_code_reference: gate.task_code_reference || splitDescription.task_code_reference || "",
     order: gate.order === undefined || gate.order === null ? 0 : Number(gate.order) || 0,
     owner_party: ownerParty,
     status,
@@ -387,13 +430,16 @@ export default function GatesPage() {
   }
 
   function startEdit(gate) {
+    const splitDescription = splitTaskCodeReference(gate.description || "");
+
     setEditingGateId(gate.id);
     setActionError("");
     setMessage("");
     setForm({
       project_id: gate.project_id || "",
       name: gate.name || "",
-      description: gate.description || "",
+      description: splitDescription.description,
+      task_code_reference: gate.task_code_reference || splitDescription.task_code_reference || "",
       order: gate.order === undefined || gate.order === null ? "" : String(gate.order),
       owner_party: gate.owner_party || "YOU",
       required_by_date: cleanDateForInput(gate.required_by_date),
@@ -433,7 +479,7 @@ export default function GatesPage() {
     return {
       project_id: form.project_id,
       name: form.name.trim(),
-      description: form.description.trim() || null,
+      description: buildDescriptionWithTaskCodeReference(form.description, form.task_code_reference),
       order: toNumber(form.order, 0),
       owner_party: form.owner_party || "YOU",
       required_by_date: form.required_by_date || null,
@@ -606,6 +652,13 @@ export default function GatesPage() {
                   {linkedTask.owner_tag ? ` | ${linkedTask.owner_tag}` : ""}
                 </div>
               ) : null}
+            </div>
+          ) : null}
+
+          {gate.task_code_reference ? (
+            <div className="rounded-md border border-border bg-background px-3 py-2" data-testid="roadblock-manual-task-code-reference-display-v1">
+              <div className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Task/code reference</div>
+              <div className="mt-1 text-sm font-semibold">{gate.task_code_reference}</div>
             </div>
           ) : null}
 
@@ -971,7 +1024,7 @@ export default function GatesPage() {
                     Delay / Programme Impact
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Link this roadblock to the programme task or code it is delaying.
+                    Link this roadblock to the programme task it is delaying.
                   </p>
                 </div>
 
@@ -982,7 +1035,7 @@ export default function GatesPage() {
                   disabled={!form.project_id || selectedProjectProgrammeTasks.length === 0}
                   data-testid="roadblock-linked-programme-task-select"
                 >
-                  <option value="">No linked programme task/code</option>
+                  <option value="">No linked programme task</option>
                   {selectedProjectProgrammeTasks.map((task) => (
                     <option key={task.id} value={task.id}>
                       {task.task_name || "Untitled task"}{task.end_date ? ` - due ${task.end_date}` : ""}{task.owner_tag ? ` - ${task.owner_tag}` : ""}
@@ -992,9 +1045,27 @@ export default function GatesPage() {
 
                 {form.project_id && selectedProjectProgrammeTasks.length === 0 ? (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    No programme tasks found for this project yet.
+                    No programme tasks found for this project yet. Upload or import a programme for this project first, or choose the project that owns the programme.
                   </p>
                 ) : null}
+              </div>
+
+              <div className={ROADBLOCK_PANEL_CLASS} data-testid="roadblock-manual-task-code-reference-v1">
+                <label className="space-y-1">
+                  <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                    Task/code reference
+                  </span>
+                  <input
+                    className={ROADBLOCK_FIELD_CLASS}
+                    value={form.task_code_reference}
+                    onChange={(event) => setField("task_code_reference", event.target.value)}
+                    placeholder="e.g. 101, 102, Gib Stopping, Grid Ceiling"
+                    data-testid="roadblock-task-code-reference-input"
+                  />
+                </label>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Manual note only. This does not create a programme task link.
+                </p>
               </div>
 
               <div className={ROADBLOCK_PANEL_CLASS}>
