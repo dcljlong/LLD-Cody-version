@@ -59,6 +59,54 @@ const parseDateInput = (dateStr) => {
   return new Date(year, month - 1, day);
 };
 
+class DiaryPageErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, errorMessage: "" };
+  }
+
+  static getDerivedStateFromError(error) {
+    return {
+      hasError: true,
+      errorMessage: error?.message || "Unknown diary error",
+    };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("LLD Diary render failure", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <main className="min-h-screen bg-background p-6" data-commercial-readiness="diary-error-boundary-v1">
+          <section className="mx-auto max-w-3xl rounded-2xl border border-destructive/30 bg-card p-6 shadow-lg">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-destructive">Diary recovery mode</p>
+            <h1 className="mt-2 font-heading text-2xl font-black uppercase tracking-[0.12em] text-foreground">
+              Diary could not load safely
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              One Diary section hit a runtime error, so the app stopped this page before showing incorrect diary data.
+              Reload the page first. If it happens again, record the time and continue using Roadblocks, Walkaround, or Action Items from the sidebar.
+            </p>
+            <p className="mt-3 rounded-lg bg-secondary/40 p-3 text-xs font-semibold text-muted-foreground">
+              Error: {this.state.errorMessage}
+            </p>
+            <button
+              type="button"
+              className="mt-5 rounded-xl bg-primary px-4 py-2 text-sm font-black uppercase tracking-[0.12em] text-primary-foreground"
+              onClick={() => window.location.reload()}
+            >
+              Reload Diary
+            </button>
+          </section>
+        </main>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 const DiaryPage = () => {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
@@ -2594,4 +2642,10 @@ const DiaryPage = () => {
   );
 };
 
-export default DiaryPage;
+const DiaryPageWithErrorBoundary = () => (
+  <DiaryPageErrorBoundary>
+    <DiaryPage />
+  </DiaryPageErrorBoundary>
+);
+
+export default DiaryPageWithErrorBoundary;
