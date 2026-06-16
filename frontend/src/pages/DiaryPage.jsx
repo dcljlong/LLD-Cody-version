@@ -1250,6 +1250,9 @@ const DiaryPage = () => {
     return Number.isNaN(date.getTime()) ? fallback : date.getTime();
   };
 
+  const walkaroundEntries = Array.isArray(diary?.walkaround_entries) ? diary.walkaround_entries : [];
+  const walkaroundEntriesCount = walkaroundEntries.length;
+
   const sortDiaryPriorityFirst = (items = []) => {
     return [...(Array.isArray(items) ? items : [])].sort((a, b) => {
       const priorityDiff = getDiaryPriorityRank(a.priority) - getDiaryPriorityRank(b.priority);
@@ -1648,7 +1651,7 @@ const DiaryPage = () => {
               className="rounded-xl border border-primary/35 bg-primary/10 px-3 py-2 text-left transition hover:bg-primary/15"
               data-testid="diary-command-forecast"
             >
-              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-primary">Next 2Ã¢â‚¬â€œ3 Weeks</span>
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-primary">Next 2-3 Weeks</span>
               <span className="block text-xl font-black">{nextThreeWeeksItems.length}</span>
             </button>
             <button
@@ -1687,7 +1690,7 @@ const DiaryPage = () => {
                 Staff: {labourRows.length}
               </button>
               <button type="button" onClick={() => openDiarySection('diary-work-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
-                Work: {diary?.summary?.entries_count || 0}
+                Walkaround: {walkaroundEntriesCount}
               </button>
               <button type="button" onClick={() => openDiarySection('diary-resources-section', 'materials')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
                 Materials: {resourceMaterials.length}
@@ -2286,20 +2289,20 @@ const DiaryPage = () => {
         </Card>
 
         {/* Work Done Today - diary-work-before-resources-v1 - diary-critical-hierarchy-staff-compact-v1 */}
-            <Card id="diary-work-section" className="ops-card lg:col-span-2">
+            <Card id="diary-work-section" className="ops-card lg:col-span-2 border-primary/35" data-testid="diary-walkaround-notes-section" data-commercial-readiness="diary-walkaround-safe-array-wording-v2">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <FileText className="w-4 h-4" />
-                  Work Done Today ({diary.walkaround_entries?.length || 0})
+                  Walkaround Notes / Site Observations ({walkaroundEntriesCount})
                 </CardTitle>
               </CardHeader>
 
               <CardContent className="py-3 max-h-80 overflow-y-auto">
-                {diary.walkaround_entries?.length > 0 ? (
+                {walkaroundEntriesCount > 0 ? (
                   <div className="space-y-3">
-                    {sortDiaryPriorityFirst(diary.walkaround_entries).map((entry) => (
+                    {sortDiaryPriorityFirst(walkaroundEntries).map((entry) => (
                       <div key={entry.id} className="p-3 bg-secondary/30 rounded-md space-y-1">
-                        <p className="text-sm">{entry.note}</p>
+                        <p className="text-sm font-semibold leading-6">{entry.note}</p>
 
                         {entry.linked_task && (
                           <p className="text-xs text-primary">
@@ -2329,7 +2332,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No entries recorded</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No Walkaround notes recorded for this diary day.</p>
                 )}
               </CardContent>
             </Card>
