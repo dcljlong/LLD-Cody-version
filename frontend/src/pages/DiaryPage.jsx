@@ -2293,11 +2293,12 @@ const DiaryPage = () => {
         </Card>
 
         {/* Work Done Today - diary-work-before-resources-v1 - diary-critical-hierarchy-staff-compact-v1 */}
-            <Card id="diary-work-section" className="ops-card lg:col-span-2 border-primary/35" data-testid="diary-walkaround-notes-section" data-commercial-readiness="diary-walkaround-safe-array-wording-v2">
+            <Card id="diary-work-section" className="ops-card lg:col-span-2 border-primary/45 shadow-sm" data-testid="diary-walkaround-notes-section" data-commercial-readiness="diary-commercial-ux-polish-v3">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   Walkaround Notes / Site Observations ({walkaroundEntriesCount})
+                  <span className="block pt-1 text-xs normal-case tracking-normal text-muted-foreground">Evidence notes from the site walkaround. Follow-up actions are separated below.</span>
                 </CardTitle>
               </CardHeader>
 
@@ -2305,7 +2306,7 @@ const DiaryPage = () => {
                 {walkaroundEntriesCount > 0 ? (
                   <div className="space-y-3">
                     {sortDiaryPriorityFirst(walkaroundEntries).map((entry) => (
-                      <div key={entry.id} className="p-3 bg-secondary/30 rounded-md space-y-1">
+                      <div key={entry.id} className="rounded-xl border border-border/80 border-l-4 border-l-primary bg-background/80 p-3 shadow-sm space-y-2">
                         <p className="text-sm font-semibold leading-6">{entry.note}</p>
 
                         {entry.linked_task && (
@@ -2314,7 +2315,7 @@ const DiaryPage = () => {
                           </p>
                         )}
 
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-2 rounded-lg bg-secondary/30 px-2 py-1 text-xs font-semibold text-muted-foreground">
                           <span>
                             {new Date(entry.created_at).toLocaleTimeString('en-NZ', {
                               hour: '2-digit',
@@ -2517,11 +2518,12 @@ const DiaryPage = () => {
             </Card>
 
             {/* Action Items Raised Today - action-wording-cleanup-v1 */}
-            <Card id="diary-action-open-section" className="ops-card">
+            <Card id="diary-action-open-section" className="ops-card border-amber-500/30" data-testid="diary-action-open-commercial-section">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <ListTodo className="w-4 h-4" />
                   Action Items Raised Today ({visibleRaisedActionItemsCount})
+                  <span className="block pt-1 text-xs normal-case tracking-normal text-muted-foreground">Follow-up actions raised today, filtered so observations are not duplicated.</span>
                 </CardTitle>
               </CardHeader>
 
@@ -2552,17 +2554,18 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No separate action items raised today</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No separate follow-up actions raised today.</p>
                 )}
               </CardContent>
             </Card>
 
             {/* Action Items Completed Today */}
-            <Card id="diary-action-completed-section" className="ops-card">
+            <Card id="diary-action-completed-section" className="ops-card border-emerald-500/30" data-testid="diary-action-completed-commercial-section">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-emerald-500">
                   <CheckCircle2 className="w-4 h-4" />
                   Action Items Completed Today ({diary.action_items_closed?.length || 0})
+                  <span className="block pt-1 text-xs normal-case tracking-normal text-muted-foreground">Closed-out follow-up actions for the selected diary day.</span>
                 </CardTitle>
               </CardHeader>
 
@@ -2582,7 +2585,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No action items completed today</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No follow-up actions completed today.</p>
                 )}
               </CardContent>
             </Card>
