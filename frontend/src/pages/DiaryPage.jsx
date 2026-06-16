@@ -1694,7 +1694,7 @@ const DiaryPage = () => {
               className="rounded-xl border border-orange-400/35 bg-orange-500/10 px-3 py-2 text-left transition hover:bg-orange-500/15"
               data-testid="diary-command-due-today"
             >
-              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-orange-400">Due Today</span>
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-orange-400">Open Follow-ups</span>
               <span className="block text-xl font-black">{dueTodayItems.length}</span>
             </button>
             <button
@@ -2004,14 +2004,14 @@ const DiaryPage = () => {
             </Card>
 
 
-            {/* Due Today Follow-ups - diary-critical-hierarchy-staff-compact-v1 */}
+            {/* Open Follow-ups / Carry Forward - diary-carry-forward-ui-clarity-v2 */}
             <Card id="diary-due-today-section" className="ops-card" data-testid="diary-due-today-section">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-orange-500">
                   <Target className="w-4 h-4" />
-                  Due Today ({dueTodayItems.length})
+                  Open Follow-ups / Carry Forward ({dueTodayItems.length})
                 </CardTitle>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">Follow-ups due today. Critical and high priority stay at the top.</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">Open project follow-ups carried forward until completed. Critical and high priority stay at the top.</p>
               </CardHeader>
 
               <CardContent className="py-3">
@@ -2033,7 +2033,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">Nothing due today</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No open carried-forward follow-ups</p>
                 )}
               </CardContent>
             </Card>
