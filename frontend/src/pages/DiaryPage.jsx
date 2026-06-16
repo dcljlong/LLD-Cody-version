@@ -1648,7 +1648,7 @@ const DiaryPage = () => {
               className="rounded-xl border border-primary/35 bg-primary/10 px-3 py-2 text-left transition hover:bg-primary/15"
               data-testid="diary-command-forecast"
             >
-              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-primary">Next 2ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ3 Weeks</span>
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-primary">Next 2-3 Weeks</span>
               <span className="block text-xl font-black">{nextThreeWeeksItems.length}</span>
             </button>
             <button
@@ -1686,8 +1686,8 @@ const DiaryPage = () => {
               <button type="button" onClick={() => openDiarySection('diary-staff-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
                 Staff: {labourRows.length}
               </button>
-            <button type="button" onClick={() => openDiarySection('diary-walkaround-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50" data-testid="diary-checklist-walkaround-observations">
-              Walkaround: {diary.walkaround_entries?.length || 0}
+              <button type="button" onClick={() => openDiarySection('diary-walkaround-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50" data-testid="diary-checklist-walkaround-observations">
+                Walkaround: {diary.walkaround_entries?.length || 0}
               </button>
               <button type="button" onClick={() => openDiarySection('diary-resources-section', 'materials')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
                 Materials: {resourceMaterials.length}
@@ -2000,12 +2000,7 @@ const DiaryPage = () => {
               </CardContent>
             </Card>
 
-            <Card id="diary-staff-section" className="ops-card" data-testid="daily-labour-card">
-          <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-2 sm:px-4" data-testid="daily-labour-polish-v1-marker">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                {/* Walkaround / Site Observations - diary-walkaround-visible-v3 */}
-        <Card id="diary-walkaround-section" className="ops-card border-primary/40" data-testid="diary-walkaround-observations-panel">
+            <Card id="diary-walkaround-section" className="ops-card border-primary/40" data-testid="diary-walkaround-observations-panel" data-commercial-readiness="diary-walkaround-visible-v5">
           <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-2 sm:px-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -2053,7 +2048,11 @@ const DiaryPage = () => {
             )}
           </CardContent>
         </Card>
-        <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
+        <Card id="diary-staff-section" className="ops-card" data-testid="daily-labour-card">
+          <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-2 sm:px-4" data-testid="daily-labour-polish-v1-marker">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
                 <p className="text-xs text-muted-foreground">
                   Diary check only. Staff complete and sign timesheets separately in Timesheet Manager.
                 </p>
@@ -2334,7 +2333,8 @@ const DiaryPage = () => {
           </CardContent>
         </Card>
 
-        <Card id="diary-resources-section" className="ops-card lg:col-span-2" data-testid="daily-site-resources-card">
+        {/* Work Done Today - diary-work-before-resources-v1 - diary-critical-hierarchy-staff-compact-v1 */}
+            <Card id="diary-resources-section" className="ops-card lg:col-span-2" data-testid="daily-site-resources-card">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
