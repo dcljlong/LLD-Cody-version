@@ -1113,7 +1113,7 @@ const DiaryPage = () => {
 
   const openActionItems = Array.isArray(diary?.action_items_opened) ? diary.action_items_opened : [];
   const normaliseDiaryItemKey = (value) => String(value || '').trim().toLowerCase();
-  const walkaroundNoteKeys = new Set(walkaroundEntries.map((entry) => normaliseDiaryItemKey(entry.note)).filter(Boolean));
+  const walkaroundNoteKeys = new Set((Array.isArray(diary?.walkaround_entries) ? diary.walkaround_entries : []).map((entry) => normaliseDiaryItemKey(entry.note)).filter(Boolean)); // diary-init-order-fix-v1
   const visibleRaisedActionItems = openActionItems.filter((item) => !walkaroundNoteKeys.has(normaliseDiaryItemKey(item.title || item.task_name || item.name || item.note)));
   const visibleRaisedActionItemsCount = visibleRaisedActionItems.length; // diary-no-duplicate-walkaround-actions-v1
   const overdueDiaryItems = Array.isArray(diary?.overdue_items) ? diary.overdue_items : [];
