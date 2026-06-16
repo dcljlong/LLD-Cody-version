@@ -232,25 +232,30 @@ export default function ProjectOverviewPage() {
   ];
 
   return (
-    <div className="space-y-5" data-testid="project-overview-page" data-commercial-readiness="project-overview-v3-commercial-project-filter">
-      <section className="ops-card overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-sm" data-testid="project-overview-live-header">
-        <div className="border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-5">
+    <div className="mx-auto max-w-7xl space-y-5 px-0 pb-8 lg:space-y-6" data-testid="project-overview-page" data-commercial-readiness="project-overview-v4-desktop-control-centre">
+      <section className="ops-card overflow-hidden rounded-3xl border border-primary/30 bg-card shadow-md lg:grid lg:grid-cols-[minmax(0,1fr)_360px]" data-testid="project-overview-live-header">
+        <div className="border-b border-border/70 bg-secondary/20 px-4 py-5 sm:px-6 lg:border-b-0 lg:border-r lg:py-6">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Project control</p>
           <h2 className="mt-1 font-heading text-2xl font-black uppercase tracking-[0.06em] sm:text-4xl sm:tracking-[0.08em]">
             Project Overview
           </h2>
-          <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-muted-foreground">
-            Live commercial snapshot for the selected job: roadblocks, due actions, staff hours, and close-out links.
+          <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-muted-foreground">
+            Live control snapshot for the selected job: blockers, due actions, staff hours, and close-out links before daily sign-off.
           </p>
+          <div className="mt-4 grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-muted-foreground sm:grid-cols-3" data-testid="project-overview-desktop-proof-strip">
+            <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-2">Live job context</span>
+            <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-2">Daily close-out</span>
+            <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-2">Site risk focus</span>
+          </div>
         </div>
 
-        <div className="grid gap-3 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-          <label className="space-y-1">
+        <div className="grid gap-3 px-4 py-4 sm:px-6 lg:content-center lg:py-6" data-testid="project-overview-desktop-selector-panel">
+          <label className="space-y-2">
             <span className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">Selected project</span>
             <select
               value={selectedProject}
               onChange={handleProjectChange}
-              className="input min-h-11 w-full min-w-0 rounded-lg border border-primary/40 bg-background px-3 py-2 font-bold"
+              className="input min-h-12 w-full min-w-0 rounded-xl border border-primary/40 bg-background px-3 py-2 text-base font-black shadow-sm"
               data-testid="project-overview-project-select"
             >
               {projects.length === 0 ? (
@@ -264,10 +269,10 @@ export default function ProjectOverviewPage() {
             </select>
           </label>
 
-          <div className="rounded-xl border border-border bg-background/80 px-4 py-3" data-testid="project-overview-selected-job-card">
+          <div className="rounded-2xl border border-primary/20 bg-background/90 px-4 py-4 shadow-sm" data-testid="project-overview-selected-job-card">
             <div className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">Active job</div>
-            <div className="mt-1 text-base font-black">{selectedProjectRecord ? getProjectName(selectedProjectRecord) : "No project selected"}</div>
-            <div className="mt-1 text-xs font-semibold text-muted-foreground">
+            <div className="mt-1 text-xl font-black leading-tight">{selectedProjectRecord ? getProjectName(selectedProjectRecord) : "No project selected"}</div>
+            <div className="mt-2 inline-flex rounded-full border border-border bg-secondary/30 px-3 py-1 text-xs font-black text-muted-foreground">
               {selectedProjectRecord?.job_number ? `Job # ${selectedProjectRecord.job_number}` : "Job number not set"}
             </div>
           </div>
@@ -280,7 +285,7 @@ export default function ProjectOverviewPage() {
         </section>
       ) : null}
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" data-testid="project-overview-live-stats">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" data-testid="project-overview-live-stats" data-layout="desktop-balanced-stat-grid">
         <StatCard
           label="Open roadblocks"
           value={loading ? "..." : openRoadblocks.length}
@@ -311,7 +316,7 @@ export default function ProjectOverviewPage() {
         />
       </section>
 
-      <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" data-testid="project-overview-priority-panels">
+      <section className="grid gap-3 lg:grid-cols-[420px_minmax(0,1fr)]" data-testid="project-overview-priority-panels">
         <div className="rounded-2xl border border-border bg-background/80 p-4">
           <div className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">Priority close-out</div>
           <div className="mt-3 space-y-2 text-sm">
@@ -323,12 +328,12 @@ export default function ProjectOverviewPage() {
 
         <div className="rounded-2xl border border-border bg-background/80 p-4">
           <div className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">Quick links</div>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2" data-testid="project-overview-quick-links">
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3" data-testid="project-overview-quick-links">
             {quickLinks.map((link) => (
               <Link
                 key={link.label}
                 to={link.to}
-                className="rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-black text-primary transition hover:bg-primary/15"
+                className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-black text-primary shadow-sm transition hover:bg-primary/15"
                 data-testid={`project-overview-link-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
               >
                 {link.label}
