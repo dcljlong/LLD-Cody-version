@@ -1163,7 +1163,7 @@ const DiaryPage = () => {
   const normaliseDiaryItemKey = (value) => String(value || '').trim().toLowerCase();
   const walkaroundNoteKeys = new Set((Array.isArray(diary?.walkaround_entries) ? diary.walkaround_entries : []).map((entry) => normaliseDiaryItemKey(entry.note)).filter(Boolean)); // diary-init-order-fix-v1
   const visibleRaisedActionItems = openActionItems.filter((item) => !walkaroundNoteKeys.has(normaliseDiaryItemKey(item.title || item.task_name || item.name || item.note)));
-  const visibleRaisedActionItemsCount = visibleRaisedActionItems.length; // diary-no-duplicate-walkaround-actions-v1
+  const visibleRaisedActionItemsCount = visibleRaisedActionItems.length; // diary-carry-forward-followups-v1 keeps prior unresolved items visible until completed
   const overdueDiaryItems = Array.isArray(diary?.overdue_items) ? diary.overdue_items : [];
   const forecastEndDate = (() => {
     const date = parseDateInput(selectedDate);
@@ -2565,12 +2565,15 @@ const DiaryPage = () => {
             </Card>
 
             {/* Action Items Raised Today - action-wording-cleanup-v1 */}
-            <Card id="diary-action-open-section" className="ops-card">
+            <Card id="diary-action-open-section" className="ops-card border-amber-500/30" data-testid="diary-carry-forward-followups-section" data-commercial-readiness="diary-carry-forward-followups-v1">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <ListTodo className="w-4 h-4" />
-                  Action Items Raised Today ({visibleRaisedActionItemsCount})
+                  Open Follow-ups / Carry Forward ({visibleRaisedActionItemsCount})
                 </CardTitle>
+                <p className="mt-1 text-xs font-semibold leading-5 text-muted-foreground">
+                  Unresolved Walkaround-created follow-ups and open action items stay here until completed, so yesterday's site issues are not forgotten.
+                </p>
               </CardHeader>
 
               <CardContent className="py-3 max-h-80 overflow-y-auto">
@@ -2600,7 +2603,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No separate action items raised today</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No open follow-ups or carried-forward Walkaround items.</p>
                 )}
               </CardContent>
             </Card>
