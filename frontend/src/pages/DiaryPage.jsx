@@ -1648,7 +1648,7 @@ const DiaryPage = () => {
               className="rounded-xl border border-primary/35 bg-primary/10 px-3 py-2 text-left transition hover:bg-primary/15"
               data-testid="diary-command-forecast"
             >
-              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-primary">Next 2-3 Weeks</span>
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-primary">Next 2Ã¢â‚¬â€œ3 Weeks</span>
               <span className="block text-xl font-black">{nextThreeWeeksItems.length}</span>
             </button>
             <button
@@ -1686,8 +1686,8 @@ const DiaryPage = () => {
               <button type="button" onClick={() => openDiarySection('diary-staff-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
                 Staff: {labourRows.length}
               </button>
-              <button type="button" onClick={() => openDiarySection('diary-walkaround-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50" data-testid="diary-checklist-walkaround-observations">
-                Walkaround: {diary.walkaround_entries?.length || 0}
+              <button type="button" onClick={() => openDiarySection('diary-work-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+                Work: {diary?.summary?.entries_count || 0}
               </button>
               <button type="button" onClick={() => openDiarySection('diary-resources-section', 'materials')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
                 Materials: {resourceMaterials.length}
@@ -2000,55 +2000,7 @@ const DiaryPage = () => {
               </CardContent>
             </Card>
 
-            <Card id="diary-walkaround-section" className="ops-card border-primary/40" data-testid="diary-walkaround-observations-panel" data-commercial-readiness="diary-walkaround-visible-v5">
-          <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-2 sm:px-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle className="text-orange-600 dark:text-orange-400">
-                  Walkaround / Site Observations ({diary.walkaround_entries?.length || 0})
-                </CardTitle>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                  Observations captured from Walkaround for this selected project and diary date.
-                </p>
-              </div>
-              <Button type="button" variant="outline" size="sm" onClick={() => window.open('/walkaround', '_self')} data-testid="diary-open-walkaround-page">
-                Open Walkaround
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="px-3 py-3 sm:px-4">
-            {diary.walkaround_entries?.length > 0 ? (
-              <div className="grid gap-2" data-testid="diary-walkaround-observations-list">
-                {sortDiaryPriorityFirst(diary.walkaround_entries).map((entry) => (
-                  <div key={entry.id} className="rounded-xl border border-border bg-secondary/20 px-3 py-3" data-testid={`diary-walkaround-entry-${entry.id}`}>
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                      <p className="text-sm font-black leading-6 text-foreground">{entry.note}</p>
-                      <span className="shrink-0 rounded-full border border-border bg-background px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground">
-                        {entry.status || 'noted'}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-muted-foreground">
-                      <span>
-                        {new Date(entry.created_at).toLocaleTimeString('en-NZ', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
-                      {entry.owner ? <span>Owner: {entry.owner}</span> : null}
-                      {entry.priority ? <span>Priority: {entry.priority}</span> : null}
-                      {entry.photos?.length > 0 ? <span>{entry.photos.length} photo{entry.photos.length === 1 ? '' : 's'}</span> : null}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-dashed border-border bg-background/60 px-3 py-4 text-sm font-semibold text-muted-foreground" data-testid="diary-walkaround-observations-empty">
-                No Walkaround observations recorded for this project and diary date yet.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card id="diary-staff-section" className="ops-card" data-testid="daily-labour-card">
+            <Card id="diary-staff-section" className="ops-card" data-testid="daily-labour-card">
           <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-2 sm:px-4" data-testid="daily-labour-polish-v1-marker">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
@@ -2334,6 +2286,55 @@ const DiaryPage = () => {
         </Card>
 
         {/* Work Done Today - diary-work-before-resources-v1 - diary-critical-hierarchy-staff-compact-v1 */}
+            <Card id="diary-work-section" className="ops-card lg:col-span-2">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+                <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.14em] flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Work Done Today ({diary.walkaround_entries?.length || 0})
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="py-3 max-h-80 overflow-y-auto">
+                {diary.walkaround_entries?.length > 0 ? (
+                  <div className="space-y-3">
+                    {sortDiaryPriorityFirst(diary.walkaround_entries).map((entry) => (
+                      <div key={entry.id} className="p-3 bg-secondary/30 rounded-md space-y-1">
+                        <p className="text-sm">{entry.note}</p>
+
+                        {entry.linked_task && (
+                          <p className="text-xs text-primary">
+                            Task: {entry.linked_task.name}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>
+                            {new Date(entry.created_at).toLocaleTimeString('en-NZ', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                          {entry.owner && <span>| {entry.owner}</span>}
+                          {entry.priority && (
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              entry.priority === 'critical' ? 'bg-red-500/20 text-red-400' :
+                              entry.priority === 'high' ? 'bg-orange-500/20 text-orange-400' :
+                              'bg-slate-500/20 text-slate-400'
+                            }`}>
+                              {entry.priority}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No entries recorded</p>
+                )}
+              </CardContent>
+            </Card>
+
+        {/* Site Resources */}
             <Card id="diary-resources-section" className="ops-card lg:col-span-2" data-testid="daily-site-resources-card">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
