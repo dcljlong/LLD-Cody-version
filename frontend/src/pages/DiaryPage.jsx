@@ -1164,6 +1164,27 @@ const DiaryPage = () => {
   const walkaroundNoteKeys = new Set((Array.isArray(diary?.walkaround_entries) ? diary.walkaround_entries : []).map((entry) => normaliseDiaryItemKey(entry.note)).filter(Boolean)); // diary-init-order-fix-v1
   const visibleRaisedActionItems = openActionItems.filter((item) => !walkaroundNoteKeys.has(normaliseDiaryItemKey(item.title || item.task_name || item.name || item.note)));
   const visibleRaisedActionItemsCount = visibleRaisedActionItems.length; // diary-carry-forward-followups-v1 keeps prior unresolved items visible until completed
+
+  const handleCompleteFollowUpFromDiary = async (item) => {
+    if (!item?.id) {
+      return;
+    }
+
+    const label = item.title || item.task_name || item.name || item.note || "this follow-up";
+    const confirmed = window.confirm(`Mark "${label}" as complete?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await actionItemsApi.complete(item.id);
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to complete Diary follow-up", error);
+      alert("Could not complete this follow-up. Refresh and try again.");
+    }
+  }; // diary-complete-carry-forward-v6
   const overdueDiaryItems = Array.isArray(diary?.overdue_items) ? diary.overdue_items : [];
   const forecastEndDate = (() => {
     const date = parseDateInput(selectedDate);
@@ -2011,25 +2032,43 @@ const DiaryPage = () => {
                   <Target className="w-4 h-4" />
                   Open Follow-ups / Carry Forward ({dueTodayItems.length})
                 </CardTitle>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">Open project follow-ups carried forward until completed. Critical and high priority stay at the top.</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">Open project follow-ups carried forward until completed. Use Complete when the issue is closed out on site.</p>
               </CardHeader>
 
               <CardContent className="py-3">
                 {dueTodayItems.length > 0 ? (
                   <div className="space-y-2">
                     {sortDiaryPriorityFirst(dueTodayItems).map((item) => (
-                      <button
+                      <div
                         key={item.id}
-                        type="button"
-                        onClick={() => openDiaryActionItem(item)}
                         className={`w-full p-2 rounded-md border-l-4 text-left transition ${selectedDiaryActionItem?.id === item.id ? 'border-l-orange-300 bg-orange-500/20 ring-2 ring-orange-400/30' : 'border-l-orange-400 bg-orange-500/10 hover:border-orange-400/70 hover:bg-orange-500/15'}`}
-                        data-testid={`diary-due-today-clickthrough-${item.id}`}
+                        data-testid={`diary-carry-forward-followup-row-${item.id}`}
                       >
-                        <p className="text-sm font-medium">{item.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {[item.project_name || item.project?.name, item.owner, item.priority].filter(Boolean).join(' | ')}
-                        </p>
-                      </button>
+                        <div className="flex items-start justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() => openDiaryActionItem(item)}
+                            className="min-w-0 flex-1 text-left"
+                            data-testid={`diary-due-today-clickthrough-${item.id}`}
+                          >
+                            <p className="text-sm font-medium">{item.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {[item.project_name || item.project?.name, item.owner, item.priority, 'Carried forward until completed'].filter(Boolean).join(' | ')}
+                            </p>
+                          </button>
+                          <button
+                            type="button"
+                            className="shrink-0 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.08em] text-emerald-700 hover:bg-emerald-500/20"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleCompleteFollowUpFromDiary(item);
+                            }}
+                            data-testid={`diary-complete-followup-${item.id}`}
+                          >
+                            Complete
+                          </button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : (
