@@ -1915,12 +1915,14 @@ async def get_project_diary(
     for entry in entries:
         entry["linked_task"] = task_lookup.get(entry.get("task_id"))
 
-    # Get action items opened today
+    # Get open action items carried forward up to the selected diary day
+    # diary-carry-forward-open-followups-v2: open project follow-ups stay visible until completed
     items_opened = await db.action_items.find({
         "project_id": project_id,
         "user_id": current_user["id"],
-        "created_at": {"$gte": start, "$lte": end}
-    }, {"_id": 0}).to_list(100)
+        "status": "open",
+        "created_at": {"$lte": end}
+    }, {"_id": 0}).sort("created_at", 1).to_list(250)
 
     # Get action items closed today
     items_closed = await db.action_items.find({
