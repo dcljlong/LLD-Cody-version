@@ -1112,6 +1112,10 @@ const DiaryPage = () => {
   );
 
   const openActionItems = Array.isArray(diary?.action_items_opened) ? diary.action_items_opened : [];
+  const normaliseDiaryItemKey = (value) => String(value || '').trim().toLowerCase();
+  const walkaroundNoteKeys = new Set(walkaroundEntries.map((entry) => normaliseDiaryItemKey(entry.note)).filter(Boolean));
+  const visibleRaisedActionItems = openActionItems.filter((item) => !walkaroundNoteKeys.has(normaliseDiaryItemKey(item.title || item.task_name || item.name || item.note)));
+  const visibleRaisedActionItemsCount = visibleRaisedActionItems.length; // diary-no-duplicate-walkaround-actions-v1
   const overdueDiaryItems = Array.isArray(diary?.overdue_items) ? diary.overdue_items : [];
   const forecastEndDate = (() => {
     const date = parseDateInput(selectedDate);
@@ -2517,14 +2521,14 @@ const DiaryPage = () => {
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <ListTodo className="w-4 h-4" />
-                  Action Items Raised Today ({diary.action_items_opened?.length || 0})
+                  Action Items Raised Today ({visibleRaisedActionItemsCount})
                 </CardTitle>
               </CardHeader>
 
               <CardContent className="py-3 max-h-80 overflow-y-auto">
-                {diary.action_items_opened?.length > 0 ? (
+                {visibleRaisedActionItemsCount > 0 ? (
                   <div className="space-y-2">
-                    {sortDiaryPriorityFirst(diary.action_items_opened).map((item) => (
+                    {sortDiaryPriorityFirst(visibleRaisedActionItems).map((item) => (
                       <button
                         key={item.id}
                         type="button"
@@ -2548,7 +2552,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No action items raised today</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No separate action items raised today</p>
                 )}
               </CardContent>
             </Card>
