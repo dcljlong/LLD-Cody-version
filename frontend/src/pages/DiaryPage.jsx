@@ -1877,13 +1877,13 @@ const DiaryPage = () => {
                 Plant: {resourcePlantEquipment.length}
               </button>
               <button type="button" onClick={() => openDiarySection('diary-queries-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50" data-testid="diary-checklist-queries-rfis">
-                Queries/RFIs: 0
+                Queries / RFIs: 0
               </button>
               <button type="button" onClick={() => openDiarySection('diary-action-open-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
-                Follow-ups: {diary?.summary?.items_opened || 0}
+                Open follow-ups: {diary?.summary?.items_opened || 0}
               </button>
               <button type="button" onClick={() => openDiarySection('diary-action-completed-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
-                Completed: {diary?.summary?.items_closed || 0}
+                Closed today: {diary?.summary?.items_closed || 0}
               </button>
             </div>
           </div>
