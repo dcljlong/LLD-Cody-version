@@ -2124,7 +2124,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No overdue follow-ups</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No overdue follow-ups. Open items still appear in Open Follow-ups / Carry Forward until closed out.</p>
                 )}
               </CardContent>
             </Card>
@@ -2194,7 +2194,7 @@ const DiaryPage = () => {
 
               <CardContent className="py-3">
                 <div className="rounded-lg border border-dashed border-sky-400/35 bg-sky-500/10 px-3 py-3 text-sm text-muted-foreground">
-                  No Queries / RFIs recorded for this diary day yet. Next feature: raise a query, assign it, set answer required date, then convert to Roadblock if it blocks work.
+                  No Queries / RFIs recorded for this diary day.
                 </div>
               </CardContent>
             </Card>
@@ -2285,7 +2285,7 @@ const DiaryPage = () => {
 
                   {labourRows.length === 0 ? (
                     <div className="mt-3 rounded-lg border border-dashed border-border/70 bg-background/60 px-3 py-4 text-sm font-semibold text-muted-foreground" data-testid="staff-timesheet-empty">
-                      Tap a staff name above to start today's compact Staff on Site list.
+                      No staff recorded for this diary day yet. Tap a staff name above to start today's compact Staff on Site list.
                     </div>
                   ) : (
                     <div className="mt-2 grid max-h-56 gap-1.5 overflow-y-auto pr-1" data-testid="staff-timesheet-selected-list">
@@ -2528,7 +2528,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No Walkaround notes recorded for this diary day.</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No walkaround notes recorded for this diary day.</p>
                 )}
               </CardContent>
             </Card>
@@ -2585,7 +2585,7 @@ const DiaryPage = () => {
                   <p className="text-sm text-muted-foreground">Loading site resources...</p>
                 ) : resourcesTotalCount === 0 && !resourcesEditMode ? (
                   <div className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground" data-testid="daily-site-resources-empty">
-                    No resources recorded for this diary day.
+                    No site resources recorded for this diary day.
                   </div>
                 ) : !resourcesEditMode ? (
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2" data-testid="daily-site-resources-summary">
