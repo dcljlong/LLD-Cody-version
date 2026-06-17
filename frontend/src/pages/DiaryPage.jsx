@@ -1219,14 +1219,14 @@ const DiaryPage = () => {
     const rawDate = getDiaryFollowupRawDate(item);
 
     if (!rawDate) {
-      return "Open age unknown";
+      return "Age unknown";
     }
 
     const openedDate = new Date(rawDate);
     const selected = selectedDate ? new Date(`${selectedDate}T12:00:00`) : new Date();
 
     if (Number.isNaN(openedDate.getTime()) || Number.isNaN(selected.getTime())) {
-      return "Open age unknown";
+      return "Age unknown";
     }
 
     const openedDay = new Date(openedDate.getFullYear(), openedDate.getMonth(), openedDate.getDate());
@@ -1235,14 +1235,14 @@ const DiaryPage = () => {
     const sinceLabel = openedDate.toLocaleDateString("en-NZ", { day: "numeric", month: "short" });
 
     if (ageDays === 0) {
-      return `Open today | since ${sinceLabel}`;
+      return "Open today";
     }
 
     if (ageDays === 1) {
-      return `Open 1 day | since ${sinceLabel}`;
+      return "1 day open";
     }
 
-    return `Open ${ageDays} days | since ${sinceLabel}`;
+    return `${ageDays} days open`;
   };
 
   const getDiaryFollowupSourceLabel = (item) => {
@@ -1261,37 +1261,35 @@ const DiaryPage = () => {
     ].filter(Boolean).join(" ").toLowerCase();
 
     if (item?.walkaround_id || item?.walkaroundId || sourceText.includes("walkaround") || sourceText.includes("walk around")) {
-      return "Source: Walkaround";
+      return "Walkaround";
     }
 
     if (item?.diary_id || item?.diaryId || sourceText.includes("diary")) {
-      return "Source: Diary";
+      return "Diary";
     }
 
     if (sourceText.includes("action")) {
-      return "Source: Action item";
+      return "Action item";
     }
 
-    return "Source: Follow-up";
+    return "Follow-up";
   };
 
   const getOpenFollowupMetaParts = (item) => ([
     item.project_name || item.project?.name,
     item.owner,
     item.priority,
-    "Open",
     getDiaryFollowupAgeLabel(item),
-    getDiaryFollowupSourceLabel(item),
-    "Carried forward until closed out"
-  ].filter(Boolean)); // diary-followup-age-source-v1
+    getDiaryFollowupSourceLabel(item)
+  ].filter(Boolean)); // diary-followup-age-source-v1 diary-followup-metadata-compact-v2
 
   const getClosedFollowupMetaParts = (item) => ([
     item.project_name || item.project?.name,
     item.owner,
     item.priority,
-    "Closed out today",
+    "Closed today",
     getDiaryFollowupSourceLabel(item)
-  ].filter(Boolean)); // diary-followup-age-source-v1
+  ].filter(Boolean)); // diary-followup-age-source-v1 diary-followup-metadata-compact-v2
   const overdueDiaryItems = Array.isArray(diary?.overdue_items) ? diary.overdue_items : [];
   const forecastEndDate = (() => {
     const date = parseDateInput(selectedDate);
