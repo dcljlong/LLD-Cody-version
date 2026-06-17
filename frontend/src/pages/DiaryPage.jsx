@@ -1869,29 +1869,29 @@ const DiaryPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5 text-[11px] sm:grid-cols-4 lg:grid-cols-8" data-testid="diary-clickable-checklist-v2">
-              <button type="button" onClick={() => openDiarySection('diary-roadblocks-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+            <div className="relative z-10 grid grid-cols-2 gap-2 pb-8 text-xs sm:grid-cols-4 lg:grid-cols-8" data-testid="diary-clickable-checklist-v2" data-commercial-readiness="diary-checklist-mobile-tap-target-v1">
+              <button type="button" onClick={() => openDiarySection('diary-roadblocks-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
                 Roadblocks: {diary?.summary?.blocked_gates || 0}
               </button>
-              <button type="button" onClick={() => openDiarySection('diary-staff-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+              <button type="button" onClick={() => openDiarySection('diary-staff-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
                 Staff: {labourRows.length}
               </button>
-              <button type="button" onClick={() => openDiarySection('diary-work-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+              <button type="button" onClick={() => openDiarySection('diary-work-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
                 Walkaround: {walkaroundEntriesCount}
               </button>
-              <button type="button" onClick={() => openDiarySection('diary-resources-section', 'materials')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+              <button type="button" onClick={() => openDiarySection('diary-resources-section', 'materials')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
                 Materials: {resourceMaterials.length}
               </button>
-              <button type="button" onClick={() => openDiarySection('diary-resources-section', 'plant_equipment')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+              <button type="button" onClick={() => openDiarySection('diary-resources-section', 'plant_equipment')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
                 Plant: {resourcePlantEquipment.length}
               </button>
-              <button type="button" onClick={() => openDiarySection('diary-queries-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50" data-testid="diary-checklist-queries-rfis">
+              <button type="button" onClick={() => openDiarySection('diary-queries-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]" data-testid="diary-checklist-queries-rfis">
                 Queries / RFIs: 0
               </button>
-              <button type="button" onClick={() => openDiarySection('diary-action-open-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+              <button type="button" onClick={() => openDiarySection('diary-action-open-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
                 Open follow-ups: {diary?.summary?.items_opened || 0}
               </button>
-              <button type="button" onClick={() => openDiarySection('diary-action-completed-section')} className="rounded border border-border bg-secondary/30 px-2 py-1 text-left font-semibold hover:bg-secondary/50">
+              <button type="button" onClick={() => openDiarySection('diary-action-completed-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
                 Closed today: {diary?.summary?.items_closed || 0}
               </button>
             </div>
