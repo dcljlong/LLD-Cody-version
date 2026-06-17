@@ -1320,10 +1320,10 @@ const DiaryPage = () => {
     });
   };
 
-  const openActionItemsPage = (filter) => {
+  const openActionItemsPage = (section = null) => {
     const params = new URLSearchParams();
     if (selectedProject) params.set('project', selectedProject);
-    if (filter) params.set('filter', filter);
+    if (section) params.set('section', section);
     window.location.assign(`/action-items?${params.toString()}`);
   };
 
@@ -1834,7 +1834,7 @@ const DiaryPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => openDiarySection('diary-action-open-section')}
+              onClick={() => openActionItemsPage('week')}
               className="rounded-xl border border-primary/35 bg-primary/10 px-3 py-2 text-left transition hover:bg-primary/15"
               data-testid="diary-command-forecast"
             >
