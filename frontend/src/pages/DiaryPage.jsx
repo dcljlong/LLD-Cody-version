@@ -1307,7 +1307,16 @@ const DiaryPage = () => {
   const openDiarySection = (sectionId, tab = null) => {
     if (tab) setActiveResourceTab(tab);
     window.requestAnimationFrame(() => {
-      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const target = document.getElementById(sectionId);
+      if (!target) return;
+
+      const stickyHeaderOffset = window.innerWidth < 768 ? 168 : 120; // diary-jump-scroll-offset-v2
+      const targetTop = target.getBoundingClientRect().top + window.scrollY - stickyHeaderOffset;
+
+      window.scrollTo({
+        top: Math.max(targetTop, 0),
+        behavior: 'smooth',
+      });
     });
   };
 
