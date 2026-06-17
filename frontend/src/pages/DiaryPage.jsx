@@ -1171,7 +1171,7 @@ const DiaryPage = () => {
     }
 
     const label = item.title || item.task_name || item.name || item.note || "this follow-up";
-    const confirmed = window.confirm(`Mark "${label}" as complete?`);
+    const confirmed = window.confirm(`Close out "${label}"?`);
 
     if (!confirmed) {
       return;
@@ -1181,10 +1181,10 @@ const DiaryPage = () => {
       await actionItemsApi.complete(item.id);
       window.location.reload();
     } catch (error) {
-      console.error("Failed to complete Diary follow-up", error);
-      alert("Could not complete this follow-up. Refresh and try again.");
+      console.error("Failed to close out Diary follow-up", error);
+      alert("Could not close out this follow-up. Refresh and try again.");
     }
-  }; // diary-complete-carry-forward-v6
+  }; // diary-complete-carry-forward-v6 diary-close-out-wording-v1
   const overdueDiaryItems = Array.isArray(diary?.overdue_items) ? diary.overdue_items : [];
   const forecastEndDate = (() => {
     const date = parseDateInput(selectedDate);
@@ -2032,7 +2032,7 @@ const DiaryPage = () => {
                   <Target className="w-4 h-4" />
                   Open Follow-ups / Carry Forward ({dueTodayItems.length})
                 </CardTitle>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">Open project follow-ups carried forward until completed. Use Complete when the issue is closed out on site.</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">Open project follow-ups carried forward until closed out. Use Close out when the issue is finished on site.</p>
               </CardHeader>
 
               <CardContent className="py-3">
@@ -2053,19 +2053,19 @@ const DiaryPage = () => {
                           >
                             <p className="text-sm font-medium">{item.title}</p>
                             <p className="text-xs text-muted-foreground">
-                              {[item.project_name || item.project?.name, item.owner, item.priority, 'Carried forward until completed'].filter(Boolean).join(' | ')}
+                              {[item.project_name || item.project?.name, item.owner, item.priority, 'Open', 'Carried forward until closed out'].filter(Boolean).join(' | ')}
                             </p>
                           </button>
                           <button
                             type="button"
-                            className="shrink-0 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.08em] text-emerald-700 hover:bg-emerald-500/20"
+                            className="shrink-0 rounded-md border border-orange-500/50 bg-orange-500/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.08em] text-orange-700 hover:bg-orange-500/20"
                             onClick={(event) => {
                               event.stopPropagation();
                               handleCompleteFollowUpFromDiary(item);
                             }}
-                            data-testid={`diary-complete-followup-${item.id}`}
+                            data-testid={`diary-closeout-followup-${item.id}`}
                           >
-                            Complete
+                            Close out
                           </button>
                         </div>
                       </div>
