@@ -2603,56 +2603,14 @@ const DiaryPage = () => {
               </CardContent>
             </Card>
 
-            {/* Action Items Raised Today - action-wording-cleanup-v1 */}
-            <Card id="diary-action-open-section" className="ops-card border-amber-500/30" data-testid="diary-carry-forward-followups-section" data-commercial-readiness="diary-carry-forward-followups-v1">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
-                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
-                  <ListTodo className="w-4 h-4" />
-                  Open Follow-ups / Carry Forward ({visibleRaisedActionItemsCount})
-                </CardTitle>
-                <p className="mt-1 text-xs font-semibold leading-5 text-muted-foreground">
-                  Unresolved Walkaround-created follow-ups and open action items stay here until completed, so yesterday's site issues are not forgotten.
-                </p>
-              </CardHeader>
 
-              <CardContent className="py-3 max-h-80 overflow-y-auto">
-                {visibleRaisedActionItemsCount > 0 ? (
-                  <div className="space-y-2">
-                    {sortDiaryPriorityFirst(visibleRaisedActionItems).map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => openDiaryActionItem(item)}
-                        className={`w-full p-2 rounded-md border-l-4 text-left transition ${selectedDiaryActionItem?.id === item.id ? 'border-l-primary bg-primary/15 ring-2 ring-primary/25' : 'border-l-amber-500 bg-secondary/30 hover:border-primary/50 hover:bg-primary/5'}`}
-                        data-testid={`diary-action-open-clickthrough-${item.id}`}
-                      >
-                        <p className="text-sm font-medium">{item.title}</p>
-                        <span
-                          className={`text-xs ${
-                            item.priority === 'critical'
-                              ? 'text-red-500'
-                              : item.priority === 'high'
-                                ? 'text-orange-500'
-                                : 'text-muted-foreground'
-                          }`}
-                        >
-                          {item.priority}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No open follow-ups or carried-forward Walkaround items.</p>
-                )}
-              </CardContent>
-            </Card>
 
-            {/* Action Items Completed Today */}
+            {/* diary-remove-duplicate-followups-v1: duplicate lower open follow-up card removed; completed section renamed to Closed Out Today */}            {/* Closed Out Today */}
             <Card id="diary-action-completed-section" className="ops-card">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-emerald-500">
                   <CheckCircle2 className="w-4 h-4" />
-                  Action Items Completed Today ({diary.action_items_closed?.length || 0})
+                  Closed Out Today ({diary.action_items_closed?.length || 0})
                 </CardTitle>
               </CardHeader>
 
@@ -2672,7 +2630,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No action items completed today</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No items closed out today</p>
                 )}
               </CardContent>
             </Card>
