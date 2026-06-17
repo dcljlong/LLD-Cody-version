@@ -1888,7 +1888,7 @@ const DiaryPage = () => {
               <button type="button" onClick={() => openDiarySection('diary-queries-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]" data-testid="diary-checklist-queries-rfis">
                 Queries / RFIs: 0
               </button>
-              <button type="button" onClick={() => openDiarySection('diary-action-open-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
+              <button type="button" onClick={() => openDiarySection('diary-due-today-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
                 Open follow-ups: {diary?.summary?.items_opened || 0}
               </button>
               <button type="button" onClick={() => openDiarySection('diary-action-completed-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
