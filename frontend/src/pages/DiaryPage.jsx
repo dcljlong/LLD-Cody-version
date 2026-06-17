@@ -2484,7 +2484,12 @@ const DiaryPage = () => {
           </CardContent>
         </Card>
 
-        {/* Work Done Today - diary-work-before-resources-v1 - diary-critical-hierarchy-staff-compact-v1 */}
+        {/* Daily Evidence - Walkaround Notes / Site Observations - diary-daily-evidence-hierarchy-v2 */}
+        <div className="lg:col-span-2 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3" data-testid="diary-daily-evidence-divider-v2">
+          <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary">Daily Evidence</p>
+          <p className="mt-1 text-xs font-semibold text-muted-foreground">Site observations, materials, plant, and supporting diary records.</p>
+        </div>
+
             <Card id="diary-work-section" className="ops-card lg:col-span-2 border-primary/35" data-testid="diary-walkaround-notes-section" data-commercial-readiness="diary-walkaround-safe-array-wording-v2">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.14em] flex items-center gap-2">
