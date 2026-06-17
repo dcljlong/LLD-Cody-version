@@ -443,9 +443,9 @@ const ActionItemsPage = () => {
       key: 'blocked',
       label: 'Blocked / Delayed',
       count: blockedDelayedItems.length,
-      toneClass: 'border-red-500/70 bg-gradient-to-br from-red-950/25 via-card to-card shadow-[0_14px_36px_rgba(127,29,29,0.18)]',
-      countClass: 'text-red-400',
-      accentClass: 'bg-red-500/90'
+      toneClass: 'border-red-600/75 bg-gradient-to-br from-red-50 via-card to-card shadow-[0_14px_36px_rgba(185,28,28,0.16)] dark:border-red-500/70 dark:from-red-950/25 dark:via-card dark:to-card dark:shadow-[0_14px_36px_rgba(127,29,29,0.18)]', // action-items-blocked-light-contrast-v1
+      countClass: 'text-red-700 dark:text-red-400',
+      accentClass: 'bg-red-600/95 dark:bg-red-500/90'
     },
     {
       key: 'risk',
@@ -476,10 +476,10 @@ const ActionItemsPage = () => {
   const SectionCard = ({ title, count, icon, tone = 'neutral', emptyText, children, testId }) => {
     const toneClasses = {
       critical: {
-        card: 'border-red-500/80 bg-gradient-to-br from-red-950/25 via-card to-card shadow-[0_18px_50px_rgba(127,29,29,0.22)]',
-        header: 'border-red-500/20 bg-red-950/20',
-        title: 'text-red-400',
-        count: 'border-red-500/30 bg-red-500/10 text-red-300'
+        card: 'border-red-600/80 bg-gradient-to-br from-red-50 via-card to-card shadow-[0_18px_50px_rgba(185,28,28,0.18)] dark:border-red-500/80 dark:from-red-950/25 dark:via-card dark:to-card dark:shadow-[0_18px_50px_rgba(127,29,29,0.22)]',
+        header: 'border-red-500/45 bg-red-100/90 dark:border-red-500/20 dark:bg-red-950/20',
+        title: 'text-red-800 dark:text-red-400',
+        count: 'border-red-600/45 bg-red-100 text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300'
       },
       warning: {
         card: 'border-orange-500/70 bg-gradient-to-br from-orange-950/20 via-card to-card shadow-[0_18px_50px_rgba(124,45,18,0.18)]',
