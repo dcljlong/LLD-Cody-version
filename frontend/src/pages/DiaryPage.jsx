@@ -1206,6 +1206,92 @@ const DiaryPage = () => {
       alert("Could not reopen this follow-up. Refresh and try again.");
     }
   }; // diary-closed-out-reopen-v2
+
+  const getDiaryFollowupRawDate = (item) => {
+    if (!item) {
+      return null;
+    }
+
+    return item.created_at || item.createdAt || item.created_date || item.createdDate || item.raised_at || item.raisedAt || item.opened_at || item.openedAt || item.date || item.diary_date || null;
+  };
+
+  const getDiaryFollowupAgeLabel = (item) => {
+    const rawDate = getDiaryFollowupRawDate(item);
+
+    if (!rawDate) {
+      return "Open age unknown";
+    }
+
+    const openedDate = new Date(rawDate);
+    const selected = selectedDate ? new Date(`${selectedDate}T12:00:00`) : new Date();
+
+    if (Number.isNaN(openedDate.getTime()) || Number.isNaN(selected.getTime())) {
+      return "Open age unknown";
+    }
+
+    const openedDay = new Date(openedDate.getFullYear(), openedDate.getMonth(), openedDate.getDate());
+    const selectedDay = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate());
+    const ageDays = Math.max(0, Math.round((selectedDay - openedDay) / 86400000));
+    const sinceLabel = openedDate.toLocaleDateString("en-NZ", { day: "numeric", month: "short" });
+
+    if (ageDays === 0) {
+      return `Open today | since ${sinceLabel}`;
+    }
+
+    if (ageDays === 1) {
+      return `Open 1 day | since ${sinceLabel}`;
+    }
+
+    return `Open ${ageDays} days | since ${sinceLabel}`;
+  };
+
+  const getDiaryFollowupSourceLabel = (item) => {
+    const sourceText = [
+      item?.source,
+      item?.source_type,
+      item?.sourceType,
+      item?.origin,
+      item?.origin_type,
+      item?.created_from,
+      item?.createdFrom,
+      item?.entry_type,
+      item?.entryType,
+      item?.type,
+      item?.category
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    if (item?.walkaround_id || item?.walkaroundId || sourceText.includes("walkaround") || sourceText.includes("walk around")) {
+      return "Source: Walkaround";
+    }
+
+    if (item?.diary_id || item?.diaryId || sourceText.includes("diary")) {
+      return "Source: Diary";
+    }
+
+    if (sourceText.includes("action")) {
+      return "Source: Action item";
+    }
+
+    return "Source: Follow-up";
+  };
+
+  const getOpenFollowupMetaParts = (item) => ([
+    item.project_name || item.project?.name,
+    item.owner,
+    item.priority,
+    "Open",
+    getDiaryFollowupAgeLabel(item),
+    getDiaryFollowupSourceLabel(item),
+    "Carried forward until closed out"
+  ].filter(Boolean)); // diary-followup-age-source-v1
+
+  const getClosedFollowupMetaParts = (item) => ([
+    item.project_name || item.project?.name,
+    item.owner,
+    item.priority,
+    "Closed out today",
+    getDiaryFollowupSourceLabel(item)
+  ].filter(Boolean)); // diary-followup-age-source-v1
   const overdueDiaryItems = Array.isArray(diary?.overdue_items) ? diary.overdue_items : [];
   const forecastEndDate = (() => {
     const date = parseDateInput(selectedDate);
@@ -2074,7 +2160,7 @@ const DiaryPage = () => {
                           >
                             <p className="text-sm font-medium">{item.title}</p>
                             <p className="text-xs text-muted-foreground">
-                              {[item.project_name || item.project?.name, item.owner, item.priority, 'Open', 'Carried forward until closed out'].filter(Boolean).join(' | ')}
+                              {getOpenFollowupMetaParts(item).join(' | ')}
                             </p>
                           </button>
                           <button
@@ -2654,7 +2740,7 @@ const DiaryPage = () => {
                           >
                             <p className="text-sm font-medium">{item.title}</p>
                             <p className="text-xs text-muted-foreground">
-                              {[item.project_name || item.project?.name, item.owner, item.priority, "Closed out today"].filter(Boolean).join(" | ")}
+                              {getClosedFollowupMetaParts(item).join(" | ")}
                             </p>
                           </button>
                           <button
