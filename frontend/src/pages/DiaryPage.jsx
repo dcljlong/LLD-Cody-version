@@ -1185,6 +1185,27 @@ const DiaryPage = () => {
       alert("Could not close out this follow-up. Refresh and try again.");
     }
   }; // diary-complete-carry-forward-v6 diary-close-out-wording-v1
+
+  const handleReopenClosedOutFromDiary = async (item) => {
+    if (!item?.id) {
+      return;
+    }
+
+    const label = item.title || item.task_name || item.name || item.note || "this follow-up";
+    const confirmed = window.confirm(`Reopen "${label}" and move it back to Open Follow-ups?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await actionItemsApi.reopen(item.id);
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to reopen closed-out Diary follow-up", error);
+      alert("Could not reopen this follow-up. Refresh and try again.");
+    }
+  }; // diary-closed-out-reopen-v2
   const overdueDiaryItems = Array.isArray(diary?.overdue_items) ? diary.overdue_items : [];
   const forecastEndDate = (() => {
     const date = parseDateInput(selectedDate);
@@ -2606,27 +2627,49 @@ const DiaryPage = () => {
 
 
             {/* diary-remove-duplicate-followups-v1: duplicate lower open follow-up card removed; completed section renamed to Closed Out Today */}            {/* Closed Out Today */}
-            <Card id="diary-action-completed-section" className="ops-card">
+            <Card id="diary-action-completed-section" className="ops-card" data-testid="diary-closed-out-today-section">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-emerald-500">
                   <CheckCircle2 className="w-4 h-4" />
                   Closed Out Today ({diary.action_items_closed?.length || 0})
                 </CardTitle>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">Closed follow-ups stay visible here for today. Use Reopen if an item was closed by mistake.</p>
               </CardHeader>
 
               <CardContent className="py-3 max-h-80 overflow-y-auto">
                 {diary.action_items_closed?.length > 0 ? (
                   <div className="space-y-2">
                     {sortDiaryPriorityFirst(diary.action_items_closed).map((item) => (
-                      <button
+                      <div
                         key={item.id}
-                        type="button"
-                        onClick={() => openDiaryActionItem(item)}
-                        className={`w-full p-2 rounded-md border-l-4 text-left transition ${selectedDiaryActionItem?.id === item.id ? 'border-l-emerald-300 bg-emerald-500/15 ring-2 ring-emerald-400/25' : 'border-l-emerald-500 bg-secondary/30 hover:border-primary/50 hover:bg-primary/5'}`}
-                        data-testid={`diary-action-closed-clickthrough-${item.id}`}
+                        className="w-full rounded-md border border-emerald-500/20 border-l-4 border-l-emerald-500 bg-emerald-500/10 p-2"
+                        data-testid={`diary-closed-out-row-${item.id}`}
                       >
-                        <p className="text-sm font-medium">{item.title}</p>
-                      </button>
+                        <div className="flex items-start justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() => openDiaryActionItem(item)}
+                            className="min-w-0 flex-1 text-left"
+                            data-testid={`diary-closed-out-details-${item.id}`}
+                          >
+                            <p className="text-sm font-medium">{item.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {[item.project_name || item.project?.name, item.owner, item.priority, "Closed out today"].filter(Boolean).join(" | ")}
+                            </p>
+                          </button>
+                          <button
+                            type="button"
+                            className="shrink-0 rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.08em] text-amber-700 hover:bg-amber-500/20"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleReopenClosedOutFromDiary(item);
+                            }}
+                            data-testid={`diary-reopen-closed-out-${item.id}`}
+                          >
+                            Reopen
+                          </button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : (
