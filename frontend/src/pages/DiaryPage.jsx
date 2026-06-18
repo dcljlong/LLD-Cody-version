@@ -2207,7 +2207,7 @@ const DiaryPage = () => {
               </CardContent>
             </Card>
 
-            <Card id="diary-staff-section" className="ops-card" data-testid="daily-labour-card">
+            <Card id="diary-staff-section" className="ops-card w-full max-w-full overflow-hidden" data-testid="daily-labour-card" data-commercial-readiness="staff-mobile-overflow-containment-v2">
           <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-2 sm:px-4" data-testid="daily-labour-polish-v1-marker">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
@@ -2228,13 +2228,13 @@ const DiaryPage = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="max-h-[34rem] space-y-3 overflow-y-auto px-3 py-3 sm:px-4" data-testid="diary-staff-compact-panel-v1">
+          <CardContent className="max-h-[34rem] w-full max-w-full space-y-3 overflow-y-auto overflow-x-hidden px-3 py-3 sm:px-4" data-testid="diary-staff-compact-panel-v1">
             {labourLoading ? (
               <p className="text-sm text-muted-foreground">Loading staff...</p>
             ) : (
-              <div className="space-y-2" data-testid="daily-labour-rows">
+              <div className="w-full min-w-0 max-w-full space-y-2 overflow-hidden" data-testid="daily-labour-rows">
                 <div
-                  className="rounded-xl border border-primary/40 bg-primary/5 p-2"
+                  className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-primary/40 bg-primary/5 p-2"
                   data-testid="staff-diary-check-picker-v1"
                   onClick={(event) => {
                     if (event.target === event.currentTarget) {
@@ -2243,14 +2243,14 @@ const DiaryPage = () => {
                     }
                   }}
                 >
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-primary">Staff on Site</p>
-                      <p className="text-xs font-bold text-muted-foreground">{labourRows.length} staff - {labourTotalHours.toFixed(2)}h total</p>
+                  <div className="mb-3 flex min-w-0 items-center justify-between gap-3 overflow-hidden">
+                    <div className="min-w-0">
+                      <p className="truncate text-[11px] font-black uppercase tracking-[0.16em] text-primary">Staff on Site</p>
+                      <p className="truncate text-xs font-bold text-muted-foreground">{labourRows.length} staff - {labourTotalHours.toFixed(2)}h total</p>
                     </div>
                   </div>
 
-                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]" data-testid="staff-timesheet-picker">
+                  <div className="grid w-full min-w-0 max-w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]" data-testid="staff-timesheet-picker">
                     <select
                       className="input lld-daily-labour-control lld-staff-picker-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
                       value={selectedStaffEmployeeValue}
@@ -2270,7 +2270,7 @@ const DiaryPage = () => {
                         <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
                     </select>
-                    <Button type="button" variant="outline" onClick={() => setShowNewStaffForm((value) => !value)} data-testid="staff-timesheet-add-new-toggle">
+                    <Button type="button" variant="outline" className="w-full justify-center sm:w-auto" onClick={() => setShowNewStaffForm((value) => !value)} data-testid="staff-timesheet-add-new-toggle">
                       + Add new staff
                     </Button>
                   </div>
@@ -2280,7 +2280,7 @@ const DiaryPage = () => {
                       <p className="mb-2 text-xs font-bold text-muted-foreground">
                         Use this if the person is not in the master staff dropdown yet. They will appear in today's Staff on Site list and can be linked in Timesheet Manager later.
                       </p>
-                      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                      <div className="grid w-full min-w-0 max-w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                         <input
                           className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
                           placeholder="New staff member name"
@@ -2300,12 +2300,12 @@ const DiaryPage = () => {
                       No staff recorded for this diary day yet. Select from the dropdown or add a new staff member to start today's Staff on Site list.
                     </div>
                   ) : (
-                    <div className="mt-2 grid max-h-56 gap-1.5 overflow-y-auto pr-1" data-testid="staff-timesheet-selected-list" data-commercial-readiness="staff-manual-add-visible-list-v1">
+                    <div className="mt-2 grid max-h-56 w-full min-w-0 max-w-full gap-1.5 overflow-y-auto overflow-x-hidden pr-0 sm:pr-1" data-testid="staff-timesheet-selected-list" data-commercial-readiness="staff-manual-add-visible-list-v1">
                       {labourRows.map((row, index) => (
                         <button
                           key={row.id || index}
                           type="button"
-                          className={`flex w-full items-center justify-between gap-2 rounded-lg border px-2 py-1.5 text-left transition ${
+                          className={`flex w-full min-w-0 max-w-full items-center justify-between gap-2 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition ${
                             activeLabourIndex === index
                               ? 'border-primary bg-primary/10'
                               : 'border-border/60 bg-background/70 hover:border-primary/50 hover:bg-primary/5'
@@ -2333,11 +2333,11 @@ const DiaryPage = () => {
                   <div
                     key={row.id || index}
                     ref={activeLabourEditorRef}
-                    className="relative z-10 mt-3 w-full max-w-full rounded-2xl border border-primary/70 bg-card p-3 shadow-xl sm:p-4"
+                    className="relative z-10 mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-primary/70 bg-card p-3 shadow-xl sm:p-4"
                     data-testid="diary-staff-timesheet-popout-editor-v1" data-commercial-readiness="staff-diary-always-inline-editor-v2 staff-diary-no-forced-focus-v2"
                     onClick={(event) => event.stopPropagation()}
                   >
-                    <div className="mb-3 flex items-start justify-between gap-3 border-b border-primary/25 pb-3">
+                    <div className="mb-3 flex min-w-0 flex-col gap-3 border-b border-primary/25 pb-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
                         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Staff Diary Check</p>
                         <h3 className="truncate font-heading text-base font-black uppercase tracking-[0.10em]">
@@ -2351,6 +2351,7 @@ const DiaryPage = () => {
                         type="button"
                         variant="secondary"
                         size="sm"
+                        className="w-full justify-center sm:w-auto"
                         onClick={closeLabourEditor}
                         data-testid="diary-staff-popout-close"
                       >
