@@ -2300,7 +2300,7 @@ const DiaryPage = () => {
                       No staff recorded for this diary day yet. Select from the dropdown or add a new staff member to start today's Staff on Site list.
                     </div>
                   ) : (
-                    <div className="mt-2 grid max-h-56 w-full min-w-0 max-w-full gap-1.5 overflow-y-auto overflow-x-hidden pr-0 sm:pr-1" data-testid="staff-timesheet-selected-list" data-commercial-readiness="staff-manual-add-visible-list-v1">
+                    <div className="mt-2 grid w-full min-w-0 max-w-full gap-1.5 overflow-visible pr-0 sm:max-h-56 sm:overflow-y-auto sm:overflow-x-hidden sm:pr-1" data-testid="staff-timesheet-selected-list" data-commercial-readiness="staff-manual-add-visible-list-v1 staff-selected-list-mobile-show-all-v1">
                       {labourRows.map((row, index) => (
                         <button
                           key={row.id || index}
