@@ -237,13 +237,7 @@ const DiaryPage = () => {
     setActiveLabourIndex(index);
     setLabourEditMode(true);
 
-    window.requestAnimationFrame(() => {
-      window.setTimeout(() => {
-        if (window.innerWidth >= 768) {
-          activeLabourNameInputRef.current?.focus(); // staff-diary-mobile-no-autofocus-v1
-        }
-      }, 150);
-    });
+    // staff-diary-no-forced-focus-v2: keep Staff on Site editor stable; do not force focus/keyboard/page movement.
   };
 
   const toggleLabourEditor = (index) => {
@@ -2335,8 +2329,8 @@ const DiaryPage = () => {
                   <div
                     key={row.id || index}
                     ref={activeLabourEditorRef}
-                    className="relative z-10 mt-3 max-h-none overscroll-contain rounded-2xl border border-primary/70 bg-card p-3 shadow-xl sm:fixed sm:inset-x-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:max-h-[88dvh] sm:w-[min(760px,calc(100vw-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:overflow-y-auto sm:p-4 sm:shadow-2xl"
-                    data-testid="diary-staff-timesheet-popout-editor-v1" data-commercial-readiness="staff-diary-mobile-inline-editor-v1 staff-diary-mobile-no-autofocus-v1"
+                    className="relative z-10 mt-3 w-full max-w-full rounded-2xl border border-primary/70 bg-card p-3 shadow-xl sm:p-4"
+                    data-testid="diary-staff-timesheet-popout-editor-v1" data-commercial-readiness="staff-diary-always-inline-editor-v2 staff-diary-no-forced-focus-v2"
                     onClick={(event) => event.stopPropagation()}
                   >
                     <div className="mb-3 flex items-start justify-between gap-3 border-b border-primary/25 pb-3">
