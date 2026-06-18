@@ -451,9 +451,9 @@ const ActionItemsPage = () => {
       key: 'risk',
       label: 'At Risk',
       count: atRiskItems.length,
-      toneClass: 'border-orange-500/70 bg-gradient-to-br from-orange-950/20 via-card to-card shadow-[0_14px_36px_rgba(124,45,18,0.16)]',
-      countClass: 'text-orange-400',
-      accentClass: 'bg-orange-500/90'
+      toneClass: 'border-orange-600/75 bg-gradient-to-br from-orange-50 via-card to-card shadow-[0_14px_36px_rgba(194,65,12,0.16)] dark:border-orange-500/70 dark:from-orange-950/20 dark:via-card dark:to-card dark:shadow-[0_14px_36px_rgba(124,45,18,0.16)]', // action-items-at-risk-light-contrast-v1
+      countClass: 'text-orange-700 dark:text-orange-400',
+      accentClass: 'bg-orange-600/95 dark:bg-orange-500/90'
     },
     {
       key: 'today',
@@ -482,10 +482,10 @@ const ActionItemsPage = () => {
         count: 'border-red-600/45 bg-red-100 text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300'
       },
       warning: {
-        card: 'border-orange-500/70 bg-gradient-to-br from-orange-950/20 via-card to-card shadow-[0_18px_50px_rgba(124,45,18,0.18)]',
-        header: 'border-orange-500/20 bg-orange-950/10',
-        title: 'text-orange-300',
-        count: 'border-orange-500/30 bg-orange-500/10 text-orange-200'
+        card: 'border-orange-600/80 bg-gradient-to-br from-orange-50 via-card to-card shadow-[0_18px_50px_rgba(194,65,12,0.18)] dark:border-orange-500/70 dark:from-orange-950/20 dark:via-card dark:to-card dark:shadow-[0_18px_50px_rgba(124,45,18,0.18)]',
+        header: 'border-orange-500/45 bg-orange-100/90 dark:border-orange-500/20 dark:bg-orange-950/10',
+        title: 'text-orange-800 dark:text-orange-300',
+        count: 'border-orange-600/45 bg-orange-100 text-orange-800 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-200'
       },
       today: {
         card: 'border-amber-500/70 bg-gradient-to-br from-amber-950/20 via-card to-card shadow-[0_18px_50px_rgba(120,53,15,0.16)]',
@@ -551,17 +551,17 @@ const ActionItemsPage = () => {
       data-testid={`item-${item.id}`}
     >
       <CardContent className="px-3 py-3 sm:px-4">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4" data-commercial-readiness="action-items-mobile-card-stack-v1">
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex flex-wrap items-start gap-2">
-              <h4 className="min-w-0 flex-1 text-base font-bold leading-5 text-foreground sm:text-lg">
+              <h4 className="w-full min-w-0 break-words text-base font-bold leading-5 text-foreground sm:flex-1 sm:text-lg">
                 {item.title || item.task_name || item.name || 'Untitled task'}
               </h4>
               <PriorityBadge priority={item.priority} />
             </div>
 
             {item.description && (
-              <p className="mt-1 text-xs leading-5 text-muted-foreground line-clamp-1 sm:text-sm">
+              <p className="mt-1 break-words text-xs leading-5 text-muted-foreground line-clamp-2 sm:text-sm">
                 {item.description || item.note || item.details}
               </p>
             )}
@@ -595,8 +595,8 @@ const ActionItemsPage = () => {
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-col items-end gap-2">
-            <div className="flex flex-wrap justify-end gap-1.5" data-testid={`action-status-workflow-v3-${item.id}`}>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:shrink-0 sm:items-end">
+            <div className="grid w-full grid-cols-2 gap-1.5 sm:flex sm:w-auto sm:flex-wrap sm:justify-end" data-testid={`action-status-workflow-v3-${item.id}`} data-commercial-readiness="action-items-mobile-status-grid-v1">
               {statusOptions.map((statusOption) => (
                 <button
                   key={statusOption.value}
@@ -605,7 +605,7 @@ const ActionItemsPage = () => {
                     event.stopPropagation();
                     handleStatusChange(item, statusOption.value);
                   }}
-                  className={`rounded-lg border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.1em] transition ${
+                  className={`w-full rounded-lg border px-2.5 py-2 text-center text-[11px] font-black uppercase tracking-[0.1em] transition sm:w-auto sm:py-1 ${
                     getNormalizedStatus(item.status) === statusOption.value
                       ? 'border-primary bg-primary text-primary-foreground'
                       : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:bg-white/[0.08] hover:text-foreground'
@@ -622,7 +622,7 @@ const ActionItemsPage = () => {
                 event.stopPropagation();
                 openEditDialog(item);
               }}
-              className="h-9 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-muted-foreground hover:bg-white/[0.08] hover:text-foreground"
+              className="h-10 w-full justify-center rounded-xl border border-white/10 bg-white/[0.03] px-3 text-muted-foreground hover:bg-white/[0.08] hover:text-foreground sm:h-9 sm:w-auto"
             >
               <Pencil className="mr-1.5 h-4 w-4" />
               Edit
