@@ -3558,3 +3558,16 @@
   }
 }
 /* LLD SITE RESOURCES MOBILE UX V1 END */
+/* staff-picker-dark-options-v1: keep native Staff on Site dropdown readable in dark mode */
+select.lld-staff-picker-control,
+select.lld-staff-picker-control option,
+.dark select.lld-staff-picker-control,
+.dark select.lld-staff-picker-control option {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+select.lld-staff-picker-control:focus {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}

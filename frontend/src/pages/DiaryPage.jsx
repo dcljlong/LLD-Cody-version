@@ -2216,11 +2216,15 @@ const DiaryPage = () => {
                   Diary check only. Staff complete and sign timesheets separately in Timesheet Manager.
                 </p>
               </div>
-              <div className="inline-flex w-fit items-center rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
-                <span data-testid="daily-labour-row-count">{labourRows.length}</span>{' '}
-                staff |{' '}
-                <span data-testid="daily-labour-total-hours">{labourTotalHours.toFixed(2)}</span>{' '}
-                check hrs
+              <div className="grid w-full grid-cols-2 gap-2 rounded-xl border border-primary/30 bg-background/70 p-2 text-center sm:w-auto sm:min-w-[13rem]" data-testid="staff-onsite-summary-polish-v1">
+                <div className="rounded-lg bg-secondary/40 px-2 py-1">
+                  <span className="block text-lg font-black leading-none text-foreground" data-testid="daily-labour-row-count">{labourRows.length}</span>
+                  <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">staff</span>
+                </div>
+                <div className="rounded-lg bg-secondary/40 px-2 py-1">
+                  <span className="block text-lg font-black leading-none text-foreground" data-testid="daily-labour-total-hours">{labourTotalHours.toFixed(2)}</span>
+                  <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">check hrs</span>
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -2248,7 +2252,7 @@ const DiaryPage = () => {
 
                   <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]" data-testid="staff-timesheet-picker">
                     <select
-                      className="input min-h-11 w-full min-w-0"
+                      className="input lld-daily-labour-control lld-staff-picker-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
                       value={selectedStaffEmployeeValue}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -2261,7 +2265,7 @@ const DiaryPage = () => {
                       }}
                       data-testid="staff-timesheet-employee-select"
                     >
-                      <option value="">Select staff to add</option>
+                      <option value="" data-commercial-readiness="staff-picker-dark-options-v1">Select staff to add</option>
                       {employeePickerOptions().map((option) => (
                         <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
@@ -2274,11 +2278,11 @@ const DiaryPage = () => {
                   {showNewStaffForm && (
                     <div className="mt-3 rounded-lg border border-dashed border-primary/50 bg-background/70 p-3" data-testid="staff-timesheet-add-new-form">
                       <p className="mb-2 text-xs font-bold text-muted-foreground">
-                        Use this only if the person is not in the dropdown yet. They will be added to today's diary and can be linked in Timesheet Manager later.
+                        Use this if the person is not in the master staff dropdown yet. They will appear in today's Staff on Site list and can be linked in Timesheet Manager later.
                       </p>
                       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                         <input
-                          className="input min-h-11 w-full min-w-0"
+                          className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
                           placeholder="New staff member name"
                           value={newStaffName}
                           onChange={(e) => setNewStaffName(e.target.value)}
@@ -2293,10 +2297,10 @@ const DiaryPage = () => {
 
                   {labourRows.length === 0 ? (
                     <div className="mt-3 rounded-lg border border-dashed border-border/70 bg-background/60 px-3 py-4 text-sm font-semibold text-muted-foreground" data-testid="staff-timesheet-empty">
-                      No staff recorded for this diary day yet. Tap a staff name above to start today's compact Staff on Site list.
+                      No staff recorded for this diary day yet. Select from the dropdown or add a new staff member to start today's Staff on Site list.
                     </div>
                   ) : (
-                    <div className="mt-2 grid max-h-56 gap-1.5 overflow-y-auto pr-1" data-testid="staff-timesheet-selected-list">
+                    <div className="mt-2 grid max-h-56 gap-1.5 overflow-y-auto pr-1" data-testid="staff-timesheet-selected-list" data-commercial-readiness="staff-manual-add-visible-list-v1">
                       {labourRows.map((row, index) => (
                         <button
                           key={row.id || index}
