@@ -319,7 +319,7 @@ const DiaryPage = () => {
 
     setNewStaffName('');
     setShowNewStaffForm(false);
-    toast.info('Staff added to this diary check. Timesheet Manager stays separate.');
+    toast.info('Site-only staff added to this diary. Add them in Timesheet Manager to make them permanent.');
   };
 
   const updateLabourRowEmployee = (index, selectedValue) => {
@@ -577,7 +577,21 @@ const DiaryPage = () => {
     const options = [];
     const seen = new Set();
 
+    const isCleanStaffOption = (employee) => { // staff-timesheet-dropdown-filter-v1
+      const combined = ['employee_name', 'name', 'full_name', 'display_name', 'email', 'id']
+        .map((key) => String(employee?.[key] || ''))
+        .join(' ')
+        .toLowerCase();
+      if (combined.includes('tm cert')) return false;
+      if (combined.includes('cert employee')) return false;
+      if (combined.includes('cert pm')) return false;
+      if (combined.includes('demo')) return false;
+      if (combined.includes('sample')) return false;
+      return true;
+    };
+
     sourceEmployees.forEach((employee) => {
+      if (!isCleanStaffOption(employee)) return;
       const employeeId = String(employee.employee_id || employee.id || employee.value || '').trim();
       const employeeName = String(
         employee.employee_name ||
@@ -608,7 +622,7 @@ const DiaryPage = () => {
     if (current && !seen.has(current)) {
       options.unshift({
         value: current,
-        label: `${current} (pending Timesheet link)`,
+        label: `${current} (site-only diary entry)`,
         employee_id: '',
         employee_name: current,
         linked_to_timesheet: false
@@ -2265,31 +2279,31 @@ const DiaryPage = () => {
                       }}
                       data-testid="staff-timesheet-employee-select"
                     >
-                      <option value="" data-commercial-readiness="staff-picker-dark-options-v1">Select staff to add</option>
+                      <option value="" data-commercial-readiness="staff-picker-dark-options-v1 staff-site-only-wording-v1">Add from Timesheet staff</option>
                       {employeePickerOptions().map((option) => (
                         <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
                     </select>
                     <Button type="button" variant="outline" className="w-full justify-center sm:w-auto" onClick={() => setShowNewStaffForm((value) => !value)} data-testid="staff-timesheet-add-new-toggle">
-                      + Add new staff
+                      + Add site-only staff
                     </Button>
                   </div>
 
                   {showNewStaffForm && (
-                    <div className="mt-3 rounded-lg border border-dashed border-primary/50 bg-background/70 p-3" data-testid="staff-timesheet-add-new-form">
+                    <div className="mt-3 rounded-lg border border-dashed border-primary/50 bg-background/70 p-3" data-testid="staff-timesheet-add-new-form" data-commercial-readiness="staff-site-only-wording-v1">
                       <p className="mb-2 text-xs font-bold text-muted-foreground">
-                        Use this if the person is not in the master staff dropdown yet. They will appear in today's Staff on Site list and can be linked in Timesheet Manager later.
+                        Adds this person to today's diary only. It does not create a permanent Timesheet Manager staff profile. Add permanent staff in Timesheet Manager.
                       </p>
                       <div className="grid w-full min-w-0 max-w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                         <input
                           className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
-                          placeholder="New staff member name"
+                          placeholder="Site-only staff name"
                           value={newStaffName}
                           onChange={(e) => setNewStaffName(e.target.value)}
                           data-testid="staff-timesheet-new-name"
                         />
                         <Button type="button" onClick={addNewStaffToDiary} disabled={!newStaffName.trim()} data-testid="staff-timesheet-add-new-confirm">
-                          Add new staff
+                          Add to this diary
                         </Button>
                       </div>
                     </div>
@@ -2297,7 +2311,7 @@ const DiaryPage = () => {
 
                   {labourRows.length === 0 ? (
                     <div className="mt-3 rounded-lg border border-dashed border-border/70 bg-background/60 px-3 py-4 text-sm font-semibold text-muted-foreground" data-testid="staff-timesheet-empty">
-                      No staff recorded for this diary day yet. Select from the dropdown or add a new staff member to start today's Staff on Site list.
+                      No staff recorded for this diary day yet. Add from Timesheet staff or add site-only staff for this diary only.
                     </div>
                   ) : (
                     <div className="mt-2 grid w-full min-w-0 max-w-full gap-1.5 overflow-visible pr-0 sm:max-h-56 sm:overflow-y-auto sm:overflow-x-hidden sm:pr-1" data-testid="staff-timesheet-selected-list" data-commercial-readiness="staff-manual-add-visible-list-v1 staff-selected-list-mobile-show-all-v1">
@@ -2339,12 +2353,12 @@ const DiaryPage = () => {
                   >
                     <div className="mb-3 flex min-w-0 flex-col gap-3 border-b border-primary/25 pb-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Staff Diary Check</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Daily Staff Check</p>
                         <h3 className="truncate font-heading text-base font-black uppercase tracking-[0.10em]">
                           {row.employee_name || 'Staff member'}
                         </h3>
                         <p className="text-xs font-semibold text-muted-foreground">
-                          Name, start, finish, job, code, hours and staff-specific notes only.
+                          Daily check fields only. This does not create a permanent staff profile.
                         </p>
                       </div>
                       <Button
@@ -2361,7 +2375,7 @@ const DiaryPage = () => {
 
                     <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
                       <label className="space-y-1 sm:col-span-2">
-                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Staff member</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Daily staff member</span>
                         <select
                           ref={activeLabourNameInputRef}
                           className="input lld-daily-labour-control min-h-11 w-full min-w-0 border-primary/45 bg-background text-foreground shadow-inner"
