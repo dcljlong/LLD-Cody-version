@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { actionItemsApi, diaryApi, integrationsApi, projectsApi, walkaroundApi, gatesApi } from '../lib/api';
+import { actionItemsApi, diaryApi, integrationsApi, projectsApi, walkaroundApi, gatesApi, programmesApi } from '../lib/api';
 import { toast } from 'sonner';
 import {
   BookOpen,
@@ -141,6 +141,9 @@ const DiaryPage = () => {
   const [diaryActionSaving, setDiaryActionSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [gates, setGates] = useState([]);
+  const [programmeLookaheadItems, setProgrammeLookaheadItems] = useState([]); // diary-programme-lookahead-v1
+  const [programmeLookaheadLoading, setProgrammeLookaheadLoading] = useState(false);
+  const [programmeLookaheadError, setProgrammeLookaheadError] = useState('');
   const fileInputRef = useRef(null);
   const noteInputRef = useRef(null);
   const activeLabourEditorRef = useRef(null);
@@ -1026,6 +1029,75 @@ const DiaryPage = () => {
     }
   }, [selectedProject, selectedDate]);
 
+
+  const getDiaryProgrammeTaskWindowDate = (task = {}) => {
+    return task.programme_start_date || task.start_date || task.start || task.end_date || task.due_date || '';
+  }; // diary-programme-lookahead-v1
+
+  const fetchProgrammeLookahead = useCallback(async () => {
+    if (!selectedProject) {
+      setProgrammeLookaheadItems([]);
+      setProgrammeLookaheadError('');
+      return;
+    }
+
+    setProgrammeLookaheadLoading(true);
+    setProgrammeLookaheadError('');
+
+    try {
+      const project = projects.find((item) => String(item.id) === String(selectedProject));
+      const projectLabel = project?.job_number
+        ? `${project.job_number} - ${project.name || 'Project'}`
+        : (project?.name || 'Selected project');
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const windowEnd = new Date(today);
+      windowEnd.setDate(today.getDate() + 42);
+
+      const programmeRes = await programmesApi.getAll(selectedProject);
+      const programmes = Array.isArray(programmeRes?.data) ? programmeRes.data : (programmeRes?.data?.items || []);
+      const rows = [];
+
+      for (const programme of programmes.slice(0, 3)) {
+        if (!programme?.id) continue;
+
+        const tasksRes = await programmesApi.getTasks(programme.id);
+        const tasks = Array.isArray(tasksRes?.data) ? tasksRes.data : (tasksRes?.data?.items || []);
+
+        tasks.forEach((task) => {
+          const dateValue = getDiaryProgrammeTaskWindowDate(task);
+          if (!dateValue) return;
+
+          const date = new Date(dateValue);
+          if (Number.isNaN(date.getTime())) return;
+          date.setHours(0, 0, 0, 0);
+
+          if (date < today || date > windowEnd) return;
+
+          rows.push({
+            id: task.id || `${programme.id}-${task.name || task.title || task.task_name || rows.length}`,
+            title: task.name || task.title || task.task_name || 'Programme task',
+            projectLabel,
+            programmeLabel: programme.filename || programme.name || 'Programme',
+            dateValue,
+            dateTime: date.getTime(),
+            status: task.is_tracked ? 'Tracked' : (task.status || task.owner_tag || 'Upcoming')
+          });
+        });
+      }
+
+      rows.sort((a, b) => a.dateTime - b.dateTime || a.title.localeCompare(b.title));
+      setProgrammeLookaheadItems(rows.slice(0, 6));
+    } catch (error) {
+      console.warn('Diary programme lookahead unavailable', error);
+      setProgrammeLookaheadItems([]);
+      setProgrammeLookaheadError('Programme lookahead unavailable');
+    } finally {
+      setProgrammeLookaheadLoading(false);
+    }
+  }, [projects, selectedProject]);
+
   const fetchGates = useCallback(async () => {
     if (!selectedProject) return;
     try {
@@ -1048,6 +1120,7 @@ const DiaryPage = () => {
       fetchLabourRows();
       fetchSiteResources();
       fetchGates();
+      fetchProgrammeLookahead();
 
       const quickKey = getDiaryDraftKey('quick_entry');
       const draft = readDiaryDraft('quick_entry');
@@ -1057,7 +1130,7 @@ const DiaryPage = () => {
       }
       quickEntryDraftReadyRef.current = quickKey;
     }
-  }, [selectedProject, selectedDate, fetchDiary, fetchLabourRows, fetchSiteResources, fetchGates]);
+  }, [selectedProject, selectedDate, fetchDiary, fetchLabourRows, fetchSiteResources, fetchGates, fetchProgrammeLookahead]);
 
   useEffect(() => {
     const key = getDiaryDraftKey('labour');
@@ -1863,6 +1936,58 @@ const DiaryPage = () => {
                   <span className="mt-1 block text-lg font-black text-foreground">M/P</span>
                   <span className="mt-0.5 block truncate text-[11px] font-bold text-muted-foreground">Materials / plant</span>
                 </button>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-emerald-400/35 bg-emerald-500/10 p-3 shadow-inner" data-testid="diary-programme-lookahead-v1" data-commercial-readiness="diary-programme-lookahead-v1">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-emerald-300">6 Week Programme Lookahead</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">Upcoming programme tasks for this selected job.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/programme')}
+                  className="shrink-0 rounded-full border border-emerald-400/40 bg-background/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-300 transition hover:bg-emerald-500/10"
+                  data-testid="diary-programme-lookahead-open-programme"
+                >
+                  Open Programme
+                </button>
+              </div>
+
+              <div className="rounded-xl border border-border/70 bg-background/55 p-3" data-testid="diary-programme-lookahead-summary-v1">
+                {programmeLookaheadLoading ? (
+                  <p className="text-xs font-semibold text-muted-foreground">Loading programme lookahead...</p>
+                ) : programmeLookaheadError ? (
+                  <p className="text-xs font-semibold text-amber-300">{programmeLookaheadError}</p>
+                ) : programmeLookaheadItems.length > 0 ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Next 6 weeks</span>
+                      <span className="rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-black text-emerald-300">{programmeLookaheadItems.length} shown</span>
+                    </div>
+                    {programmeLookaheadItems.slice(0, 4).map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => navigate('/programme')}
+                        className="w-full rounded-lg border border-border/70 bg-secondary/25 p-2 text-left transition hover:border-emerald-400/50 hover:bg-emerald-500/10"
+                        data-testid={`diary-programme-lookahead-item-${item.id}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="min-w-0 truncate text-xs font-black text-foreground">{item.title}</span>
+                          <span className="shrink-0 text-[10px] font-bold text-muted-foreground">{new Date(item.dateValue).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}</span>
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-1 text-[10px] font-bold text-muted-foreground">
+                          <span>{item.status}</span>
+                          <span>•</span>
+                          <span className="truncate">{item.programmeLabel}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs font-semibold text-muted-foreground">No programme tasks found in the next 6 weeks for this job.</p>
+                )}
               </div>
             </div>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-5" data-testid="diary-attention-strip-v2">
