@@ -1938,7 +1938,7 @@ const DiaryPage = () => {
                 Staff: {labourRows.length}
               </button>
               <button type="button" onClick={() => openDiarySection('diary-work-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
-                Walkaround: {walkaroundEntriesCount}
+                Site notes: {walkaroundEntriesCount}
               </button>
               <button type="button" onClick={() => openDiarySection('diary-resources-section', 'materials')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
                 Materials: {resourceMaterials.length}
@@ -2565,17 +2565,17 @@ const DiaryPage = () => {
           </CardContent>
         </Card>
 
-        {/* Daily Evidence - Walkaround Notes / Site Observations - diary-daily-evidence-hierarchy-v2 */}
+        {/* Daily Evidence - Site Notes / Observations - diary-daily-evidence-hierarchy-v2 site-notes-observations-naming-v1 */}
         <div className="lg:col-span-2 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3" data-testid="diary-daily-evidence-divider-v2">
           <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary">Daily Evidence</p>
-          <p className="mt-1 text-xs font-semibold text-muted-foreground">Site observations, materials, plant, and supporting diary records.</p>
+          <p className="mt-1 text-xs font-semibold text-muted-foreground">Site notes, observations, materials, plant, and supporting diary records.</p>
         </div>
 
             <Card id="diary-work-section" className="ops-card lg:col-span-2 border-primary/35" data-testid="diary-walkaround-notes-section" data-commercial-readiness="diary-walkaround-safe-array-wording-v2">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <FileText className="w-4 h-4" />
-                  Walkaround Notes / Site Observations ({walkaroundEntriesCount})
+                  Site Notes / Observations ({walkaroundEntriesCount})
                 </CardTitle>
               </CardHeader>
 
@@ -2614,7 +2614,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No walkaround notes recorded for this diary day.</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No site notes or observations recorded for this diary day.</p>
                 )}
               </CardContent>
             </Card>
