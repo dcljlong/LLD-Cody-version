@@ -1823,6 +1823,47 @@ const DiaryPage = () => {
       {/* Diary Command Strip / Clickable Checklist - diary-command-header-tabs-v2 */}
       <Card className="ops-card" data-testid="daily-report-readiness">
         <CardContent className="space-y-3 py-3" data-testid="diary-mobile-compression-v5">
+            <div className="rounded-2xl border border-primary/35 bg-background/80 p-3 shadow-inner" data-testid="diary-status-summary-v1" data-commercial-readiness="diary-status-summary-v1">
+              <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary">Today's Diary Status</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">At-a-glance completion for this diary day.</p>
+                </div>
+                <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] ${
+                  labourRows.length > 0 && walkaroundEntriesCount > 0
+                    ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300'
+                    : 'border-orange-400/40 bg-orange-500/10 text-orange-300'
+                }`}>
+                  {labourRows.length > 0 && walkaroundEntriesCount > 0 ? 'Started' : 'Needs entry'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4" data-testid="diary-status-summary-grid-v1">
+                <button type="button" onClick={() => openDiarySection('diary-staff-section')} className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99]">
+                  <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Staff</span>
+                  <span className="mt-1 block text-lg font-black text-foreground">{labourRows.length}</span>
+                  <span className="mt-0.5 block truncate text-[11px] font-bold text-muted-foreground">{labourRows.length > 0 ? `${labourTotalHours.toFixed(2)}h checked` : 'Missing'}</span>
+                </button>
+
+                <button type="button" onClick={() => openDiarySection('diary-due-today-section')} className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99]">
+                  <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Follow-ups</span>
+                  <span className="mt-1 block text-lg font-black text-foreground">{dueTodayItems.length}</span>
+                  <span className="mt-0.5 block truncate text-[11px] font-bold text-muted-foreground">Open / carry forward</span>
+                </button>
+
+                <button type="button" onClick={() => openDiarySection('diary-work-section')} className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99]">
+                  <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Site notes</span>
+                  <span className="mt-1 block text-lg font-black text-foreground">{walkaroundEntriesCount}</span>
+                  <span className="mt-0.5 block truncate text-[11px] font-bold text-muted-foreground">{walkaroundEntriesCount > 0 ? 'Recorded' : 'Missing'}</span>
+                </button>
+
+                <button type="button" onClick={() => openDiarySection('diary-resources-section', activeResourceTab || 'materials')} className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99]">
+                  <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Resources</span>
+                  <span className="mt-1 block text-lg font-black text-foreground">M/P</span>
+                  <span className="mt-0.5 block truncate text-[11px] font-bold text-muted-foreground">Materials / plant</span>
+                </button>
+              </div>
+            </div>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-5" data-testid="diary-attention-strip-v2">
             <button
               type="button"
