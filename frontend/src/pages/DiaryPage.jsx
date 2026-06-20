@@ -120,6 +120,7 @@ const DiaryPage = () => {
   const [activeLabourIndex, setActiveLabourIndex] = useState(null);
   const [selectedStaffEmployeeValue, setSelectedStaffEmployeeValue] = useState('');
   const [showNewStaffForm, setShowNewStaffForm] = useState(false);
+  const [staffSectionExpanded, setStaffSectionExpanded] = useState(false); // staff-collapsible-summary-v1
   const [newStaffName, setNewStaffName] = useState('');
   const [siteResources, setSiteResources] = useState({ materials: [], plant_equipment: [] });
   const [resourcesLoading, setResourcesLoading] = useState(false);
@@ -1839,7 +1840,7 @@ const DiaryPage = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4" data-testid="diary-status-summary-grid-v1">
-                <button type="button" onClick={() => openDiarySection('diary-staff-section')} className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99]">
+                <button type="button" onClick={() => { setStaffSectionExpanded(true); openDiarySection('diary-staff-section'); }} className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99]">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Staff</span>
                   <span className="mt-1 block text-lg font-black text-foreground">{labourRows.length}</span>
                   <span className="mt-0.5 block truncate text-[11px] font-bold text-muted-foreground">{labourRows.length > 0 ? `${labourTotalHours.toFixed(2)}h checked` : 'Missing'}</span>
@@ -1933,7 +1934,7 @@ const DiaryPage = () => {
               <button type="button" onClick={() => openDiarySection('diary-queries-section')} className="min-h-11 touch-manipulation select-none rounded border border-sky-400/35 bg-sky-500/10 px-3 py-2 text-left font-semibold transition hover:bg-sky-500/15 active:scale-[0.99]" data-testid="diary-checklist-queries-rfis">
                 Queries / RFIs: 0
               </button>
-              <button type="button" onClick={() => openDiarySection('diary-staff-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
+              <button type="button" onClick={() => { setStaffSectionExpanded(true); openDiarySection('diary-staff-section'); }} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
                 Staff: {labourRows.length}
               </button>
               <button type="button" onClick={() => openDiarySection('diary-work-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
@@ -2271,19 +2272,31 @@ const DiaryPage = () => {
                   Diary check only. Staff complete and sign timesheets separately in Timesheet Manager.
                 </p>
               </div>
-              <div className="grid w-full grid-cols-2 gap-2 rounded-xl border border-primary/30 bg-background/70 p-2 text-center sm:w-auto sm:min-w-[13rem]" data-testid="staff-onsite-summary-polish-v1">
-                <div className="rounded-lg bg-secondary/40 px-2 py-1">
-                  <span className="block text-lg font-black leading-none text-foreground" data-testid="daily-labour-row-count">{labourRows.length}</span>
-                  <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">staff</span>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-stretch" data-commercial-readiness="staff-collapsible-summary-v1">
+                <div className="grid w-full grid-cols-2 gap-2 rounded-xl border border-primary/30 bg-background/70 p-2 text-center sm:w-auto sm:min-w-[13rem]" data-testid="staff-onsite-summary-polish-v1">
+                  <div className="rounded-lg bg-secondary/40 px-2 py-1">
+                    <span className="block text-lg font-black leading-none text-foreground" data-testid="daily-labour-row-count">{labourRows.length}</span>
+                    <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">staff</span>
+                  </div>
+                  <div className="rounded-lg bg-secondary/40 px-2 py-1">
+                    <span className="block text-lg font-black leading-none text-foreground" data-testid="daily-labour-total-hours">{labourTotalHours.toFixed(2)}</span>
+                    <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">check hrs</span>
+                  </div>
                 </div>
-                <div className="rounded-lg bg-secondary/40 px-2 py-1">
-                  <span className="block text-lg font-black leading-none text-foreground" data-testid="daily-labour-total-hours">{labourTotalHours.toFixed(2)}</span>
-                  <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">check hrs</span>
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11 justify-center px-3 text-xs font-black uppercase tracking-[0.14em] sm:w-auto"
+                  onClick={() => setStaffSectionExpanded((value) => !value)}
+                  aria-expanded={staffSectionExpanded}
+                  data-testid="diary-staff-collapse-toggle"
+                >
+                  {staffSectionExpanded ? 'Collapse' : 'Expand'}
+                </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="max-h-[34rem] w-full max-w-full space-y-3 overflow-y-auto overflow-x-hidden px-3 py-3 sm:px-4" data-testid="diary-staff-compact-panel-v1">
+          <CardContent className={`${staffSectionExpanded ? 'max-h-[34rem] py-3 opacity-100' : 'max-h-0 py-0 opacity-0 pointer-events-none'} w-full max-w-full space-y-3 overflow-y-auto overflow-x-hidden px-3 transition-all duration-200 sm:px-4`} data-testid="diary-staff-compact-panel-v1" data-commercial-readiness="staff-collapsible-summary-v1">
             {labourLoading ? (
               <p className="text-sm text-muted-foreground">Loading staff...</p>
             ) : (
