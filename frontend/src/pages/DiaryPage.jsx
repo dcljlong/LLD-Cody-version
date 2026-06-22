@@ -122,7 +122,7 @@ const DiaryPage = () => {
   const [showNewStaffForm, setShowNewStaffForm] = useState(false);
   const [staffSectionExpanded, setStaffSectionExpanded] = useState(false); // staff-collapsible-summary-v1
   const [newStaffName, setNewStaffName] = useState('');
-  const [siteResources, setSiteResources] = useState({ materials: [], plant_equipment: [] });
+  const [siteResources, setSiteResources] = useState({ materials: [], plant_equipment: [], subcontractors: [] }); // diary-subcontractors-on-site-v1
   const [resourcesLoading, setResourcesLoading] = useState(false);
   const [resourcesSaving, setResourcesSaving] = useState(false);
   const [resourcesEditMode, setResourcesEditMode] = useState(false);
@@ -387,7 +387,8 @@ const DiaryPage = () => {
 
   const resourceMaterials = Array.isArray(siteResources?.materials) ? siteResources.materials : [];
   const resourcePlantEquipment = Array.isArray(siteResources?.plant_equipment) ? siteResources.plant_equipment : [];
-  const resourcesTotalCount = resourceMaterials.length + resourcePlantEquipment.length;
+  const resourceSubcontractors = Array.isArray(siteResources?.subcontractors) ? siteResources.subcontractors : []; // diary-subcontractors-on-site-v1
+  const resourcesTotalCount = resourceMaterials.length + resourcePlantEquipment.length + resourceSubcontractors.length;
   const toolTrackerUrl = process.env.REACT_APP_TOOL_TRACKER_URL || 'https://tool-tracker-enterprise.vercel.app';
 
   const getDiaryDraftKey = (section) => {
@@ -443,7 +444,8 @@ const DiaryPage = () => {
 
   const hasMeaningfulResourceRows = (resources = {}) => [
     ...(Array.isArray(resources.materials) ? resources.materials : []),
-    ...(Array.isArray(resources.plant_equipment) ? resources.plant_equipment : [])
+    ...(Array.isArray(resources.plant_equipment) ? resources.plant_equipment : []),
+    ...(Array.isArray(resources.subcontractors) ? resources.subcontractors : [])
   ].some((row) => [
     row.item,
     row.supplier_or_reference,
@@ -810,7 +812,7 @@ const DiaryPage = () => {
 
   const fetchSiteResources = useCallback(async () => {
     if (!selectedProject || !selectedDate) {
-      setSiteResources({ materials: [], plant_equipment: [] });
+      setSiteResources({ materials: [], plant_equipment: [], subcontractors: [] });
       resourcesDraftReadyRef.current = '';
       return;
     }
@@ -821,14 +823,16 @@ const DiaryPage = () => {
       const res = await diaryApi.getResources(selectedProject, selectedDate);
       const serverResources = {
         materials: Array.isArray(res.data?.materials) ? res.data.materials : [],
-        plant_equipment: Array.isArray(res.data?.plant_equipment) ? res.data.plant_equipment : []
+        plant_equipment: Array.isArray(res.data?.plant_equipment) ? res.data.plant_equipment : [],
+        subcontractors: Array.isArray(res.data?.subcontractors) ? res.data.subcontractors : []
       };
       const draft = readDiaryDraft('resources');
 
       if (draft?.resources && hasMeaningfulResourceRows(draft.resources)) {
         setSiteResources({
           materials: Array.isArray(draft.resources.materials) ? draft.resources.materials : [],
-          plant_equipment: Array.isArray(draft.resources.plant_equipment) ? draft.resources.plant_equipment : []
+          plant_equipment: Array.isArray(draft.resources.plant_equipment) ? draft.resources.plant_equipment : [],
+          subcontractors: Array.isArray(draft.resources.subcontractors) ? draft.resources.subcontractors : []
         });
         setResourcesEditMode(true);
         setDraftStatus('Resources draft restored on this device');
@@ -843,12 +847,13 @@ const DiaryPage = () => {
       if (draft?.resources && hasMeaningfulResourceRows(draft.resources)) {
         setSiteResources({
           materials: Array.isArray(draft.resources.materials) ? draft.resources.materials : [],
-          plant_equipment: Array.isArray(draft.resources.plant_equipment) ? draft.resources.plant_equipment : []
+          plant_equipment: Array.isArray(draft.resources.plant_equipment) ? draft.resources.plant_equipment : [],
+          subcontractors: Array.isArray(draft.resources.subcontractors) ? draft.resources.subcontractors : []
         });
         setResourcesEditMode(true);
         setDraftStatus('Resources draft restored on this device');
       } else {
-        setSiteResources({ materials: [], plant_equipment: [] });
+        setSiteResources({ materials: [], plant_equipment: [], subcontractors: [] });
       }
       resourcesDraftReadyRef.current = draftKey;
     } finally {
@@ -878,12 +883,14 @@ const DiaryPage = () => {
       const res = await diaryApi.saveResources(selectedProject, {
         date: selectedDate,
         materials: cleanRows(resourceMaterials),
-        plant_equipment: cleanRows(resourcePlantEquipment)
+        plant_equipment: cleanRows(resourcePlantEquipment),
+        subcontractors: cleanRows(resourceSubcontractors)
       });
 
       setSiteResources({
         materials: Array.isArray(res.data?.materials) ? res.data.materials : [],
-        plant_equipment: Array.isArray(res.data?.plant_equipment) ? res.data.plant_equipment : []
+        plant_equipment: Array.isArray(res.data?.plant_equipment) ? res.data.plant_equipment : [],
+        subcontractors: Array.isArray(res.data?.subcontractors) ? res.data.subcontractors : []
       });
       clearDiaryDraft('resources');
       setDraftStatus('Resources saved to diary');
@@ -2071,6 +2078,9 @@ const DiaryPage = () => {
               <button type="button" onClick={() => openDiarySection('diary-resources-section', 'plant_equipment')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
                 Plant: {resourcePlantEquipment.length}
               </button>
+              <button type="button" onClick={() => openDiarySection('diary-resources-section', 'subcontractors')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]" data-testid="diary-command-subcontractors-count-v1">
+                Subcontractors: {resourceSubcontractors.length}
+              </button>
               <button type="button" onClick={() => openDiarySection('diary-action-completed-section')} className="min-h-11 touch-manipulation select-none rounded border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-left font-semibold transition hover:bg-emerald-500/15 active:scale-[0.99]">
                 Closed today: {diary?.summary?.items_closed || 0}
               </button>
@@ -2754,12 +2764,12 @@ const DiaryPage = () => {
                       Site Resources
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Materials and plant are separated so the diary stays clean.
+                      Materials, plant, and subcontractors are separated so the diary stays clean.
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
-                      {resourceMaterials.length} materials | {resourcePlantEquipment.length} plant / gear
+                      {resourceMaterials.length} materials | {resourcePlantEquipment.length} plant / gear | {resourceSubcontractors.length} subcontractors
                     </span>
                     <Button type="button" variant="outline" size="sm" onClick={() => window.open(toolTrackerUrl, '_blank', 'noopener,noreferrer')} data-testid="open-tool-tracker">
                       Open Tool Tracker
@@ -2836,7 +2846,8 @@ const DiaryPage = () => {
                   <div className="grid grid-cols-1 gap-4 xl:grid-cols-2" data-testid="daily-site-resources-edit">
                     {[
                       ['materials', 'Materials', resourceMaterials],
-                      ['plant_equipment', 'Plant', resourcePlantEquipment]
+                      ['plant_equipment', 'Plant', resourcePlantEquipment],
+                    ['subcontractors', 'Subcontractors on Site', resourceSubcontractors]
                     ].filter(([category]) => category === activeResourceTab).map(([category, title, rows]) => (
                       <div key={category} id={category === 'materials' ? 'daily-site-resources-materials' : 'daily-site-resources-plant'} className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3">
                         <div className="mb-3 flex items-center justify-between gap-3">
@@ -2855,7 +2866,7 @@ const DiaryPage = () => {
                                 <Input
                                   value={row.item || ''}
                                   onChange={(e) => updateResourceRow(category, index, 'item', e.target.value)}
-                                  placeholder={category === 'materials' ? 'Material / item' : 'Plant / equipment / tool'}
+                                  placeholder={category === 'materials' ? 'Material / item' : category === 'subcontractors' ? 'Subcontractor / company' : 'Plant / equipment / tool'}
                                   data-testid={`daily-site-resources-item-${category}-${index}`}
                                 />
                                 <Input
@@ -2867,7 +2878,7 @@ const DiaryPage = () => {
                                 <Input
                                   value={row.supplier_or_reference || ''}
                                   onChange={(e) => updateResourceRow(category, index, 'supplier_or_reference', e.target.value)}
-                                  placeholder={category === 'materials' ? 'Supplier / docket' : 'Owned / hired / Tool Tracker ref'}
+                                  placeholder={category === 'materials' ? 'Supplier / docket' : category === 'subcontractors' ? 'Trade / area' : 'Owned / hired / Tool Tracker ref'}
                                   data-testid={`daily-site-resources-reference-${category}-${index}`}
                                 />
                                 <select
@@ -2887,7 +2898,7 @@ const DiaryPage = () => {
                                   className="md:col-span-2"
                                   value={row.notes || ''}
                                   onChange={(e) => updateResourceRow(category, index, 'notes', e.target.value)}
-                                  placeholder="Notes"
+                                  placeholder={category === 'subcontractors' ? 'Work carried out / notes' : 'Notes'}
                                   data-testid={`daily-site-resources-notes-${category}-${index}`}
                                 />
                                 <div className="md:col-span-2">

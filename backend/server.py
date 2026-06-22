@@ -212,6 +212,7 @@ class DailySiteResourcesSaveRequest(BaseModel):
     date: str
     materials: List[DailySiteResourceItem] = []
     plant_equipment: List[DailySiteResourceItem] = []
+    subcontractors: List[DailySiteResourceItem] = []  # diary-subcontractors-on-site-v1
 
 class WalkaroundEntryCreate(BaseModel):
     project_id: str
@@ -1628,6 +1629,7 @@ async def get_daily_site_resources(
 
     materials = doc.get("materials", []) if doc else []
     plant_equipment = doc.get("plant_equipment", []) if doc else []
+    subcontractors = doc.get("subcontractors", []) if doc else []  # diary-subcontractors-on-site-v1
 
     return {
         "project_id": project_id,
@@ -1645,10 +1647,12 @@ async def get_daily_site_resources(
         },
         "summary": {
             "materials_count": len(materials),
-            "plant_equipment_count": len(plant_equipment)
+            "plant_equipment_count": len(plant_equipment),
+            "subcontractors_count": len(subcontractors)
         },
         "materials": materials,
-        "plant_equipment": plant_equipment
+        "plant_equipment": plant_equipment,
+        "subcontractors": subcontractors
     }
 
 @api_router.post("/diary/{project_id}/resources")
@@ -1694,6 +1698,7 @@ async def save_daily_site_resources(
 
     materials = normalise_resource_rows(payload.materials, "materials")
     plant_equipment = normalise_resource_rows(payload.plant_equipment, "plant_equipment")
+    subcontractors = normalise_resource_rows(payload.subcontractors, "subcontractors")  # diary-subcontractors-on-site-v1
 
     doc = {
         "id": f"{project_id}:{date_value}:daily-site-resources",
@@ -1707,9 +1712,11 @@ async def save_daily_site_resources(
         "tool_tracker_linked": False,
         "materials": materials,
         "plant_equipment": plant_equipment,
+        "subcontractors": subcontractors,
         "summary": {
             "materials_count": len(materials),
-            "plant_equipment_count": len(plant_equipment)
+            "plant_equipment_count": len(plant_equipment),
+            "subcontractors_count": len(subcontractors)
         },
         "updated_at": now
     }
@@ -1737,6 +1744,7 @@ async def save_daily_site_resources(
         "summary": doc["summary"],
         "materials": materials,
         "plant_equipment": plant_equipment,
+        "subcontractors": subcontractors,
         "honest_status": {
             "diary_capture_only": True,
             "creates_tool_tracker_assets": False,
