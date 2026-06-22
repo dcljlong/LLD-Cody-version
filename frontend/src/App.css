@@ -1269,7 +1269,7 @@
         display: grid !important;
     }
 }
-/* LLD LEFT-RAIL THEME + LOGOUT â€” LONG LINE SUITE STANDARD */
+/* LLD LEFT-RAIL THEME + LOGOUT - LONG LINE SUITE STANDARD */
 .lld-sidebar-footer {
   margin-top: auto !important;
   padding: 0.85rem 0.85rem 1rem !important;
@@ -3082,7 +3082,7 @@
    - prevents LLD falling back to older compact 13.85rem/14rem rail rhythm
    - makes the visible LLD rail match FitoutOS width, brand scale, nav spacing, and footer weight
 */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .app-container > aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail,
   aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail,
   .fo-desktop-brand-rail.lld-fitoutos-rail {
@@ -3232,7 +3232,7 @@
   }
 }
 
-@media (min-width: 768px) and (max-height: 820px) {
+@media (min-width: 1024px) and (max-height: 820px) {
   .app-container > aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail,
   aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail,
   .fo-desktop-brand-rail.lld-fitoutos-rail {
@@ -3267,6 +3267,9 @@
   }
 }
 /* LLD / FINAL RAIL PARITY CALIBRATION V7F END */
+/* LLD / RESPONSIVE WHITE COLUMN FIX V1
+   Aligns final FitoutOS rail parity desktop offsets with Layout.jsx lg breakpoint.
+   Prevents hidden off-canvas rail from reserving a 272px white column at 768-1023px widths. */
 
 
 /* LLD / FINAL CIRCLED RAIL CLEANUP V7G
