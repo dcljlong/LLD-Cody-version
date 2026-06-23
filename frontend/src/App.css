@@ -3574,3 +3574,72 @@ select.lld-staff-picker-control:focus {
   outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
 }
+
+/* LLD / FINAL SHARED SHELL LOCK V1
+   Last-resort guardrail for the shared Layout.jsx shell contract.
+   Keeps desktop rail, main offset, mobile header, and tablet/mobile off-canvas behaviour stable across all protected routes. */
+.app-container {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+main.main-content.fo-main-content.lld-fitoutos-main {
+  min-width: 0;
+  width: auto;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+@media (min-width: 1024px) {
+  .app-container > aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail,
+  aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail {
+    display: flex !important;
+    transform: translateX(0) !important;
+    width: 14rem !important;
+    min-width: 14rem !important;
+    max-width: 14rem !important;
+  }
+
+  .app-container > main.main-content.fo-main-content.lld-fitoutos-main,
+  main.main-content.fo-main-content.lld-fitoutos-main {
+    margin-left: 14rem !important;
+    width: calc(100% - 14rem) !important;
+    min-width: 0 !important;
+  }
+
+  main.main-content.fo-main-content.lld-fitoutos-main > .app-header {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .app-container > aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail,
+  aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail {
+    width: 16rem !important;
+    min-width: 16rem !important;
+    max-width: 16rem !important;
+  }
+
+  .app-container > main.main-content.fo-main-content.lld-fitoutos-main,
+  main.main-content.fo-main-content.lld-fitoutos-main {
+    margin-left: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  main.main-content.fo-main-content.lld-fitoutos-main > .app-header {
+    display: block !important;
+  }
+}
+
+@media (max-width: 640px) {
+  main.main-content.fo-main-content.lld-fitoutos-main > .app-header {
+    display: block !important;
+  }
+
+  .lld-compact-menu-button {
+    display: inline-flex !important;
+  }
+}
+/* LLD / FINAL SHARED SHELL LOCK V1 END */
