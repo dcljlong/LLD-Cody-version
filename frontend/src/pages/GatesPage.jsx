@@ -2,6 +2,13 @@ import { useLocation } from 'react-router-dom';
 import React, { useEffect, useMemo, useState } from "react";
 import { gatesApi, programmesApi, projectsApi } from "../lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 
 const EMPTY_FORM = {
   project_id: "",
@@ -210,6 +217,7 @@ export default function GatesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [busyGateId, setBusyGateId] = useState("");
+  const [deleteConfirmGate, setDeleteConfirmGate] = useState(null); // roadblocks-delete-app-confirm-v1-state
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
   const [message, setMessage] = useState("");
@@ -555,11 +563,9 @@ export default function GatesPage() {
       }
 
       if (action === "delete") {
-        const ok = window.confirm(`Delete roadblock / concern "${gate.name || "Untitled Roadblock / Concern"}"?`);
-        if (!ok) return;
-
-        await gatesApi.delete(gate.id);
-        setMessage("Roadblock / concern deleted.");
+        setDeleteConfirmGate(gate);
+        setBusyGateId("");
+        return;
       }
 
       await loadData();
@@ -570,6 +576,26 @@ export default function GatesPage() {
     }
   }
 
+
+  async function executeDeleteConfirm() {
+    if (!deleteConfirmGate?.id || busyGateId) {
+      return;
+    }
+
+    try {
+      setBusyGateId(deleteConfirmGate.id);
+      setActionError("");
+      setMessage("");
+      await gatesApi.delete(deleteConfirmGate.id);
+      setMessage("Roadblock / concern deleted.");
+      setDeleteConfirmGate(null);
+      await loadData();
+    } catch (e) {
+      setActionError(e?.response?.data?.detail || "Roadblock / concern action failed.");
+    } finally {
+      setBusyGateId("");
+    }
+  } // roadblocks-delete-app-confirm-v1-execute
   function dependencyNames(gate) {
     const ids = Array.isArray(gate.depends_on_gate_ids) ? gate.depends_on_gate_ids : [];
 
@@ -829,6 +855,47 @@ export default function GatesPage() {
         </div>
       ) : null}
 
+      <Dialog open={Boolean(deleteConfirmGate)} onOpenChange={(open) => {
+        if (!open && !busyGateId) {
+          setDeleteConfirmGate(null);
+        }
+      }}>
+        <DialogContent className="sm:max-w-md" data-testid="roadblocks-delete-app-confirm-v1-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl uppercase tracking-tight">
+              Delete roadblock / concern?
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              This will permanently delete the roadblock / concern from the project record.
+            </p>
+            <p className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 font-semibold text-foreground">
+              {deleteConfirmGate?.name || "Untitled Roadblock / Concern"}
+            </p>
+          </div>
+
+          <DialogFooter>
+            <button
+              type="button"
+              className="rounded-md border border-border bg-background px-3 py-2 text-sm font-semibold hover:bg-muted"
+              onClick={() => setDeleteConfirmGate(null)}
+              disabled={Boolean(busyGateId)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="rounded-md bg-destructive px-3 py-2 text-sm font-bold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
+              onClick={executeDeleteConfirm}
+              disabled={Boolean(busyGateId)}
+            >
+              {busyGateId ? "Working..." : "Delete Roadblock / Concern"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {actionError ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {actionError}
