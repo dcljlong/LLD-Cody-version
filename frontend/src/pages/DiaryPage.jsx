@@ -31,6 +31,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
 
 const NZ_TIME_ZONE = 'Pacific/Auckland';
 
@@ -139,6 +146,8 @@ const DiaryPage = () => {
   const [selectedDiaryActionItem, setSelectedDiaryActionItem] = useState(null); // diary-action-inline-close-panel-v1
   const [selectedDiaryActionDraft, setSelectedDiaryActionDraft] = useState(null); // diary-inline-action-edit-panel-v1
   const [diaryActionSaving, setDiaryActionSaving] = useState(false);
+  const [followUpConfirm, setFollowUpConfirm] = useState(null); // diary-followup-app-confirm-v1-state
+  const [followUpConfirmSaving, setFollowUpConfirmSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [gates, setGates] = useState([]);
   const [programmeLookaheadItems, setProgrammeLookaheadItems] = useState([]); // diary-programme-lookahead-v1
@@ -1256,47 +1265,51 @@ const DiaryPage = () => {
   const visibleRaisedActionItems = openActionItems.filter((item) => !walkaroundNoteKeys.has(normaliseDiaryItemKey(item.title || item.task_name || item.name || item.note)));
   const visibleRaisedActionItemsCount = visibleRaisedActionItems.length; // diary-carry-forward-followups-v1 keeps prior unresolved items visible until completed
 
-  const handleCompleteFollowUpFromDiary = async (item) => {
+  const requestDiaryFollowUpConfirm = (mode, item) => {
     if (!item?.id) {
       return;
     }
 
     const label = item.title || item.task_name || item.name || item.note || "this follow-up";
-    const confirmed = window.confirm(`Close out "${label}"?`);
+    setFollowUpConfirm({ mode, item, label });
+  }; // diary-followup-app-confirm-v1-request
 
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await actionItemsApi.complete(item.id);
-      window.location.reload();
-    } catch (error) {
-      console.error("Failed to close out Diary follow-up", error);
-      alert("Could not close out this follow-up. Refresh and try again.");
-    }
+  const handleCompleteFollowUpFromDiary = (item) => {
+    requestDiaryFollowUpConfirm("close", item);
   }; // diary-complete-carry-forward-v6 diary-close-out-wording-v1
 
-  const handleReopenClosedOutFromDiary = async (item) => {
-    if (!item?.id) {
+  const handleReopenClosedOutFromDiary = (item) => {
+    requestDiaryFollowUpConfirm("reopen", item);
+  }; // diary-closed-out-reopen-v2
+
+  const executeDiaryFollowUpConfirm = async () => {
+    if (!followUpConfirm?.item?.id || followUpConfirmSaving) {
       return;
     }
 
-    const label = item.title || item.task_name || item.name || item.note || "this follow-up";
-    const confirmed = window.confirm(`Reopen "${label}" and move it back to Open Follow-ups?`);
-
-    if (!confirmed) {
-      return;
-    }
+    setFollowUpConfirmSaving(true);
 
     try {
-      await actionItemsApi.reopen(item.id);
+      if (followUpConfirm.mode === "reopen") {
+        await actionItemsApi.reopen(followUpConfirm.item.id);
+        toast.success("Follow-up reopened");
+      } else {
+        await actionItemsApi.complete(followUpConfirm.item.id);
+        toast.success("Follow-up closed out");
+      }
+
+      setFollowUpConfirm(null);
       window.location.reload();
     } catch (error) {
-      console.error("Failed to reopen closed-out Diary follow-up", error);
-      alert("Could not reopen this follow-up. Refresh and try again.");
+      console.error("Failed to update Diary follow-up from confirm dialog", error);
+      toast.error(followUpConfirm.mode === "reopen"
+        ? "Could not reopen this follow-up. Refresh and try again."
+        : "Could not close out this follow-up. Refresh and try again."
+      );
+    } finally {
+      setFollowUpConfirmSaving(false);
     }
-  }; // diary-closed-out-reopen-v2
+  }; // diary-followup-app-confirm-v1-execute
 
   const getDiaryFollowupRawDate = (item) => {
     if (!item) {
@@ -2095,6 +2108,43 @@ const DiaryPage = () => {
         </CardContent>
       </Card>
 
+      <Dialog open={Boolean(followUpConfirm)} onOpenChange={(open) => {
+        if (!open && !followUpConfirmSaving) {
+          setFollowUpConfirm(null);
+        }
+      }}>
+        <DialogContent className="sm:max-w-md" data-testid="diary-followup-app-confirm-v1-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl uppercase tracking-tight">
+              {followUpConfirm?.mode === "reopen" ? "Reopen follow-up?" : "Close out follow-up?"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              {followUpConfirm?.mode === "reopen"
+                ? "This will move the item back to Open Follow-ups."
+                : "This will mark the follow-up as closed out for the diary day."}
+            </p>
+            <p className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 font-semibold text-foreground">
+              {followUpConfirm?.label || "This follow-up"}
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setFollowUpConfirm(null)} disabled={followUpConfirmSaving}>
+              Cancel
+            </Button>
+            <Button type="button" className="btn-primary" onClick={executeDiaryFollowUpConfirm} disabled={followUpConfirmSaving}>
+              {followUpConfirmSaving
+                ? "Working..."
+                : followUpConfirm?.mode === "reopen"
+                  ? "Reopen Follow-up"
+                  : "Close Out Follow-up"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {selectedDiaryActionItem && selectedDiaryActionDraft && (
         <Card id="diary-action-detail-panel" className="ops-card border-primary/60 bg-card shadow-lg" data-testid="diary-inline-action-edit-panel-v1">
           <CardHeader className="ops-card-header border-b border-primary/25 bg-primary/10 px-4 py-3">
