@@ -85,7 +85,9 @@ function AppRoutes() {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="walkaround" element={<WalkaroundPage />} />
         <Route path="projects" element={<ProjectsPage />} />
+        <Route path="projects/overview" element={<ProjectOverviewPage />} />
         <Route path="projects/:id" element={<ProjectDetailPage />} />
+        <Route path="weather" element={<WeatherPage />} />
         <Route path="gates" element={<GatesPage />} />
         <Route path="roadblocks" element={<Navigate to="/gates" replace />} />
         <Route path="programme" element={<ProgrammePage />} />
@@ -95,8 +97,6 @@ function AppRoutes() {
       </Route>
       
       {/* Catch all */}
-      <Route path="projects/overview" element={<ProjectOverviewPage />} />
-      <Route path="weather" element={<WeatherPage />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
