@@ -2800,6 +2800,16 @@ const DiaryPage = () => {
                   >
                     Plant ({resourcePlantEquipment.length})
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveResourceTab('subcontractors')}
+                    className={`rounded-lg border px-3 py-2 text-left text-xs font-black uppercase tracking-[0.10em] transition ${
+                      activeResourceTab === 'subcontractors' ? 'border-primary bg-primary/15 text-primary' : 'border-border bg-secondary/30 text-muted-foreground hover:bg-secondary/50'
+                    }`}
+                    data-testid="diary-resource-tab-subcontractors-v1"
+                  >
+                    Subcontractors ({resourceSubcontractors.length})
+                  </button>
                 </div>
 
                 {resourcesLoading ? (
@@ -2807,11 +2817,38 @@ const DiaryPage = () => {
                 ) : resourcesTotalCount === 0 && !resourcesEditMode ? (
                   <div className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground" data-testid="daily-site-resources-empty">
                     No site resources recorded for this diary day.
+<div className="grid gap-3 md:grid-cols-3" data-testid="diary-resource-zero-state-panels-v1">
+                    No site resources recorded for this diary day.
+  <div className="rounded-xl border border-border/70 bg-secondary/20 p-3">
+                    No site resources recorded for this diary day.
+    <p className="mb-1 text-sm font-black uppercase tracking-[0.08em] text-foreground">Materials on Site</p>
+                    No site resources recorded for this diary day.
+    <p className="text-sm text-muted-foreground">No materials recorded.</p>
+                    No site resources recorded for this diary day.
+  </div>
+                    No site resources recorded for this diary day.
+  <div className="rounded-xl border border-border/70 bg-secondary/20 p-3">
+                    No site resources recorded for this diary day.
+    <p className="mb-1 text-sm font-black uppercase tracking-[0.08em] text-foreground">Plant / Equipment on Site</p>
+                    No site resources recorded for this diary day.
+    <p className="text-sm text-muted-foreground">No plant, equipment, or tools recorded.</p>
+                    No site resources recorded for this diary day.
+  </div>
+                    No site resources recorded for this diary day.
+  <div className="rounded-xl border border-primary/30 bg-primary/5 p-3" data-testid="diary-resource-subcontractors-empty-panel-v1">
+                    No site resources recorded for this diary day.
+    <p className="mb-1 text-sm font-black uppercase tracking-[0.08em] text-foreground">Subcontractors on Site</p>
+                    No site resources recorded for this diary day.
+    <p className="text-sm text-muted-foreground">No subcontractors recorded for this diary day.</p>
+                    No site resources recorded for this diary day.
+  </div>
+                    No site resources recorded for this diary day.
+</div>
                   </div>
                 ) : !resourcesEditMode ? (
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2" data-testid="daily-site-resources-summary">
                     <div id="daily-site-resources-materials" className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3">
-                      <p className="mb-2 text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">Materials</p>
+                      <p className="mb-2 text-sm font-black uppercase tracking-[0.08em] text-foreground">Materials on Site</p>
                       {resourceMaterials.length > 0 ? (
                         <div className="space-y-2">
                           {resourceMaterials.map((row, index) => (
@@ -2827,7 +2864,7 @@ const DiaryPage = () => {
                     </div>
 
                     <div id="daily-site-resources-plant" className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3">
-                      <p className="mb-2 text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">Plant</p>
+                      <p className="mb-2 text-sm font-black uppercase tracking-[0.08em] text-foreground">Plant / Equipment on Site</p>
                       {resourcePlantEquipment.length > 0 ? (
                         <div className="space-y-2">
                           {resourcePlantEquipment.map((row, index) => (
@@ -2841,6 +2878,18 @@ const DiaryPage = () => {
                         <p className="text-sm text-muted-foreground">No plant, equipment, or tools recorded.</p>
                       )}
                     </div>
+                  <div id="daily-site-resources-subcontractors" className="lld-resource-section rounded-xl border border-primary/30 bg-primary/5 p-3" data-testid="diary-resource-subcontractors-panel-v1">
+                    <p className="mb-2 text-sm font-black uppercase tracking-[0.08em] text-foreground">Subcontractors on Site</p>
+                    {resourceSubcontractors.length > 0 ? (
+                      <div className="space-y-2">
+                        {resourceSubcontractors.map((row, index) => (
+                          <ResourceSummaryRow key={row.id || index} row={row} />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No subcontractors recorded for this diary day.</p>
+                    )}
+                  </div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-4 xl:grid-cols-2" data-testid="daily-site-resources-edit">
@@ -2849,7 +2898,7 @@ const DiaryPage = () => {
                       ['plant_equipment', 'Plant', resourcePlantEquipment],
                     ['subcontractors', 'Subcontractors on Site', resourceSubcontractors]
                     ].filter(([category]) => category === activeResourceTab).map(([category, title, rows]) => (
-                      <div key={category} id={category === 'materials' ? 'daily-site-resources-materials' : 'daily-site-resources-plant'} className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3">
+                      <div key={category} id={category === 'materials' ? 'daily-site-resources-materials' : category === 'subcontractors' ? 'daily-site-resources-subcontractors' : 'daily-site-resources-plant'} className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3">
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
                           <Button type="button" size="sm" variant="secondary" onClick={() => addResourceRow(category)} data-testid={`daily-site-resources-add-${category}`}>
