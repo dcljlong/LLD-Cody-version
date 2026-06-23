@@ -12,11 +12,19 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
 
 const ProjectsPage = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+  const [projectConfirm, setProjectConfirm] = useState(null); // projects-archive-delete-app-confirm-v1-state
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [statusFilter, setStatusFilter] = useState('active');
@@ -152,46 +160,53 @@ const [showCreate, setShowCreate] = useState(false);
     }
   };
 
-  const handleArchiveProject = async (project) => {
-    const label = project.name || 'this project';
-    if (!window.confirm(`Archive ${label}? It will be hidden from active jobs but kept in the system.`)) {
+  const requestProjectConfirm = (action, project) => {
+    if (!project?.id) {
       return;
     }
 
-    try {
-      setDeletingId(project.id);
-      await projectsApi.update(project.id, {
-        ...project,
-        status: 'archived'
-      });
-      toast.success('Project archived');
-      fetchProjects();
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to archive project');
-    } finally {
-      setDeletingId(null);
-    }
+    const label = project.name || project.job_number || 'this project';
+    setProjectConfirm({ action, project, label });
+  }; // projects-archive-delete-app-confirm-v1-request
+
+  const handleArchiveProject = (project) => {
+    requestProjectConfirm('archive', project);
   };
 
-  const handleDeleteProject = async (project) => {
-    const label = project.name || 'this project';
-    if (!window.confirm(`Delete ${label}? This will also delete related roadblocks / concerns, action items, and walkaround entries.`)) {
+  const handleDeleteProject = (project) => {
+    requestProjectConfirm('delete', project);
+  };
+
+  const executeProjectConfirm = async () => {
+    if (!projectConfirm?.project?.id || deletingId) {
       return;
     }
 
+    const { action, project } = projectConfirm;
+
     try {
       setDeletingId(project.id);
-      await projectsApi.delete(project.id);
-      toast.success('Project deleted');
+
+      if (action === 'archive') {
+        await projectsApi.update(project.id, {
+          ...project,
+          status: 'archived'
+        });
+        toast.success('Project archived');
+      } else {
+        await projectsApi.delete(project.id);
+        toast.success('Project deleted');
+      }
+
+      setProjectConfirm(null);
       fetchProjects();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to delete project');
+      toast.error(action === 'archive' ? 'Failed to archive project' : 'Failed to delete project');
     } finally {
       setDeletingId(null);
     }
-  };
+  }; // projects-archive-delete-app-confirm-v1-execute
 
   const formatDate = (value) => {
     if (!value) return '-';
@@ -233,6 +248,43 @@ const [showCreate, setShowCreate] = useState(false);
         </Button>
       </div>
 
+      <Dialog open={Boolean(projectConfirm)} onOpenChange={(open) => {
+        if (!open && !deletingId) {
+          setProjectConfirm(null);
+        }
+      }}>
+        <DialogContent className="sm:max-w-md" data-testid="projects-archive-delete-app-confirm-v1-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl uppercase tracking-tight">
+              {projectConfirm?.action === 'delete' ? 'Delete project?' : 'Archive project?'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              {projectConfirm?.action === 'delete'
+                ? 'This will delete the project and related roadblocks / concerns, action items, and walkaround entries.'
+                : 'This will hide the project from active jobs while keeping it in the system.'}
+            </p>
+            <p className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 font-semibold text-foreground">
+              {projectConfirm?.label || 'This project'}
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setProjectConfirm(null)} disabled={Boolean(deletingId)}>
+              Cancel
+            </Button>
+            <Button type="button" className={projectConfirm?.action === 'delete' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'btn-primary'} onClick={executeProjectConfirm} disabled={Boolean(deletingId)}>
+              {deletingId
+                ? 'Working...'
+                : projectConfirm?.action === 'delete'
+                  ? 'Delete Project'
+                  : 'Archive Project'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {showCreate && (
       <Card className="ops-card border-primary/40" data-testid="projects-form-polish-v2">
         <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4 sm:px-5">
