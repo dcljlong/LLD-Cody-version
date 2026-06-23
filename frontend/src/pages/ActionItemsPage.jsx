@@ -89,6 +89,7 @@ const ActionItemsPage = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [appConfirm, setAppConfirm] = useState(null); // action-items-app-confirm-v1-state
   const [filterProject, setFilterProject] = useState('all');
   const [filterOwner, setFilterOwner] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
@@ -212,17 +213,29 @@ const ActionItemsPage = () => {
     }
   };
 
-  const handleDelete = async (itemId) => {
-    if (!window.confirm('Delete this action item?')) return;
+  const handleDelete = (itemId) => {
+    const item = items.find((candidate) => String(candidate.id) === String(itemId));
+    setAppConfirm({
+      type: 'delete',
+      itemId,
+      label: item?.title || item?.task_name || item?.name || 'this action item'
+    });
+  }; // action-items-delete-confirm-v1-request
+
+  const executeDeleteConfirm = async () => {
+    if (!appConfirm?.itemId) {
+      return;
+    }
 
     try {
-      await actionItemsApi.delete(itemId);
+      await actionItemsApi.delete(appConfirm.itemId);
       toast.success('Item deleted');
+      setAppConfirm(null);
       fetchData();
     } catch (error) {
       toast.error('Failed to delete item');
     }
-  };
+  }; // action-items-delete-confirm-v1-execute
 
   const openEditDialog = (item) => {
     setSelectedItem(item);
@@ -273,6 +286,12 @@ const ActionItemsPage = () => {
     );
   };
 
+  const closeActionItemDialog = () => {
+    setDialogOpen(false);
+    resetForm();
+    setAppConfirm(null);
+  };
+
   const requestDialogOpenChange = (open) => {
     if (open) {
       setDialogOpen(true);
@@ -282,14 +301,19 @@ const ActionItemsPage = () => {
     if (submitting) return;
 
     if (hasUnsavedDialogChanges()) {
-      const discard = window.confirm('Discard unsaved action item changes?');
-      if (!discard) return;
+      setAppConfirm({
+        type: 'discard',
+        label: selectedItem ? 'this edited action item' : 'this new action item'
+      });
+      return;
     }
 
-    setDialogOpen(false);
-    resetForm();
-  };
+    closeActionItemDialog();
+  }; // action-items-discard-confirm-v1-request
 
+  const executeDiscardConfirm = () => {
+    closeActionItemDialog();
+  };
 
   const getProjectName = (projectId) => {
     const project = projects.find((p) => String(p.id) === String(projectId));
@@ -962,6 +986,43 @@ const ActionItemsPage = () => {
         )}
       </div>
 
+      <Dialog open={Boolean(appConfirm)} onOpenChange={(open) => {
+        if (!open) {
+          setAppConfirm(null);
+        }
+      }}>
+        <DialogContent className="sm:max-w-md" data-testid="action-items-confirm-dialog-v1">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl uppercase tracking-tight">
+              {appConfirm?.type === 'delete' ? 'Delete action item?' : 'Discard changes?'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              {appConfirm?.type === 'delete'
+                ? 'This will permanently delete the action item.'
+                : 'This will close the form and lose unsaved changes.'}
+            </p>
+            <p className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 font-semibold text-foreground">
+              {appConfirm?.label || 'This action item'}
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setAppConfirm(null)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className={appConfirm?.type === 'delete' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'btn-primary'}
+              onClick={appConfirm?.type === 'delete' ? executeDeleteConfirm : executeDiscardConfirm}
+            >
+              {appConfirm?.type === 'delete' ? 'Delete Action Item' : 'Discard Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={dialogOpen} onOpenChange={requestDialogOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
