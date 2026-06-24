@@ -79,7 +79,6 @@ const WalkaroundPage = () => {
       const items = Array.isArray(res.data) ? res.data : (res.data?.value || []);
       setProjects(items);
     } catch (error) {
-      console.error('Failed to fetch projects:', error);
       setProjects([]);
     } finally {
       setLoading(false);
@@ -92,7 +91,6 @@ const WalkaroundPage = () => {
       const items = Array.isArray(res.data) ? res.data : (res.data?.value || []);
       setGates(items.filter(g => g.status !== 'COMPLETED'));
     } catch (error) {
-      console.error('Failed to fetch roadblocks / concerns:', error);
       setGates([]);
     }
   };
@@ -103,7 +101,6 @@ const WalkaroundPage = () => {
       const items = Array.isArray(res.data) ? res.data : (res.data?.value || []);
       setRecentEntries(items.slice(0, 5));
     } catch (error) {
-      console.error('Failed to fetch entries:', error);
     }
   };
 
@@ -171,7 +168,6 @@ const WalkaroundPage = () => {
       setTimeout(() => noteInputRef.current?.focus(), 50);
     } catch (error) {
       toast.error('Failed to save entry');
-      console.error(error);
     } finally {
       setSubmitting(false);
     }
