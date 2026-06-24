@@ -44,6 +44,15 @@ app = FastAPI(title="LLDv2 API", description="Long Line Diary V2 - Construction 
 api_router = APIRouter(prefix="/api")
 security = HTTPBearer()
 
+# LLD / ROOT BACKEND HEALTH ROUTES V1
+@app.get("/")
+async def app_root():
+    return {"message": "LLDv2 API - Construction Operations Command Center", "status": "operational"}
+
+@app.get("/health")
+async def app_health_check():
+    return {"status": "healthy", "service": "lld", "timestamp": datetime.now(timezone.utc).isoformat()}
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
