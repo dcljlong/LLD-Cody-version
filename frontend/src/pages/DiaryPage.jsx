@@ -80,7 +80,6 @@ class DiaryPageErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("LLD Diary render failure", error, errorInfo);
   }
 
   render() {
@@ -908,7 +907,6 @@ const DiaryPage = () => {
       fetchDiary();
       fetchSiteResources();
     } catch (error) {
-      console.error('Failed to save site resources:', error);
       toast.error('Failed to save site resources');
     } finally {
       setResourcesSaving(false);
@@ -983,7 +981,6 @@ const DiaryPage = () => {
       setLabourSaveStatus('Saved');
       fetchDiary();
     } catch (error) {
-      console.error('Failed to save labour rows:', error);
       setLabourSaveStatus('Save failed');
       if (!silent) {
         toast.error('Failed to autosave staff diary check');
@@ -1026,7 +1023,6 @@ const DiaryPage = () => {
         toast.info('Timesheet import completed with no new rows created');
       }
     } catch (error) {
-      console.error('Failed to import labour rows to Timesheet:', error);
       const detail = error?.response?.data?.detail;
       toast.error(detail || 'Failed to import labour rows to Timesheet');
     } finally {
@@ -1106,7 +1102,6 @@ const DiaryPage = () => {
       rows.sort((a, b) => a.dateTime - b.dateTime || a.title.localeCompare(b.title));
       setProgrammeLookaheadItems(rows.slice(0, 6));
     } catch (error) {
-      console.warn('Diary programme lookahead unavailable', error);
       setProgrammeLookaheadItems([]);
       setProgrammeLookaheadError('Programme lookahead unavailable');
     } finally {
@@ -1301,7 +1296,6 @@ const DiaryPage = () => {
       setFollowUpConfirm(null);
       window.location.reload();
     } catch (error) {
-      console.error("Failed to update Diary follow-up from confirm dialog", error);
       toast.error(followUpConfirm.mode === "reopen"
         ? "Could not reopen this follow-up. Refresh and try again."
         : "Could not close out this follow-up. Refresh and try again."
@@ -1510,7 +1504,6 @@ const DiaryPage = () => {
       setShowQuickEntry(false);
     } catch (error) {
       toast.error('Failed to save entry');
-      console.error(error);
     } finally {
       setSubmitting(false);
     }
@@ -1619,7 +1612,6 @@ const DiaryPage = () => {
       toast.success('Follow-up updated');
       fetchDiary();
     } catch (error) {
-      console.error('Failed to update diary follow-up:', error);
       toast.error('Failed to update follow-up');
     } finally {
       setDiaryActionSaving(false);
@@ -1637,7 +1629,6 @@ const DiaryPage = () => {
       setSelectedDiaryActionDraft(null);
       fetchDiary();
     } catch (error) {
-      console.error('Failed to complete diary follow-up:', error);
       toast.error('Failed to complete follow-up');
     } finally {
       setDiaryActionSaving(false);
@@ -1655,7 +1646,6 @@ const DiaryPage = () => {
       setSelectedDiaryActionItem((current) => current ? { ...current, status: 'open' } : current);
       setSelectedDiaryActionDraft((current) => current ? { ...current, status: 'open' } : current);
     } catch (error) {
-      console.error('Failed to reopen diary follow-up:', error);
       toast.error('Failed to reopen follow-up');
     } finally {
       setDiaryActionSaving(false);
