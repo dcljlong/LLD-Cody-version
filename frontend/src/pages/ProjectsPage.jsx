@@ -93,7 +93,6 @@ const [showCreate, setShowCreate] = useState(false);
       const allProjects = Array.isArray(res?.data) ? res.data : Array.isArray(res?.data?.value) ? res.data.value : [];
       setProjects(allProjects);
     } catch (error) {
-      console.error(error);
       toast.error('Failed to load projects');
       setProjects([]);
     } finally {
@@ -153,7 +152,6 @@ const [showCreate, setShowCreate] = useState(false);
 
       fetchProjects();
     } catch (error) {
-      console.error(error);
       toast.error(editingId ? 'Failed to update project' : 'Failed to create project');
     } finally {
       setCreating(false);
@@ -201,7 +199,6 @@ const [showCreate, setShowCreate] = useState(false);
       setProjectConfirm(null);
       fetchProjects();
     } catch (error) {
-      console.error(error);
       toast.error(action === 'archive' ? 'Failed to archive project' : 'Failed to delete project');
     } finally {
       setDeletingId(null);
