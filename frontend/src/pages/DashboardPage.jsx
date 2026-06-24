@@ -236,7 +236,6 @@ const DashboardPage = () => {
               });
             }
           } catch (err) {
-            console.warn('Programme lookahead skipped project', project.id, err);
           }
         }
 
@@ -246,7 +245,6 @@ const DashboardPage = () => {
           setProgrammeLookaheadItems(rows.slice(0, 12));
         }
       } catch (err) {
-        console.error(err);
         if (!cancelled) {
           setProgrammeLookaheadItems([]);
           setProgrammeLookaheadError('Programme lookahead unavailable');
@@ -271,7 +269,6 @@ const DashboardPage = () => {
       setData(dashRes.data);
     } catch (error) {
       toast.error('Failed to load dashboard');
-      console.error(error);
     } finally {
       setLoading(false);
     }
