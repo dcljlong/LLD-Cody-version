@@ -119,7 +119,6 @@ export default function ProjectOverviewPage() {
         setSelectedProject(nextProject);
       } catch (error) {
         if (cancelled) return;
-        console.error("Failed to load project overview snapshot:", error);
         setSnapshotError("Project overview could not load the live snapshot yet.");
       } finally {
         if (!cancelled) {
@@ -150,7 +149,6 @@ export default function ProjectOverviewPage() {
         setLabourSummary(response?.data?.summary || response?.summary || null);
       } catch (error) {
         if (cancelled) return;
-        console.warn("Project overview labour summary unavailable:", error);
         setLabourSummary(null);
       }
     }
