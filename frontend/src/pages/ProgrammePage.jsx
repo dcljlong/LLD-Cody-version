@@ -63,7 +63,6 @@ export default function ProgrammePage() {
           setSelectedProjectId(items[0].id);
         }
       } catch (err) {
-        console.error(err);
         toast.error('Failed to load projects');
       } finally {
         setLoadingProjects(false);
@@ -97,7 +96,6 @@ export default function ProgrammePage() {
           setDrafts({});
         }
       } catch (err) {
-        console.error(err);
         toast.error('Failed to load programmes');
         setProgrammes([]);
       } finally {
@@ -137,7 +135,6 @@ export default function ProgrammePage() {
         });
         setDrafts(nextDrafts);
       } catch (err) {
-        console.error(err);
         toast.error('Failed to load programme tasks');
         setTasks([]);
       } finally {
@@ -229,7 +226,6 @@ export default function ProgrammePage() {
 
       setFile(null);
     } catch (err) {
-      console.error(err);
       toast.error(err?.response?.data?.detail || 'Programme upload failed');
     } finally {
       setUploading(false);
@@ -305,7 +301,6 @@ export default function ProgrammePage() {
 
       toast.success(`Saved: ${task.task_name}`);
     } catch (err) {
-      console.error(err);
       toast.error(err?.response?.data?.detail || 'Failed to save');
     } finally {
       setSavingTaskId('');
