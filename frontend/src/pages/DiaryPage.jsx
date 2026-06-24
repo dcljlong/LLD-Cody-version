@@ -412,7 +412,7 @@ const DiaryPage = () => {
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : null;
     } catch (error) {
-      console.warn(`Failed to read ${section} diary draft`, error);
+      // Corrupt or unreadable device drafts are ignored so the diary can continue loading.
       return null;
     }
   };
@@ -430,7 +430,7 @@ const DiaryPage = () => {
       }));
       setDraftStatus('Draft autosaved on this device');
     } catch (error) {
-      console.warn(`Failed to write ${section} diary draft`, error);
+      setDraftStatus('Draft autosave unavailable on this device. Save manually before leaving.');
     }
   };
 
@@ -766,7 +766,7 @@ const DiaryPage = () => {
           : ['0', '30', '60']
       });
     } catch (error) {
-      console.error('Failed to load Timesheet reference options:', error);
+      setDraftStatus('Timesheet staff and task-code lists could not be loaded. Lunch options are still available.');
       setTimesheetReferenceOptions((current) => ({
         ...current,
         lunch_options: Array.isArray(current.lunch_options) && current.lunch_options.length
@@ -803,7 +803,7 @@ const DiaryPage = () => {
 
       labourDraftReadyRef.current = draftKey;
     } catch (error) {
-      console.error('Failed to load labour rows:', error);
+      setDraftStatus('Staff diary rows could not be loaded. Restoring any saved device draft if available.');
       const draft = readDiaryDraft('labour');
       if (Array.isArray(draft?.rows) && hasMeaningfulLabourRows(draft.rows)) {
         setLabourRows(draft.rows.map(normaliseLabourRow));
@@ -850,7 +850,7 @@ const DiaryPage = () => {
 
       resourcesDraftReadyRef.current = draftKey;
     } catch (error) {
-      console.error('Failed to load site resources:', error);
+      setDraftStatus('Site resources could not be loaded. Restoring any saved device draft if available.');
       const draft = readDiaryDraft('resources');
       if (draft?.resources && hasMeaningfulResourceRows(draft.resources)) {
         setSiteResources({
@@ -1036,7 +1036,7 @@ const DiaryPage = () => {
       const res = await diaryApi.get(selectedProject, selectedDate);
       setDiary(res.data);
     } catch (error) {
-      console.error('Failed to load diary:', error);
+      setDraftStatus('Diary could not be loaded. Check connection or refresh.');
       setDiary(null);
     }
   }, [selectedProject, selectedDate]);
@@ -1116,7 +1116,7 @@ const DiaryPage = () => {
       const items = Array.isArray(res.data) ? res.data : (res.data?.value || []);
       setGates(items.filter(g => g.status !== 'COMPLETED'));
     } catch (error) {
-      console.error('Failed to fetch gates:', error);
+      setDraftStatus('Related roadblocks could not be loaded.');
       setGates([]);
     }
   }, [selectedProject]);
