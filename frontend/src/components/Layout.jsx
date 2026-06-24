@@ -47,7 +47,6 @@ const Layout = () => {
             : [];
         setProjects(items);
       } catch (error) {
-        console.error('Failed to load layout projects:', error);
         setProjects([]);
       }
     };

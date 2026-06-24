@@ -169,7 +169,6 @@ export default function ProjectDetailPage() {
         setWalkaroundEntries(normaliseList(walkaroundRes));
         setDiarySummary(diaryRes?.data || null);
       } catch (error) {
-        console.error(error);
         setProject(null);
         setLoadError(error?.response?.data?.detail || "This project could not be loaded.");
       } finally {
