@@ -2682,47 +2682,8 @@ const DiaryPage = () => {
             </button>
           </div>
 
-          <div className="hidden md:block" data-commercial-readiness="diary-lower-mobile-clutter-polish-v2">
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <div>
-                <p className="font-heading text-sm font-black uppercase tracking-[0.14em]">Desktop Review Shortcuts</p>
-                <p className="text-xs text-muted-foreground">Detailed diary shortcuts are kept for desktop review. Mobile uses the compact Diary Board above.</p>
-              </div>
-            </div>
+                      {/* diary-remove-desktop-review-shortcuts-v2: removed redundant review shortcut clutter. Diary Board and action strip are the release navigation. */}
 
-            <div className="relative z-10 grid grid-cols-2 gap-2 pb-8 text-xs sm:grid-cols-3 lg:grid-cols-9" data-testid="diary-clickable-checklist-v2" data-commercial-readiness="diary-checklist-priority-order-v5 diary-lower-mobile-clutter-polish-v2">
-              <button type="button" onClick={() => openDiarySection('diary-roadblocks-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
-                Roadblocks: {diary?.summary?.blocked_gates || 0}
-              </button>
-              <button type="button" onClick={() => openDiarySection('diary-overdue-followups')} className="min-h-11 touch-manipulation select-none rounded border border-red-400/35 bg-red-500/10 px-3 py-2 text-left font-semibold transition hover:bg-red-500/15 active:scale-[0.99]">
-                Overdue: {overdueDiaryItems.length}
-              </button>
-              <button type="button" onClick={() => openDiarySection('diary-due-today-section')} className="min-h-11 touch-manipulation select-none rounded border border-orange-400/35 bg-orange-500/10 px-3 py-2 text-left font-semibold transition hover:bg-orange-500/15 active:scale-[0.99]">
-                Open follow-ups: {diary?.summary?.items_opened || 0}
-              </button>
-              <button type="button" onClick={() => openDiarySection('diary-queries-section')} className="min-h-11 touch-manipulation select-none rounded border border-sky-400/35 bg-sky-500/10 px-3 py-2 text-left font-semibold transition hover:bg-sky-500/15 active:scale-[0.99]" data-testid="diary-checklist-queries-rfis">
-                RFIs: 0
-              </button>
-              <button type="button" onClick={() => { setStaffSectionExpanded(true); openDiarySection('diary-staff-section'); }} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
-                Staff: {labourRows.length}
-              </button>
-              <button type="button" onClick={() => openDiarySection('diary-work-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
-                Site notes: {walkaroundEntriesCount}
-              </button>
-              <button type="button" onClick={() => openDiarySection('diary-resources-section', 'materials')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
-                Materials: {resourceMaterials.length}
-              </button>
-              <button type="button" onClick={() => openDiarySection('diary-resources-section', 'plant_equipment')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
-                Plant: {resourcePlantEquipment.length}
-              </button>
-              <button type="button" onClick={() => openDiarySection('diary-resources-section', 'subcontractors')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]" data-testid="diary-command-subcontractors-count-v1">
-                Subcontractors: {resourceSubcontractors.length}
-              </button>
-              <button type="button" onClick={() => openDiarySection('diary-action-completed-section')} className="min-h-11 touch-manipulation select-none rounded border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-left font-semibold transition hover:bg-emerald-500/15 active:scale-[0.99]">
-                Closed today: {diary?.summary?.items_closed || 0}
-              </button>
-            </div>
-          </div>
 
           {!hasDiaryContent && (
             <p className="text-xs text-muted-foreground">
