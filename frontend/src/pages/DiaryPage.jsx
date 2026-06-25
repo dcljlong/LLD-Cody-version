@@ -1163,7 +1163,7 @@ const DiaryPage = () => {
       const draft = readDiaryDraft('quick_entry');
       if (draft?.entryData && String(draft.entryData.note || '').trim()) {
         setEntryData((current) => ({ ...current, ...draft.entryData }));
-        setDraftStatus('Quick entry draft restored on this device');
+        setDraftStatus('Capture activity draft restored on this device');
       }
       quickEntryDraftReadyRef.current = quickKey;
     }
@@ -1527,7 +1527,7 @@ const DiaryPage = () => {
     }));
   }; // onsite-issue-recorder-v1
 
-  const getIssueTypeLabel = (value) => issueTypeOptions.find((option) => option.value === value)?.label || 'Onsite Issue';
+  const getIssueTypeLabel = (value) => issueTypeOptions.find((option) => option.value === value)?.label || 'Formal Site Issue';
   const getIssueImpactLabel = (value) => issueImpactOptions.find((option) => option.value === value)?.label || 'Not selected';
   const getIssueActionLabel = (value) => issueActionOptions.find((option) => option.value === value)?.label || 'Not selected';
 
@@ -1537,7 +1537,7 @@ const DiaryPage = () => {
       : 'Selected project';
 
     return [
-      'ONSITE ISSUE RECORDER',
+      'FORMAL SITE ISSUE',
       `Project: ${projectLabel}`,
       `Date recorded: ${selectedDateLabel}`,
       `Issue type: ${getIssueTypeLabel(issueRecorderData.issue_type)}`,
@@ -1558,7 +1558,7 @@ const DiaryPage = () => {
 
   const buildIssueEmailSubject = () => {
     const job = currentProject?.job_number || 'LLD';
-    const title = String(issueRecorderData.title || 'Onsite issue').trim();
+    const title = String(issueRecorderData.title || 'Formal site issue').trim();
     return `Site Issue - ${job} - ${title}`;
   }; // onsite-issue-recorder-v1
 
@@ -1622,11 +1622,11 @@ const DiaryPage = () => {
       const emailBody = buildIssueEmailBody();
       setIssueRecorderEmailPreview(emailBody);
       localStorage.setItem('lld_last_project_id', selectedProject);
-      setDraftStatus('Onsite issue saved to LLD');
-      toast.success('Onsite issue saved. Review the email draft before sending.');
+      setDraftStatus('Formal site issue saved to LLD');
+      toast.success('Formal site issue saved. Review the email draft before sending.');
       fetchDiary();
     } catch (error) {
-      toast.error('Failed to save onsite issue');
+      toast.error('Failed to save formal site issue');
     } finally {
       setIssueRecorderSaving(false);
     }
@@ -1957,11 +1957,16 @@ const DiaryPage = () => {
             </Button>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:w-auto lg:grid-cols-1 xl:grid-cols-2" data-commercial-readiness="diary-above-fold-hierarchy-v1">
             {selectedDate === today && (
-              <Button onClick={() => setShowQuickEntry(!showQuickEntry)} data-testid="quick-entry-btn">
+              <Button
+                onClick={() => setShowQuickEntry(!showQuickEntry)}
+                className="min-h-11 justify-center font-black"
+                data-testid="quick-entry-btn"
+                data-commercial-readiness="diary-above-fold-hierarchy-v1"
+              >
                 <Plus className="w-4 h-4 mr-2" />
-                Quick Entry
+                Capture Site Activity
               </Button>
             )}
             {selectedDate === today && (
@@ -1969,18 +1974,31 @@ const DiaryPage = () => {
                 type="button"
                 variant="outline"
                 onClick={() => setShowIssueRecorder(true)}
+                className="min-h-11 justify-center font-black"
                 data-testid="onsite-issue-recorder-btn"
-                data-commercial-readiness="onsite-issue-recorder-v1"
+                data-commercial-readiness="onsite-issue-recorder-v1 diary-above-fold-hierarchy-v1"
               >
                 <AlertTriangle className="w-4 h-4 mr-2" />
-                Record Onsite Issue
+                Record Formal Site Issue
               </Button>
             )}
             <Button
               type="button"
               variant="outline"
+              onClick={() => document.getElementById('daily-report-readiness')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="min-h-11 justify-center font-black"
+              data-testid="review-close-day-button"
+              data-commercial-readiness="diary-above-fold-hierarchy-v1"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Review / Close Day
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               onClick={handlePrintReport}
               disabled={!diary}
+              className="min-h-11 justify-center font-black"
               data-testid="daily-report-print-button"
             >
               <Printer className="w-4 h-4 mr-2" />
@@ -1990,7 +2008,7 @@ const DiaryPage = () => {
         </div>
       </div>
 
-      {/* Quick Entry Form */}
+      {/* Capture Site Activity Form - diary-above-fold-hierarchy-v1 */}
       {showQuickEntry && selectedDate === today && (
         <Card className="ops-card border-primary/60 bg-gradient-to-br from-background via-background to-primary/5 shadow-lg" data-testid="capture-site-activity-card" data-commercial-readiness="diary-command-centre-ux-v1">
           <CardHeader className="ops-card-header border-b border-primary/20 bg-primary/10 py-4">
@@ -2267,16 +2285,16 @@ const DiaryPage = () => {
         </Card>
       )}
 
-      {/* Onsite Issue Recorder Dialog - onsite-issue-recorder-v1 */}
+      {/* Formal Site Issue Dialog - onsite-issue-recorder-v1 diary-above-fold-hierarchy-v1 */}
       <Dialog open={showIssueRecorder} onOpenChange={setShowIssueRecorder}>
         <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl" data-testid="onsite-issue-recorder-dialog" data-commercial-readiness="onsite-issue-recorder-v1">
           <DialogHeader>
             <DialogTitle className="font-heading text-lg font-black uppercase tracking-[0.12em] flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-amber-400" />
-              Onsite Issue Recorder
+              Formal Site Issue
             </DialogTitle>
             <p className="text-sm font-semibold text-muted-foreground">
-              Guided issue capture for delays, RFIs, defects, safety, access, material, or design problems. Save the record first, then review the email draft.
+              Guided formal site issue capture for delays, RFIs, defects, safety, access, material, or design problems. Save the record first, then review the email draft.
             </p>
           </DialogHeader>
 
@@ -2504,7 +2522,7 @@ const DiaryPage = () => {
               {issueRecorderEmailPreview && (
                 <>
                   <Button type="button" variant="outline" onClick={resetIssueRecorder} data-testid="onsite-issue-new">
-                    New Issue
+                    New Formal Issue
                   </Button>
                   <Button type="button" variant="outline" onClick={openIssueRecorderEmailDraft} data-testid="onsite-issue-open-email">
                     <Send className="mr-2 h-4 w-4" />
@@ -2513,7 +2531,7 @@ const DiaryPage = () => {
                 </>
               )}
               <Button type="submit" disabled={issueRecorderSaving || !issueRecorderData.title.trim() || !issueRecorderData.description.trim()} data-testid="onsite-issue-save">
-                {issueRecorderSaving ? 'Saving...' : 'Save Issue + Preview Email'}
+                {issueRecorderSaving ? 'Saving...' : 'Save Formal Issue + Preview Email'}
               </Button>
             </DialogFooter>
           </form>
@@ -2523,11 +2541,11 @@ const DiaryPage = () => {
       {/* Diary Command Strip / Clickable Checklist - diary-command-header-tabs-v2 */}
       <Card className="ops-card" data-testid="daily-report-readiness">
         <CardContent className="space-y-3 py-3" data-testid="diary-mobile-compression-v5">
-            <div className="rounded-2xl border border-primary/35 bg-background/80 p-3 shadow-inner" data-testid="diary-status-summary-v1" data-commercial-readiness="diary-status-summary-v1">
+            <div className="rounded-2xl border border-primary/30 bg-background/85 p-2.5 shadow-inner sm:p-3" data-testid="diary-status-summary-v1" data-commercial-readiness="diary-status-summary-v1 diary-above-fold-hierarchy-v1">
               <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary">Today’s Diary Board</p>
-                  <p className="mt-1 text-xs font-semibold text-muted-foreground">Tap a card to jump to the right diary section.</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">Tap a card to jump sections.</p>
                 </div>
                 <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] ${
                   labourRows.length > 0 && walkaroundEntriesCount > 0
@@ -2539,36 +2557,36 @@ const DiaryPage = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4" data-testid="diary-status-summary-grid-v1">
-                <button type="button" onClick={() => { setStaffSectionExpanded(true); openDiarySection('diary-staff-section'); }} className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99]">
+                <button type="button" onClick={() => { setStaffSectionExpanded(true); openDiarySection('diary-staff-section'); }} className="rounded-xl border border-border/70 bg-secondary/30 p-2.5 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Staff</span>
-                  <span className="mt-1 block text-lg font-black text-foreground">{labourRows.length}</span>
-                  <span className="mt-0.5 block truncate text-[11px] font-bold text-muted-foreground">{labourRows.length > 0 ? `${labourTotalHours.toFixed(2)}h checked` : 'Missing'}</span>
+                  <span className="mt-0.5 block text-base font-black text-foreground sm:text-lg">{labourRows.length}</span>
+                  <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">{labourRows.length > 0 ? `${labourTotalHours.toFixed(2)}h checked` : 'Missing'}</span>
                 </button>
 
-                <button type="button" onClick={() => openDiarySection('diary-due-today-section')} className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99]">
+                <button type="button" onClick={() => openDiarySection('diary-due-today-section')} className="rounded-xl border border-border/70 bg-secondary/30 p-2.5 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Follow-ups</span>
-                  <span className="mt-1 block text-lg font-black text-foreground">{dueTodayItems.length}</span>
-                  <span className="mt-0.5 block truncate text-[11px] font-bold text-muted-foreground">Open / carry forward</span>
+                  <span className="mt-0.5 block text-base font-black text-foreground sm:text-lg">{dueTodayItems.length}</span>
+                  <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">Open / carry forward</span>
                 </button>
 
-                <button type="button" onClick={() => openDiarySection('diary-work-section')} className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99]">
+                <button type="button" onClick={() => openDiarySection('diary-work-section')} className="rounded-xl border border-border/70 bg-secondary/30 p-2.5 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Site notes</span>
-                  <span className="mt-1 block text-lg font-black text-foreground">{walkaroundEntriesCount}</span>
-                  <span className="mt-0.5 block truncate text-[11px] font-bold text-muted-foreground">{walkaroundEntriesCount > 0 ? 'Recorded' : 'Missing'}</span>
+                  <span className="mt-0.5 block text-base font-black text-foreground sm:text-lg">{walkaroundEntriesCount}</span>
+                  <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">{walkaroundEntriesCount > 0 ? 'Recorded' : 'Missing'}</span>
                 </button>
 
-                <button type="button" onClick={() => openDiarySection('diary-resources-section', activeResourceTab || 'materials')} className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99]">
+                <button type="button" onClick={() => openDiarySection('diary-resources-section', activeResourceTab || 'materials')} className="rounded-xl border border-border/70 bg-secondary/30 p-2.5 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Resources</span>
-                  <span className="mt-1 block text-lg font-black text-foreground">M/P</span>
-                  <span className="mt-0.5 block truncate text-[11px] font-bold text-muted-foreground">Materials / plant</span>
+                  <span className="mt-0.5 block text-base font-black text-foreground sm:text-lg">M/P</span>
+                  <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">Materials / plant</span>
                 </button>
               </div>
             </div>
-            <div className="rounded-2xl border border-emerald-400/35 bg-emerald-500/10 p-3 shadow-inner" data-testid="diary-programme-lookahead-v1" data-commercial-readiness="diary-programme-lookahead-v1">
+            <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-2.5 shadow-inner sm:p-3" data-testid="diary-programme-lookahead-v1" data-commercial-readiness="diary-programme-lookahead-v1 diary-above-fold-hierarchy-v1">
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-emerald-300">6 Week Programme Lookahead</p>
-                  <p className="mt-1 text-xs font-semibold text-muted-foreground">Upcoming programme tasks for this selected job.</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">Upcoming tasks for this job.</p>
                 </div>
                 <button
                   type="button"
@@ -2580,7 +2598,7 @@ const DiaryPage = () => {
                 </button>
               </div>
 
-              <div className="rounded-xl border border-border/70 bg-background/55 p-3" data-testid="diary-programme-lookahead-summary-v1">
+              <div className="rounded-xl border border-border/70 bg-background/55 p-2 sm:p-3" data-testid="diary-programme-lookahead-summary-v1">
                 {programmeLookaheadLoading ? (
                   <p className="text-xs font-semibold text-muted-foreground">Loading programme lookahead...</p>
                 ) : programmeLookaheadError ? (
@@ -2708,7 +2726,7 @@ const DiaryPage = () => {
 
           {!hasDiaryContent && (
             <p className="text-xs text-muted-foreground">
-              No reportable activity for this day yet. Add a quick entry or review another date before issuing a report.
+              No reportable activity for this day yet. Add a Capture Site Activity or review another date before issuing a report.
             </p>
           )}
         </CardContent>
@@ -3667,6 +3685,8 @@ const DiaryPageWithErrorBoundary = () => (
 );
 
 export default DiaryPageWithErrorBoundary;
+
+
 
 
 
