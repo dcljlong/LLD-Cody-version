@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { actionItemsApi, diaryApi, integrationsApi, projectsApi, walkaroundApi, gatesApi, programmesApi } from '../lib/api';
 import { toast } from 'sonner';
 import {
@@ -2032,13 +2032,13 @@ const DiaryPage = () => {
                     <Label className="text-xs text-muted-foreground mb-1.5 block">Link to Roadblock / Concern</Label>
                     <Select
                       value={entryData.gate_id}
-                      onValueChange={(val) => setEntryData(prev => ({ ...prev, gate_id: val }))}
+                      onValueChange={(val) => setEntryData(prev => ({ ...prev, gate_id: val === '__none__' ? '' : val }))} // diary-select-empty-value-hotfix-v1
                     >
                       <SelectTrigger className="h-9 text-sm">
                         <SelectValue placeholder="Optional" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="__none__">None</SelectItem>
                         {gates.map(g => (
                           <SelectItem key={g.id} value={g.id}>
                             {g.order ? `${g.order}. ` : ''}{g.name}
@@ -2421,7 +2421,7 @@ const DiaryPage = () => {
                         </div>
                         <div className="mt-1 flex flex-wrap gap-1 text-[10px] font-bold text-muted-foreground">
                           <span>{item.status}</span>
-                          <span>•</span>
+                          <span>â€¢</span>
                           <span className="truncate">{item.programmeLabel}</span>
                         </div>
                       </button>
@@ -3483,3 +3483,4 @@ const DiaryPageWithErrorBoundary = () => (
 );
 
 export default DiaryPageWithErrorBoundary;
+
