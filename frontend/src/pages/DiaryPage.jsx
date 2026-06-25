@@ -3620,13 +3620,13 @@ const DiaryPage = () => {
 
 
             {/* diary-remove-duplicate-followups-v1: duplicate lower open follow-up card removed; completed section renamed to Closed Out Today */}            {/* Closed Out Today */}
-            <Card id="diary-action-completed-section" className="ops-card" data-testid="diary-closed-out-today-section">
+            <Card id="diary-action-completed-section" className="ops-card" data-testid="diary-closed-out-today-section" data-commercial-readiness="diary-closed-out-section-polish-v1">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-emerald-500">
                   <CheckCircle2 className="w-4 h-4" />
                   Closed Out Today ({diary.action_items_closed?.length || 0})
                 </CardTitle>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">Closed follow-ups stay visible here for today. Use Reopen if an item was closed by mistake.</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">Closed today. Reopen if needed.</p>
               </CardHeader>
 
               <CardContent className="py-3 max-h-80 overflow-y-auto">
@@ -3652,7 +3652,7 @@ const DiaryPage = () => {
                           </button>
                           <button
                             type="button"
-                            className="shrink-0 rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.08em] text-amber-700 hover:bg-amber-500/20"
+                            className="shrink-0 rounded-md border border-amber-500/50 bg-amber-500/10 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-amber-700 hover:bg-amber-500/20"
                             onClick={(event) => {
                               event.stopPropagation();
                               handleReopenClosedOutFromDiary(item);
@@ -3666,7 +3666,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No items closed out today</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No items closed today.</p>
                 )}
               </CardContent>
             </Card>
