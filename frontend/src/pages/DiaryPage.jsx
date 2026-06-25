@@ -1957,7 +1957,7 @@ const DiaryPage = () => {
             </Button>
           </div>
 
-          <div className="grid w-full grid-cols-2 gap-2 lg:w-auto lg:grid-cols-1 xl:grid-cols-2" data-commercial-readiness="diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2">
+          <div className="grid w-full grid-cols-2 gap-2 lg:w-auto lg:grid-cols-1 xl:grid-cols-2" data-commercial-readiness="diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2 diary-mobile-action-buttons-wrap-fix-v1">
             {selectedDate === today && (
               <Button
                 onClick={() => setShowQuickEntry(!showQuickEntry)}
@@ -1974,7 +1974,7 @@ const DiaryPage = () => {
                 type="button"
                 variant="outline"
                 onClick={() => setShowIssueRecorder(true)}
-                className="min-h-10 justify-center text-sm font-black sm:min-h-11"
+                className="col-span-2 min-h-11 justify-center whitespace-normal text-center text-sm font-black leading-tight lg:col-span-1"
                 data-testid="onsite-issue-recorder-btn"
                 data-commercial-readiness="onsite-issue-recorder-v1 diary-above-fold-hierarchy-v1"
               >
@@ -1986,7 +1986,7 @@ const DiaryPage = () => {
               type="button"
               variant="outline"
               onClick={() => document.getElementById('daily-report-readiness')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              className="min-h-10 justify-center text-sm font-black sm:min-h-11"
+              className="min-h-10 justify-center whitespace-normal text-center text-sm font-black leading-tight sm:min-h-11"
               data-testid="review-close-day-button"
               data-commercial-readiness="diary-above-fold-hierarchy-v1"
             >
@@ -1998,7 +1998,7 @@ const DiaryPage = () => {
               variant="outline"
               onClick={handlePrintReport}
               disabled={!diary}
-              className="min-h-10 justify-center text-sm font-black sm:min-h-11"
+              className="min-h-10 justify-center whitespace-normal text-center text-sm font-black leading-tight sm:min-h-11"
               data-testid="daily-report-print-button"
             >
               <Printer className="w-4 h-4 mr-2" />
