@@ -153,6 +153,9 @@ const DiaryPage = () => {
   const [programmeLookaheadLoading, setProgrammeLookaheadLoading] = useState(false);
   const [programmeLookaheadError, setProgrammeLookaheadError] = useState('');
   const fileInputRef = useRef(null);
+  const quickUploadInputRef = useRef(null); // photo-take-upload-choice-v1
+  const issueCameraInputRef = useRef(null);
+  const issueUploadInputRef = useRef(null);
   const noteInputRef = useRef(null);
   const activeLabourEditorRef = useRef(null);
   const activeLabourNameInputRef = useRef(null);
@@ -2061,14 +2064,36 @@ const DiaryPage = () => {
                     capture="environment"
                     multiple
                     className="hidden"
+                    data-testid="quick-entry-take-photo-input"
+                  />
+                  <input
+                    type="file"
+                    ref={quickUploadInputRef}
+                    onChange={handlePhotoUpload}
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    data-testid="quick-entry-upload-photo-input"
                   />
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="h-10 px-3 border border-dashed border-border rounded-md flex items-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                    data-testid="quick-entry-take-photo"
+                    data-commercial-readiness="photo-take-upload-choice-v1"
                   >
                     <Camera className="w-4 h-4" />
-                    <span className="text-sm">Photo</span>
+                    <span className="text-sm">Take Photo</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => quickUploadInputRef.current?.click()}
+                    className="h-10 px-3 border border-dashed border-border rounded-md flex items-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                    data-testid="quick-entry-upload-photo"
+                    data-commercial-readiness="photo-take-upload-choice-v1"
+                  >
+                    <Package className="w-4 h-4" />
+                    <span className="text-sm">Upload Photo</span>
                   </button>
 
                   {entryData.photos.map((photo, i) => (
@@ -2270,19 +2295,45 @@ const DiaryPage = () => {
             <div className="rounded-xl border border-dashed border-border/70 bg-secondary/20 p-3">
               <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">Photos / evidence</Label>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-dashed border-primary/45 px-3 py-2 text-sm font-black uppercase tracking-[0.08em] text-primary transition hover:bg-primary/10">
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  multiple
+                  className="hidden"
+                  ref={issueCameraInputRef}
+                  onChange={handleIssueRecorderPhotoUpload}
+                  data-testid="onsite-issue-take-photo-input"
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  ref={issueUploadInputRef}
+                  onChange={handleIssueRecorderPhotoUpload}
+                  data-testid="onsite-issue-upload-photo-input"
+                />
+                <button
+                  type="button"
+                  onClick={() => issueCameraInputRef.current?.click()}
+                  className="flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-primary/45 px-3 py-2 text-sm font-black uppercase tracking-[0.08em] text-primary transition hover:bg-primary/10"
+                  data-testid="onsite-issue-take-photo"
+                  data-commercial-readiness="photo-take-upload-choice-v1"
+                >
                   <Camera className="w-4 h-4" />
-                  Add Photos
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    multiple
-                    className="hidden"
-                    onChange={handleIssueRecorderPhotoUpload}
-                    data-testid="onsite-issue-photos"
-                  />
-                </label>
+                  Take Photo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => issueUploadInputRef.current?.click()}
+                  className="flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-primary/45 px-3 py-2 text-sm font-black uppercase tracking-[0.08em] text-primary transition hover:bg-primary/10"
+                  data-testid="onsite-issue-upload-photo"
+                  data-commercial-readiness="photo-take-upload-choice-v1"
+                >
+                  <Package className="w-4 h-4" />
+                  Upload Photo
+                </button>
 
                 {(Array.isArray(issueRecorderData.photos) ? issueRecorderData.photos : []).map((photo, index) => (
                   <div key={index} className="relative">
