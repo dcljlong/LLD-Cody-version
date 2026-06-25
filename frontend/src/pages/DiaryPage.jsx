@@ -2634,7 +2634,7 @@ const DiaryPage = () => {
                 )}
               </div>
             </div>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-5" data-testid="diary-attention-strip-v2">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-5" data-testid="diary-attention-strip-v2" data-commercial-readiness="diary-lower-mobile-clutter-polish-v2">
             <button
               type="button"
               onClick={() => openDiarySection('diary-overdue-followups')}
@@ -2682,15 +2682,15 @@ const DiaryPage = () => {
             </button>
           </div>
 
-          <div>
+          <div className="hidden md:block" data-commercial-readiness="diary-lower-mobile-clutter-polish-v2">
             <div className="mb-1 flex items-center justify-between gap-2">
               <div>
-                <p className="font-heading text-sm font-black uppercase tracking-[0.14em]">Today's Diary Checklist</p>
-                <p className="text-xs text-muted-foreground">Tap a label to jump to that part of the diary.</p>
+                <p className="font-heading text-sm font-black uppercase tracking-[0.14em]">Desktop Review Shortcuts</p>
+                <p className="text-xs text-muted-foreground">Detailed diary shortcuts are kept for desktop review. Mobile uses the compact Diary Board above.</p>
               </div>
             </div>
 
-            <div className="relative z-10 grid grid-cols-2 gap-2 pb-8 text-xs sm:grid-cols-3 lg:grid-cols-9" data-testid="diary-clickable-checklist-v2" data-commercial-readiness="diary-checklist-priority-order-v5">
+            <div className="relative z-10 grid grid-cols-2 gap-2 pb-8 text-xs sm:grid-cols-3 lg:grid-cols-9" data-testid="diary-clickable-checklist-v2" data-commercial-readiness="diary-checklist-priority-order-v5 diary-lower-mobile-clutter-polish-v2">
               <button type="button" onClick={() => openDiarySection('diary-roadblocks-section')} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
                 Roadblocks: {diary?.summary?.blocked_gates || 0}
               </button>
