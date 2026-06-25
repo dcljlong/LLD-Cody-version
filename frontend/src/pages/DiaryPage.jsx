@@ -3072,13 +3072,13 @@ const DiaryPage = () => {
               </CardContent>
             </Card>
 
-            <Card id="diary-staff-section" className="ops-card w-full max-w-full overflow-hidden" data-testid="daily-labour-card" data-commercial-readiness="staff-mobile-overflow-containment-v2">
-          <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-2 sm:px-4" data-testid="daily-labour-polish-v1-marker">
+            <Card id="diary-staff-section" className="ops-card w-full max-w-full overflow-hidden" data-testid="daily-labour-card" data-commercial-readiness="staff-mobile-overflow-containment-v2 diary-staff-section-wording-polish-v1">
+          <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-2" data-testid="daily-labour-polish-v1-marker">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  Diary check only. Staff complete and sign timesheets separately in Timesheet Manager.
+                  Diary check only. Timesheets remain separate.
                 </p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-stretch" data-commercial-readiness="staff-collapsible-summary-v1">
@@ -3155,7 +3155,7 @@ const DiaryPage = () => {
                   {showNewStaffForm && (
                     <div className="mt-3 rounded-lg border border-dashed border-primary/50 bg-background/70 p-3" data-testid="staff-timesheet-add-new-form" data-commercial-readiness="staff-site-only-wording-v1">
                       <p className="mb-2 text-xs font-bold text-muted-foreground">
-                        Adds this person to today's diary only. It does not create a permanent Timesheet Manager staff profile. Add permanent staff in Timesheet Manager.
+                        Adds this person to today's diary only. Permanent staff are managed in Timesheet Manager.
                       </p>
                       <div className="grid w-full min-w-0 max-w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                         <input
@@ -3174,7 +3174,7 @@ const DiaryPage = () => {
 
                   {labourRows.length === 0 ? (
                     <div className="mt-3 rounded-lg border border-dashed border-border/70 bg-background/60 px-3 py-4 text-sm font-semibold text-muted-foreground" data-testid="staff-timesheet-empty">
-                      No staff recorded for this diary day yet. Add from Timesheet staff or add site-only staff for this diary only.
+                      No staff recorded yet. Add Timesheet staff or site-only staff.
                     </div>
                   ) : (
                     <div className="mt-2 grid w-full min-w-0 max-w-full gap-1.5 overflow-visible pr-0 sm:max-h-56 sm:overflow-y-auto sm:overflow-x-hidden sm:pr-1" data-testid="staff-timesheet-selected-list" data-commercial-readiness="staff-manual-add-visible-list-v1 staff-selected-list-mobile-show-all-v1">
@@ -3221,7 +3221,7 @@ const DiaryPage = () => {
                           {row.employee_name || 'Staff member'}
                         </h3>
                         <p className="text-xs font-semibold text-muted-foreground">
-                          Daily check fields only. This does not create a permanent staff profile.
+                          Daily check only. Permanent profiles stay in Timesheet Manager.
                         </p>
                       </div>
                       <Button
