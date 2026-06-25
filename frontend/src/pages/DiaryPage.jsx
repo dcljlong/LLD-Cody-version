@@ -3375,9 +3375,9 @@ const DiaryPage = () => {
         </Card>
 
         {/* Daily Evidence - Site Notes / Observations - diary-daily-evidence-hierarchy-v2 site-notes-observations-naming-v1 */}
-        <div className="lg:col-span-2 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3" data-testid="diary-daily-evidence-divider-v2">
+        <div className="lg:col-span-2 rounded-xl border border-primary/25 bg-primary/10 px-3 py-2.5" data-testid="diary-daily-evidence-divider-v2" data-commercial-readiness="diary-daily-evidence-resources-polish-v1">
           <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary">Daily Evidence</p>
-          <p className="mt-1 text-xs font-semibold text-muted-foreground">Site notes, observations, materials, plant, and supporting diary records.</p>
+          <p className="mt-1 text-xs font-semibold text-muted-foreground">Site notes, resources, photos, and supporting records.</p>
         </div>
 
             <Card id="diary-work-section" className="ops-card lg:col-span-2 border-primary/35" data-testid="diary-walkaround-notes-section" data-commercial-readiness="diary-walkaround-safe-array-wording-v2">
@@ -3423,13 +3423,13 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No site notes or observations recorded for this diary day.</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No site notes recorded yet.</p>
                 )}
               </CardContent>
             </Card>
 
         {/* Site Resources */}
-            <Card id="diary-resources-section" className="ops-card lg:col-span-2" data-testid="daily-site-resources-card">
+            <Card id="diary-resources-section" className="ops-card lg:col-span-2" data-testid="daily-site-resources-card" data-commercial-readiness="diary-daily-evidence-resources-polish-v1">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
@@ -3438,12 +3438,12 @@ const DiaryPage = () => {
                       Site Resources
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Materials, plant, and subcontractors are separated so the diary stays clean.
+                      Materials, plant, and subcontractors kept separate.
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-sm font-semibold text-muted-foreground">
-                      {resourceMaterials.length} materials | {resourcePlantEquipment.length} plant / gear | {resourceSubcontractors.length} subcontractors
+                      {resourceMaterials.length} mat | {resourcePlantEquipment.length} plant | {resourceSubcontractors.length} subs
                     </span>
                     <Button type="button" variant="outline" size="sm" onClick={() => window.open(toolTrackerUrl, '_blank', 'noopener,noreferrer')} data-testid="open-tool-tracker">
                       Open Tool Tracker
@@ -3452,7 +3452,7 @@ const DiaryPage = () => {
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-4 px-4 py-5 sm:px-6">
+              <CardContent className="space-y-3 px-3 py-3 sm:px-4">
                 <div className="grid grid-cols-2 gap-2" data-testid="diary-resource-tabs-v2">
                   <button
                     type="button"
@@ -3596,7 +3596,7 @@ const DiaryPage = () => {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-sm text-muted-foreground">No subcontractors recorded for this diary day.</p>
+                        <p className="text-sm text-muted-foreground">No subcontractors recorded.</p>
                       )}
                     </div>
                   </div>
@@ -3604,7 +3604,7 @@ const DiaryPage = () => {
 
                 <div className="flex flex-col gap-2 border-t border-border/70 pt-4 sm:flex-row sm:flex-wrap">
                   <Button type="button" variant="secondary" onClick={() => setResourcesEditMode(true)} data-testid="daily-site-resources-edit-button">
-                    Add / edit resources
+                    Add / edit
                   </Button>
                   <Button type="button" onClick={saveSiteResources} disabled={resourcesSaving || !selectedProject} data-testid="daily-site-resources-save">
                     {resourcesSaving ? 'Saving...' : 'Save resources'}
@@ -3612,7 +3612,7 @@ const DiaryPage = () => {
                 </div>
 
                 <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
-                  Diary-only resource capture. Tool Tracker remains the full asset register.
+                  Diary-only resources. Tool Tracker remains the asset register.
                 </p>
               </CardContent>
             </Card>
