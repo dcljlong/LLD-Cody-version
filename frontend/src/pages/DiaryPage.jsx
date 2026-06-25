@@ -2071,7 +2071,7 @@ const DiaryPage = () => {
                         ...prev,
                         entry_type: option.value
                       }))}
-                      className={`min-h-[76px] rounded-xl border px-3 py-2 text-left transition ${entryData.entry_type === option.value ? 'border-primary bg-primary text-primary-foreground shadow-md' : 'border-border bg-background/80 hover:border-primary/60 hover:bg-primary/10'}`}
+                      className={`min-h-[76px] rounded-xl border px-2.5 py-1.5 text-left transition ${entryData.entry_type === option.value ? 'border-primary bg-primary text-primary-foreground shadow-md' : 'border-border bg-background/80 hover:border-primary/60 hover:bg-primary/10'}`}
                       data-testid={`smart-capture-category-${option.value}`}
                     >
                       <span className="block text-sm font-black">{option.label}</span>
@@ -2120,7 +2120,7 @@ const DiaryPage = () => {
                             key={option.value}
                             type="button"
                             onClick={() => setEntryData((prev) => ({ ...prev, action_type: option.value, create_action_item: true }))}
-                            className={`rounded-xl border px-3 py-2 text-left transition ${entryData.action_type === option.value ? 'border-primary bg-primary text-primary-foreground shadow-sm' : 'border-border bg-background hover:border-primary/60 hover:bg-primary/10'}`}
+                            className={`rounded-xl border px-2.5 py-1.5 text-left transition ${entryData.action_type === option.value ? 'border-primary bg-primary text-primary-foreground shadow-sm' : 'border-border bg-background hover:border-primary/60 hover:bg-primary/10'}`}
                             data-testid={`capture-site-action-${option.value}`}
                           >
                             <span className="block text-sm font-black">{option.label}</span>
@@ -2634,51 +2634,51 @@ const DiaryPage = () => {
                 )}
               </div>
             </div>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-5" data-testid="diary-attention-strip-v2" data-commercial-readiness="diary-lower-mobile-clutter-polish-v2">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-5" data-testid="diary-attention-strip-v2" data-commercial-readiness="diary-lower-mobile-clutter-polish-v2 diary-attention-strip-compact-polish-v1">
             <button
               type="button"
               onClick={() => openDiarySection('diary-overdue-followups')}
-              className="rounded-xl border border-red-400/40 bg-red-500/10 px-3 py-2 text-left transition hover:bg-red-500/15"
+              className="rounded-xl border border-red-400/40 bg-red-500/10 px-2.5 py-1.5 text-left transition hover:bg-red-500/15"
               data-testid="diary-command-overdue"
             >
               <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-red-400">Overdue</span>
-              <span className="block text-xl font-black">{overdueDiaryItems.length}</span>
+              <span className="block text-lg font-black sm:text-xl">{overdueDiaryItems.length}</span>
             </button>
             <button
               type="button"
               onClick={() => openDiarySection('diary-due-today-section')}
-              className="rounded-xl border border-orange-400/35 bg-orange-500/10 px-3 py-2 text-left transition hover:bg-orange-500/15"
+              className="rounded-xl border border-orange-400/35 bg-orange-500/10 px-2.5 py-1.5 text-left transition hover:bg-orange-500/15"
               data-testid="diary-command-due-today"
             >
-              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-orange-400">Open Follow-ups</span>
-              <span className="block text-xl font-black">{dueTodayItems.length}</span>
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-orange-400">Follow-ups</span>
+              <span className="block text-lg font-black sm:text-xl">{dueTodayItems.length}</span>
             </button>
             <button
               type="button"
               onClick={() => openActionItemsPage('week')}
-              className="rounded-xl border border-primary/35 bg-primary/10 px-3 py-2 text-left transition hover:bg-primary/15"
+              className="rounded-xl border border-primary/35 bg-primary/10 px-2.5 py-1.5 text-left transition hover:bg-primary/15"
               data-testid="diary-command-forecast"
             >
-              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-primary">Next 2-3 Weeks</span>
-              <span className="block text-xl font-black">{nextThreeWeeksItems.length}</span>
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-primary">Upcoming</span>
+              <span className="block text-lg font-black sm:text-xl">{nextThreeWeeksItems.length}</span>
             </button>
             <button
               type="button"
               onClick={openRoadblockCreateFlow}
-              className="rounded-xl border border-red-500/35 bg-secondary/30 px-3 py-2 text-left transition hover:bg-secondary/45"
+              className="rounded-xl border border-red-500/35 bg-secondary/30 px-2.5 py-1.5 text-left transition hover:bg-secondary/45"
               data-testid="diary-command-roadblocks-create"
             >
               <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-red-400">Roadblocks</span>
-              <span className="block text-xl font-black">{diary?.summary?.blocked_gates || 0}</span>
+              <span className="block text-lg font-black sm:text-xl">{diary?.summary?.blocked_gates || 0}</span>
             </button>
             <button
               type="button"
               onClick={() => openDiarySection('diary-queries-section')}
-              className="rounded-xl border border-sky-400/35 bg-sky-500/10 px-3 py-2 text-left transition hover:bg-sky-500/15"
+              className="rounded-xl border border-sky-400/35 bg-sky-500/10 px-2.5 py-1.5 text-left transition hover:bg-sky-500/15"
               data-testid="diary-command-queries-rfis"
             >
-              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-sky-500">Queries / RFIs</span>
-              <span className="block text-xl font-black">0</span>
+              <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-sky-500">RFIs</span>
+              <span className="block text-lg font-black sm:text-xl">0</span>
             </button>
           </div>
 
@@ -2701,7 +2701,7 @@ const DiaryPage = () => {
                 Open follow-ups: {diary?.summary?.items_opened || 0}
               </button>
               <button type="button" onClick={() => openDiarySection('diary-queries-section')} className="min-h-11 touch-manipulation select-none rounded border border-sky-400/35 bg-sky-500/10 px-3 py-2 text-left font-semibold transition hover:bg-sky-500/15 active:scale-[0.99]" data-testid="diary-checklist-queries-rfis">
-                Queries / RFIs: 0
+                RFIs: 0
               </button>
               <button type="button" onClick={() => { setStaffSectionExpanded(true); openDiarySection('diary-staff-section'); }} className="min-h-11 touch-manipulation select-none rounded border border-border bg-secondary/30 px-3 py-2 text-left font-semibold transition hover:bg-secondary/50 active:scale-[0.99]">
                 Staff: {labourRows.length}
@@ -2747,7 +2747,7 @@ const DiaryPage = () => {
           <div className="space-y-3 text-sm text-muted-foreground">
             <p>
               {followUpConfirm?.mode === "reopen"
-                ? "This will move the item back to Open Follow-ups."
+                ? "This will move the item back to Follow-ups."
                 : "This will mark the follow-up as closed out for the diary day."}
             </p>
             <p className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 font-semibold text-foreground">
@@ -2997,18 +2997,18 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No overdue follow-ups. Open items still appear in Open Follow-ups / Carry Forward until closed out.</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No overdue follow-ups. Open items still appear in Follow-ups / Carry Forward until closed out.</p>
                 )}
               </CardContent>
             </Card>
 
 
-            {/* Open Follow-ups / Carry Forward - diary-carry-forward-ui-clarity-v2 */}
+            {/* Follow-ups / Carry Forward - diary-carry-forward-ui-clarity-v2 */}
             <Card id="diary-due-today-section" className="ops-card" data-testid="diary-due-today-section">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-orange-500">
                   <Target className="w-4 h-4" />
-                  Open Follow-ups / Carry Forward ({dueTodayItems.length})
+                  Follow-ups / Carry Forward ({dueTodayItems.length})
                 </CardTitle>
                 <p className="mt-1 text-xs font-semibold text-muted-foreground">Open project follow-ups carried forward until closed out. Use Close out when the issue is finished on site.</p>
               </CardHeader>
@@ -3055,19 +3055,19 @@ const DiaryPage = () => {
               </CardContent>
             </Card>
 
-            {/* Queries / RFIs - diary-critical-hierarchy-staff-compact-v1 */}
+            {/* RFIs - diary-critical-hierarchy-staff-compact-v1 */}
             <Card id="diary-queries-section" className="ops-card" data-testid="diary-queries-rfis-section">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-sky-500">
                   <ListTodo className="w-4 h-4" />
-                  Queries / RFIs (0)
+                  RFIs (0)
                 </CardTitle>
                 <p className="mt-1 text-xs font-semibold text-muted-foreground">Questions needing answers. Keep these separate from roadblocks until they start blocking work.</p>
               </CardHeader>
 
               <CardContent className="py-3">
                 <div className="rounded-lg border border-dashed border-sky-400/35 bg-sky-500/10 px-3 py-3 text-sm text-muted-foreground">
-                  No Queries / RFIs recorded for this diary day.
+                  No RFIs recorded for this diary day.
                 </div>
               </CardContent>
             </Card>
@@ -3685,6 +3685,7 @@ const DiaryPageWithErrorBoundary = () => (
 );
 
 export default DiaryPageWithErrorBoundary;
+
 
 
 
