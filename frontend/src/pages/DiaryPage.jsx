@@ -2910,7 +2910,7 @@ const DiaryPage = () => {
           {/* Content Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Roadblocks / Critical Site Issues - diary-field-sheet-layout-v1 */}
-            <Card id="diary-roadblocks-section" className="ops-card">
+            <Card id="diary-roadblocks-section" className="ops-card" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
@@ -2918,7 +2918,7 @@ const DiaryPage = () => {
                       <AlertTriangle className="w-4 h-4" />
                       Roadblocks / Critical Site Issues ({diary.blocked_gates?.length || 0})
                     </CardTitle>
-                    <p className="mt-1 text-xs font-semibold text-muted-foreground">Check blockers first. If nothing is stopping progress, keep moving through the diary.</p>
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">Check blockers first, then keep moving through the diary.</p>
                   </div>
                   <Button
                     type="button"
@@ -2964,8 +2964,8 @@ const DiaryPage = () => {
             </Card>
 
             {/* Overdue Follow-ups - moved into critical hierarchy - diary-critical-hierarchy-staff-compact-v1 */}
-            <Card id="diary-overdue-followups" className="ops-card" data-testid="diary-overdue-top-section">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+            <Card id="diary-overdue-followups" className="ops-card" data-testid="diary-overdue-top-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-400">
                   <Target className="w-4 h-4" />
                   Overdue Follow-ups ({diary.overdue_items?.length || 0})
@@ -2997,20 +2997,20 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No overdue follow-ups. Open items still appear in Follow-ups / Carry Forward until closed out.</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No overdue follow-ups.</p>
                 )}
               </CardContent>
             </Card>
 
 
             {/* Follow-ups / Carry Forward - diary-carry-forward-ui-clarity-v2 */}
-            <Card id="diary-due-today-section" className="ops-card" data-testid="diary-due-today-section">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+            <Card id="diary-due-today-section" className="ops-card" data-testid="diary-due-today-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-orange-500">
                   <Target className="w-4 h-4" />
                   Follow-ups / Carry Forward ({dueTodayItems.length})
                 </CardTitle>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">Open project follow-ups carried forward until closed out. Use Close out when the issue is finished on site.</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">Open items carried forward until closed out.</p>
               </CardHeader>
 
               <CardContent className="py-3">
@@ -3056,13 +3056,13 @@ const DiaryPage = () => {
             </Card>
 
             {/* RFIs - diary-critical-hierarchy-staff-compact-v1 */}
-            <Card id="diary-queries-section" className="ops-card" data-testid="diary-queries-rfis-section">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+            <Card id="diary-queries-section" className="ops-card" data-testid="diary-queries-rfis-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-sky-500">
                   <ListTodo className="w-4 h-4" />
                   RFIs (0)
                 </CardTitle>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">Questions needing answers. Keep these separate from roadblocks until they start blocking work.</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">Questions needing answers before they block work.</p>
               </CardHeader>
 
               <CardContent className="py-3">
@@ -3381,7 +3381,7 @@ const DiaryPage = () => {
         </div>
 
             <Card id="diary-work-section" className="ops-card lg:col-span-2 border-primary/35" data-testid="diary-walkaround-notes-section" data-commercial-readiness="diary-walkaround-safe-array-wording-v2">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
                 <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.14em] flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   Site Notes / Observations ({walkaroundEntriesCount})
@@ -3430,7 +3430,7 @@ const DiaryPage = () => {
 
         {/* Site Resources */}
             <Card id="diary-resources-section" className="ops-card lg:col-span-2" data-testid="daily-site-resources-card">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
                     <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
@@ -3621,7 +3621,7 @@ const DiaryPage = () => {
 
             {/* diary-remove-duplicate-followups-v1: duplicate lower open follow-up card removed; completed section renamed to Closed Out Today */}            {/* Closed Out Today */}
             <Card id="diary-action-completed-section" className="ops-card" data-testid="diary-closed-out-today-section">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-4 py-4">
+              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-emerald-500">
                   <CheckCircle2 className="w-4 h-4" />
                   Closed Out Today ({diary.action_items_closed?.length || 0})
