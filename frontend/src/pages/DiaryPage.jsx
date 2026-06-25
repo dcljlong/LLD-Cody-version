@@ -727,6 +727,26 @@ const DiaryPage = () => {
     create_action_item: true
   });
 
+  const createEmptyIssueRecorderData = () => ({
+    issue_type: 'delay',
+    title: '',
+    location: '',
+    related_trade: '',
+    description: '',
+    impact: 'programme',
+    action_required: 'please-confirm',
+    response_required_by: tomorrow,
+    owner: 'Me',
+    priority: 'high',
+    recipients: '',
+    photos: []
+  });
+
+  const [showIssueRecorder, setShowIssueRecorder] = useState(false); // onsite-issue-recorder-v1
+  const [issueRecorderData, setIssueRecorderData] = useState(() => createEmptyIssueRecorderData());
+  const [issueRecorderSaving, setIssueRecorderSaving] = useState(false);
+  const [issueRecorderEmailPreview, setIssueRecorderEmailPreview] = useState('');
+
   const fetchProjects = useCallback(async () => {
     try {
       const res = await projectsApi.getAll();
@@ -1466,6 +1486,146 @@ const DiaryPage = () => {
     }));
   };
 
+  const updateIssueRecorderData = (field, value) => {
+    setIssueRecorderData((current) => ({
+      ...current,
+      [field]: value
+    }));
+  }; // onsite-issue-recorder-v1
+
+  const handleIssueRecorderPhotoUpload = (event) => {
+    const files = Array.from(event.target.files || []);
+    files.forEach((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Issue photo must be under 5MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        setIssueRecorderData((current) => ({
+          ...current,
+          photos: [...(Array.isArray(current.photos) ? current.photos : []), reader.result]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+
+    event.target.value = '';
+  }; // onsite-issue-recorder-v1
+
+  const removeIssueRecorderPhoto = (index) => {
+    setIssueRecorderData((current) => ({
+      ...current,
+      photos: (Array.isArray(current.photos) ? current.photos : []).filter((_, photoIndex) => photoIndex !== index)
+    }));
+  }; // onsite-issue-recorder-v1
+
+  const getIssueTypeLabel = (value) => issueTypeOptions.find((option) => option.value === value)?.label || 'Onsite Issue';
+  const getIssueImpactLabel = (value) => issueImpactOptions.find((option) => option.value === value)?.label || 'Not selected';
+  const getIssueActionLabel = (value) => issueActionOptions.find((option) => option.value === value)?.label || 'Not selected';
+
+  const buildIssueRecorderSummary = () => {
+    const projectLabel = currentProject
+      ? `${currentProject.job_number ? `${currentProject.job_number} - ` : ''}${currentProject.name || 'Selected project'}`
+      : 'Selected project';
+
+    return [
+      'ONSITE ISSUE RECORDER',
+      `Project: ${projectLabel}`,
+      `Date recorded: ${selectedDateLabel}`,
+      `Issue type: ${getIssueTypeLabel(issueRecorderData.issue_type)}`,
+      `Title: ${issueRecorderData.title || 'Untitled issue'}`,
+      `Location: ${issueRecorderData.location || 'Not recorded'}`,
+      `Related trade/task: ${issueRecorderData.related_trade || 'Not recorded'}`,
+      `Impact: ${getIssueImpactLabel(issueRecorderData.impact)}`,
+      `Action required: ${getIssueActionLabel(issueRecorderData.action_required)}`,
+      `Response required by: ${issueRecorderData.response_required_by || 'Not set'}`,
+      `Owner: ${issueRecorderData.owner || 'Me'}`,
+      '',
+      'Issue / site condition:',
+      issueRecorderData.description || 'No description entered',
+      '',
+      `Photos recorded in LLD: ${Array.isArray(issueRecorderData.photos) ? issueRecorderData.photos.length : 0}`
+    ].join('\n');
+  }; // onsite-issue-recorder-v1
+
+  const buildIssueEmailSubject = () => {
+    const job = currentProject?.job_number || 'LLD';
+    const title = String(issueRecorderData.title || 'Onsite issue').trim();
+    return `Site Issue - ${job} - ${title}`;
+  }; // onsite-issue-recorder-v1
+
+  const buildIssueEmailBody = () => {
+    return [
+      buildIssueRecorderSummary(),
+      '',
+      'Required response:',
+      getIssueActionLabel(issueRecorderData.action_required),
+      '',
+      'Note:',
+      'This issue has been recorded in Long Line Diary. Photos are saved against the LLD issue record; attach photos manually if your email client does not include them automatically.'
+    ].join('\n');
+  }; // onsite-issue-recorder-v1
+
+  const openIssueRecorderEmailDraft = () => {
+    const recipients = String(issueRecorderData.recipients || '').trim();
+    const subject = encodeURIComponent(buildIssueEmailSubject());
+    const body = encodeURIComponent(issueRecorderEmailPreview || buildIssueEmailBody());
+    window.location.href = `mailto:${recipients}?subject=${subject}&body=${body}`;
+  }; // onsite-issue-recorder-v1
+
+  const resetIssueRecorder = () => {
+    setIssueRecorderData(createEmptyIssueRecorderData());
+    setIssueRecorderEmailPreview('');
+  }; // onsite-issue-recorder-v1
+
+  const handleIssueRecorderSave = async (event) => {
+    event.preventDefault();
+
+    if (!String(issueRecorderData.title || '').trim()) {
+      toast.error('Add a short issue title');
+      return;
+    }
+
+    if (!String(issueRecorderData.description || '').trim()) {
+      toast.error('Add what happened on site');
+      return;
+    }
+
+    if (!selectedProject) {
+      toast.error('Select a project first');
+      return;
+    }
+
+    const summary = buildIssueRecorderSummary();
+    setIssueRecorderSaving(true);
+
+    try {
+      await walkaroundApi.create({
+        note: summary,
+        priority: issueRecorderData.priority || 'high',
+        owner: issueRecorderData.owner || 'Me',
+        due_date: issueRecorderData.response_required_by || tomorrow,
+        gate_id: '',
+        photos: Array.isArray(issueRecorderData.photos) ? issueRecorderData.photos : [],
+        create_action_item: true,
+        project_id: selectedProject
+      });
+
+      const emailBody = buildIssueEmailBody();
+      setIssueRecorderEmailPreview(emailBody);
+      localStorage.setItem('lld_last_project_id', selectedProject);
+      setDraftStatus('Onsite issue saved to LLD');
+      toast.success('Onsite issue saved. Review the email draft before sending.');
+      fetchDiary();
+    } catch (error) {
+      toast.error('Failed to save onsite issue');
+    } finally {
+      setIssueRecorderSaving(false);
+    }
+  }; // onsite-issue-recorder-v1
+
   const handleQuickEntry = async (e) => {
     e.preventDefault();
 
@@ -1517,6 +1677,39 @@ const DiaryPage = () => {
   ];
 
   const ownerOptions = ['Me', 'Site', 'MC', 'Subbies', 'Client'];
+
+  const issueTypeOptions = [
+    { value: 'delay', label: 'Delay / Roadblock' },
+    { value: 'rfi', label: 'RFI / Clarification' },
+    { value: 'defect', label: 'Defect / Quality Issue' },
+    { value: 'safety', label: 'Safety Concern' },
+    { value: 'access', label: 'Access Issue' },
+    { value: 'material', label: 'Material Issue' },
+    { value: 'design', label: 'Design Conflict' },
+    { value: 'instruction', label: 'Client / Consultant Instruction' },
+    { value: 'subcontractor', label: 'Subcontractor Issue' },
+    { value: 'other', label: 'Other Site Issue' }
+  ]; // onsite-issue-recorder-v1
+
+  const issueImpactOptions = [
+    { value: 'none', label: 'No impact yet' },
+    { value: 'cost', label: 'Cost impact possible' },
+    { value: 'programme', label: 'Programme impact possible' },
+    { value: 'work-stopped', label: 'Work stopped' },
+    { value: 'work-slowed', label: 'Work slowed' },
+    { value: 'instruction-required', label: 'Instruction required' },
+    { value: 'variation', label: 'Variation possible' }
+  ]; // onsite-issue-recorder-v1
+
+  const issueActionOptions = [
+    { value: 'info-only', label: 'Information only' },
+    { value: 'please-confirm', label: 'Please confirm' },
+    { value: 'please-instruct', label: 'Please instruct' },
+    { value: 'please-price', label: 'Please price' },
+    { value: 'please-attend', label: 'Please attend site' },
+    { value: 'please-approve', label: 'Please approve' },
+    { value: 'please-resolve', label: 'Please resolve by due date' }
+  ]; // onsite-issue-recorder-v1
 
   const diaryPriorityRank = {
     critical: 0,
@@ -1733,6 +1926,18 @@ const DiaryPage = () => {
                 Quick Entry
               </Button>
             )}
+            {selectedDate === today && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowIssueRecorder(true)}
+                data-testid="onsite-issue-recorder-btn"
+                data-commercial-readiness="onsite-issue-recorder-v1"
+              >
+                <AlertTriangle className="w-4 h-4 mr-2" />
+                Record Onsite Issue
+              </Button>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -1903,6 +2108,233 @@ const DiaryPage = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Onsite Issue Recorder Dialog - onsite-issue-recorder-v1 */}
+      <Dialog open={showIssueRecorder} onOpenChange={setShowIssueRecorder}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl" data-testid="onsite-issue-recorder-dialog" data-commercial-readiness="onsite-issue-recorder-v1">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-lg font-black uppercase tracking-[0.12em] flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-400" />
+              Onsite Issue Recorder
+            </DialogTitle>
+            <p className="text-sm font-semibold text-muted-foreground">
+              Guided issue capture for delays, RFIs, defects, safety, access, material, or design problems. Save the record first, then review the email draft.
+            </p>
+          </DialogHeader>
+
+          <form onSubmit={handleIssueRecorderSave} className="space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">Issue type</Label>
+                <select
+                  className="input mt-1 min-h-11 w-full border-primary/40 bg-background text-foreground"
+                  value={issueRecorderData.issue_type}
+                  onChange={(event) => updateIssueRecorderData('issue_type', event.target.value)}
+                  data-testid="onsite-issue-type"
+                >
+                  {issueTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">Priority</Label>
+                <select
+                  className="input mt-1 min-h-11 w-full border-primary/40 bg-background text-foreground"
+                  value={issueRecorderData.priority}
+                  onChange={(event) => updateIssueRecorderData('priority', event.target.value)}
+                  data-testid="onsite-issue-priority"
+                >
+                  {priorityOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">Short title</Label>
+              <Input
+                value={issueRecorderData.title}
+                onChange={(event) => updateIssueRecorderData('title', event.target.value)}
+                placeholder="Example: Ceiling grid access blocked by scaffold"
+                className="mt-1 min-h-11"
+                data-testid="onsite-issue-title"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">Location / area</Label>
+                <Input
+                  value={issueRecorderData.location}
+                  onChange={(event) => updateIssueRecorderData('location', event.target.value)}
+                  placeholder="Level, room, area, gridline"
+                  className="mt-1 min-h-11"
+                  data-testid="onsite-issue-location"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">Related trade / task</Label>
+                <Input
+                  value={issueRecorderData.related_trade}
+                  onChange={(event) => updateIssueRecorderData('related_trade', event.target.value)}
+                  placeholder="Ceilings, wall linings, painting, design, client"
+                  className="mt-1 min-h-11"
+                  data-testid="onsite-issue-related-trade"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">What happened?</Label>
+              <Textarea
+                value={issueRecorderData.description}
+                onChange={(event) => updateIssueRecorderData('description', event.target.value)}
+                placeholder="Record the site issue clearly. Include who was told, what is blocked, and what decision is required."
+                className="mt-1 min-h-[120px] text-base"
+                data-testid="onsite-issue-description"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div>
+                <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">Impact</Label>
+                <select
+                  className="input mt-1 min-h-11 w-full border-primary/40 bg-background text-foreground"
+                  value={issueRecorderData.impact}
+                  onChange={(event) => updateIssueRecorderData('impact', event.target.value)}
+                  data-testid="onsite-issue-impact"
+                >
+                  {issueImpactOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">Action required</Label>
+                <select
+                  className="input mt-1 min-h-11 w-full border-primary/40 bg-background text-foreground"
+                  value={issueRecorderData.action_required}
+                  onChange={(event) => updateIssueRecorderData('action_required', event.target.value)}
+                  data-testid="onsite-issue-action-required"
+                >
+                  {issueActionOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">Response required by</Label>
+                <Input
+                  type="date"
+                  value={issueRecorderData.response_required_by}
+                  onChange={(event) => updateIssueRecorderData('response_required_by', event.target.value)}
+                  className="mt-1 min-h-11"
+                  data-testid="onsite-issue-response-date"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">Owner</Label>
+                <select
+                  className="input mt-1 min-h-11 w-full border-primary/40 bg-background text-foreground"
+                  value={issueRecorderData.owner}
+                  onChange={(event) => updateIssueRecorderData('owner', event.target.value)}
+                  data-testid="onsite-issue-owner"
+                >
+                  {ownerOptions.map((owner) => (
+                    <option key={owner} value={owner}>{owner}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">Email recipients</Label>
+                <Input
+                  value={issueRecorderData.recipients}
+                  onChange={(event) => updateIssueRecorderData('recipients', event.target.value)}
+                  placeholder="name@example.co.nz, other@example.co.nz"
+                  className="mt-1 min-h-11"
+                  data-testid="onsite-issue-recipients"
+                />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-dashed border-border/70 bg-secondary/20 p-3">
+              <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">Photos / evidence</Label>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-dashed border-primary/45 px-3 py-2 text-sm font-black uppercase tracking-[0.08em] text-primary transition hover:bg-primary/10">
+                  <Camera className="w-4 h-4" />
+                  Add Photos
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    multiple
+                    className="hidden"
+                    onChange={handleIssueRecorderPhotoUpload}
+                    data-testid="onsite-issue-photos"
+                  />
+                </label>
+
+                {(Array.isArray(issueRecorderData.photos) ? issueRecorderData.photos : []).map((photo, index) => (
+                  <div key={index} className="relative">
+                    <img src={photo} alt={`Issue evidence ${index + 1}`} className="h-14 w-14 rounded-lg object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeIssueRecorderPhoto(index)}
+                      className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+                      aria-label="Remove issue photo"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-xs font-semibold text-muted-foreground">
+                V1 saves photos into the LLD issue record. The email draft includes the issue text; attach photos manually if required by your email client.
+              </p>
+            </div>
+
+            {issueRecorderEmailPreview && (
+              <div className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 p-3" data-testid="onsite-issue-email-preview">
+                <div className="mb-2 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-emerald-300" />
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-300">Email preview ready</p>
+                </div>
+                <pre className="max-h-60 overflow-auto whitespace-pre-wrap rounded-lg bg-background/80 p-3 text-xs text-foreground">{issueRecorderEmailPreview}</pre>
+              </div>
+            )}
+
+            <DialogFooter className="flex-col gap-2 sm:flex-row">
+              <Button type="button" variant="ghost" onClick={() => setShowIssueRecorder(false)}>
+                Close
+              </Button>
+              {issueRecorderEmailPreview && (
+                <>
+                  <Button type="button" variant="outline" onClick={resetIssueRecorder} data-testid="onsite-issue-new">
+                    New Issue
+                  </Button>
+                  <Button type="button" variant="outline" onClick={openIssueRecorderEmailDraft} data-testid="onsite-issue-open-email">
+                    <Send className="mr-2 h-4 w-4" />
+                    Open Email Draft
+                  </Button>
+                </>
+              )}
+              <Button type="submit" disabled={issueRecorderSaving || !issueRecorderData.title.trim() || !issueRecorderData.description.trim()} data-testid="onsite-issue-save">
+                {issueRecorderSaving ? 'Saving...' : 'Save Issue + Preview Email'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Diary Command Strip / Clickable Checklist - diary-command-header-tabs-v2 */}
       <Card className="ops-card" data-testid="daily-report-readiness">
