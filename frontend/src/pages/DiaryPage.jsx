@@ -1957,11 +1957,11 @@ const DiaryPage = () => {
             </Button>
           </div>
 
-          <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:w-auto lg:grid-cols-1 xl:grid-cols-2" data-commercial-readiness="diary-above-fold-hierarchy-v1">
+          <div className="grid w-full grid-cols-2 gap-2 lg:w-auto lg:grid-cols-1 xl:grid-cols-2" data-commercial-readiness="diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2">
             {selectedDate === today && (
               <Button
                 onClick={() => setShowQuickEntry(!showQuickEntry)}
-                className="min-h-11 justify-center font-black"
+                className="col-span-2 min-h-11 justify-center font-black lg:col-span-1"
                 data-testid="quick-entry-btn"
                 data-commercial-readiness="diary-above-fold-hierarchy-v1"
               >
@@ -1974,7 +1974,7 @@ const DiaryPage = () => {
                 type="button"
                 variant="outline"
                 onClick={() => setShowIssueRecorder(true)}
-                className="min-h-11 justify-center font-black"
+                className="min-h-10 justify-center text-sm font-black sm:min-h-11"
                 data-testid="onsite-issue-recorder-btn"
                 data-commercial-readiness="onsite-issue-recorder-v1 diary-above-fold-hierarchy-v1"
               >
@@ -1986,7 +1986,7 @@ const DiaryPage = () => {
               type="button"
               variant="outline"
               onClick={() => document.getElementById('daily-report-readiness')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              className="min-h-11 justify-center font-black"
+              className="min-h-10 justify-center text-sm font-black sm:min-h-11"
               data-testid="review-close-day-button"
               data-commercial-readiness="diary-above-fold-hierarchy-v1"
             >
@@ -1998,7 +1998,7 @@ const DiaryPage = () => {
               variant="outline"
               onClick={handlePrintReport}
               disabled={!diary}
-              className="min-h-11 justify-center font-black"
+              className="min-h-10 justify-center text-sm font-black sm:min-h-11"
               data-testid="daily-report-print-button"
             >
               <Printer className="w-4 h-4 mr-2" />
@@ -2541,11 +2541,11 @@ const DiaryPage = () => {
       {/* Diary Command Strip / Clickable Checklist - diary-command-header-tabs-v2 */}
       <Card className="ops-card" data-testid="daily-report-readiness">
         <CardContent className="space-y-3 py-3" data-testid="diary-mobile-compression-v5">
-            <div className="rounded-2xl border border-primary/30 bg-background/85 p-2.5 shadow-inner sm:p-3" data-testid="diary-status-summary-v1" data-commercial-readiness="diary-status-summary-v1 diary-above-fold-hierarchy-v1">
+            <div className="rounded-2xl border border-primary/30 bg-background/85 p-2 shadow-inner sm:p-3" data-testid="diary-status-summary-v1" data-commercial-readiness="diary-status-summary-v1 diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2">
               <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary">Today’s Diary Board</p>
-                  <p className="mt-1 text-xs font-semibold text-muted-foreground">Tap a card to jump sections.</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">Tap cards to jump.</p>
                 </div>
                 <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] ${
                   labourRows.length > 0 && walkaroundEntriesCount > 0
@@ -2557,35 +2557,35 @@ const DiaryPage = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4" data-testid="diary-status-summary-grid-v1">
-                <button type="button" onClick={() => { setStaffSectionExpanded(true); openDiarySection('diary-staff-section'); }} className="rounded-xl border border-border/70 bg-secondary/30 p-2.5 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
+                <button type="button" onClick={() => { setStaffSectionExpanded(true); openDiarySection('diary-staff-section'); }} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Staff</span>
-                  <span className="mt-0.5 block text-base font-black text-foreground sm:text-lg">{labourRows.length}</span>
+                  <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">{labourRows.length}</span>
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">{labourRows.length > 0 ? `${labourTotalHours.toFixed(2)}h checked` : 'Missing'}</span>
                 </button>
 
-                <button type="button" onClick={() => openDiarySection('diary-due-today-section')} className="rounded-xl border border-border/70 bg-secondary/30 p-2.5 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
+                <button type="button" onClick={() => openDiarySection('diary-due-today-section')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Follow-ups</span>
-                  <span className="mt-0.5 block text-base font-black text-foreground sm:text-lg">{dueTodayItems.length}</span>
+                  <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">{dueTodayItems.length}</span>
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">Open / carry forward</span>
                 </button>
 
-                <button type="button" onClick={() => openDiarySection('diary-work-section')} className="rounded-xl border border-border/70 bg-secondary/30 p-2.5 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
+                <button type="button" onClick={() => openDiarySection('diary-work-section')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Site notes</span>
-                  <span className="mt-0.5 block text-base font-black text-foreground sm:text-lg">{walkaroundEntriesCount}</span>
+                  <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">{walkaroundEntriesCount}</span>
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">{walkaroundEntriesCount > 0 ? 'Recorded' : 'Missing'}</span>
                 </button>
 
-                <button type="button" onClick={() => openDiarySection('diary-resources-section', activeResourceTab || 'materials')} className="rounded-xl border border-border/70 bg-secondary/30 p-2.5 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
+                <button type="button" onClick={() => openDiarySection('diary-resources-section', activeResourceTab || 'materials')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Resources</span>
-                  <span className="mt-0.5 block text-base font-black text-foreground sm:text-lg">M/P</span>
+                  <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">M/P</span>
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">Materials / plant</span>
                 </button>
               </div>
             </div>
-            <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-2.5 shadow-inner sm:p-3" data-testid="diary-programme-lookahead-v1" data-commercial-readiness="diary-programme-lookahead-v1 diary-above-fold-hierarchy-v1">
+            <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-2 shadow-inner sm:p-3" data-testid="diary-programme-lookahead-v1" data-commercial-readiness="diary-programme-lookahead-v1 diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2">
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-emerald-300">6 Week Programme Lookahead</p>
+                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-emerald-300">6 Week Lookahead</p>
                   <p className="mt-1 text-xs font-semibold text-muted-foreground">Upcoming tasks for this job.</p>
                 </div>
                 <button
@@ -2598,7 +2598,7 @@ const DiaryPage = () => {
                 </button>
               </div>
 
-              <div className="rounded-xl border border-border/70 bg-background/55 p-2 sm:p-3" data-testid="diary-programme-lookahead-summary-v1">
+              <div className="rounded-xl border border-border/70 bg-background/55 px-2 py-1.5 sm:p-3" data-testid="diary-programme-lookahead-summary-v1">
                 {programmeLookaheadLoading ? (
                   <p className="text-xs font-semibold text-muted-foreground">Loading programme lookahead...</p>
                 ) : programmeLookaheadError ? (
@@ -2630,7 +2630,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs font-semibold text-muted-foreground">No programme tasks found in the next 6 weeks for this job.</p>
+                  <p className="text-xs font-semibold text-muted-foreground">No tasks found for this job.</p>
                 )}
               </div>
             </div>
@@ -3685,6 +3685,7 @@ const DiaryPageWithErrorBoundary = () => (
 );
 
 export default DiaryPageWithErrorBoundary;
+
 
 
 
