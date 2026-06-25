@@ -722,6 +722,7 @@ const DiaryPage = () => {
   };
   const [entryData, setEntryData] = useState({
     note: '',
+    entry_type: 'general', // diary-smart-capture-board-v1
     priority: 'medium',
     owner: 'Me',
     due_date: tomorrow,
@@ -1642,8 +1643,10 @@ const DiaryPage = () => {
     try {
       await walkaroundApi.create({
         ...entryData,
+        note: buildSmartCaptureNote(),
+        create_action_item: shouldShowSmartCaptureActionFields ? entryData.create_action_item : false,
         project_id: selectedProject
-      });
+      }); // diary-smart-capture-board-v1
 
       localStorage.setItem('lld_last_project_id', selectedProject);
       clearDiaryDraft('quick_entry');
@@ -1653,6 +1656,7 @@ const DiaryPage = () => {
       // Reset form
       setEntryData({
         note: '',
+        entry_type: 'general', // diary-smart-capture-board-v1
         priority: 'medium',
         owner: 'Me',
         due_date: tomorrow,
@@ -1680,6 +1684,27 @@ const DiaryPage = () => {
   ];
 
   const ownerOptions = ['Me', 'Site', 'MC', 'Subbies', 'Client'];
+
+  const smartCaptureOptions = [
+    { value: 'work', label: 'Work Done', hint: 'Completed work or progress' },
+    { value: 'material', label: 'Material', hint: 'Deliveries, shortages, use' },
+    { value: 'plant', label: 'Plant', hint: 'Equipment, access, hire' },
+    { value: 'delay', label: 'Delay', hint: 'Blocked, slowed, waiting' },
+    { value: 'rfi', label: 'RFI', hint: 'Question or clarification' },
+    { value: 'safety', label: 'Safety', hint: 'Hazard or incident' },
+    { value: 'action', label: 'Action', hint: 'Needs follow-up' },
+    { value: 'general', label: 'General', hint: 'Site observation' }
+  ]; // diary-smart-capture-board-v1
+
+  const actionCaptureTypes = ['delay', 'rfi', 'safety', 'action'];
+  const shouldShowSmartCaptureActionFields = actionCaptureTypes.includes(entryData.entry_type);
+  const selectedSmartCaptureOption = smartCaptureOptions.find((option) => option.value === entryData.entry_type) || smartCaptureOptions[smartCaptureOptions.length - 1];
+
+  const buildSmartCaptureNote = () => [
+    `SMART CAPTURE - ${selectedSmartCaptureOption.label}`,
+    '',
+    String(entryData.note || '').trim()
+  ].join('\n'); // diary-smart-capture-board-v1
 
   const issueTypeOptions = [
     { value: 'delay', label: 'Delay / Roadblock' },
@@ -1961,21 +1986,52 @@ const DiaryPage = () => {
           <CardHeader className="ops-card-header py-3 bg-primary/10">
             <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
               <Plus className="w-4 h-4" />
-              Quick Diary Entry
+              Smart Capture
             </CardTitle>
           </CardHeader>
           <CardContent className="py-4">
             <form onSubmit={handleQuickEntry} className="space-y-4">
               <Textarea
                 ref={noteInputRef}
-                placeholder="What happened today? Type here..."
+                placeholder="Type what happened on site. Example: Need L5 clear for setout..."
                 value={entryData.note}
                 onChange={(e) => setEntryData(prev => ({ ...prev, note: e.target.value }))}
                 className="min-h-[80px] text-base"
                 data-testid="quick-entry-note"
               />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="rounded-2xl border border-primary/25 bg-background/70 p-3" data-testid="smart-capture-category-panel" data-commercial-readiness="diary-smart-capture-board-v1">
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-heading text-xs font-black uppercase tracking-[0.16em] text-primary">What kind of diary entry is this?</p>
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">Choose the section first. Action fields only appear when they are needed.</p>
+                  </div>
+                  <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-primary">
+                    {selectedSmartCaptureOption.label}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {smartCaptureOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setEntryData((prev) => ({
+                        ...prev,
+                        entry_type: option.value,
+                        create_action_item: actionCaptureTypes.includes(option.value)
+                      }))}
+                      className={`rounded-xl border px-3 py-2 text-left transition ${entryData.entry_type === option.value ? 'border-primary bg-primary text-primary-foreground shadow-sm' : 'border-border bg-secondary/35 hover:border-primary/60 hover:bg-primary/10'}`}
+                      data-testid={`smart-capture-category-${option.value}`}
+                    >
+                      <span className="block text-sm font-black">{option.label}</span>
+                      <span className="mt-0.5 block text-[11px] font-semibold opacity-80">{option.hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {shouldShowSmartCaptureActionFields && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="smart-capture-action-fields">
                 {/* Priority */}
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1.5 block">Priority</Label>
@@ -2052,10 +2108,11 @@ const DiaryPage = () => {
                   </div>
                 )}
               </div>
+              )}
 
               {/* Photo & Submit Row */}
-              <div className="flex items-center justify-between pt-2">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between" data-testid="smart-capture-save-row" data-commercial-readiness="diary-smart-capture-board-v1">
+                <div className="flex flex-wrap items-center gap-2">
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -2109,22 +2166,24 @@ const DiaryPage = () => {
                     </div>
                   ))}
 
-                  <label className="flex items-center gap-2 text-sm text-muted-foreground ml-4">
-                    <input
-                      type="checkbox"
-                      checked={entryData.create_action_item}
-                      onChange={(e) => setEntryData(prev => ({ ...prev, create_action_item: e.target.checked }))}
-                      className="w-4 h-4 rounded"
-                    />
-                    Create action item
-                  </label>
+                  {shouldShowSmartCaptureActionFields && (
+                    <label className="flex items-center gap-2 rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-sm font-semibold text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={entryData.create_action_item}
+                        onChange={(e) => setEntryData(prev => ({ ...prev, create_action_item: e.target.checked }))}
+                        className="w-4 h-4 rounded"
+                      />
+                      Create action item
+                    </label>
+                  )}
                 </div>
 
-                <Button type="submit" disabled={submitting || !entryData.note.trim()}>
+                <Button type="submit" className="w-full sm:w-auto" disabled={submitting || !entryData.note.trim()} data-testid="smart-capture-save-entry">
                   {submitting ? 'Saving...' : (
                     <>
                       <Send className="w-4 h-4 mr-2" />
-                      Save Entry
+                      Add to Diary
                     </>
                   )}
                 </Button>
@@ -2393,8 +2452,8 @@ const DiaryPage = () => {
             <div className="rounded-2xl border border-primary/35 bg-background/80 p-3 shadow-inner" data-testid="diary-status-summary-v1" data-commercial-readiness="diary-status-summary-v1">
               <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary">Today's Diary Status</p>
-                  <p className="mt-1 text-xs font-semibold text-muted-foreground">At-a-glance completion for this diary day.</p>
+                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary">Today’s Diary Board</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">Tap a card to jump to the right diary section.</p>
                 </div>
                 <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] ${
                   labourRows.length > 0 && walkaroundEntriesCount > 0
@@ -3534,4 +3593,6 @@ const DiaryPageWithErrorBoundary = () => (
 );
 
 export default DiaryPageWithErrorBoundary;
+
+
 
