@@ -2747,8 +2747,8 @@ const DiaryPage = () => {
           <div className="space-y-3 text-sm text-muted-foreground">
             <p>
               {followUpConfirm?.mode === "reopen"
-                ? "This will move the item back to Follow-ups."
-                : "This will mark the follow-up as closed out for the diary day."}
+                ? "Moves this item back to Follow-ups."
+                : "Marks this follow-up closed for the diary day."}
             </p>
             <p className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 font-semibold text-foreground">
               {followUpConfirm?.label || "This follow-up"}
@@ -2763,8 +2763,8 @@ const DiaryPage = () => {
               {followUpConfirmSaving
                 ? "Working..."
                 : followUpConfirm?.mode === "reopen"
-                  ? "Reopen Follow-up"
-                  : "Close Out Follow-up"}
+                  ? "Reopen"
+                  : "Close Out"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2779,7 +2779,7 @@ const DiaryPage = () => {
                   {selectedDiaryActionDraft.title || 'Untitled action item'}
                 </CardTitle>
                 <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                  Stay in the Diary. Edit, save, complete, reopen, or close from this panel.
+                  Edit, close, or reopen without leaving the diary.
                 </p>
               </div>
 
@@ -2888,7 +2888,7 @@ const DiaryPage = () => {
               <Button type="button" variant="outline" onClick={completeSelectedDiaryActionItem} disabled={diaryActionSaving} data-testid="diary-action-complete-inline">
                 Mark Complete
               </Button>
-              <Button type="button" variant="outline" onClick={reopenSelectedDiaryActionItem} disabled={diaryActionSaving} data-testid="diary-action-reopen-inline">
+              <Button type="button" variant="outline" onClick={reopenSelectedDiaryActionItem} disabled={diaryActionSaving} data-testid="diary-action-reopen-inline" data-commercial-readiness="diary-followup-panel-wording-polish-v1">
                 Reopen
               </Button>
               <Button type="button" variant="secondary" onClick={closeDiaryActionItem} disabled={diaryActionSaving}>
