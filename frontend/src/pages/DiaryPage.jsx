@@ -722,13 +722,15 @@ const DiaryPage = () => {
   };
   const [entryData, setEntryData] = useState({
     note: '',
-    entry_type: 'general', // diary-smart-capture-board-v1
+    entry_type: 'note', // diary-command-centre-ux-v1
+    needs_action: false,
+    action_type: 'todo',
     priority: 'medium',
     owner: 'Me',
     due_date: tomorrow,
     gate_id: '',
     photos: [],
-    create_action_item: true
+    create_action_item: false
   });
 
   const createEmptyIssueRecorderData = () => ({
@@ -1644,9 +1646,10 @@ const DiaryPage = () => {
       await walkaroundApi.create({
         ...entryData,
         note: buildSmartCaptureNote(),
-        create_action_item: shouldShowSmartCaptureActionFields ? entryData.create_action_item : false,
+        create_action_item: Boolean(entryData.needs_action),
+        action_type: entryData.needs_action ? entryData.action_type : 'none',
         project_id: selectedProject
-      }); // diary-smart-capture-board-v1
+      }); // diary-command-centre-ux-v1
 
       localStorage.setItem('lld_last_project_id', selectedProject);
       clearDiaryDraft('quick_entry');
@@ -1656,13 +1659,15 @@ const DiaryPage = () => {
       // Reset form
       setEntryData({
         note: '',
-        entry_type: 'general', // diary-smart-capture-board-v1
+        entry_type: 'note', // diary-command-centre-ux-v1
+        needs_action: false,
+        action_type: 'todo',
         priority: 'medium',
         owner: 'Me',
         due_date: tomorrow,
         gate_id: '',
         photos: [],
-        create_action_item: true
+        create_action_item: false
       });
 
       // Refresh diary
@@ -1686,25 +1691,30 @@ const DiaryPage = () => {
   const ownerOptions = ['Me', 'Site', 'MC', 'Subbies', 'Client'];
 
   const smartCaptureOptions = [
-    { value: 'work', label: 'Work Done', hint: 'Completed work or progress' },
-    { value: 'material', label: 'Material', hint: 'Deliveries, shortages, use' },
-    { value: 'plant', label: 'Plant', hint: 'Equipment, access, hire' },
-    { value: 'delay', label: 'Delay', hint: 'Blocked, slowed, waiting' },
-    { value: 'rfi', label: 'RFI', hint: 'Question or clarification' },
-    { value: 'safety', label: 'Safety', hint: 'Hazard or incident' },
-    { value: 'action', label: 'Action', hint: 'Needs follow-up' },
-    { value: 'general', label: 'General', hint: 'Site observation' }
-  ]; // diary-smart-capture-board-v1
-
-  const actionCaptureTypes = ['delay', 'rfi', 'safety', 'action'];
-  const shouldShowSmartCaptureActionFields = actionCaptureTypes.includes(entryData.entry_type);
-  const selectedSmartCaptureOption = smartCaptureOptions.find((option) => option.value === entryData.entry_type) || smartCaptureOptions[smartCaptureOptions.length - 1];
-
-  const buildSmartCaptureNote = () => [
-    `SMART CAPTURE - ${selectedSmartCaptureOption.label}`,
-    '',
-    String(entryData.note || '').trim()
-  ].join('\n'); // diary-smart-capture-board-v1
+      { value: 'progress', label: 'Progress', hint: 'Work completed or progress made' },
+      { value: 'resource', label: 'Resource', hint: 'Labour, material, plant, delivery' },
+      { value: 'issue', label: 'Issue', hint: 'Delay, access, RFI, defect, safety' },
+      { value: 'instruction', label: 'Instruction', hint: 'Direction, change, verbal instruction' },
+      { value: 'note', label: 'Note', hint: 'General site observation' }
+    ]; // diary-command-centre-ux-v1
+  
+    const actionOutcomeOptions = [
+      { value: 'todo', label: 'To Do', hint: 'Internal task' },
+      { value: 'followup', label: 'Follow-up', hint: 'Carry forward until closed' },
+      { value: 'email', label: 'Email Required', hint: 'Prepare communication' },
+      { value: 'formal', label: 'Formal Issue', hint: 'Evidence record / notice' }
+    ]; // diary-command-centre-ux-v1
+  
+    const shouldShowSmartCaptureActionFields = Boolean(entryData.needs_action);
+    const selectedSmartCaptureOption = smartCaptureOptions.find((option) => option.value === entryData.entry_type) || smartCaptureOptions[smartCaptureOptions.length - 1];
+    const selectedActionOutcomeOption = actionOutcomeOptions.find((option) => option.value === entryData.action_type) || actionOutcomeOptions[0];
+  
+    const buildSmartCaptureNote = () => [
+      `CAPTURE SITE ACTIVITY - ${selectedSmartCaptureOption.label}`,
+      `ACTION REQUIRED - ${entryData.needs_action ? selectedActionOutcomeOption.label : 'No'}`,
+      '',
+      String(entryData.note || '').trim()
+    ].join('\n'); // diary-command-centre-ux-v1
 
   const issueTypeOptions = [
     { value: 'delay', label: 'Delay / Roadblock' },
@@ -1982,211 +1992,275 @@ const DiaryPage = () => {
 
       {/* Quick Entry Form */}
       {showQuickEntry && selectedDate === today && (
-        <Card className="ops-card border-primary/50">
-          <CardHeader className="ops-card-header py-3 bg-primary/10">
-            <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Smart Capture
-            </CardTitle>
+        <Card className="ops-card border-primary/60 bg-gradient-to-br from-background via-background to-primary/5 shadow-lg" data-testid="capture-site-activity-card" data-commercial-readiness="diary-command-centre-ux-v1">
+          <CardHeader className="ops-card-header border-b border-primary/20 bg-primary/10 py-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <p className="font-heading text-[11px] font-black uppercase tracking-[0.22em] text-primary">Daily capture</p>
+                <CardTitle className="mt-1 font-heading text-xl font-black uppercase tracking-[0.12em] text-foreground flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-primary" />
+                  Capture Site Activity
+                </CardTitle>
+                <p className="mt-2 max-w-2xl text-sm font-semibold text-muted-foreground">
+                  Record progress, resources, issues, instructions, notes, or photos from today.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-primary/25 bg-background/80 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-primary">
+                Record → Classify → Action? → Save
+              </div>
+            </div>
           </CardHeader>
+
           <CardContent className="py-4">
             <form onSubmit={handleQuickEntry} className="space-y-4">
-              <Textarea
-                ref={noteInputRef}
-                placeholder="Type what happened on site. Example: Need L5 clear for setout..."
-                value={entryData.note}
-                onChange={(e) => setEntryData(prev => ({ ...prev, note: e.target.value }))}
-                className="min-h-[80px] text-base"
-                data-testid="quick-entry-note"
-              />
-
-              <div className="rounded-2xl border border-primary/25 bg-background/70 p-3" data-testid="smart-capture-category-panel" data-commercial-readiness="diary-smart-capture-board-v1">
-                <div className="mb-2 flex items-start justify-between gap-3">
+              <div className="rounded-2xl border border-primary/25 bg-background/95 p-3 shadow-sm" data-testid="capture-site-record-step">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground">1</span>
                   <div>
-                    <p className="font-heading text-xs font-black uppercase tracking-[0.16em] text-primary">What kind of diary entry is this?</p>
-                    <p className="mt-1 text-xs font-semibold text-muted-foreground">Choose the section first. Action fields only appear when they are needed.</p>
+                    <p className="font-heading text-sm font-black uppercase tracking-[0.14em] text-foreground">Record</p>
+                    <p className="text-xs font-semibold text-muted-foreground">What do you need to record?</p>
+                  </div>
+                </div>
+                <Textarea
+                  ref={noteInputRef}
+                  placeholder="Add progress, resources, issues, instructions, notes, or photo context..."
+                  value={entryData.note}
+                  onChange={(e) => setEntryData(prev => ({ ...prev, note: e.target.value }))}
+                  className="min-h-[120px] border-primary/30 bg-background text-base shadow-inner focus-visible:ring-primary/40"
+                  data-testid="quick-entry-note"
+                />
+              </div>
+
+              <div className="rounded-2xl border border-border/80 bg-secondary/20 p-3" data-testid="smart-capture-category-panel" data-commercial-readiness="diary-smart-capture-board-v1 diary-command-centre-ux-v1">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-black text-primary">2</span>
+                    <div>
+                      <p className="font-heading text-sm font-black uppercase tracking-[0.14em] text-foreground">Classify</p>
+                      <p className="mt-1 text-xs font-semibold text-muted-foreground">What is this? Pick the simplest bucket.</p>
+                    </div>
                   </div>
                   <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-primary">
                     {selectedSmartCaptureOption.label}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
                   {smartCaptureOptions.map((option) => (
                     <button
                       key={option.value}
                       type="button"
                       onClick={() => setEntryData((prev) => ({
                         ...prev,
-                        entry_type: option.value,
-                        create_action_item: actionCaptureTypes.includes(option.value)
+                        entry_type: option.value
                       }))}
-                      className={`rounded-xl border px-3 py-2 text-left transition ${entryData.entry_type === option.value ? 'border-primary bg-primary text-primary-foreground shadow-sm' : 'border-border bg-secondary/35 hover:border-primary/60 hover:bg-primary/10'}`}
+                      className={`min-h-[76px] rounded-xl border px-3 py-2 text-left transition ${entryData.entry_type === option.value ? 'border-primary bg-primary text-primary-foreground shadow-md' : 'border-border bg-background/80 hover:border-primary/60 hover:bg-primary/10'}`}
                       data-testid={`smart-capture-category-${option.value}`}
                     >
                       <span className="block text-sm font-black">{option.label}</span>
-                      <span className="mt-0.5 block text-[11px] font-semibold opacity-80">{option.hint}</span>
+                      <span className="mt-1 block text-[11px] font-semibold opacity-80">{option.hint}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {shouldShowSmartCaptureActionFields && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="smart-capture-action-fields">
-                {/* Priority */}
-                <div>
-                  <Label className="text-xs text-muted-foreground mb-1.5 block">Priority</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {priorityOptions.map(p => (
-                      <button
-                        key={p.value}
-                        type="button"
-                        onClick={() => setEntryData(prev => ({ ...prev, priority: p.value }))}
-                        className={`px-2 py-1.5 text-xs font-medium rounded border transition-all ${
-                          entryData.priority === p.value
-                            ? `${p.color} text-white border-transparent`
-                            : 'border-border bg-secondary/40 hover:border-primary'
-                        }`}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
+              <div className="rounded-2xl border border-border/80 bg-background/80 p-3" data-testid="capture-site-action-panel" data-commercial-readiness="diary-command-centre-ux-v1">
+                <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-black text-primary">3</span>
+                    <div>
+                      <p className="font-heading text-sm font-black uppercase tracking-[0.14em] text-foreground">Action required?</p>
+                      <p className="mt-1 text-xs font-semibold text-muted-foreground">Most entries are diary only. Turn this on only when somebody needs to do something.</p>
+                    </div>
                   </div>
-                </div>
-
-                {/* Owner */}
-                <div>
-                  <Label className="text-xs text-muted-foreground mb-1.5 block">Owner</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {ownerOptions.map(o => (
-                      <button
-                        key={o}
-                        type="button"
-                        onClick={() => setEntryData(prev => ({ ...prev, owner: o }))}
-                        className={`px-2 py-1.5 text-xs font-medium rounded border transition-all ${
-                          entryData.owner === o
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'border-border bg-secondary/40 hover:border-primary'
-                        }`}
-                      >
-                        {o}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Due Date */}
-                <div>
-                  <Label className="text-xs text-muted-foreground mb-1.5 block">Due Date</Label>
-                  <Input
-                    type="date"
-                    value={entryData.due_date}
-                    onChange={(e) => setEntryData(prev => ({ ...prev, due_date: e.target.value }))}
-                    className="h-9 text-sm"
-                  />
-                </div>
-
-                {/* Roadblock / Concern Link */}
-                {gates.length > 0 && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1.5 block">Link to Roadblock / Concern</Label>
-                    <Select
-                      value={entryData.gate_id}
-                      onValueChange={(val) => setEntryData(prev => ({ ...prev, gate_id: val === '__none__' ? '' : val }))} // diary-select-empty-value-hotfix-v1
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEntryData((prev) => ({ ...prev, needs_action: false, create_action_item: false }))}
+                      className={`rounded-lg border px-4 py-2 text-xs font-black uppercase tracking-[0.08em] transition ${!entryData.needs_action ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-secondary/30 hover:border-primary/60'}`}
+                      data-testid="capture-site-action-no"
                     >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Optional" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">None</SelectItem>
-                        {gates.map(g => (
-                          <SelectItem key={g.id} value={g.id}>
-                            {g.order ? `${g.order}. ` : ''}{g.name}
-                          </SelectItem>
+                      No
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEntryData((prev) => ({ ...prev, needs_action: true, create_action_item: true }))}
+                      className={`rounded-lg border px-4 py-2 text-xs font-black uppercase tracking-[0.08em] transition ${entryData.needs_action ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-secondary/30 hover:border-primary/60'}`}
+                      data-testid="capture-site-action-yes"
+                    >
+                      Yes
+                    </button>
+                  </div>
+                </div>
+
+                {entryData.needs_action && (
+                  <div className="space-y-3 rounded-xl border border-primary/25 bg-primary/5 p-3" data-testid="capture-site-action-details">
+                    <div>
+                      <p className="mb-2 text-xs font-black uppercase tracking-[0.14em] text-primary">Action type</p>
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-4" data-testid="capture-site-action-outcomes">
+                        {actionOutcomeOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setEntryData((prev) => ({ ...prev, action_type: option.value, create_action_item: true }))}
+                            className={`rounded-xl border px-3 py-2 text-left transition ${entryData.action_type === option.value ? 'border-primary bg-primary text-primary-foreground shadow-sm' : 'border-border bg-background hover:border-primary/60 hover:bg-primary/10'}`}
+                            data-testid={`capture-site-action-${option.value}`}
+                          >
+                            <span className="block text-sm font-black">{option.label}</span>
+                            <span className="mt-0.5 block text-[11px] font-semibold opacity-80">{option.hint}</span>
+                          </button>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="smart-capture-action-fields">
+                      <div>
+                        <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground mb-1.5 block">Priority</Label>
+                        <div className="flex flex-wrap gap-1">
+                          {priorityOptions.map(p => (
+                            <button
+                              key={p.value}
+                              type="button"
+                              onClick={() => setEntryData(prev => ({ ...prev, priority: p.value }))}
+                              className={`px-2 py-1.5 text-xs font-medium rounded border transition-all ${entryData.priority === p.value ? `${p.color} text-white border-transparent` : 'border-border bg-secondary/40 hover:border-primary'}`}
+                            >
+                              {p.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground mb-1.5 block">Owner</Label>
+                        <div className="flex flex-wrap gap-1">
+                          {ownerOptions.map(o => (
+                            <button
+                              key={o}
+                              type="button"
+                              onClick={() => setEntryData(prev => ({ ...prev, owner: o }))}
+                              className={`px-2 py-1.5 text-xs font-medium rounded border transition-all ${entryData.owner === o ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-secondary/40 hover:border-primary'}`}
+                            >
+                              {o}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground mb-1.5 block">Due Date</Label>
+                        <Input
+                          type="date"
+                          value={entryData.due_date}
+                          onChange={(e) => setEntryData(prev => ({ ...prev, due_date: e.target.value }))}
+                          className="h-10 border-primary/25 text-sm"
+                        />
+                      </div>
+
+                      {gates.length > 0 && (
+                        <div>
+                          <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground mb-1.5 block">Related Roadblock / Concern</Label>
+                          <Select
+                            value={entryData.gate_id}
+                            onValueChange={(val) => setEntryData(prev => ({ ...prev, gate_id: val === '__none__' ? '' : val }))}
+                          >
+                            <SelectTrigger className="h-10 border-primary/25 text-sm">
+                              <SelectValue placeholder="Optional" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">None</SelectItem>
+                              {gates.map(g => (
+                                <SelectItem key={g.id} value={g.id}>
+                                  {g.order ? `${g.order}. ` : ''}{g.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
-              )}
 
-              {/* Photo & Submit Row */}
-              <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between" data-testid="smart-capture-save-row" data-commercial-readiness="diary-smart-capture-board-v1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handlePhotoUpload}
-                    accept="image/*"
-                    capture="environment"
-                    multiple
-                    className="hidden"
-                    data-testid="quick-entry-take-photo-input"
-                  />
-                  <input
-                    type="file"
-                    ref={quickUploadInputRef}
-                    onChange={handlePhotoUpload}
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    data-testid="quick-entry-upload-photo-input"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="h-10 px-3 border border-dashed border-border rounded-md flex items-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-                    data-testid="quick-entry-take-photo"
-                    data-commercial-readiness="photo-take-upload-choice-v1"
-                  >
-                    <Camera className="w-4 h-4" />
-                    <span className="text-sm">Take Photo</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => quickUploadInputRef.current?.click()}
-                    className="h-10 px-3 border border-dashed border-border rounded-md flex items-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-                    data-testid="quick-entry-upload-photo"
-                    data-commercial-readiness="photo-take-upload-choice-v1"
-                  >
-                    <Package className="w-4 h-4" />
-                    <span className="text-sm">Upload Photo</span>
-                  </button>
-
-                  {entryData.photos.map((photo, i) => (
-                    <div key={i} className="relative group">
-                      <img src={photo} alt={`Upload ${i + 1}`} className="w-10 h-10 object-cover rounded" />
-                      <button
-                        type="button"
-                        onClick={() => removePhoto(i)}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center text-xs"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-
-                  {shouldShowSmartCaptureActionFields && (
-                    <label className="flex items-center gap-2 rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-sm font-semibold text-muted-foreground">
-                      <input
-                        type="checkbox"
-                        checked={entryData.create_action_item}
-                        onChange={(e) => setEntryData(prev => ({ ...prev, create_action_item: e.target.checked }))}
-                        className="w-4 h-4 rounded"
-                      />
-                      Create action item
-                    </label>
-                  )}
+              <div className="rounded-2xl border border-border/80 bg-secondary/15 p-3" data-testid="smart-capture-save-row" data-commercial-readiness="diary-smart-capture-board-v1 diary-command-centre-ux-v1">
+                <div className="mb-3 flex items-start gap-2">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-black text-primary">4</span>
+                  <div>
+                    <p className="font-heading text-sm font-black uppercase tracking-[0.14em] text-foreground">Add to diary</p>
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">Attach photos if needed, then save the record.</p>
+                  </div>
                 </div>
 
-                <Button type="submit" className="w-full sm:w-auto" disabled={submitting || !entryData.note.trim()} data-testid="smart-capture-save-entry">
-                  {submitting ? 'Saving...' : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Add to Diary
-                    </>
-                  )}
-                </Button>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handlePhotoUpload}
+                      accept="image/*"
+                      capture="environment"
+                      multiple
+                      className="hidden"
+                      data-testid="quick-entry-take-photo-input"
+                    />
+                    <input
+                      type="file"
+                      ref={quickUploadInputRef}
+                      onChange={handlePhotoUpload}
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      data-testid="quick-entry-upload-photo-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="h-10 px-3 border border-dashed border-primary/40 rounded-md flex items-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                      data-testid="quick-entry-take-photo"
+                      data-commercial-readiness="photo-take-upload-choice-v1"
+                    >
+                      <Camera className="w-4 h-4" />
+                      <span className="text-sm">Take Photo</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => quickUploadInputRef.current?.click()}
+                      className="h-10 px-3 border border-dashed border-primary/40 rounded-md flex items-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                      data-testid="quick-entry-upload-photo"
+                      data-commercial-readiness="photo-take-upload-choice-v1"
+                    >
+                      <Package className="w-4 h-4" />
+                      <span className="text-sm">Upload Photo</span>
+                    </button>
+
+                    {entryData.photos.map((photo, i) => (
+                      <div key={i} className="relative group">
+                        <img src={photo} alt={`Upload ${i + 1}`} className="w-10 h-10 object-cover rounded" />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(i)}
+                          className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center text-xs"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {entryData.needs_action && (
+                      <div className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-sm font-black text-primary" data-testid="capture-site-action-tracked">
+                        Action: {selectedActionOutcomeOption.label}
+                      </div>
+                    )}
+                  </div>
+
+                  <Button type="submit" className="w-full sm:w-auto" disabled={submitting || !entryData.note.trim()} data-testid="smart-capture-save-entry">
+                    {submitting ? 'Saving...' : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Add to Diary
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </form>
           </CardContent>
@@ -3593,6 +3667,7 @@ const DiaryPageWithErrorBoundary = () => (
 );
 
 export default DiaryPageWithErrorBoundary;
+
 
 
 
