@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { actionItemsApi, diaryApi, integrationsApi, projectsApi, walkaroundApi, gatesApi, programmesApi } from '../lib/api';
 import { toast } from 'sonner';
 import {
@@ -1428,6 +1428,20 @@ const DiaryPage = () => {
     return due && due > selectedDate && due <= forecastEndDate;
   });
 
+  const [activeDiaryView, setActiveDiaryView] = useState(() => {
+    if (typeof window === 'undefined') return 'overview';
+    return new URLSearchParams(window.location.search).get('view') || 'overview';
+  });
+  const [lastCaptureResult, setLastCaptureResult] = useState(null);
+
+  const diaryViewLabels = {
+    overview: 'Overview',
+    'site-notes': 'Site Notes',
+    resources: 'Resources',
+    staff: 'Staff',
+    rfis: 'RFIs',
+  }; // diary-nav-post-capture-v4
+
   const openDiarySection = (sectionId, tab = null) => {
     if (tab) setActiveResourceTab(tab);
     window.requestAnimationFrame(() => {
@@ -1444,6 +1458,41 @@ const DiaryPage = () => {
     });
   };
 
+  const openDiaryView = (view = 'overview', tab = null) => {
+    const safeView = view || 'overview';
+    setActiveDiaryView(safeView);
+
+    const params = new URLSearchParams(window.location.search);
+    params.set('view', safeView);
+    if (tab) {
+      params.set('tab', tab);
+    } else {
+      params.delete('tab');
+    }
+
+    window.history.pushState({}, '', `/diary?${params.toString()}`);
+
+    const targetMap = {
+      overview: 'daily-report-readiness',
+      'site-notes': 'diary-work-section',
+      resources: 'diary-resources-section',
+      staff: 'diary-staff-section',
+      rfis: 'diary-queries-section',
+    };
+
+    const target = targetMap[safeView] || 'daily-report-readiness';
+    openDiarySection(target, tab);
+  }; // diary-nav-post-capture-v4
+
+  const getCaptureDiaryView = (capture) => {
+    if (!capture) return 'overview';
+    const entryType = String(capture.entry_type || '').toLowerCase();
+    if (entryType.includes('material') || entryType.includes('plant') || entryType.includes('resource')) return 'resources';
+    if (entryType.includes('staff') || entryType.includes('labour') || entryType.includes('labor')) return 'staff';
+    if (entryType.includes('rfi') || entryType.includes('query')) return 'rfis';
+    return 'site-notes';
+  }; // diary-nav-post-capture-v4
+
   const openActionItemsPage = (section = null) => {
     const params = new URLSearchParams();
     if (selectedProject) params.set('project', selectedProject);
@@ -1457,6 +1506,41 @@ const DiaryPage = () => {
     if (selectedProject) params.set('project', selectedProject);
     window.location.assign(`/roadblocks?${params.toString()}`); // diary-direct-roadblock-create-v1
   };
+
+  const openRoadblocksPage = () => {
+    const params = new URLSearchParams();
+    if (selectedProject) params.set('project', selectedProject);
+    window.location.assign(`/roadblocks?${params.toString()}`);
+  }; // diary-nav-post-capture-v4
+
+  const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
+    if (!capture) {
+      toast.error('No saved capture selected for email draft');
+      return;
+    }
+
+    const projectLine = capture.job_number || capture.project_name
+      ? `${capture.job_number ? `${capture.job_number} - ` : ''}${capture.project_name || 'Project'}`
+      : 'Project';
+    const subject = encodeURIComponent(`LLD Site Diary Action - ${projectLine} - ${selectedDateLabel}`);
+    const body = encodeURIComponent([
+      `Project: ${projectLine}`,
+      `Date: ${selectedDateLabel}`,
+      `Type: ${capture.entry_type || 'note'}`,
+      `Priority: ${capture.priority || 'medium'}`,
+      `Owner: ${capture.owner || 'Me'}`,
+      '',
+      'Diary capture:',
+      capture.note || '',
+      '',
+      'Action required:',
+      capture.needs_action ? (capture.action_type || 'todo') : 'No',
+      '',
+      'Sent from Long Line Diary.'
+    ].join('\n'));
+
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }; // diary-nav-post-capture-v4
 
   const handlePrintReport = () => {
     if (!diary) {
@@ -1643,18 +1727,37 @@ const DiaryPage = () => {
 
     setSubmitting(true);
     try {
+      const captureNote = buildSmartCaptureNote();
+      const savedCaptureResult = {
+        note: captureNote,
+        raw_note: entryData.note,
+        entry_type: entryData.entry_type,
+        needs_action: Boolean(entryData.needs_action),
+        action_type: entryData.needs_action ? entryData.action_type : 'none',
+        priority: entryData.priority || 'medium',
+        owner: entryData.owner || 'Me',
+        due_date: entryData.due_date,
+        project_id: selectedProject,
+        project_name: currentProject?.name || '',
+        job_number: currentProject?.job_number || '',
+        saved_at: new Date().toISOString(),
+        has_photos: Array.isArray(entryData.photos) && entryData.photos.length > 0,
+      }; // diary-nav-post-capture-v4
+
       await walkaroundApi.create({
         ...entryData,
-        note: buildSmartCaptureNote(),
+        note: captureNote,
         create_action_item: Boolean(entryData.needs_action),
         action_type: entryData.needs_action ? entryData.action_type : 'none',
         project_id: selectedProject
       }); // diary-command-centre-ux-v1
 
+      setLastCaptureResult(savedCaptureResult);
       localStorage.setItem('lld_last_project_id', selectedProject);
       clearDiaryDraft('quick_entry');
-      setDraftStatus('Diary entry saved');
-      toast.success('Entry captured');
+      setDraftStatus('Diary entry saved - choose next action');
+      toast.success('Entry captured. Choose the next action below.');
+
 
       // Reset form
       setEntryData({
@@ -2538,6 +2641,81 @@ const DiaryPage = () => {
         </DialogContent>
       </Dialog>
 
+      {lastCaptureResult && (
+        <Card className="ops-card border-primary/50 bg-primary/5" data-testid="diary-last-capture-panel-v4" data-commercial-readiness="diary-nav-post-capture-v4">
+          <CardContent className="space-y-3 py-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <p className="font-heading text-[11px] font-black uppercase tracking-[0.2em] text-primary">Saved - next action</p>
+                <h3 className="mt-1 font-heading text-lg font-black uppercase tracking-[0.1em] text-foreground">
+                  Capture saved to diary
+                </h3>
+                <p className="mt-2 max-h-16 overflow-hidden text-sm font-semibold text-muted-foreground">
+                  {lastCaptureResult.note}
+                </p>
+                <p className="mt-2 text-xs font-bold text-muted-foreground">
+                  {diaryViewLabels[getCaptureDiaryView(lastCaptureResult)] || 'Diary'} view | {lastCaptureResult.needs_action ? `Action: ${lastCaptureResult.action_type}` : 'No action required'}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:min-w-[420px]">
+                <Button type="button" size="sm" onClick={() => openDiaryView(getCaptureDiaryView(lastCaptureResult))} data-testid="diary-last-capture-view-record-v4">
+                  View Diary Record
+                </Button>
+                {lastCaptureResult.needs_action && (
+                  <Button type="button" size="sm" variant="outline" onClick={() => openActionItemsPage('today')} data-testid="diary-last-capture-action-items-v4">
+                    Open Action Items
+                  </Button>
+                )}
+                {String(lastCaptureResult.action_type || '').toLowerCase().includes('email') && (
+                  <Button type="button" size="sm" variant="outline" onClick={() => openQuickCaptureEmailDraft(lastCaptureResult)} data-testid="diary-last-capture-email-v4">
+                    <Send className="mr-2 h-4 w-4" />
+                    Open Email Draft
+                  </Button>
+                )}
+                {String(lastCaptureResult.action_type || '').toLowerCase().includes('formal') && (
+                  <Button type="button" size="sm" variant="outline" onClick={() => setShowIssueRecorder(true)} data-testid="diary-last-capture-formal-issue-v4">
+                    Record Formal Issue
+                  </Button>
+                )}
+                {String(lastCaptureResult.entry_type || '').toLowerCase().includes('issue') && (
+                  <Button type="button" size="sm" variant="outline" onClick={openRoadblockCreateFlow} data-testid="diary-last-capture-roadblock-v4">
+                    Add Roadblock
+                  </Button>
+                )}
+                <Button type="button" size="sm" variant="ghost" onClick={() => setLastCaptureResult(null)} data-testid="diary-last-capture-dismiss-v4">
+                  Dismiss
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="ops-card border-border/80 bg-card/95" data-testid="diary-active-view-panel-v4" data-commercial-readiness="diary-nav-post-capture-v4">
+        <CardContent className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="font-heading text-[11px] font-black uppercase tracking-[0.18em] text-primary">Current diary view</p>
+            <p className="mt-1 text-sm font-black text-foreground">
+              {diaryViewLabels[activeDiaryView] || 'Overview'}
+            </p>
+            <p className="mt-1 text-xs font-semibold text-muted-foreground">
+              Board cards now open the relevant page or diary view instead of leaving you hunting through the day.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center">
+            <Button type="button" size="sm" variant="outline" onClick={() => openActionItemsPage('today')} data-testid="diary-view-action-items-v4">
+              Action Items
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={openRoadblocksPage} data-testid="diary-view-roadblocks-v4">
+              Roadblocks
+            </Button>
+            <Button type="button" size="sm" onClick={() => openDiaryView('overview')} data-testid="diary-view-overview-v4">
+              Overview
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Diary Command Strip / Clickable Checklist - diary-command-header-tabs-v2 */}
       <Card className="ops-card" data-testid="daily-report-readiness">
         <CardContent className="space-y-3 py-3" data-testid="diary-mobile-compression-v5">
@@ -2545,7 +2723,7 @@ const DiaryPage = () => {
               <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary">Today’s Diary Board</p>
-                  <p className="mt-1 text-xs font-semibold text-muted-foreground">Tap cards to jump.</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">Tap cards to open the right page or view.</p>
                 </div>
                 <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] ${
                   labourRows.length > 0 && walkaroundEntriesCount > 0
@@ -2557,25 +2735,25 @@ const DiaryPage = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4" data-testid="diary-status-summary-grid-v1">
-                <button type="button" onClick={() => { setStaffSectionExpanded(true); openDiarySection('diary-staff-section'); }} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
+                <button type="button" onClick={() => { setStaffSectionExpanded(true); openDiaryView('staff'); }} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Staff</span>
                   <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">{labourRows.length}</span>
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">{labourRows.length > 0 ? `${labourTotalHours.toFixed(2)}h checked` : 'Missing'}</span>
                 </button>
 
-                <button type="button" onClick={() => openDiarySection('diary-due-today-section')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
+                <button type="button" onClick={() => openActionItemsPage('today')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Follow-ups</span>
                   <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">{dueTodayItems.length}</span>
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">Open / carry forward</span>
                 </button>
 
-                <button type="button" onClick={() => openDiarySection('diary-work-section')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
+                <button type="button" onClick={() => openDiaryView('site-notes')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Site notes</span>
                   <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">{walkaroundEntriesCount}</span>
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">{walkaroundEntriesCount > 0 ? 'Recorded' : 'Missing'}</span>
                 </button>
 
-                <button type="button" onClick={() => openDiarySection('diary-resources-section', activeResourceTab || 'materials')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
+                <button type="button" onClick={() => openDiaryView('resources', activeResourceTab || 'materials')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Resources</span>
                   <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">M/P</span>
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">Materials / plant</span>
@@ -2637,7 +2815,7 @@ const DiaryPage = () => {
           <div className="grid grid-cols-2 gap-2 md:grid-cols-5" data-testid="diary-attention-strip-v2" data-commercial-readiness="diary-lower-mobile-clutter-polish-v2 diary-attention-strip-compact-polish-v1">
             <button
               type="button"
-              onClick={() => openDiarySection('diary-overdue-followups')}
+              onClick={() => openActionItemsPage('blocked')}
               className="rounded-xl border border-red-400/40 bg-red-500/10 px-2.5 py-1.5 text-left transition hover:bg-red-500/15"
               data-testid="diary-command-overdue"
             >
@@ -2646,7 +2824,7 @@ const DiaryPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => openDiarySection('diary-due-today-section')}
+              onClick={() => openActionItemsPage('today')}
               className="rounded-xl border border-orange-400/35 bg-orange-500/10 px-2.5 py-1.5 text-left transition hover:bg-orange-500/15"
               data-testid="diary-command-due-today"
             >
@@ -2664,16 +2842,16 @@ const DiaryPage = () => {
             </button>
             <button
               type="button"
-              onClick={openRoadblockCreateFlow}
+              onClick={openRoadblocksPage}
               className="rounded-xl border border-red-500/35 bg-secondary/30 px-2.5 py-1.5 text-left transition hover:bg-secondary/45"
-              data-testid="diary-command-roadblocks-create"
+              data-testid="diary-command-roadblocks-open"
             >
               <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-red-400">Roadblocks</span>
               <span className="block text-lg font-black sm:text-xl">{diary?.summary?.blocked_gates || 0}</span>
             </button>
             <button
               type="button"
-              onClick={() => openDiarySection('diary-queries-section')}
+              onClick={() => openDiaryView('rfis')}
               className="rounded-xl border border-sky-400/35 bg-sky-500/10 px-2.5 py-1.5 text-left transition hover:bg-sky-500/15"
               data-testid="diary-command-queries-rfis"
             >
