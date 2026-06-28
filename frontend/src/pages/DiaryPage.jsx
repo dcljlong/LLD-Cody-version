@@ -722,15 +722,16 @@ const DiaryPage = () => {
   };
   const [entryData, setEntryData] = useState({
     note: '',
-    entry_type: 'note', // diary-command-centre-ux-v1
+    entry_type: 'general_note', // diary-quick-walkaround-v1
     needs_action: false,
-    action_type: 'todo',
+    action_type: 'none',
     priority: 'medium',
     owner: 'Me',
     due_date: tomorrow,
     gate_id: '',
     photos: [],
-    create_action_item: false
+    create_action_item: false,
+    send_to: 'none'
   });
 
   const createEmptyIssueRecorderData = () => ({
@@ -1433,6 +1434,7 @@ const DiaryPage = () => {
     return new URLSearchParams(window.location.search).get('view') || 'overview';
   });
   const [lastCaptureResult, setLastCaptureResult] = useState(null);
+  const [quickWalkaroundItems, setQuickWalkaroundItems] = useState([]); // diary-quick-walkaround-v1
 
   const diaryViewLabels = {
     overview: 'Overview',
@@ -1727,13 +1729,18 @@ const DiaryPage = () => {
 
     setSubmitting(true);
     try {
+      const sendTo = entryData.send_to || 'none';
+      const derivedActionType = getSmartCaptureActionType(entryData.entry_type, sendTo);
+      const needsAction = derivedActionType !== 'none';
+      const sortedBuckets = getWorkThroughBuckets(entryData.entry_type, sendTo, entryData.priority);
       const captureNote = buildSmartCaptureNote();
       const savedCaptureResult = {
         note: captureNote,
         raw_note: entryData.note,
         entry_type: entryData.entry_type,
-        needs_action: Boolean(entryData.needs_action),
-        action_type: entryData.needs_action ? entryData.action_type : 'none',
+        needs_action: needsAction,
+        action_type: derivedActionType,
+        send_to: sendTo,
         priority: entryData.priority || 'medium',
         owner: entryData.owner || 'Me',
         due_date: entryData.due_date,
@@ -1742,16 +1749,18 @@ const DiaryPage = () => {
         job_number: currentProject?.job_number || '',
         saved_at: new Date().toISOString(),
         has_photos: Array.isArray(entryData.photos) && entryData.photos.length > 0,
-      }; // diary-nav-post-capture-v4
+        work_through_buckets: sortedBuckets,
+      }; // diary-quick-walkaround-v1
 
       await walkaroundApi.create({
         ...entryData,
         note: captureNote,
-        create_action_item: Boolean(entryData.needs_action),
-        action_type: entryData.needs_action ? entryData.action_type : 'none',
+        create_action_item: needsAction,
+        action_type: derivedActionType,
         project_id: selectedProject
-      }); // diary-command-centre-ux-v1
+      }); // diary-command-centre-ux-v1 diary-quick-walkaround-v1
 
+      setQuickWalkaroundItems((prev) => [savedCaptureResult, ...prev].slice(0, 12));
       setLastCaptureResult(savedCaptureResult);
       localStorage.setItem('lld_last_project_id', selectedProject);
       clearDiaryDraft('quick_entry');
@@ -1762,15 +1771,16 @@ const DiaryPage = () => {
       // Reset form
       setEntryData({
         note: '',
-        entry_type: 'note', // diary-command-centre-ux-v1
+        entry_type: 'general_note', // diary-quick-walkaround-v1
         needs_action: false,
-        action_type: 'todo',
+        action_type: 'none',
         priority: 'medium',
         owner: 'Me',
         due_date: tomorrow,
         gate_id: '',
         photos: [],
-        create_action_item: false
+        create_action_item: false,
+        send_to: 'none'
       });
 
       // Refresh diary
@@ -1794,30 +1804,76 @@ const DiaryPage = () => {
   const ownerOptions = ['Me', 'Site', 'MC', 'Subbies', 'Client'];
 
   const smartCaptureOptions = [
-      { value: 'progress', label: 'Progress', hint: 'Work completed or progress made' },
-      { value: 'resource', label: 'Resource', hint: 'Labour, material, plant, delivery' },
-      { value: 'issue', label: 'Issue', hint: 'Delay, access, RFI, defect, safety' },
-      { value: 'instruction', label: 'Instruction', hint: 'Direction, change, verbal instruction' },
-      { value: 'note', label: 'Note', hint: 'General site observation' }
-    ]; // diary-command-centre-ux-v1
-  
-    const actionOutcomeOptions = [
-      { value: 'todo', label: 'To Do', hint: 'Internal task' },
-      { value: 'followup', label: 'Follow-up', hint: 'Carry forward until closed' },
-      { value: 'email', label: 'Email Required', hint: 'Prepare communication' },
-      { value: 'formal', label: 'Formal Issue', hint: 'Evidence record / notice' }
-    ]; // diary-command-centre-ux-v1
-  
-    const shouldShowSmartCaptureActionFields = Boolean(entryData.needs_action);
-    const selectedSmartCaptureOption = smartCaptureOptions.find((option) => option.value === entryData.entry_type) || smartCaptureOptions[smartCaptureOptions.length - 1];
-    const selectedActionOutcomeOption = actionOutcomeOptions.find((option) => option.value === entryData.action_type) || actionOutcomeOptions[0];
-  
-    const buildSmartCaptureNote = () => [
-      `CAPTURE SITE ACTIVITY - ${selectedSmartCaptureOption.label}`,
-      `ACTION REQUIRED - ${entryData.needs_action ? selectedActionOutcomeOption.label : 'No'}`,
-      '',
-      String(entryData.note || '').trim()
-    ].join('\n'); // diary-command-centre-ux-v1
+    { value: 'progress', label: 'Progress', hint: 'Work done or progress made' },
+    { value: 'labour', label: 'Labour', hint: 'Who is on site / crew numbers' },
+    { value: 'materials_plant', label: 'Materials / Plant', hint: 'Materials, plant, deliveries, requests' },
+    { value: 'question_rfi', label: 'Question / RFI', hint: 'Answer, design info, or formal RFI needed' },
+    { value: 'issue_defect', label: 'Issue / Defect', hint: 'Quality issue, damage, rework, defect' },
+    { value: 'clash_holdup', label: 'Clash / Hold Up', hint: 'Trade clash, blocked area, delay' },
+    { value: 'health_safety', label: 'H&S', hint: 'Hazard, access, housekeeping, safety' },
+    { value: 'staff_message', label: 'Staff Message', hint: 'Information or instruction for staff' },
+    { value: 'general_note', label: 'General Note', hint: 'Diary evidence only' }
+  ]; // diary-quick-walkaround-v1
+
+  const sendToOptions = [
+    { value: 'none', label: 'No' },
+    { value: 'staff', label: 'Staff' },
+    { value: 'builder', label: 'Builder' },
+    { value: 'client', label: 'Client' },
+    { value: 'architect', label: 'Architect' },
+    { value: 'supplier', label: 'Supplier' },
+    { value: 'subbie', label: 'Subbie' },
+    { value: 'email_draft', label: 'Email Draft' }
+  ]; // diary-quick-walkaround-v1
+
+  const actionOutcomeOptions = [
+    { value: 'none', label: 'Diary Only' },
+    { value: 'todo', label: 'To Do' },
+    { value: 'followup', label: 'Follow Up' },
+    { value: 'email', label: 'Needs Sending' },
+    { value: 'formal', label: 'Formal Issue' }
+  ]; // diary-quick-walkaround-v1
+
+  const getSmartCaptureActionType = (category, sendTo = 'none') => {
+    if (sendTo && sendTo !== 'none') return 'email';
+    if (category === 'materials_plant') return 'todo';
+    if (category === 'question_rfi') return 'followup';
+    if (category === 'issue_defect') return 'followup';
+    if (category === 'clash_holdup') return 'followup';
+    if (category === 'health_safety') return 'formal';
+    if (category === 'staff_message') return 'todo';
+    return 'none';
+  }; // diary-quick-walkaround-v1
+
+  const getWorkThroughBuckets = (category, sendTo = 'none', priority = 'medium') => {
+    const buckets = [];
+    if (priority === 'urgent' || priority === 'high') buckets.push('High Priority');
+    if (sendTo && sendTo !== 'none') buckets.push('Needs Sending');
+    if (category === 'question_rfi') buckets.push('Questions / RFIs');
+    if (category === 'clash_holdup') buckets.push('Roadblocks / Hold Ups');
+    if (category === 'materials_plant') buckets.push('Materials / Plant');
+    if (category === 'health_safety') buckets.push('H&S');
+    if (category === 'staff_message') buckets.push('To Do / Follow Up');
+    if (buckets.length === 0) buckets.push('Diary Only');
+    return buckets;
+  }; // diary-quick-walkaround-v1
+
+  const selectedSmartCaptureOption = smartCaptureOptions.find((option) => option.value === entryData.entry_type) || smartCaptureOptions[smartCaptureOptions.length - 1];
+  const selectedSendToOption = sendToOptions.find((option) => option.value === (entryData.send_to || 'none')) || sendToOptions[0];
+  const selectedPriorityOption = priorityOptions.find((option) => option.value === entryData.priority) || priorityOptions[1];
+  const derivedSmartActionType = getSmartCaptureActionType(entryData.entry_type, entryData.send_to || 'none');
+  const selectedActionOutcomeOption = actionOutcomeOptions.find((option) => option.value === derivedSmartActionType) || actionOutcomeOptions[0];
+  const workThroughBuckets = getWorkThroughBuckets(entryData.entry_type, entryData.send_to || 'none', entryData.priority);
+
+  const buildSmartCaptureNote = () => [
+    `WALKAROUND CAPTURE - ${selectedSmartCaptureOption.label}`,
+    `PRIORITY - ${selectedPriorityOption.label || entryData.priority}`,
+    `NEEDS SENDING - ${selectedSendToOption.label}`,
+    `ACTION - ${selectedActionOutcomeOption.label}`,
+    `SORT TO - ${workThroughBuckets.join(' | ')}`,
+    '',
+    String(entryData.note || '').trim()
+  ].filter(Boolean).join('\n'); // diary-quick-walkaround-v1
 
   const issueTypeOptions = [
     { value: 'delay', label: 'Delay / Roadblock' },
@@ -2132,258 +2188,136 @@ const DiaryPage = () => {
             </div>
           </CardHeader>
 
-          <CardContent className="py-4">
-            <form onSubmit={handleQuickEntry} className="space-y-4">
-              <div className="rounded-2xl border border-primary/25 bg-background/95 p-3 shadow-sm" data-testid="capture-site-record-step">
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground">1</span>
-                  <div>
-                    <p className="font-heading text-sm font-black uppercase tracking-[0.14em] text-foreground">Record</p>
-                    <p className="text-xs font-semibold text-muted-foreground">What do you need to record?</p>
-                  </div>
-                </div>
+          <CardContent className="py-3" data-testid="quick-walkaround-capture-v1" data-commercial-readiness="diary-quick-walkaround-v1">
+            <form onSubmit={handleQuickEntry} className="space-y-3">
+              <div className="rounded-2xl border border-primary/25 bg-background/95 p-3 shadow-sm">
+                <Label className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-primary">
+                  Quick walkaround note
+                </Label>
                 <Textarea
                   ref={noteInputRef}
-                  placeholder="Add progress, resources, issues, instructions, notes, or photo context..."
+                  placeholder="Type what you noticed... to do, who's on site, question, material request, clash, hold up, H&S, staff message..."
                   value={entryData.note}
                   onChange={(e) => setEntryData(prev => ({ ...prev, note: e.target.value }))}
-                  className="min-h-[120px] border-primary/30 bg-background text-base shadow-inner focus-visible:ring-primary/40"
-                  data-testid="quick-entry-note"
+                  className="min-h-[104px] border-primary/30 bg-background text-base shadow-inner focus-visible:ring-primary/40"
+                  data-testid="quick-walkaround-note"
                 />
               </div>
 
-              <div className="rounded-2xl border border-border/80 bg-secondary/20 p-3" data-testid="smart-capture-category-panel" data-commercial-readiness="diary-smart-capture-board-v1 diary-command-centre-ux-v1">
-                <div className="mb-3 flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-2">
-                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-black text-primary">2</span>
-                    <div>
-                      <p className="font-heading text-sm font-black uppercase tracking-[0.14em] text-foreground">Classify</p>
-                      <p className="mt-1 text-xs font-semibold text-muted-foreground">What is this? Pick the simplest bucket.</p>
-                    </div>
-                  </div>
-                  <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-primary">
-                    {selectedSmartCaptureOption.label}
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
-                  {smartCaptureOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setEntryData((prev) => ({
-                        ...prev,
-                        entry_type: option.value
-                      }))}
-                      className={`min-h-[76px] rounded-xl border px-2.5 py-1.5 text-left transition ${entryData.entry_type === option.value ? 'border-primary bg-primary text-primary-foreground shadow-md' : 'border-border bg-background/80 hover:border-primary/60 hover:bg-primary/10'}`}
-                      data-testid={`smart-capture-category-${option.value}`}
-                    >
-                      <span className="block text-sm font-black">{option.label}</span>
-                      <span className="mt-1 block text-[11px] font-semibold opacity-80">{option.hint}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-border/80 bg-background/80 p-3" data-testid="capture-site-action-panel" data-commercial-readiness="diary-command-centre-ux-v1">
-                <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex items-start gap-2">
-                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-black text-primary">3</span>
-                    <div>
-                      <p className="font-heading text-sm font-black uppercase tracking-[0.14em] text-foreground">Action required?</p>
-                      <p className="mt-1 text-xs font-semibold text-muted-foreground">Most entries are diary only. Turn this on only when somebody needs to do something.</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setEntryData((prev) => ({ ...prev, needs_action: false, create_action_item: false }))}
-                      className={`rounded-lg border px-4 py-2 text-xs font-black uppercase tracking-[0.08em] transition ${!entryData.needs_action ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-secondary/30 hover:border-primary/60'}`}
-                      data-testid="capture-site-action-no"
-                    >
-                      No
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEntryData((prev) => ({ ...prev, needs_action: true, create_action_item: true }))}
-                      className={`rounded-lg border px-4 py-2 text-xs font-black uppercase tracking-[0.08em] transition ${entryData.needs_action ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-secondary/30 hover:border-primary/60'}`}
-                      data-testid="capture-site-action-yes"
-                    >
-                      Yes
-                    </button>
-                  </div>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-4" data-testid="quick-walkaround-fields-v1">
+                <div>
+                  <Label className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.12em] text-muted-foreground">Category</Label>
+                  <Select value={entryData.entry_type} onValueChange={(val) => setEntryData(prev => ({ ...prev, entry_type: val }))}>
+                    <SelectTrigger className="h-11 border-primary/25" data-testid="quick-walkaround-category-select">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {smartCaptureOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {entryData.needs_action && (
-                  <div className="space-y-3 rounded-xl border border-primary/25 bg-primary/5 p-3" data-testid="capture-site-action-details">
-                    <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-[0.14em] text-primary">Action type</p>
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-4" data-testid="capture-site-action-outcomes">
-                        {actionOutcomeOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => setEntryData((prev) => ({ ...prev, action_type: option.value, create_action_item: true }))}
-                            className={`rounded-xl border px-2.5 py-1.5 text-left transition ${entryData.action_type === option.value ? 'border-primary bg-primary text-primary-foreground shadow-sm' : 'border-border bg-background hover:border-primary/60 hover:bg-primary/10'}`}
-                            data-testid={`capture-site-action-${option.value}`}
-                          >
-                            <span className="block text-sm font-black">{option.label}</span>
-                            <span className="mt-0.5 block text-[11px] font-semibold opacity-80">{option.hint}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="smart-capture-action-fields">
-                      <div>
-                        <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground mb-1.5 block">Priority</Label>
-                        <div className="flex flex-wrap gap-1">
-                          {priorityOptions.map(p => (
-                            <button
-                              key={p.value}
-                              type="button"
-                              onClick={() => setEntryData(prev => ({ ...prev, priority: p.value }))}
-                              className={`px-2 py-1.5 text-xs font-medium rounded border transition-all ${entryData.priority === p.value ? `${p.color} text-white border-transparent` : 'border-border bg-secondary/40 hover:border-primary'}`}
-                            >
-                              {p.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground mb-1.5 block">Owner</Label>
-                        <div className="flex flex-wrap gap-1">
-                          {ownerOptions.map(o => (
-                            <button
-                              key={o}
-                              type="button"
-                              onClick={() => setEntryData(prev => ({ ...prev, owner: o }))}
-                              className={`px-2 py-1.5 text-xs font-medium rounded border transition-all ${entryData.owner === o ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-secondary/40 hover:border-primary'}`}
-                            >
-                              {o}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground mb-1.5 block">Due Date</Label>
-                        <Input
-                          type="date"
-                          value={entryData.due_date}
-                          onChange={(e) => setEntryData(prev => ({ ...prev, due_date: e.target.value }))}
-                          className="h-10 border-primary/25 text-sm"
-                        />
-                      </div>
-
-                      {gates.length > 0 && (
-                        <div>
-                          <Label className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground mb-1.5 block">Related Roadblock / Concern</Label>
-                          <Select
-                            value={entryData.gate_id}
-                            onValueChange={(val) => setEntryData(prev => ({ ...prev, gate_id: val === '__none__' ? '' : val }))}
-                          >
-                            <SelectTrigger className="h-10 border-primary/25 text-sm">
-                              <SelectValue placeholder="Optional" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">None</SelectItem>
-                              {gates.map(g => (
-                                <SelectItem key={g.id} value={g.id}>
-                                  {g.order ? `${g.order}. ` : ''}{g.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-2xl border border-border/80 bg-secondary/15 p-3" data-testid="smart-capture-save-row" data-commercial-readiness="diary-smart-capture-board-v1 diary-command-centre-ux-v1">
-                <div className="mb-3 flex items-start gap-2">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-black text-primary">4</span>
-                  <div>
-                    <p className="font-heading text-sm font-black uppercase tracking-[0.14em] text-foreground">Add to diary</p>
-                    <p className="mt-1 text-xs font-semibold text-muted-foreground">Attach photos if needed, then save the record.</p>
-                  </div>
+                <div>
+                  <Label className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.12em] text-muted-foreground">Priority</Label>
+                  <Select value={entryData.priority} onValueChange={(val) => setEntryData(prev => ({ ...prev, priority: val }))}>
+                    <SelectTrigger className="h-11 border-primary/25" data-testid="quick-walkaround-priority-select">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {priorityOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handlePhotoUpload}
-                      accept="image/*"
-                      capture="environment"
-                      multiple
-                      className="hidden"
-                      data-testid="quick-entry-take-photo-input"
-                    />
-                    <input
-                      type="file"
-                      ref={quickUploadInputRef}
-                      onChange={handlePhotoUpload}
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      data-testid="quick-entry-upload-photo-input"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="h-10 px-3 border border-dashed border-primary/40 rounded-md flex items-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-                      data-testid="quick-entry-take-photo"
-                      data-commercial-readiness="photo-take-upload-choice-v1"
-                    >
-                      <Camera className="w-4 h-4" />
-                      <span className="text-sm">Take Photo</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => quickUploadInputRef.current?.click()}
-                      className="h-10 px-3 border border-dashed border-primary/40 rounded-md flex items-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-                      data-testid="quick-entry-upload-photo"
-                      data-commercial-readiness="photo-take-upload-choice-v1"
-                    >
-                      <Package className="w-4 h-4" />
-                      <span className="text-sm">Upload Photo</span>
-                    </button>
+                <div>
+                  <Label className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.12em] text-muted-foreground">Needs Sending</Label>
+                  <Select value={entryData.send_to || 'none'} onValueChange={(val) => setEntryData(prev => ({ ...prev, send_to: val }))}>
+                    <SelectTrigger className="h-11 border-primary/25" data-testid="quick-walkaround-send-to-select">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sendToOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                    {entryData.photos.map((photo, i) => (
-                      <div key={i} className="relative group">
-                        <img src={photo} alt={`Upload ${i + 1}`} className="w-10 h-10 object-cover rounded" />
-                        <button
-                          type="button"
-                          onClick={() => removePhoto(i)}
-                          className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center text-xs"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-
-                    {entryData.needs_action && (
-                      <div className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-sm font-black text-primary" data-testid="capture-site-action-tracked">
-                        Action: {selectedActionOutcomeOption.label}
-                      </div>
-                    )}
-                  </div>
-
-                  <Button type="submit" className="w-full sm:w-auto" disabled={submitting || !entryData.note.trim()} data-testid="smart-capture-save-entry">
-                    {submitting ? 'Saving...' : (
+                <div className="flex items-end">
+                  <Button type="submit" className="h-11 w-full font-black" disabled={submitting || !entryData.note.trim()} data-testid="quick-walkaround-add-item">
+                    {submitting ? 'Adding...' : (
                       <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Add to Diary
+                        <Send className="mr-2 h-4 w-4" />
+                        Add Item
                       </>
                     )}
                   </Button>
                 </div>
               </div>
+
+              <div className="rounded-2xl border border-border/70 bg-secondary/20 p-3" data-testid="things-to-work-through-v1" data-commercial-readiness="diary-quick-walkaround-v1">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="font-heading text-[11px] font-black uppercase tracking-[0.16em] text-primary">Will sort into</p>
+                    <p className="mt-1 text-sm font-black text-foreground">{workThroughBuckets.join(' | ')}</p>
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                      Action: {selectedActionOutcomeOption.label} | Send: {selectedSendToOption.label}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} accept="image/*" capture="environment" multiple className="hidden" data-testid="quick-entry-take-photo-input" />
+                    <input type="file" ref={quickUploadInputRef} onChange={handlePhotoUpload} accept="image/*" multiple className="hidden" data-testid="quick-entry-upload-photo-input" />
+                    <button type="button" onClick={() => fileInputRef.current?.click()} className="h-10 rounded-md border border-dashed border-primary/40 px-3 text-xs font-black uppercase tracking-[0.08em] text-primary transition hover:bg-primary/10" data-testid="quick-entry-take-photo">
+                      Take Photo
+                    </button>
+                    <button type="button" onClick={() => quickUploadInputRef.current?.click()} className="h-10 rounded-md border border-dashed border-primary/40 px-3 text-xs font-black uppercase tracking-[0.08em] text-primary transition hover:bg-primary/10" data-testid="quick-entry-upload-photo">
+                      Upload
+                    </button>
+                    {entryData.photos.length > 0 && (
+                      <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-black text-primary">
+                        {entryData.photos.length} photo{entryData.photos.length === 1 ? '' : 's'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </form>
+
+            {quickWalkaroundItems.length > 0 && (
+              <div className="mt-3 rounded-2xl border border-primary/25 bg-primary/5 p-3" data-testid="things-to-work-through-list-v1" data-commercial-readiness="diary-quick-walkaround-v1">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="font-heading text-[11px] font-black uppercase tracking-[0.16em] text-primary">Things to work through</p>
+                  <span className="text-xs font-black text-muted-foreground">{quickWalkaroundItems.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {quickWalkaroundItems.map((item, index) => (
+                    <div key={`${item.saved_at}-${index}`} className="rounded-xl border border-border/70 bg-background/90 p-2 text-sm">
+                      <div className="mb-1 flex flex-wrap gap-1">
+                        {(item.work_through_buckets || ['Diary Only']).map((bucket) => (
+                          <span key={bucket} className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-primary">
+                            {bucket}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="font-semibold text-foreground">{item.raw_note || item.note}</p>
+                      <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                        {item.priority || 'medium'} | {item.action_type || 'none'} | Send: {item.send_to || 'none'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
