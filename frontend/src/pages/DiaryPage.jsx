@@ -1941,17 +1941,24 @@ const DiaryPage = () => {
     const rawNote = blankIndex >= 0 ? lines.slice(blankIndex + 1).join('\n').trim() : note;
     const sortTo = getLineValue('SORT TO - ');
     const buckets = sortTo ? sortTo.split('|').map((bucket) => bucket.trim()).filter(Boolean) : ['Diary Only'];
+    const category = getLineValue('WALKAROUND CAPTURE - ') || 'Walkaround Item';
+    const priority = getLineValue('PRIORITY - ') || entry.priority || 'medium';
+    const actionType = getLineValue('ACTION - ') || entry.action_type || 'Diary Only';
+    const sendTo = getLineValue('NEEDS SENDING - ') || entry.send_to || 'No';
 
     return {
       ...entry,
+      title: category,
+      display_title: category,
+      display_note: rawNote || note,
       raw_note: rawNote || note,
       work_through_buckets: buckets.length > 0 ? buckets : ['Diary Only'],
-      priority: String(getLineValue('PRIORITY - ') || entry.priority || 'medium').toLowerCase(),
-      action_type: getLineValue('ACTION - ') || entry.action_type || 'Diary Only',
-      send_to: getLineValue('NEEDS SENDING - ') || entry.send_to || 'No',
+      priority: String(priority).toLowerCase(),
+      action_type: actionType,
+      send_to: sendTo,
       saved_at: entry.created_at || entry.saved_at || entry.date || ''
     };
-  }; // diary-quick-walkaround-persistent-queue-v1
+  }; // diary-quick-walkaround-persistent-queue-v1 diary-walkaround-queue-clean-actionable-v1
 
   const persistentQuickWalkaroundItems = (() => {
     const savedItems = walkaroundEntries.map(parseQuickWalkaroundQueueItem).filter(Boolean);
@@ -2348,10 +2355,19 @@ const DiaryPage = () => {
                           </span>
                         ))}
                       </div>
-                      <p className="font-semibold text-foreground">{item.raw_note || item.note}</p>
+                      <p className="text-[11px] font-black uppercase tracking-[0.12em] text-muted-foreground" data-testid="diary-walkaround-queue-clean-actionable-v1">{item.display_title || item.title || 'Walkaround Item'}</p>
+                      <p className="mt-1 break-words text-sm font-bold leading-5 text-foreground">{item.display_note || item.raw_note || item.note}</p>
                       <p className="mt-1 text-xs font-semibold text-muted-foreground">
                         {item.priority || 'medium'} | {item.action_type || 'none'} | Send: {item.send_to || 'none'}
                       </p>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <Button type="button" size="sm" variant="outline" onClick={() => openActionItemsPage('today')} data-testid="diary-walkaround-queue-open-action-items-v1">
+                          Open Action Items
+                        </Button>
+                        <Button type="button" size="sm" variant="secondary" onClick={() => openDiaryView('overview')} data-testid="diary-walkaround-queue-review-diary-v1">
+                          Review Diary
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -2687,10 +2703,19 @@ const DiaryPage = () => {
                     </span>
                   ))}
                 </div>
-                <p className="font-semibold text-foreground">{item.raw_note || item.note}</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.12em] text-muted-foreground" data-testid="diary-walkaround-queue-clean-actionable-v1">{item.display_title || item.title || 'Walkaround Item'}</p>
+                <p className="mt-1 break-words text-sm font-bold leading-5 text-foreground">{item.display_note || item.raw_note || item.note}</p>
                 <p className="mt-1 text-xs font-semibold text-muted-foreground">
                   {item.priority || 'medium'} | {item.action_type || 'Diary Only'} | Send: {item.send_to || 'No'}
                 </p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Button type="button" size="sm" variant="outline" onClick={() => openActionItemsPage('today')} data-testid="diary-walkaround-queue-open-action-items-v1">
+                    Open Action Items
+                  </Button>
+                  <Button type="button" size="sm" variant="secondary" onClick={() => openDiaryView('overview')} data-testid="diary-walkaround-queue-review-diary-v1">
+                    Review Diary
+                  </Button>
+                </div>
               </div>
             ))}
           </CardContent>
