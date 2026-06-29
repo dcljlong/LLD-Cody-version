@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!static/|favicon.ico|longline-diary-icon-192.png|longline-diary-apple-touch-icon.png|asset-manifest.json|manifest.json).*)",
       "destination": "/index.html"
     }
   ]
