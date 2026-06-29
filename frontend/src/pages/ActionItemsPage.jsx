@@ -94,11 +94,11 @@ const parseQuickWalkaroundDisplay = (item = {}) => {
         .trim();
 
   return {
-    title: category,
-    description: cleanDescription || item.description || item.note || item.details || '',
+    title: cleanDescription || category,
+    description: category,
     meta: [priority, sendTo, action, sortTo].filter(Boolean)
   };
-}; // action-items-quick-walkaround-display-clean-v1
+}; // action-items-quick-walkaround-display-clean-v1 action-items-human-followup-titles-v1
 
 const getActionItemDisplay = (item = {}) => parseQuickWalkaroundDisplay(item); // action-items-quick-walkaround-display-clean-v1
 
@@ -576,7 +576,7 @@ const ActionItemsPage = () => {
     const currentTone = toneClasses[tone] || toneClasses.neutral;
 
     return (
-      <Card className={`ops-card overflow-hidden border ${currentTone.card}`} data-testid={testId}>
+      <Card className={`ops-card overflow-hidden border ${currentTone.card}`} data-testid={testId} data-commercial-readiness="action-items-human-followup-titles-v1">
         <CardHeader className={`ops-card-header flex flex-row items-center justify-between gap-3 border-b px-4 py-4 sm:px-5 ${currentTone.header}`}>
           <CardTitle className={`font-heading text-xl font-black uppercase tracking-[0.14em] flex items-center gap-2 ${currentTone.title}`}>
             {icon}

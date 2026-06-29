@@ -2353,10 +2353,9 @@ const DiaryPage = () => {
                           </span>
                         ))}
                       </div>
-                      <p className="text-[11px] font-black uppercase tracking-[0.12em] text-muted-foreground" data-testid="diary-walkaround-queue-clean-actionable-v1">{item.display_title || item.title || 'Walkaround Item'}</p>
-                      <p className="mt-1 break-words text-sm font-bold leading-5 text-foreground">{item.display_note || item.raw_note || item.note}</p>
+                      <p className="break-words text-sm font-black leading-5 text-foreground" data-testid="diary-human-followup-titles-v1">{item.display_note || item.raw_note || item.note || item.title || 'Walkaround follow-up'}</p>
                       <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                        {item.priority || 'medium'} | {item.action_type || 'none'} | Send: {item.send_to || 'none'}
+                        {item.display_title || item.title || 'Walkaround Item'} | {item.priority || 'medium'} | {item.action_type || 'none'} | Send: {item.send_to || 'none'}
                       </p>
                       <div className="mt-3 grid grid-cols-2 gap-2">
                         <Button type="button" size="sm" variant="outline" onClick={() => openActionItemsPage('today')} data-testid="diary-walkaround-queue-open-action-items-v1">
@@ -2701,10 +2700,9 @@ const DiaryPage = () => {
                     </span>
                   ))}
                 </div>
-                <p className="text-[11px] font-black uppercase tracking-[0.12em] text-muted-foreground" data-testid="diary-walkaround-queue-clean-actionable-v1">{item.display_title || item.title || 'Walkaround Item'}</p>
-                <p className="mt-1 break-words text-sm font-bold leading-5 text-foreground">{item.display_note || item.raw_note || item.note}</p>
+                <p className="break-words text-sm font-black leading-5 text-foreground" data-testid="diary-human-followup-titles-v1">{item.display_note || item.raw_note || item.note || item.title || 'Walkaround follow-up'}</p>
                 <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                  {item.priority || 'medium'} | {item.action_type || 'Diary Only'} | Send: {item.send_to || 'No'}
+                  {item.display_title || item.title || 'Walkaround Item'} | {item.priority || 'medium'} | {item.action_type || 'Diary Only'} | Send: {item.send_to || 'No'}
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <Button type="button" size="sm" variant="outline" onClick={() => openActionItemsPage('today')} data-testid="diary-walkaround-queue-open-action-items-v1">
