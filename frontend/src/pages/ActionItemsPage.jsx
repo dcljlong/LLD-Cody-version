@@ -59,6 +59,48 @@ const PriorityBadge = ({ priority }) => {
 };
 
 const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3, deferred: 4 };
+const parseQuickWalkaroundDisplay = (item = {}) => {
+  const structuredText = String(item.description || item.note || item.details || item.title || '').trim();
+
+  if (!structuredText.includes('WALKAROUND CAPTURE -')) {
+    return {
+      title: item.title || item.task_name || item.name || 'Untitled task',
+      description: item.description || item.note || item.details || '',
+      meta: []
+    };
+  }
+
+  const lines = structuredText.split(/\r?\n/);
+  const getLineValue = (prefix) => {
+    const found = lines.find((line) => String(line || '').startsWith(prefix));
+    return found ? String(found).slice(prefix.length).trim() : '';
+  };
+
+  const category = getLineValue('WALKAROUND CAPTURE - ') || 'Walkaround Item';
+  const priority = getLineValue('PRIORITY - ');
+  const sendTo = getLineValue('NEEDS SENDING - ');
+  const action = getLineValue('ACTION - ');
+  const sortTo = getLineValue('SORT TO - ');
+
+  const blankIndex = lines.findIndex((line, index) => index > 0 && !String(line || '').trim());
+  const cleanDescription = blankIndex >= 0
+    ? lines.slice(blankIndex + 1).join('\n').trim()
+    : structuredText
+        .replace(/^WALKAROUND CAPTURE - .*/m, '')
+        .replace(/^PRIORITY - .*/m, '')
+        .replace(/^NEEDS SENDING - .*/m, '')
+        .replace(/^ACTION - .*/m, '')
+        .replace(/^SORT TO - .*/m, '')
+        .trim();
+
+  return {
+    title: category,
+    description: cleanDescription || item.description || item.note || item.details || '',
+    meta: [priority, sendTo, action, sortTo].filter(Boolean)
+  };
+}; // action-items-quick-walkaround-display-clean-v1
+
+const getActionItemDisplay = (item = {}) => parseQuickWalkaroundDisplay(item); // action-items-quick-walkaround-display-clean-v1
 
 const startOfToday = () => {
   const now = new Date();
@@ -579,15 +621,25 @@ const ActionItemsPage = () => {
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex flex-wrap items-start gap-2">
               <h4 className="w-full min-w-0 break-words text-base font-bold leading-5 text-foreground sm:flex-1 sm:text-lg">
-                {item.title || item.task_name || item.name || 'Untitled task'}
+                {getActionItemDisplay(item).title}
               </h4>
               <PriorityBadge priority={item.priority} />
             </div>
 
-            {item.description && (
-              <p className="mt-1 break-words text-xs leading-5 text-muted-foreground line-clamp-2 sm:text-sm">
-                {item.description || item.note || item.details}
+            {getActionItemDisplay(item).description && (
+              <p className="mt-1 break-words text-xs leading-5 text-muted-foreground line-clamp-2 sm:text-sm" data-testid="action-item-clean-description-v1">
+                {getActionItemDisplay(item).description}
               </p>
+            )}
+
+            {getActionItemDisplay(item).meta.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5" data-testid="action-item-clean-meta-v1">
+                {getActionItemDisplay(item).meta.map((value) => (
+                  <span key={value} className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-primary">
+                    {value}
+                  </span>
+                ))}
+              </div>
             )}
 
             <div className="mt-2 flex flex-wrap gap-2 text-xs">
@@ -694,7 +746,7 @@ const ActionItemsPage = () => {
                 Completed
               </span>
             </div>
-            <h4 className="text-sm font-semibold leading-tight text-foreground line-through sm:text-lg">{item.title || item.task_name || item.name || 'Untitled task'}</h4>
+            <h4 className="text-sm font-semibold leading-tight text-foreground line-through sm:text-lg">{getActionItemDisplay(item).title}</h4>
             {item.completed_at && (
               <p className="mt-2 text-xs text-muted-foreground">
                 Completed {new Date(item.completed_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}
