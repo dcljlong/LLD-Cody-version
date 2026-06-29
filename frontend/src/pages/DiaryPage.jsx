@@ -2109,18 +2109,18 @@ const DiaryPage = () => {
       <div className="empty-state py-20">
         <BookOpen className="empty-state-icon" />
         <p className="empty-state-title">No Projects Yet</p>
-        <p className="empty-state-description">Create a project first to view daily diary.</p>
+        <p className="empty-state-description">Create a project first to view the site diary.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6" data-testid="diary-page">
+    <div className="space-y-4 md:space-y-5" data-testid="diary-page" data-commercial-readiness="diary-natural-look-v1a-header-simple diary-natural-look-v1a-wording-cleanup diary-natural-look-v1b-confirmed-queue-copy diary-natural-look-v1c-safe-cleanup">
       <div className="rounded-2xl border border-border bg-card/95 p-3 shadow-sm sm:p-4" data-testid="diary-command-header-v2">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Daily Diary</p>
-            <h2 className="font-heading text-2xl font-black uppercase tracking-[0.08em] sm:text-3xl" data-testid="daily-heading-polish-v1-marker">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Site diary</p>
+            <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl" data-testid="daily-heading-polish-v1-marker">
               {selectedDateLabel}
             </h2>
             <p className="mt-1 truncate text-sm font-semibold text-muted-foreground">
@@ -2171,7 +2171,7 @@ const DiaryPage = () => {
                 data-commercial-readiness="diary-above-fold-hierarchy-v1"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Capture Site Activity
+                Write today's diary
               </Button>
             )}
             {selectedDate === today && (
@@ -2213,24 +2213,22 @@ const DiaryPage = () => {
         </div>
       </div>
 
-      {/* Capture Site Activity Form - diary-above-fold-hierarchy-v1 */}
+      {/* Write today's diary Form - diary-above-fold-hierarchy-v1 */}
       {showQuickEntry && selectedDate === today && (
-        <Card className="ops-card border-primary/60 bg-gradient-to-br from-background via-background to-primary/5 shadow-lg" data-testid="capture-site-activity-card" data-commercial-readiness="diary-command-centre-ux-v1">
-          <CardHeader className="ops-card-header border-b border-primary/20 bg-primary/10 py-4">
+        <Card className="ops-card border-primary/35 bg-card/95 shadow-sm" data-testid="capture-site-activity-card" data-commercial-readiness="diary-command-centre-ux-v1 diary-natural-look-v1a-header-simple">
+          <CardHeader className="ops-card-header border-b border-border/60 bg-secondary/20 py-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <p className="font-heading text-[11px] font-black uppercase tracking-[0.22em] text-primary">Daily capture</p>
+                <p className="font-heading text-[11px] font-black uppercase tracking-[0.18em] text-primary">Today's record</p>
                 <CardTitle className="mt-1 font-heading text-xl font-black uppercase tracking-[0.12em] text-foreground flex items-center gap-2">
                   <Plus className="w-5 h-5 text-primary" />
-                  Capture Site Activity
+                  Write today's diary
                 </CardTitle>
                 <p className="mt-2 max-w-2xl text-sm font-semibold text-muted-foreground">
-                  Record progress, resources, issues, instructions, notes, or photos from today.
+                  Write what happened on site first. Then add the type, priority, who needs to know, and save it to today's diary.
                 </p>
               </div>
-              <div className="rounded-2xl border border-primary/25 bg-background/80 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-primary">
-                Record → Classify → Action? → Save
-              </div>
+              <div className="rounded-2xl border border-primary/25 bg-background/80 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-primary">Write - classify - save</div>
             </div>
           </CardHeader>
 
@@ -2238,11 +2236,11 @@ const DiaryPage = () => {
             <form onSubmit={handleQuickEntry} className="space-y-3">
               <div className="rounded-2xl border border-primary/25 bg-background/95 p-3 shadow-sm">
                 <Label className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-primary">
-                  Quick walkaround note
+                  What happened on site?
                 </Label>
                 <Textarea
                   ref={noteInputRef}
-                  placeholder="Type what you noticed... to do, who's on site, question, material request, clash, hold up, H&S, staff message..."
+                  placeholder="Example: L5 framing started, steel delivery late, access blocked, check heights with Daniel..."
                   value={entryData.note}
                   onChange={(e) => setEntryData(prev => ({ ...prev, note: e.target.value }))}
                   className="min-h-[104px] border-primary/30 bg-background text-base shadow-inner focus-visible:ring-primary/40"
@@ -2342,7 +2340,7 @@ const DiaryPage = () => {
             {quickWalkaroundItems.length > 0 && (
               <div className="mt-3 rounded-2xl border border-primary/25 bg-primary/5 p-3" data-testid="things-to-work-through-list-v1" data-commercial-readiness="diary-quick-walkaround-v1">
                 <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="font-heading text-[11px] font-black uppercase tracking-[0.16em] text-primary">Things to work through</p>
+                  <p className="font-heading text-[11px] font-black uppercase tracking-[0.16em] text-primary">Follow-up from walkaround</p>
                   <span className="text-xs font-black text-muted-foreground">{quickWalkaroundItems.length}</span>
                 </div>
                 <div className="space-y-2">
@@ -2685,8 +2683,8 @@ const DiaryPage = () => {
           <CardHeader className="py-3">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <p className="font-heading text-[11px] font-black uppercase tracking-[0.16em] text-primary">Things to work through</p>
-                <CardTitle className="mt-1 text-base font-black text-foreground">Saved walkaround queue</CardTitle>
+                <p className="font-heading text-[11px] font-black uppercase tracking-[0.16em] text-primary">Follow-up from walkaround</p>
+                <CardTitle className="mt-1 text-base font-black text-foreground">Walkaround follow-ups</CardTitle>
               </div>
               <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-black text-primary">
                 {persistentQuickWalkaroundItems.length}
@@ -2724,7 +2722,7 @@ const DiaryPage = () => {
       <Card className="ops-card border-border/80 bg-card/95" data-testid="diary-active-view-panel-v4" data-commercial-readiness="diary-nav-post-capture-v4">
         <CardContent className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <p className="font-heading text-[11px] font-black uppercase tracking-[0.18em] text-primary">Current diary view</p>
+            <p className="font-heading text-[11px] font-black uppercase tracking-[0.18em] text-primary">Diary section</p>
             <p className="mt-1 text-sm font-black text-foreground">
               {diaryViewLabels[activeDiaryView] || 'Overview'}
             </p>
@@ -2752,8 +2750,8 @@ const DiaryPage = () => {
             <div className="rounded-2xl border border-primary/30 bg-background/85 p-2 shadow-inner sm:p-3" data-testid="diary-status-summary-v1" data-commercial-readiness="diary-status-summary-v1 diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2">
               <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary">Today’s Diary Board</p>
-                  <p className="mt-1 text-xs font-semibold text-muted-foreground">Tap cards to open the right page or view.</p>
+                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary">Today's site diary</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">A quick check of today's staff, work, notes, follow-ups, and evidence.</p>
                 </div>
                 <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] ${
                   labourRows.length > 0 && walkaroundEntriesCount > 0
@@ -2831,7 +2829,7 @@ const DiaryPage = () => {
                         </div>
                         <div className="mt-1 flex flex-wrap gap-1 text-[10px] font-bold text-muted-foreground">
                           <span>{item.status}</span>
-                          <span>â€¢</span>
+                          <span>|</span>
                           <span className="truncate">{item.programmeLabel}</span>
                         </div>
                       </button>
@@ -2890,12 +2888,12 @@ const DiaryPage = () => {
             </button>
           </div>
 
-                      {/* diary-remove-desktop-review-shortcuts-v2: removed redundant review shortcut clutter. Diary Board and action strip are the release navigation. */}
+                      {/* diary-remove-desktop-review-shortcuts-v2 diary-natural-look-v1c-comment-cleanup: removed redundant review shortcut clutter. Site diary summary and action strip are the release navigation. */}
 
 
           {!hasDiaryContent && (
             <p className="text-xs text-muted-foreground">
-              No reportable activity for this day yet. Add a Capture Site Activity or review another date before issuing a report.
+              No reportable activity for this day yet. Add a diary note or review another date before issuing a report.
             </p>
           )}
         </CardContent>
