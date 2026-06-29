@@ -2629,7 +2629,7 @@ const DiaryPage = () => {
       </Dialog>
 
       {lastCaptureResult && (
-        <Card className="ops-card border-primary/50 bg-primary/5" data-testid="diary-last-capture-panel-v4" data-commercial-readiness="diary-nav-post-capture-v4">
+        <Card className="ops-card border-primary/50 bg-primary/5" data-testid="diary-last-capture-panel-v4" data-commercial-readiness="diary-nav-post-capture-v4 diary-natural-look-v2-nav-copy">
           <CardContent className="space-y-3 py-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
@@ -2719,7 +2719,7 @@ const DiaryPage = () => {
           </CardContent>
         </Card>
       )}
-      <Card className="ops-card border-border/80 bg-card/95" data-testid="diary-active-view-panel-v4" data-commercial-readiness="diary-nav-post-capture-v4">
+      <Card className="ops-card border-border/80 bg-card/95" data-testid="diary-active-view-panel-v4" data-commercial-readiness="diary-nav-post-capture-v4 diary-natural-look-v2-nav-copy">
         <CardContent className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <p className="font-heading text-[11px] font-black uppercase tracking-[0.18em] text-primary">Diary section</p>
@@ -2727,7 +2727,7 @@ const DiaryPage = () => {
               {diaryViewLabels[activeDiaryView] || 'Overview'}
             </p>
             <p className="mt-1 text-xs font-semibold text-muted-foreground">
-              Board cards now open the relevant page or diary view instead of leaving you hunting through the day.
+              Review today's diary sections, follow-ups, issues, staff, notes, and resources.
             </p>
           </div>
           <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center">
