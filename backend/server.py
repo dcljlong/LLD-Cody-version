@@ -1080,13 +1080,33 @@ async def create_walkaround_entry(entry: WalkaroundEntryCreate, current_user: di
     # Optionally create action item
     if entry.create_action_item:
         action_item_id = str(uuid.uuid4())
+
+        action_title = entry.note[:100] + ("..." if len(entry.note) > 100 else "")
+        action_description = entry.note
+        action_raw_note = entry.note
+
+        if "WALKAROUND CAPTURE -" in entry.note:
+            note_lines = entry.note.splitlines()
+
+            def get_capture_line_value(prefix: str) -> str:
+                found = next((line for line in note_lines if str(line or "").startswith(prefix)), "")
+                return str(found)[len(prefix):].strip() if found else ""
+
+            blank_index = next((index for index, line in enumerate(note_lines) if index > 0 and not str(line or "").strip()), -1)
+            clean_note = "\n".join(note_lines[blank_index + 1:]).strip() if blank_index >= 0 else ""
+
+            action_title = get_capture_line_value("WALKAROUND CAPTURE - ") or "Walkaround Item"
+            action_description = clean_note or entry.note
+            action_raw_note = entry.note
+
         action_doc = {
             "id": action_item_id,
             "project_id": entry.project_id,
             "gate_id": entry.gate_id,
             "user_id": current_user["id"],
-            "title": entry.note[:100] + ("..." if len(entry.note) > 100 else ""),
-            "description": entry.note,
+            "title": action_title,
+            "description": action_description,
+            "raw_note": action_raw_note,
             "priority": entry.priority,
             "due_date": entry.due_date,
             "expected_complete_date": entry.expected_complete_date,
@@ -1096,7 +1116,7 @@ async def create_walkaround_entry(entry: WalkaroundEntryCreate, current_user: di
             "completed_at": None,
             "created_at": now,
             "updated_at": now
-        }
+        }  # quick-walkaround-action-payload-hygiene-v1
         await db.action_items.insert_one(action_doc)
 
     doc = {
