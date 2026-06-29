@@ -1786,7 +1786,7 @@ const DiaryPage = () => {
       // Refresh diary
       fetchDiary();
     fetchLabourRows();
-      setShowQuickEntry(false);
+      setShowQuickEntry(true); // diary-quick-walkaround-persistent-queue-v1
     } catch (error) {
       toast.error('Failed to save entry');
     } finally {
@@ -1926,6 +1926,45 @@ const DiaryPage = () => {
 
   const walkaroundEntries = Array.isArray(diary?.walkaround_entries) ? diary.walkaround_entries : [];
   const walkaroundEntriesCount = walkaroundEntries.length;
+
+  const parseQuickWalkaroundQueueItem = (entry = {}) => {
+    const note = String(entry?.note || '');
+    if (!note.includes('WALKAROUND CAPTURE -')) return null;
+
+    const lines = note.split(/\r?\n/);
+    const getLineValue = (prefix) => {
+      const found = lines.find((line) => String(line || '').startsWith(prefix));
+      return found ? String(found).slice(prefix.length).trim() : '';
+    };
+
+    const blankIndex = lines.findIndex((line, index) => index > 0 && !String(line || '').trim());
+    const rawNote = blankIndex >= 0 ? lines.slice(blankIndex + 1).join('\n').trim() : note;
+    const sortTo = getLineValue('SORT TO - ');
+    const buckets = sortTo ? sortTo.split('|').map((bucket) => bucket.trim()).filter(Boolean) : ['Diary Only'];
+
+    return {
+      ...entry,
+      raw_note: rawNote || note,
+      work_through_buckets: buckets.length > 0 ? buckets : ['Diary Only'],
+      priority: String(getLineValue('PRIORITY - ') || entry.priority || 'medium').toLowerCase(),
+      action_type: getLineValue('ACTION - ') || entry.action_type || 'Diary Only',
+      send_to: getLineValue('NEEDS SENDING - ') || entry.send_to || 'No',
+      saved_at: entry.created_at || entry.saved_at || entry.date || ''
+    };
+  }; // diary-quick-walkaround-persistent-queue-v1
+
+  const persistentQuickWalkaroundItems = (() => {
+    const savedItems = walkaroundEntries.map(parseQuickWalkaroundQueueItem).filter(Boolean);
+    const combined = [...quickWalkaroundItems, ...savedItems];
+    const seen = new Set();
+
+    return combined.filter((item) => {
+      const key = String(item.raw_note || item.note || '').trim().toLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 12);
+  })(); // diary-quick-walkaround-persistent-queue-v1
 
   const sortDiaryPriorityFirst = (items = []) => {
     return [...(Array.isArray(items) ? items : [])].sort((a, b) => {
@@ -2625,6 +2664,38 @@ const DiaryPage = () => {
         </Card>
       )}
 
+      {!showQuickEntry && persistentQuickWalkaroundItems.length > 0 && (
+        <Card className="ops-card border-primary/45 bg-primary/5" data-testid="things-to-work-through-persistent-v1" data-commercial-readiness="diary-quick-walkaround-persistent-queue-v1">
+          <CardHeader className="py-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="font-heading text-[11px] font-black uppercase tracking-[0.16em] text-primary">Things to work through</p>
+                <CardTitle className="mt-1 text-base font-black text-foreground">Saved walkaround queue</CardTitle>
+              </div>
+              <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-black text-primary">
+                {persistentQuickWalkaroundItems.length}
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2 pt-0">
+            {persistentQuickWalkaroundItems.map((item, index) => (
+              <div key={`${item.saved_at || 'queue'}-${index}`} className="rounded-xl border border-border/70 bg-background/90 p-3 text-sm" data-testid="things-to-work-through-persistent-item-v1">
+                <div className="mb-2 flex flex-wrap gap-1">
+                  {(item.work_through_buckets || ['Diary Only']).map((bucket) => (
+                    <span key={bucket} className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-primary">
+                      {bucket}
+                    </span>
+                  ))}
+                </div>
+                <p className="font-semibold text-foreground">{item.raw_note || item.note}</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                  {item.priority || 'medium'} | {item.action_type || 'Diary Only'} | Send: {item.send_to || 'No'}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
       <Card className="ops-card border-border/80 bg-card/95" data-testid="diary-active-view-panel-v4" data-commercial-readiness="diary-nav-post-capture-v4">
         <CardContent className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
