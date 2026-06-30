@@ -3117,7 +3117,7 @@ const DiaryPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Roadblocks / Critical Site Issues - diary-field-sheet-layout-v1 */}
             <Card id="diary-roadblocks-section" className="ops-card" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
+              <CardHeader className="ops-card-header border-b border-red-500/25 border-l-4 border-l-red-500 bg-red-500/10 px-3 py-3 shadow-sm" data-commercial-readiness="diary-heading-hierarchy-v4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-red-500" data-commercial-readiness="diary-heading-hierarchy-v3">
@@ -3171,7 +3171,7 @@ const DiaryPage = () => {
 
             {/* Overdue Follow-ups - moved into critical hierarchy - diary-critical-hierarchy-staff-compact-v1 */}
             <Card id="diary-overdue-followups" className="ops-card" data-testid="diary-overdue-top-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
+              <CardHeader className="ops-card-header border-b border-red-400/25 border-l-4 border-l-red-400 bg-red-500/10 px-3 py-3 shadow-sm" data-commercial-readiness="diary-heading-hierarchy-v4">
                 <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-red-400" data-commercial-readiness="diary-heading-hierarchy-v3">
                   <Target className="w-4 h-4" />
                   Overdue Follow-ups ({diary.overdue_items?.length || 0})
@@ -3211,7 +3211,7 @@ const DiaryPage = () => {
 
             {/* Follow-ups / Carry Forward - diary-carry-forward-ui-clarity-v2 */}
             <Card id="diary-due-today-section" className="ops-card" data-testid="diary-due-today-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
+              <CardHeader className="ops-card-header border-b border-orange-500/25 border-l-4 border-l-orange-500 bg-orange-500/10 px-3 py-3 shadow-sm" data-commercial-readiness="diary-heading-hierarchy-v4">
                 <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-orange-500" data-commercial-readiness="diary-heading-hierarchy-v3">
                   <Target className="w-4 h-4" />
                   Follow-ups / Carry Forward ({dueTodayItems.length})
@@ -3263,7 +3263,7 @@ const DiaryPage = () => {
 
             {/* RFIs - diary-critical-hierarchy-staff-compact-v1 */}
             <Card id="diary-queries-section" className="ops-card" data-testid="diary-queries-rfis-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
+              <CardHeader className="ops-card-header border-b border-sky-500/25 border-l-4 border-l-sky-500 bg-sky-500/10 px-3 py-3 shadow-sm" data-commercial-readiness="diary-heading-hierarchy-v4">
                 <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-sky-500" data-commercial-readiness="diary-heading-hierarchy-v3">
                   <ListTodo className="w-4 h-4" />
                   RFIs (0)
@@ -3279,7 +3279,7 @@ const DiaryPage = () => {
             </Card>
 
             <Card id="diary-staff-section" className="ops-card w-full max-w-full overflow-hidden" data-testid="daily-labour-card" data-commercial-readiness="staff-mobile-overflow-containment-v2 diary-staff-section-wording-polish-v1">
-          <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-2" data-testid="daily-labour-polish-v1-marker">
+          <CardHeader className="ops-card-header border-b border-primary/25 border-l-4 border-l-primary bg-primary/10 px-3 py-3 shadow-sm" data-testid="daily-labour-polish-v1-marker" data-commercial-readiness="diary-heading-hierarchy-v4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight text-foreground" data-commercial-readiness="diary-heading-hierarchy-v3">Staff on Site</CardTitle>
@@ -3581,13 +3581,13 @@ const DiaryPage = () => {
         </Card>
 
         {/* Daily Evidence - Site Notes / Observations - diary-daily-evidence-hierarchy-v2 site-notes-observations-naming-v1 */}
-        <div className="lg:col-span-2 rounded-xl border border-primary/25 bg-primary/10 px-3 py-2.5" data-testid="diary-daily-evidence-divider-v2" data-commercial-readiness="diary-daily-evidence-resources-polish-v1">
+        <div className="lg:col-span-2 rounded-xl border border-primary/35 border-l-4 border-l-primary bg-primary/12 px-3 py-3 shadow-sm" data-testid="diary-daily-evidence-divider-v2" data-commercial-readiness="diary-heading-hierarchy-v4 diary-daily-evidence-resources-polish-v1">
           <p className="font-heading text-sm font-black leading-tight tracking-tight text-primary" data-commercial-readiness="diary-heading-hierarchy-v3">Today's records</p>
           <p className="mt-1 text-xs font-semibold text-muted-foreground">Site notes, resources, photos, and supporting records.</p>
         </div>
 
             <Card id="diary-work-section" className="ops-card lg:col-span-2 border-primary/35" data-testid="diary-walkaround-notes-section" data-commercial-readiness="diary-walkaround-safe-array-wording-v2">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
+              <CardHeader className="ops-card-header border-b border-primary/25 border-l-4 border-l-primary bg-primary/10 px-3 py-3 shadow-sm" data-commercial-readiness="diary-heading-hierarchy-v4">
                 <CardTitle className="font-heading text-[18px] font-black leading-tight tracking-tight flex items-center gap-2 text-foreground" data-commercial-readiness="diary-heading-hierarchy-v3">
                   <FileText className="w-4 h-4" />
                   Site Notes / Observations ({walkaroundEntriesCount})
@@ -3636,7 +3636,7 @@ const DiaryPage = () => {
 
         {/* Site Resources */}
             <Card id="diary-resources-section" className="ops-card lg:col-span-2" data-testid="daily-site-resources-card" data-commercial-readiness="diary-daily-evidence-resources-polish-v1">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
+              <CardHeader className="ops-card-header border-b border-primary/25 border-l-4 border-l-primary bg-primary/10 px-3 py-3 shadow-sm" data-commercial-readiness="diary-heading-hierarchy-v4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
                     <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-foreground" data-commercial-readiness="diary-heading-hierarchy-v3">
@@ -3826,7 +3826,7 @@ const DiaryPage = () => {
 
             {/* diary-remove-duplicate-followups-v1: duplicate lower open follow-up card removed; completed section renamed to Closed Out Today */}            {/* Closed Out Today */}
             <Card id="diary-action-completed-section" className="ops-card" data-testid="diary-closed-out-today-section" data-commercial-readiness="diary-closed-out-section-polish-v1">
-              <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
+              <CardHeader className="ops-card-header border-b border-emerald-500/25 border-l-4 border-l-emerald-500 bg-emerald-500/10 px-3 py-3 shadow-sm" data-commercial-readiness="diary-heading-hierarchy-v4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-emerald-500">
                   <CheckCircle2 className="w-4 h-4" />
                   Closed Out Today ({diary.action_items_closed?.length || 0})
