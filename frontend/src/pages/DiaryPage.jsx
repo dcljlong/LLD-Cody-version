@@ -2826,6 +2826,15 @@ const DiaryPage = () => {
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">Materials / plant</span>
                 </button>
               </div>
+
+              <div className="rounded-xl border border-orange-400/25 bg-orange-500/8 px-3 py-2" data-testid="diary-needs-attention-strip-v1" data-commercial-readiness="diary-scan-flow-v1">
+                <p className="font-heading text-[11px] font-black uppercase tracking-[0.14em] text-orange-500">Needs attention</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                  {(diary?.blocked_gates?.length || 0) + (diary?.overdue_items?.length || 0) + dueTodayItems.length > 0
+                    ? `${diary?.blocked_gates?.length || 0} roadblocks | ${diary?.overdue_items?.length || 0} overdue | ${dueTodayItems.length} follow-ups`
+                    : 'No active roadblocks, overdue items, or carried-forward follow-ups.'}
+                </p>
+              </div>
             </div>
             <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-2 shadow-inner sm:p-3" data-testid="diary-programme-lookahead-v1" data-commercial-readiness="diary-programme-lookahead-v1 diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2">
               <div className="mb-3 flex items-start justify-between gap-3">
@@ -2931,7 +2940,7 @@ const DiaryPage = () => {
 
 
           {!hasDiaryContent && (
-            <p className="text-xs text-muted-foreground">
+            <p className="rounded-xl border border-border/60 bg-background/55 px-3 py-2 text-xs font-semibold text-muted-foreground" data-commercial-readiness="diary-scan-flow-v1">
               No reportable activity for this day yet. Add a diary note or review another date before issuing a report.
             </p>
           )}
@@ -3143,7 +3152,7 @@ const DiaryPage = () => {
                     {diary.blocked_gates.map((gate) => (
                       <div key={gate.id} className="p-2 bg-red-950/30 rounded-md border-l-4 border-l-red-500">
                         <p className="text-sm font-medium">{gate.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="rounded-xl border border-border/60 bg-background/55 px-3 py-2 text-xs font-semibold text-muted-foreground" data-commercial-readiness="diary-scan-flow-v1">
                           Owner: {gate.owner_party} | Required:{' '}
                           {new Date(gate.required_by_date).toLocaleDateString('en-NZ', {
                             day: '2-digit',
@@ -3203,7 +3212,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No overdue follow-ups.</p>
+                  <p className="rounded-lg border border-dashed border-red-400/25 bg-red-500/5 px-3 py-2 text-sm text-muted-foreground">No overdue follow-ups.</p>
                 )}
               </CardContent>
             </Card>
@@ -3236,7 +3245,7 @@ const DiaryPage = () => {
                             data-testid={`diary-due-today-clickthrough-${item.id}`}
                           >
                             <p className="text-sm font-semibold leading-5" data-testid="diary-epic-human-action-titles-v1">{getHumanDiaryActionTitle(item)}</p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="rounded-xl border border-border/60 bg-background/55 px-3 py-2 text-xs font-semibold text-muted-foreground" data-commercial-readiness="diary-scan-flow-v1">
                               {getOpenFollowupMetaParts(item).join(' | ')}
                             </p>
                           </button>
@@ -3256,7 +3265,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No open carried-forward follow-ups</p>
+                  <p className="rounded-lg border border-dashed border-orange-400/25 bg-orange-500/5 px-3 py-2 text-sm text-muted-foreground">No open carried-forward follow-ups.</p>
                 )}
               </CardContent>
             </Card>
@@ -3272,7 +3281,7 @@ const DiaryPage = () => {
               </CardHeader>
 
               <CardContent className="py-3">
-                <div className="rounded-lg border border-dashed border-sky-400/35 bg-sky-500/10 px-3 py-3 text-sm text-muted-foreground">
+                <div className="rounded-lg border border-dashed border-sky-400/30 bg-sky-500/5 px-3 py-2 text-sm text-muted-foreground" data-commercial-readiness="diary-scan-flow-v1">
                   No RFIs recorded for this diary day.
                 </div>
               </CardContent>
@@ -3283,7 +3292,7 @@ const DiaryPage = () => {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight text-foreground" data-commercial-readiness="diary-heading-hierarchy-v3">Staff on Site</CardTitle>
-                <p className="text-xs text-muted-foreground">
+                <p className="rounded-xl border border-border/60 bg-background/55 px-3 py-2 text-xs font-semibold text-muted-foreground" data-commercial-readiness="diary-scan-flow-v1">
                   Diary check only. Timesheets remain separate.
                 </p>
               </div>
@@ -3629,7 +3638,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No site notes recorded yet.</p>
+                  <p className="rounded-lg border border-dashed border-primary/25 bg-primary/5 px-3 py-2 text-sm text-muted-foreground">No site notes recorded yet.</p>
                 )}
               </CardContent>
             </Card>
@@ -3851,7 +3860,7 @@ const DiaryPage = () => {
                             data-testid={`diary-closed-out-details-${item.id}`}
                           >
                             <p className="text-sm font-semibold leading-5" data-testid="diary-epic-human-action-titles-v1">{getHumanDiaryActionTitle(item)}</p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="rounded-xl border border-border/60 bg-background/55 px-3 py-2 text-xs font-semibold text-muted-foreground" data-commercial-readiness="diary-scan-flow-v1">
                               {getClosedFollowupMetaParts(item).join(" | ")}
                             </p>
                           </button>
@@ -3871,7 +3880,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No items closed today.</p>
+                  <p className="rounded-lg border border-dashed border-emerald-500/25 bg-emerald-500/5 px-3 py-2 text-sm text-muted-foreground">No items closed today.</p>
                 )}
               </CardContent>
             </Card>
