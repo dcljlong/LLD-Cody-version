@@ -3724,46 +3724,45 @@ const DiaryPage = () => {
                       </div>
                     ))}
                   </div>
+                ) : resourcesTotalCount === 0 ? (
+                  <div className="rounded-xl border border-dashed border-border/80 bg-secondary/20 px-3 py-3" data-testid="diary-compact-empty-resources-v1" data-commercial-readiness="diary-compact-empty-resources-v1">
+                    <p className="text-sm font-black text-foreground">No site resources recorded today.</p>
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">Add materials, plant, tools, or subcontractors only when they need to be part of the diary record.</p>
+                  </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-4 lg:grid-cols-3" data-testid="daily-site-resources-summary-clean-v1">
-                    <div id="daily-site-resources-materials" className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3" data-testid="diary-resource-materials-panel-v1">
-                      <p className="mb-2 text-sm font-black uppercase tracking-[0.08em] text-foreground">Materials on Site</p>
-                      {resourceMaterials.length > 0 ? (
+                    {resourceMaterials.length > 0 && (
+                      <div id="daily-site-resources-materials" className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3" data-testid="diary-resource-materials-panel-v1">
+                        <p className="mb-2 text-sm font-black uppercase tracking-[0.08em] text-foreground">Materials on Site</p>
                         <div className="space-y-2">
                           {resourceMaterials.map((row, index) => (
                             <ResourceSummaryRow key={row.id || index} row={row} />
                           ))}
                         </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No materials recorded.</p>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
-                    <div id="daily-site-resources-plant" className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3" data-testid="diary-resource-plant-panel-v1">
-                      <p className="mb-2 text-sm font-black uppercase tracking-[0.08em] text-foreground">Plant / Equipment on Site</p>
-                      {resourcePlantEquipment.length > 0 ? (
+                    {resourcePlantEquipment.length > 0 && (
+                      <div id="daily-site-resources-plant" className="lld-resource-section rounded-xl border border-border/70 bg-secondary/20 p-3" data-testid="diary-resource-plant-panel-v1">
+                        <p className="mb-2 text-sm font-black uppercase tracking-[0.08em] text-foreground">Plant / Equipment on Site</p>
                         <div className="space-y-2">
                           {resourcePlantEquipment.map((row, index) => (
                             <ResourceSummaryRow key={row.id || index} row={row} />
                           ))}
                         </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No plant, equipment, or tools recorded.</p>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
-                    <div id="daily-site-resources-subcontractors" className="lld-resource-section rounded-xl border border-primary/30 bg-primary/5 p-3" data-testid="diary-resource-subcontractors-panel-v2">
-                      <p className="mb-2 text-sm font-black uppercase tracking-[0.08em] text-foreground">Subcontractors on Site</p>
-                      {resourceSubcontractors.length > 0 ? (
+                    {resourceSubcontractors.length > 0 && (
+                      <div id="daily-site-resources-subcontractors" className="lld-resource-section rounded-xl border border-primary/30 bg-primary/5 p-3" data-testid="diary-resource-subcontractors-panel-v2">
+                        <p className="mb-2 text-sm font-black uppercase tracking-[0.08em] text-foreground">Subcontractors on Site</p>
                         <div className="space-y-2">
                           {resourceSubcontractors.map((row, index) => (
                             <ResourceSummaryRow key={row.id || index} row={row} />
                           ))}
                         </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No subcontractors recorded.</p>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
