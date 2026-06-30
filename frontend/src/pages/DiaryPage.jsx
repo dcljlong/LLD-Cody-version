@@ -3120,7 +3120,7 @@ const DiaryPage = () => {
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-500">
+                    <CardTitle className="font-heading text-base font-bold tracking-normal flex items-center gap-2 text-red-500" data-commercial-readiness="diary-epic-calm-headings-v2">
                       <AlertTriangle className="w-4 h-4" />
                       Roadblocks / Critical Site Issues ({diary.blocked_gates?.length || 0})
                     </CardTitle>
@@ -3172,7 +3172,7 @@ const DiaryPage = () => {
             {/* Overdue Follow-ups - moved into critical hierarchy - diary-critical-hierarchy-staff-compact-v1 */}
             <Card id="diary-overdue-followups" className="ops-card" data-testid="diary-overdue-top-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
-                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-red-400">
+                <CardTitle className="font-heading text-base font-bold tracking-normal flex items-center gap-2 text-red-400" data-commercial-readiness="diary-epic-calm-headings-v2">
                   <Target className="w-4 h-4" />
                   Overdue Follow-ups ({diary.overdue_items?.length || 0})
                 </CardTitle>
@@ -3212,7 +3212,7 @@ const DiaryPage = () => {
             {/* Follow-ups / Carry Forward - diary-carry-forward-ui-clarity-v2 */}
             <Card id="diary-due-today-section" className="ops-card" data-testid="diary-due-today-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
-                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-orange-500">
+                <CardTitle className="font-heading text-base font-bold tracking-normal flex items-center gap-2 text-orange-500" data-commercial-readiness="diary-epic-calm-headings-v2">
                   <Target className="w-4 h-4" />
                   Follow-ups / Carry Forward ({dueTodayItems.length})
                 </CardTitle>
@@ -3264,7 +3264,7 @@ const DiaryPage = () => {
             {/* RFIs - diary-critical-hierarchy-staff-compact-v1 */}
             <Card id="diary-queries-section" className="ops-card" data-testid="diary-queries-rfis-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
-                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-sky-500">
+                <CardTitle className="font-heading text-base font-bold tracking-normal flex items-center gap-2 text-sky-500" data-commercial-readiness="diary-epic-calm-headings-v2">
                   <ListTodo className="w-4 h-4" />
                   RFIs (0)
                 </CardTitle>
@@ -3282,7 +3282,7 @@ const DiaryPage = () => {
           <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-2" data-testid="daily-labour-polish-v1-marker">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em]">Staff on Site</CardTitle>
+                <CardTitle className="font-heading text-base font-bold tracking-normal" data-commercial-readiness="diary-epic-calm-headings-v2">Staff on Site</CardTitle>
                 <p className="text-xs text-muted-foreground">
                   Diary check only. Timesheets remain separate.
                 </p>
@@ -3582,13 +3582,13 @@ const DiaryPage = () => {
 
         {/* Daily Evidence - Site Notes / Observations - diary-daily-evidence-hierarchy-v2 site-notes-observations-naming-v1 */}
         <div className="lg:col-span-2 rounded-xl border border-primary/25 bg-primary/10 px-3 py-2.5" data-testid="diary-daily-evidence-divider-v2" data-commercial-readiness="diary-daily-evidence-resources-polish-v1">
-          <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary">Daily Evidence</p>
+          <p className="font-heading text-xs font-bold tracking-normal text-primary" data-commercial-readiness="diary-epic-calm-headings-v2">Today's records</p>
           <p className="mt-1 text-xs font-semibold text-muted-foreground">Site notes, resources, photos, and supporting records.</p>
         </div>
 
             <Card id="diary-work-section" className="ops-card lg:col-span-2 border-primary/35" data-testid="diary-walkaround-notes-section" data-commercial-readiness="diary-walkaround-safe-array-wording-v2">
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
-                <CardTitle className="font-heading text-lg font-black uppercase tracking-[0.14em] flex items-center gap-2">
+                <CardTitle className="font-heading text-lg font-bold tracking-normal flex items-center gap-2" data-commercial-readiness="diary-epic-calm-headings-v2">
                   <FileText className="w-4 h-4" />
                   Site Notes / Observations ({walkaroundEntriesCount})
                 </CardTitle>
@@ -3639,7 +3639,7 @@ const DiaryPage = () => {
               <CardHeader className="ops-card-header border-b border-border/70 bg-secondary/20 px-3 py-3">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2">
+                    <CardTitle className="font-heading text-base font-bold tracking-normal flex items-center gap-2" data-commercial-readiness="diary-epic-calm-headings-v2">
                       <Package className="w-4 h-4" />
                       Site Resources
                     </CardTitle>
