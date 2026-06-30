@@ -2762,9 +2762,16 @@ const DiaryPage = () => {
         <CardContent className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <p className="font-heading text-[11px] font-black uppercase tracking-[0.18em] text-primary">Diary section</p>
-            <p className="mt-1 text-sm font-black text-foreground">
-              {diaryViewLabels[activeDiaryView] || 'Overview'}
-            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-2" data-commercial-readiness="diary-view-state-attention-v2">
+              <p className="text-sm font-black text-foreground">
+                {diaryViewLabels[activeDiaryView] || 'Overview'}
+              </p>
+              {activeDiaryView !== 'overview' && (
+                <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-primary">
+                  Jumped section
+                </span>
+              )}
+            </div>
             <p className="mt-1 text-xs font-semibold text-muted-foreground">
               Review today's diary sections, follow-ups, issues, staff, notes, and resources.
             </p>
@@ -2776,7 +2783,7 @@ const DiaryPage = () => {
             <Button type="button" size="sm" variant="outline" onClick={openRoadblocksPage} data-testid="diary-view-roadblocks-v4">
               Roadblocks
             </Button>
-            <Button type="button" size="sm" onClick={() => openDiaryView('overview')} data-testid="diary-view-overview-v4">
+            <Button type="button" size="sm" variant={activeDiaryView === 'overview' ? 'default' : 'outline'} onClick={() => openDiaryView('overview')} data-testid="diary-view-overview-v4" data-commercial-readiness="diary-view-state-attention-v2">
               Overview
             </Button>
           </div>
@@ -2799,6 +2806,15 @@ const DiaryPage = () => {
                 }`}>
                   {labourRows.length > 0 && walkaroundEntriesCount > 0 ? 'Started' : 'Needs entry'}
                 </span>
+              </div>
+
+              <div className="rounded-xl border border-orange-400/30 bg-orange-500/10 px-3 py-2" data-testid="diary-needs-attention-strip-v1" data-commercial-readiness="diary-scan-flow-v1 diary-view-state-attention-v2">
+                <p className="font-heading text-[11px] font-black uppercase tracking-[0.14em] text-orange-500">Needs attention</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                  {(diary?.blocked_gates?.length || 0) + (diary?.overdue_items?.length || 0) + dueTodayItems.length > 0
+                    ? `${diary?.blocked_gates?.length || 0} roadblocks | ${diary?.overdue_items?.length || 0} overdue | ${dueTodayItems.length} follow-ups`
+                    : 'No active roadblocks, overdue items, or carried-forward follow-ups.'}
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4" data-testid="diary-status-summary-grid-v1">
@@ -2825,15 +2841,6 @@ const DiaryPage = () => {
                   <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">M/P</span>
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">Materials / plant</span>
                 </button>
-              </div>
-
-              <div className="rounded-xl border border-orange-400/25 bg-orange-500/8 px-3 py-2" data-testid="diary-needs-attention-strip-v1" data-commercial-readiness="diary-scan-flow-v1">
-                <p className="font-heading text-[11px] font-black uppercase tracking-[0.14em] text-orange-500">Needs attention</p>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                  {(diary?.blocked_gates?.length || 0) + (diary?.overdue_items?.length || 0) + dueTodayItems.length > 0
-                    ? `${diary?.blocked_gates?.length || 0} roadblocks | ${diary?.overdue_items?.length || 0} overdue | ${dueTodayItems.length} follow-ups`
-                    : 'No active roadblocks, overdue items, or carried-forward follow-ups.'}
-                </p>
               </div>
             </div>
             <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-2 shadow-inner sm:p-3" data-testid="diary-programme-lookahead-v1" data-commercial-readiness="diary-programme-lookahead-v1 diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2">
