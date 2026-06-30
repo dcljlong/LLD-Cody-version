@@ -1287,6 +1287,47 @@ const DiaryPage = () => {
   const visibleRaisedActionItems = openActionItems.filter((item) => !walkaroundNoteKeys.has(normaliseDiaryItemKey(item.title || item.task_name || item.name || item.note)));
   const visibleRaisedActionItemsCount = visibleRaisedActionItems.length; // diary-carry-forward-followups-v1 keeps prior unresolved items visible until completed
 
+  const getHumanDiaryActionTitle = (item = {}) => {
+    const raw = String(item.title || item.task_name || item.name || item.description || item.note || item.details || '').trim();
+
+    if (!raw) {
+      return 'Follow-up item';
+    }
+
+    const structuredSource = String(item.description || item.note || item.details || item.title || '').trim();
+    const source = structuredSource.includes('WALKAROUND CAPTURE -') || structuredSource.includes('CAPTURE SITE ACTIVITY -')
+      ? structuredSource
+      : raw;
+
+    if (source.includes('WALKAROUND CAPTURE -') || source.includes('CAPTURE SITE ACTIVITY -')) {
+      const cleaned = source
+        .split(/\r?\n/)
+        .filter((line) => !/^WALKAROUND CAPTURE - /i.test(line))
+        .filter((line) => !/^CAPTURE SITE ACTIVITY - /i.test(line))
+        .filter((line) => !/^PRIORITY - /i.test(line))
+        .filter((line) => !/^NEEDS SENDING - /i.test(line))
+        .filter((line) => !/^ACTION - /i.test(line))
+        .filter((line) => !/^SORT TO - /i.test(line))
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (cleaned) {
+        return cleaned;
+      }
+    }
+
+    return raw
+      .replace(/^WALKAROUND CAPTURE\s*-\s*/i, '')
+      .replace(/^CAPTURE SITE ACTIVITY\s*-\s*/i, '')
+      .replace(/\s+PRIORITY\s*-\s*/i, ' | Priority: ')
+      .replace(/\s+NEEDS SENDING\s*-\s*/i, ' | Send: ')
+      .replace(/\s+ACTION\s*-\s*/i, ' | Action: ')
+      .replace(/\s+SORT TO\s*-\s*/i, ' | ')
+      .replace(/\s+/g, ' ')
+      .trim() || 'Follow-up item';
+  }; // diary-epic-human-action-titles-v1
+
   const requestDiaryFollowUpConfirm = (mode, item) => {
     if (!item?.id) {
       return;
@@ -1986,7 +2027,7 @@ const DiaryPage = () => {
   };
 
   const normaliseDiaryActionDraft = (item = {}) => ({
-    title: item.title || item.task_name || item.name || '',
+    title: getHumanDiaryActionTitle(item),
     description: item.description || item.note || item.details || '',
     priority: String(item.priority || 'medium').toLowerCase(),
     status: String(item.status || 'open').toLowerCase(),
@@ -3148,7 +3189,7 @@ const DiaryPage = () => {
                         className={`w-full p-2 rounded-md border-l-4 text-left transition ${selectedDiaryActionItem?.id === item.id ? 'border-l-red-300 bg-red-500/20 ring-2 ring-red-400/30' : 'border-l-red-400 bg-red-950/20 hover:border-red-400/70 hover:bg-red-500/10'}`}
                         data-testid={`diary-overdue-clickthrough-${item.id}`}
                       >
-                        <p className="text-sm font-medium">{item.title}</p>
+                        <p className="text-sm font-semibold leading-5" data-testid="diary-epic-human-action-titles-v1">{getHumanDiaryActionTitle(item)}</p>
                         {item.due_date && (
                           <p className="text-xs text-red-400">
                             Due:{' '}
@@ -3194,7 +3235,7 @@ const DiaryPage = () => {
                             className="min-w-0 flex-1 text-left"
                             data-testid={`diary-due-today-clickthrough-${item.id}`}
                           >
-                            <p className="text-sm font-medium">{item.title}</p>
+                            <p className="text-sm font-semibold leading-5" data-testid="diary-epic-human-action-titles-v1">{getHumanDiaryActionTitle(item)}</p>
                             <p className="text-xs text-muted-foreground">
                               {getOpenFollowupMetaParts(item).join(' | ')}
                             </p>
@@ -3809,7 +3850,7 @@ const DiaryPage = () => {
                             className="min-w-0 flex-1 text-left"
                             data-testid={`diary-closed-out-details-${item.id}`}
                           >
-                            <p className="text-sm font-medium">{item.title}</p>
+                            <p className="text-sm font-semibold leading-5" data-testid="diary-epic-human-action-titles-v1">{getHumanDiaryActionTitle(item)}</p>
                             <p className="text-xs text-muted-foreground">
                               {getClosedFollowupMetaParts(item).join(" | ")}
                             </p>
