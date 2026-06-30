@@ -2251,6 +2251,22 @@ const DiaryPage = () => {
               Print
             </Button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => { setStaffSectionExpanded(true); openDiaryView('staff'); }}
+            className="mt-2 flex w-full items-center justify-between rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-left transition hover:bg-primary/15 active:scale-[0.99]"
+            data-testid="diary-staff-onsite-top-tab-v1"
+            data-commercial-readiness="diary-like-ux-v1"
+          >
+            <span>
+              <span className="block font-heading text-[11px] font-black uppercase tracking-[0.16em] text-primary">Staff on site</span>
+              <span className="mt-0.5 block text-xs font-semibold text-muted-foreground">Diary check only. Timesheets remain separate.</span>
+            </span>
+            <span className="rounded-full border border-primary/30 bg-background/70 px-3 py-1 text-sm font-black text-foreground">
+              {labourRows.length}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -2758,37 +2774,6 @@ const DiaryPage = () => {
           </CardContent>
         </Card>
       )}
-      <Card className="ops-card border-border/80 bg-card/95" data-testid="diary-active-view-panel-v4" data-commercial-readiness="diary-nav-post-capture-v4 diary-natural-look-v2-nav-copy">
-        <CardContent className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="font-heading text-[11px] font-black uppercase tracking-[0.18em] text-primary">Diary section</p>
-            <div className="mt-1 flex flex-wrap items-center gap-2" data-commercial-readiness="diary-view-state-attention-v2">
-              <p className="text-sm font-black text-foreground">
-                {diaryViewLabels[activeDiaryView] || 'Overview'}
-              </p>
-              {activeDiaryView !== 'overview' && (
-                <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-primary">
-                  Jumped section
-                </span>
-              )}
-            </div>
-            <p className="mt-1 text-xs font-semibold text-muted-foreground">
-              Review today's diary sections, follow-ups, issues, staff, notes, and resources.
-            </p>
-          </div>
-          <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center">
-            <Button type="button" size="sm" variant="outline" onClick={() => openActionItemsPage('today')} data-testid="diary-view-action-items-v4">
-              Action Items
-            </Button>
-            <Button type="button" size="sm" variant="outline" onClick={openRoadblocksPage} data-testid="diary-view-roadblocks-v4">
-              Roadblocks
-            </Button>
-            <Button type="button" size="sm" variant={activeDiaryView === 'overview' ? 'default' : 'outline'} onClick={() => openDiaryView('overview')} data-testid="diary-view-overview-v4" data-commercial-readiness="diary-view-state-attention-v2">
-              Overview
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Diary Command Strip / Clickable Checklist - diary-command-header-tabs-v2 */}
       <Card className="ops-card" data-testid="daily-report-readiness">
