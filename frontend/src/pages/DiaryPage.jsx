@@ -2158,7 +2158,7 @@ const DiaryPage = () => {
   return (
     <div className="space-y-4 md:space-y-5" data-testid="diary-page" data-commercial-readiness="diary-natural-look-v1a-header-simple diary-natural-look-v1a-wording-cleanup diary-natural-look-v1b-confirmed-queue-copy diary-natural-look-v1c-safe-cleanup">
       <div className="rounded-2xl border border-border bg-card/95 p-3 shadow-sm sm:p-4" data-testid="diary-command-header-v2">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3" data-commercial-readiness="diary-top-header-responsive-stack-v1">
           <div className="min-w-0">
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Site diary</p>
             <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl" data-testid="daily-heading-polish-v1-marker">
@@ -2171,7 +2171,7 @@ const DiaryPage = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 lg:flex lg:w-auto">
+          <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 lg:max-w-2xl">
             <Button variant="ghost" size="icon" onClick={() => changeDate(-1)} data-testid="prev-day">
               <ChevronLeft className="w-5 h-5" />
             </Button>
@@ -2180,7 +2180,7 @@ const DiaryPage = () => {
               setSelectedProject(val);
               localStorage.setItem('lld_last_project_id', val);
             }}>
-              <SelectTrigger className="w-full min-w-0 lg:w-[240px]" data-testid="diary-project-select">
+              <SelectTrigger className="w-full min-w-0" data-testid="diary-project-select">
                 <SelectValue placeholder="Select project" />
               </SelectTrigger>
               <SelectContent>
@@ -2203,7 +2203,7 @@ const DiaryPage = () => {
             </Button>
           </div>
 
-          <div className="grid w-full grid-cols-2 gap-2 lg:w-auto lg:grid-cols-1 xl:grid-cols-2" data-commercial-readiness="diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2 diary-mobile-action-buttons-wrap-fix-v1">
+          <div className="grid w-full grid-cols-2 gap-2 lg:grid-cols-4" data-commercial-readiness="diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2 diary-mobile-action-buttons-wrap-fix-v1 diary-top-header-responsive-stack-v1">
             {selectedDate === today && (
               <Button
                 onClick={() => setShowQuickEntry(!showQuickEntry)}
