@@ -2156,15 +2156,15 @@ const DiaryPage = () => {
   }
 
   return (
-    <div className="space-y-4 md:space-y-5" data-testid="diary-page" data-commercial-readiness="diary-natural-look-v1a-header-simple diary-natural-look-v1a-wording-cleanup diary-natural-look-v1b-confirmed-queue-copy diary-natural-look-v1c-safe-cleanup">
-      <div className="rounded-2xl border border-border bg-card/95 p-3 shadow-sm sm:p-4" data-testid="diary-command-header-v2">
-        <div className="flex flex-col gap-3" data-commercial-readiness="diary-top-header-responsive-stack-v1">
+    <div className="space-y-4 md:space-y-5 lg:space-y-6" data-testid="diary-page" data-commercial-readiness="diary-natural-look-v1a-header-simple diary-natural-look-v1a-wording-cleanup diary-natural-look-v1b-confirmed-queue-copy diary-natural-look-v1c-safe-cleanup diary-desktop-density-hierarchy-v1">
+      <div className="rounded-2xl border border-border bg-card/95 p-3 shadow-sm sm:p-4 lg:p-6" data-testid="diary-command-header-v2" data-commercial-readiness="diary-desktop-density-hierarchy-v1">
+        <div className="flex flex-col gap-3 lg:gap-4" data-commercial-readiness="diary-top-header-responsive-stack-v1 diary-desktop-density-hierarchy-v1">
           <div className="min-w-0">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Site diary</p>
-            <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl" data-testid="daily-heading-polish-v1-marker">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary lg:text-xs">Site diary</p>
+            <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl" data-testid="daily-heading-polish-v1-marker" data-commercial-readiness="diary-desktop-density-hierarchy-v1">
               {selectedDateLabel}
             </h2>
-            <p className="mt-1 truncate text-sm font-semibold text-muted-foreground">
+            <p className="mt-1 truncate text-sm font-semibold text-muted-foreground lg:text-base">
               {currentProject ? `${currentProject.job_number ? `${currentProject.job_number} - ` : ''}${currentProject.name}` : 'No project selected'}
               {selectedDate === today ? ' | Today' : ''}
               {draftStatus ? ` | ${draftStatus}` : ''}
@@ -2203,11 +2203,11 @@ const DiaryPage = () => {
             </Button>
           </div>
 
-          <div className="grid w-full grid-cols-2 gap-2 lg:grid-cols-4" data-commercial-readiness="diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2 diary-mobile-action-buttons-wrap-fix-v1 diary-top-header-responsive-stack-v1">
+          <div className="grid w-full grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-3" data-commercial-readiness="diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2 diary-mobile-action-buttons-wrap-fix-v1 diary-top-header-responsive-stack-v1 diary-desktop-density-hierarchy-v1">
             {selectedDate === today && (
               <Button
                 onClick={() => setShowQuickEntry(!showQuickEntry)}
-                className="col-span-2 min-h-11 justify-center font-black lg:col-span-1"
+                className="col-span-2 min-h-11 justify-center font-black lg:col-span-1 lg:min-h-12 lg:text-base"
                 data-testid="quick-entry-btn"
                 data-commercial-readiness="diary-above-fold-hierarchy-v1"
               >
@@ -2220,7 +2220,7 @@ const DiaryPage = () => {
                 type="button"
                 variant="outline"
                 onClick={() => setShowIssueRecorder(true)}
-                className="col-span-2 min-h-11 justify-center whitespace-normal text-center text-sm font-black leading-tight lg:col-span-1"
+                className="col-span-2 min-h-11 justify-center whitespace-normal text-center text-sm font-black leading-tight lg:col-span-1 lg:min-h-12 lg:text-base"
                 data-testid="onsite-issue-recorder-btn"
                 data-commercial-readiness="onsite-issue-recorder-v1 diary-above-fold-hierarchy-v1"
               >
@@ -2232,7 +2232,7 @@ const DiaryPage = () => {
               type="button"
               variant="outline"
               onClick={() => document.getElementById('daily-report-readiness')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              className="min-h-10 justify-center whitespace-normal text-center text-sm font-black leading-tight sm:min-h-11"
+              className="min-h-10 justify-center whitespace-normal text-center text-sm font-black leading-tight sm:min-h-11 lg:min-h-12 lg:text-base"
               data-testid="review-close-day-button"
               data-commercial-readiness="diary-above-fold-hierarchy-v1"
             >
@@ -2244,7 +2244,7 @@ const DiaryPage = () => {
               variant="outline"
               onClick={handlePrintReport}
               disabled={!diary}
-              className="min-h-10 justify-center whitespace-normal text-center text-sm font-black leading-tight sm:min-h-11"
+              className="min-h-10 justify-center whitespace-normal text-center text-sm font-black leading-tight sm:min-h-11 lg:min-h-12 lg:text-base"
               data-testid="daily-report-print-button"
             >
               <Printer className="w-4 h-4 mr-2" />
@@ -2255,7 +2255,7 @@ const DiaryPage = () => {
           <button
             type="button"
             onClick={() => { setStaffSectionExpanded(true); openDiaryView('staff'); }}
-            className="mt-2 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-left shadow-sm transition hover:bg-primary/15 active:scale-[0.99]"
+            className="mt-2 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-left shadow-sm transition hover:bg-primary/15 active:scale-[0.99] lg:px-4 lg:py-2"
             data-testid="diary-staff-onsite-top-tab-v1"
             data-commercial-readiness="diary-like-ux-v1 diary-staff-onsite-compact-top-tab-v2"
           >
@@ -2774,12 +2774,12 @@ const DiaryPage = () => {
 
       {/* Diary Command Strip / Clickable Checklist - diary-command-header-tabs-v2 */}
       <Card className="ops-card" data-testid="daily-report-readiness">
-        <CardContent className="space-y-3 py-3" data-testid="diary-mobile-compression-v5">
-            <div className="rounded-2xl border border-primary/30 bg-background/85 p-2 shadow-inner sm:p-3" data-testid="diary-status-summary-v1" data-commercial-readiness="diary-status-summary-v1 diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2">
+        <CardContent className="space-y-3 py-3 lg:space-y-4 lg:py-5" data-testid="diary-mobile-compression-v5" data-commercial-readiness="diary-desktop-density-hierarchy-v1">
+            <div className="rounded-2xl border border-primary/30 bg-background/85 p-2 shadow-inner sm:p-3 lg:p-5" data-testid="diary-status-summary-v1" data-commercial-readiness="diary-status-summary-v1 diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2 diary-desktop-density-hierarchy-v1">
               <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary">Today's site diary</p>
-                  <p className="mt-1 text-xs font-semibold text-muted-foreground">A quick check of today's staff, work, notes, follow-ups, and evidence.</p>
+                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary lg:text-base">Today's site diary</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground lg:text-sm">A quick check of today's staff, work, notes, follow-ups, and evidence.</p>
                 </div>
                 <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] ${
                   labourRows.length > 0 && walkaroundEntriesCount > 0
@@ -2790,7 +2790,7 @@ const DiaryPage = () => {
                 </span>
               </div>
 
-              <div className="rounded-xl border border-orange-400/30 bg-orange-500/10 px-3 py-2" data-testid="diary-needs-attention-strip-v1" data-commercial-readiness="diary-scan-flow-v1 diary-view-state-attention-v2">
+              <div className="rounded-xl border border-orange-400/30 bg-orange-500/10 px-3 py-2 lg:px-4 lg:py-3" data-testid="diary-needs-attention-strip-v1" data-commercial-readiness="diary-scan-flow-v1 diary-view-state-attention-v2 diary-desktop-density-hierarchy-v1">
                 <p className="font-heading text-[11px] font-black uppercase tracking-[0.14em] text-orange-500">Needs attention</p>
                 <p className="mt-1 text-xs font-semibold text-muted-foreground">
                   {(diary?.blocked_gates?.length || 0) + (diary?.overdue_items?.length || 0) + dueTodayItems.length > 0
@@ -2799,36 +2799,36 @@ const DiaryPage = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4" data-testid="diary-status-summary-grid-v1">
-                <button type="button" onClick={() => { setStaffSectionExpanded(true); openDiaryView('staff'); }} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
+              <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4 lg:gap-3" data-testid="diary-status-summary-grid-v1" data-commercial-readiness="diary-desktop-density-hierarchy-v1">
+                <button type="button" onClick={() => { setStaffSectionExpanded(true); openDiaryView('staff'); }} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3 lg:p-4">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Staff</span>
                   <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">{labourRows.length}</span>
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">{labourRows.length > 0 ? `${labourTotalHours.toFixed(2)}h checked` : 'Missing'}</span>
                 </button>
 
-                <button type="button" onClick={() => openActionItemsPage('today')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
+                <button type="button" onClick={() => openActionItemsPage('today')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3 lg:p-4">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Follow-ups</span>
                   <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">{dueTodayItems.length}</span>
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">Open / carry forward</span>
                 </button>
 
-                <button type="button" onClick={() => openDiaryView('site-notes')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
+                <button type="button" onClick={() => openDiaryView('site-notes')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3 lg:p-4">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Site notes</span>
                   <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">{walkaroundEntriesCount}</span>
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">{walkaroundEntriesCount > 0 ? 'Recorded' : 'Missing'}</span>
                 </button>
 
-                <button type="button" onClick={() => openDiaryView('resources', activeResourceTab || 'materials')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3">
+                <button type="button" onClick={() => openDiaryView('resources', activeResourceTab || 'materials')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3 lg:p-4">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Resources</span>
                   <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">M/P</span>
                   <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">Materials / plant</span>
                 </button>
               </div>
             </div>
-            <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-2 shadow-inner sm:p-3" data-testid="diary-programme-lookahead-v1" data-commercial-readiness="diary-programme-lookahead-v1 diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2">
+            <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-2 shadow-inner sm:p-3 lg:p-5" data-testid="diary-programme-lookahead-v1" data-commercial-readiness="diary-programme-lookahead-v1 diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2 diary-desktop-density-hierarchy-v1">
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-emerald-300">6 Week Lookahead</p>
+                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-emerald-300 lg:text-base">6 Week Lookahead</p>
                   <p className="mt-1 text-xs font-semibold text-muted-foreground">Upcoming tasks for this job.</p>
                 </div>
                 <button
@@ -3112,13 +3112,13 @@ const DiaryPage = () => {
       {diary && (
         <>
           {/* Content Sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5" data-commercial-readiness="diary-desktop-density-hierarchy-v1">
             {/* Roadblocks / Critical Site Issues - diary-field-sheet-layout-v1 */}
             <Card id="diary-roadblocks-section" className="ops-card" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
-              <CardHeader className="ops-card-header border-b border-red-500/25 border-l-4 border-l-red-500 bg-red-500/10 px-3 py-3 shadow-sm" data-commercial-readiness="diary-heading-hierarchy-v4">
+              <CardHeader className="ops-card-header border-b border-red-500/25 border-l-4 border-l-red-500 bg-red-500/10 px-3 py-3 shadow-sm lg:px-4 lg:py-4" data-commercial-readiness="diary-heading-hierarchy-v4 diary-desktop-density-hierarchy-v1">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-red-500" data-commercial-readiness="diary-heading-hierarchy-v3">
+                    <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-red-500 lg:text-xl" data-commercial-readiness="diary-heading-hierarchy-v3 diary-desktop-density-hierarchy-v1">
                       <AlertTriangle className="w-4 h-4" />
                       Roadblocks / Critical Site Issues ({diary.blocked_gates?.length || 0})
                     </CardTitle>
@@ -3169,8 +3169,8 @@ const DiaryPage = () => {
 
             {/* Overdue Follow-ups - moved into critical hierarchy - diary-critical-hierarchy-staff-compact-v1 */}
             <Card id="diary-overdue-followups" className="ops-card" data-testid="diary-overdue-top-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
-              <CardHeader className="ops-card-header border-b border-red-400/25 border-l-4 border-l-red-400 bg-red-500/10 px-3 py-3 shadow-sm" data-commercial-readiness="diary-heading-hierarchy-v4">
-                <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-red-400" data-commercial-readiness="diary-heading-hierarchy-v3">
+              <CardHeader className="ops-card-header border-b border-red-400/25 border-l-4 border-l-red-400 bg-red-500/10 px-3 py-3 shadow-sm lg:px-4 lg:py-4" data-commercial-readiness="diary-heading-hierarchy-v4 diary-desktop-density-hierarchy-v1">
+                <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-red-400 lg:text-xl" data-commercial-readiness="diary-heading-hierarchy-v3 diary-desktop-density-hierarchy-v1">
                   <Target className="w-4 h-4" />
                   Overdue Follow-ups ({diary.overdue_items?.length || 0})
                 </CardTitle>
@@ -3209,8 +3209,8 @@ const DiaryPage = () => {
 
             {/* Follow-ups / Carry Forward - diary-carry-forward-ui-clarity-v2 */}
             <Card id="diary-due-today-section" className="ops-card" data-testid="diary-due-today-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
-              <CardHeader className="ops-card-header border-b border-orange-500/25 border-l-4 border-l-orange-500 bg-orange-500/10 px-3 py-3 shadow-sm" data-commercial-readiness="diary-heading-hierarchy-v4">
-                <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-orange-500" data-commercial-readiness="diary-heading-hierarchy-v3">
+              <CardHeader className="ops-card-header border-b border-orange-500/25 border-l-4 border-l-orange-500 bg-orange-500/10 px-3 py-3 shadow-sm lg:px-4 lg:py-4" data-commercial-readiness="diary-heading-hierarchy-v4 diary-desktop-density-hierarchy-v1">
+                <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-orange-500 lg:text-xl" data-commercial-readiness="diary-heading-hierarchy-v3 diary-desktop-density-hierarchy-v1">
                   <Target className="w-4 h-4" />
                   Follow-ups / Carry Forward ({dueTodayItems.length})
                 </CardTitle>
@@ -3261,8 +3261,8 @@ const DiaryPage = () => {
 
             {/* RFIs - diary-critical-hierarchy-staff-compact-v1 */}
             <Card id="diary-queries-section" className="ops-card" data-testid="diary-queries-rfis-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
-              <CardHeader className="ops-card-header border-b border-sky-500/25 border-l-4 border-l-sky-500 bg-sky-500/10 px-3 py-3 shadow-sm" data-commercial-readiness="diary-heading-hierarchy-v4">
-                <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-sky-500" data-commercial-readiness="diary-heading-hierarchy-v3">
+              <CardHeader className="ops-card-header border-b border-sky-500/25 border-l-4 border-l-sky-500 bg-sky-500/10 px-3 py-3 shadow-sm lg:px-4 lg:py-4" data-commercial-readiness="diary-heading-hierarchy-v4 diary-desktop-density-hierarchy-v1">
+                <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-sky-500 lg:text-xl" data-commercial-readiness="diary-heading-hierarchy-v3 diary-desktop-density-hierarchy-v1">
                   <ListTodo className="w-4 h-4" />
                   RFIs (0)
                 </CardTitle>
@@ -3277,10 +3277,10 @@ const DiaryPage = () => {
             </Card>
 
             <Card id="diary-staff-section" className="ops-card w-full max-w-full overflow-hidden" data-testid="daily-labour-card" data-commercial-readiness="staff-mobile-overflow-containment-v2 diary-staff-section-wording-polish-v1">
-          <CardHeader className="ops-card-header border-b border-primary/25 border-l-4 border-l-primary bg-primary/10 px-3 py-3 shadow-sm" data-testid="daily-labour-polish-v1-marker" data-commercial-readiness="diary-heading-hierarchy-v4">
+          <CardHeader className="ops-card-header border-b border-primary/25 border-l-4 border-l-primary bg-primary/10 px-3 py-3 shadow-sm lg:px-4 lg:py-4" data-testid="daily-labour-polish-v1-marker" data-commercial-readiness="diary-heading-hierarchy-v4 diary-desktop-density-hierarchy-v1">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight text-foreground" data-commercial-readiness="diary-heading-hierarchy-v3">Staff on Site</CardTitle>
+                <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight text-foreground lg:text-xl" data-commercial-readiness="diary-heading-hierarchy-v3 diary-desktop-density-hierarchy-v1">Staff on Site</CardTitle>
                 <p className="rounded-xl border border-border/60 bg-background/55 px-3 py-2 text-xs font-semibold text-muted-foreground" data-commercial-readiness="diary-scan-flow-v1">
                   Diary check only. Timesheets remain separate.
                 </p>
