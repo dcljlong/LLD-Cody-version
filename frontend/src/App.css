@@ -3643,3 +3643,60 @@ main.main-content.fo-main-content.lld-fitoutos-main {
   }
 }
 /* LLD / FINAL SHARED SHELL LOCK V1 END */
+
+/* LLD compact shell top-nav containment V1
+   Marker: --lld-shell-topnav-containment-v1 */
+.app-header {
+    --lld-shell-topnav-containment-v1: 1;
+}
+
+@media (min-width: 641px) and (max-width: 1023px) {
+    .lld-compact-brand-row {
+        flex-wrap: wrap !important;
+        align-items: flex-start !important;
+        row-gap: 0.48rem !important;
+    }
+
+    .lld-compact-brand-left {
+        flex: 1 1 18rem !important;
+        min-width: 0 !important;
+    }
+
+    .lld-compact-brand-link,
+    .lld-compact-brand-copy {
+        min-width: 0 !important;
+    }
+
+    .lld-compact-actions {
+        flex: 0 1 auto !important;
+        max-width: 100% !important;
+        margin-left: auto !important;
+        justify-content: flex-end !important;
+        gap: 0.38rem !important;
+        min-width: 0 !important;
+    }
+
+    .lld-compact-actions .lld-compact-theme-button,
+    .lld-compact-actions .lld-compact-logout-button {
+        flex: 0 0 auto !important;
+        white-space: nowrap !important;
+    }
+
+    .lld-compact-actions .lld-compact-theme-button[data-testid="mobile-feedback-btn"] {
+        width: auto !important;
+        min-width: 2.35rem !important;
+        padding-left: 0.62rem !important;
+        padding-right: 0.62rem !important;
+    }
+
+    .lld-compact-nav-row {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+    }
+}
+
+@media (min-width: 641px) and (max-width: 760px) {
+    .lld-compact-actions .lld-compact-theme-button[data-testid="mobile-feedback-btn"] span {
+        display: none !important;
+    }
+}
