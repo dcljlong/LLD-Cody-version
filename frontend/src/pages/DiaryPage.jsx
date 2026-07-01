@@ -2203,11 +2203,11 @@ const DiaryPage = () => {
             </Button>
           </div>
 
-          <div className="grid w-full grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-3" data-commercial-readiness="diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2 diary-mobile-action-buttons-wrap-fix-v1 diary-top-header-responsive-stack-v1 diary-desktop-density-hierarchy-v1">
+          <div className="grid w-full grid-cols-2 gap-2 lg:grid-cols-2 lg:gap-3 xl:grid-cols-4" data-commercial-readiness="diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2 diary-mobile-action-buttons-wrap-fix-v1 diary-top-header-responsive-stack-v1 diary-desktop-density-hierarchy-v1 diary-action-button-breakpoint-v1">
             {selectedDate === today && (
               <Button
                 onClick={() => setShowQuickEntry(!showQuickEntry)}
-                className="col-span-2 min-h-11 justify-center font-black lg:col-span-1 lg:min-h-12 lg:text-base"
+                className="col-span-2 min-h-11 justify-center font-black lg:min-h-12 lg:text-base xl:col-span-1"
                 data-testid="quick-entry-btn"
                 data-commercial-readiness="diary-above-fold-hierarchy-v1"
               >
@@ -2220,7 +2220,7 @@ const DiaryPage = () => {
                 type="button"
                 variant="outline"
                 onClick={() => setShowIssueRecorder(true)}
-                className="col-span-2 min-h-11 justify-center whitespace-normal text-center text-sm font-black leading-tight lg:col-span-1 lg:min-h-12 lg:text-base"
+                className="col-span-2 min-h-11 justify-center whitespace-normal text-center text-sm font-black leading-tight lg:min-h-12 lg:text-base xl:col-span-1"
                 data-testid="onsite-issue-recorder-btn"
                 data-commercial-readiness="onsite-issue-recorder-v1 diary-above-fold-hierarchy-v1"
               >
