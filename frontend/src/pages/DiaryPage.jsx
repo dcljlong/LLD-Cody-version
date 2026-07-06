@@ -3282,7 +3282,7 @@ const DiaryPage = () => {
               <div>
                 <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight text-foreground lg:text-xl" data-commercial-readiness="diary-heading-hierarchy-v3 diary-desktop-density-hierarchy-v1">Staff on Site</CardTitle>
                 <p className="rounded-xl border border-border/60 bg-background/55 px-3 py-2 text-xs font-semibold text-muted-foreground" data-commercial-readiness="diary-scan-flow-v1">
-                  Diary check only. Timesheets remain separate.
+                  Diary check only until you import saved rows to Timesheet.
                 </p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-stretch" data-commercial-readiness="staff-collapsible-summary-v1">
@@ -3353,6 +3353,18 @@ const DiaryPage = () => {
                     </select>
                     <Button type="button" variant="outline" className="w-full justify-center sm:w-auto" onClick={() => setShowNewStaffForm((value) => !value)} data-testid="staff-timesheet-add-new-toggle">
                       + Add site-only staff
+                    </Button>
+                    {/* LLD / TIMESHEET IMPORT STAFF CARD BUTTON V1 */}
+                    <Button
+                      type="button"
+                      variant="default"
+                      className="w-full justify-center sm:w-auto"
+                      onClick={importLabourRowsToTimesheet}
+                      disabled={labourImporting || labourSaving || !Array.isArray(labourRows) || labourRows.length === 0}
+                      data-testid="staff-import-saved-rows-to-timesheet"
+                      title="Send saved LLD daily labour rows to Timesheet Manager for review. This does not approve payroll."
+                    >
+                      {labourImporting ? 'Importing...' : 'Import saved rows to Timesheet'}
                     </Button>
                   </div>
 
@@ -3574,7 +3586,7 @@ const DiaryPage = () => {
               </div>
             )}
 
-            <p className="text-xs font-medium text-muted-foreground">Tap a staff name to edit the diary check. This does not push to Timesheet Manager.</p>
+            <p className="text-xs font-medium text-muted-foreground">Tap a staff name to edit the diary check. Use Import saved rows to Timesheet when ready.</p>
           </CardContent>
         </Card>
 
@@ -3888,11 +3900,3 @@ const DiaryPageWithErrorBoundary = () => (
 );
 
 export default DiaryPageWithErrorBoundary;
-
-
-
-
-
-
-
-
