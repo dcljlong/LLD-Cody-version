@@ -3461,10 +3461,25 @@ async def get_job_programme(job_id: str):
 # Include router and middleware
 app.include_router(api_router)
 
+configured_cors_origins = [
+    origin.strip()
+    for origin in os.environ.get("CORS_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
+development_cors_origins = [
+    "http://localhost:3003",
+    "http://127.0.0.1:3003",
+]
+
+allowed_cors_origins = list(dict.fromkeys(
+    configured_cors_origins + development_cors_origins
+))
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=allowed_cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )

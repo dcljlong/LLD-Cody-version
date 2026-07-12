@@ -38,6 +38,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
+import DigitalJobBinder from '../components/DigitalJobBinder';
 
 const NZ_TIME_ZONE = 'Pacific/Auckland';
 
@@ -2156,7 +2157,37 @@ const DiaryPage = () => {
   }
 
   return (
-    <div className="space-y-4 md:space-y-5 lg:space-y-6" data-testid="diary-page" data-commercial-readiness="diary-natural-look-v1a-header-simple diary-natural-look-v1a-wording-cleanup diary-natural-look-v1b-confirmed-queue-copy diary-natural-look-v1c-safe-cleanup diary-desktop-density-hierarchy-v1">
+    <div className="space-y-4 md:space-y-5 lg:space-y-6" data-testid="diary-page" data-commercial-readiness="diary-natural-look-v1a-header-simple diary-natural-look-v1a-wording-cleanup diary-natural-look-v1b-confirmed-queue-copy diary-natural-look-v1c-safe-cleanup diary-desktop-density-hierarchy-v1 lld-digital-job-binder-live-v1">
+      <DigitalJobBinder
+        currentProject={currentProject}
+        selectedDateLabel={selectedDateLabel}
+        selectedDate={selectedDate}
+        today={today}
+        draftStatus={draftStatus}
+        diaryEntries={walkaroundEntries}
+        urgentItems={[...overdueDiaryItems, ...dueTodayItems]}
+        taskItems={visibleRaisedActionItems}
+        materials={resourceMaterials}
+        labourCount={labourRows.length}
+        quickNote={entryData.note}
+        submitting={submitting}
+        onQuickNoteChange={(note) => setEntryData((current) => ({ ...current, note }))}
+        onQuickSubmit={handleQuickEntry}
+        onChangeDate={changeDate}
+        onOpenDiary={() => openDiaryView('site-notes')}
+        onOpenTasks={() => openActionItemsPage('today')}
+        onOpenMaterials={() => openDiaryView('resources', 'materials')}
+        onOpenEmails={() => openActionItemsPage('today')}
+        onOpenRoadblocks={openRoadblocksPage}
+        onOpenWalkaround={() => window.location.assign(`/walkaround${selectedProject ? `?project=${selectedProject}` : ''}`)}
+        onOpenPhotos={() => openDiaryView('site-notes')}
+        onOpenStaff={() => {
+          setStaffSectionExpanded(true);
+          openDiaryView('staff');
+        }}
+        onCloseDay={() => document.getElementById('daily-report-readiness')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+      />
+
       <div className="rounded-2xl border border-border bg-card/95 p-3 shadow-sm sm:p-4 lg:p-6" data-testid="diary-command-header-v2" data-commercial-readiness="diary-desktop-density-hierarchy-v1">
         <div className="flex flex-col gap-3 lg:gap-4" data-commercial-readiness="diary-top-header-responsive-stack-v1 diary-desktop-density-hierarchy-v1">
           <div className="min-w-0">
