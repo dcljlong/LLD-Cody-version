@@ -219,7 +219,19 @@ const DiaryPage = () => {
     task_codes: [],
     lunch_options: ['0', '30', '60']
   });
-  const [selectedDate, setSelectedDate] = useState(() => getNzDateString());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const todayDate = getNzDateString();
+    const requestedDate = new URLSearchParams(
+      window.location.search
+    ).get('date');
+
+    return (
+      /^\d{4}-\d{2}-\d{2}$/.test(requestedDate || '') &&
+      requestedDate <= todayDate
+    )
+      ? requestedDate
+      : todayDate;
+  }); // diary-context-url-date-init-v8-9j2-2
   const [loading, setLoading] = useState(true);
   const [showQuickEntry, setShowQuickEntry] = useState(false);
   const [selectedDiaryActionItem, setSelectedDiaryActionItem] = useState(null); // legacy-action-open-marker-retired-v8-9a6
@@ -846,9 +858,17 @@ const DiaryPage = () => {
       const commercialItems = items.filter(isCommercialProjectOption);
       setProjects(commercialItems);
       if (commercialItems.length > 0) {
+        const requestedProject = new URLSearchParams(
+          window.location.search
+        ).get('project');
         const savedProject = localStorage.getItem('lld_last_project_id');
-        if (savedProject && commercialItems.some(p => p.id === savedProject)) {
-          setSelectedProject(savedProject);
+        const preferredProject = [requestedProject, savedProject].find(
+          (candidate) => candidate && commercialItems.some((project) => project.id === candidate)
+        );
+
+        if (preferredProject) {
+          setSelectedProject(preferredProject);
+          localStorage.setItem('lld_last_project_id', preferredProject);
         } else {
           setSelectedProject(commercialItems[0].id);
           localStorage.setItem('lld_last_project_id', commercialItems[0].id);
@@ -1349,6 +1369,32 @@ const DiaryPage = () => {
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const params = new URLSearchParams(window.location.search);
+
+    if (selectedProject) {
+      params.set('project', selectedProject);
+    } else {
+      params.delete('project');
+    }
+
+    if (selectedDate) {
+      params.set('date', selectedDate);
+    } else {
+      params.delete('date');
+    }
+
+    const nextQuery = params.toString();
+    const nextPath = nextQuery
+      ? '/diary?' + nextQuery
+      : '/diary';
+
+    window.history.replaceState({}, '', nextPath);
+  }, [loading, selectedProject, selectedDate]);
+  // diary-context-url-persistence-v8-9j2-2
 
   useEffect(() => {
     if (selectedProject) {
@@ -2423,7 +2469,8 @@ const DiaryPage = () => {
           setStaffSectionExpanded(true);
           openDiaryView('staff');
         }}
-        onCloseDay={() => document.getElementById('daily-report-readiness')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        onCloseDay={() => openDiaryView('overview', 'closeout')}
+        // closeout-full-review-context-v8-9j2-2
       />
 
       <div className="rounded-2xl border border-border bg-card/95 p-3 shadow-sm sm:p-4 lg:p-6" data-testid="diary-command-header-v2" data-commercial-readiness="diary-desktop-density-hierarchy-v1">
