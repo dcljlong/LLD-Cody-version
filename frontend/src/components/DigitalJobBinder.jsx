@@ -2747,6 +2747,15 @@ const DigitalJobBinder = ({
                 <p>{activeTabConfig.description}</p>
                 <h2>{activeTabConfig.label}</h2>
                 <span>{selectedDateLabel}</span>
+                {activeTab === 'closeout' && (
+                  <span
+                    className="lld-binder-closeout-project-v8-9j4-1"
+                    data-testid="lld-binder-closeout-project-v8-9j4-1"
+                  >
+                    {projectName}
+                  </span>
+                )}
+                {/* closeout-project-context-v8-9j4-1 */}
               </header>
 
               <div className="lld-binder-focused-rule" />
