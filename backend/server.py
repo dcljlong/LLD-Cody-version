@@ -1976,11 +1976,13 @@ async def get_project_diary(
     blocked_gates = [g for g in gates if g["status"] in ["BLOCKED", "DELAYED"]]
     at_risk_gates = [g for g in gates if g["status"] == "AT_RISK"]
 
-    # Get overdue items
+    # Get overdue items that already existed by the selected diary day.
+    # historical-overdue-created-cutoff-v8-9j2
     overdue_items = await db.action_items.find({
         "project_id": project_id,
         "user_id": current_user["id"],
         "status": "open",
+        "created_at": {"$lte": end},
         "due_date": {"$lt": start}
     }, {"_id": 0}).to_list(100)
 

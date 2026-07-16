@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   BookOpen,
   Camera,
+  CalendarDays,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -20,7 +21,7 @@ const BINDER_TABS = [
   { id: 'today', label: 'Today', description: 'Diary + My Day', color: 'coral' },
   { id: 'diary', label: 'Diary', description: 'Daily records', color: 'orange' },
   { id: 'tasks', label: 'Tasks', description: 'Actions & checks', color: 'yellow' },
-  { id: 'materials', label: 'Materials', description: 'Needed & ordered', color: 'green' },
+  { id: 'materials', label: 'Materials', description: 'On site & required', color: 'green' },
   { id: 'emails', label: 'Emails / Calls', description: 'Communications', color: 'teal' },
   { id: 'roadblocks', label: 'Roadblocks', description: 'Issues & impact', color: 'blue' },
   { id: 'walkaround', label: 'Walkaround', description: 'Site capture', color: 'indigo' },
@@ -44,15 +45,125 @@ const getItemTitle = (item = {}) => safeText(
   'Follow-up item'
 );
 
+const getItemDisplayTitle = (item = {}) => {
+  const originalTitle = getItemTitle(item);
+  const isWalkaroundCapture = /^WALKAROUND CAPTURE\s*-\s*/i.test(originalTitle);
+
+  if (!isWalkaroundCapture) {
+    return originalTitle;
+  }
+
+  const cleanedTitle = originalTitle
+    .replace(/^WALKAROUND CAPTURE\s*-\s*/i, '')
+    .replace(/\s+PRIORITY\s*-\s*(critical|high|medium|low)\b/gi, '')
+    .replace(/\s+ACTION\s*-\s*.*$/i, '')
+    .replace(/\s+NEEDS SENDING\s*-\s*/gi, ' · ')
+    .replace(/\bEmail Draft\b/gi, 'Email draft')
+    .replace(/\s*·\s*/g, ' · ')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/[.\s·-]+$/g, '')
+    .trim();
+
+  return cleanedTitle || originalTitle;
+};
+
+// LONG LINE DIARY / COMMUNICATION TITLE CONSISTENCY V8.9D2
+
+// LONG LINE DIARY / COMMUNICATION CANONICAL TITLE PRIORITY V8.9D3
+
+// LONG LINE DIARY / SHARED CANONICAL COMMUNICATION TITLE V8.9D4
+
+const getCommunicationItemTitle = (item = {}) => safeText(
+  item.binder_display_title ||
+  item.title ||
+  item.task_name ||
+  item.name ||
+  item.subject ||
+  item.display_title ||
+  item.note ||
+  item.description ||
+  item.details,
+  'Communication follow-up'
+);
+
+const getCommunicationItemLabels = (item = {}) => {
+  const searchable = [
+    item.display_title,
+    item.title,
+    item.task_name,
+    item.description,
+    item.details,
+    item.note,
+    item.action_type,
+    item.send_to,
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  const labels = [];
+
+  if (searchable.includes('email draft')) {
+    labels.push('Email draft');
+  } else if (searchable.includes('email')) {
+    labels.push('Email');
+  } else if (searchable.includes('call')) {
+    labels.push('Call');
+  } else if (searchable.includes('contact')) {
+    labels.push('Contact');
+  } else {
+    labels.push('Communication');
+  }
+
+  if (
+    searchable.includes('needs sending') ||
+    searchable.includes('send to')
+  ) {
+    labels.push('Needs sending');
+  }
+
+  return labels.join(' · ');
+};
+
 const getItemMeta = (item = {}) => {
+  const dueDate = item.due_date || item.expected_complete_date;
+
   const parts = [
     item.priority,
     item.owner,
-    item.due_date ? `Due ${String(item.due_date).slice(0, 10)}` : '',
+    dueDate ? `Due ${String(dueDate).slice(0, 10)}` : '',
     item.status,
   ].filter(Boolean);
 
   return parts.join(' · ');
+};
+
+const getItemKey = (item = {}) => {
+  const id = safeText(item.id || item._id || item.item_id);
+
+  if (id) {
+    return `id:${id}`;
+  }
+
+  return `text:${[
+    getItemTitle(item),
+    item.due_date || item.expected_complete_date,
+    item.owner,
+  ]
+    .map((value) => safeText(value).toLowerCase())
+    .join('|')}`;
+};
+
+const uniqueItemsByKey = (items = []) => {
+  const seen = new Set();
+
+  return items.filter((item) => {
+    const key = getItemKey(item);
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
 };
 
 const getEntryTime = (entry = {}) => {
@@ -71,19 +182,191 @@ const getEntryTime = (entry = {}) => {
 };
 
 const BinderRings = () => (
-  <div className="lld-binder-spine" aria-hidden="true">
-    {[8, 24, 40, 60, 76, 92].map((top) => (
-      <span
-        key={top}
-        className="lld-binder-ring-row"
-        style={{ top: `${top}%` }}
+  <svg
+    className="lld-binder-mechanism"
+    viewBox="0 0 160 1000"
+    preserveAspectRatio="none"
+    aria-hidden="true"
+    role="presentation"
+    focusable="false"
+    data-testid="lld-binder-larger-exposed-ring-mechanism-v8-5"
+  >
+    <defs>
+      <linearGradient
+        id="lld-spine-metal-v8"
+        x1="0%"
+        y1="0%"
+        x2="100%"
+        y2="0%"
       >
-        <span className="lld-binder-page-hole lld-binder-page-hole-left" />
-        <span className="lld-binder-metal-ring" />
-        <span className="lld-binder-page-hole lld-binder-page-hole-right" />
-      </span>
-    ))}
-  </div>
+        <stop offset="0%" stopColor="#171615" />
+        <stop offset="10%" stopColor="#45413d" />
+        <stop offset="24%" stopColor="#8d8780" />
+        <stop offset="38%" stopColor="#d8d3cc" />
+        <stop offset="49%" stopColor="#fffdfa" />
+        <stop offset="59%" stopColor="#c4beb7" />
+        <stop offset="76%" stopColor="#69635d" />
+        <stop offset="91%" stopColor="#36322f" />
+        <stop offset="100%" stopColor="#151413" />
+      </linearGradient>
+
+      <linearGradient
+        id="lld-ring-metal-v8"
+        x1="0%"
+        y1="0%"
+        x2="0%"
+        y2="100%"
+      >
+        <stop offset="0%" stopColor="#f3f0eb" />
+        <stop offset="13%" stopColor="#c9c2ba" />
+        <stop offset="31%" stopColor="#837b74" />
+        <stop offset="53%" stopColor="#3c3834" />
+        <stop offset="72%" stopColor="#171513" />
+        <stop offset="86%" stopColor="#554f4a" />
+        <stop offset="100%" stopColor="#aaa199" />
+      </linearGradient>
+
+      <linearGradient
+        id="lld-join-metal-v8"
+        x1="0%"
+        y1="0%"
+        x2="100%"
+        y2="0%"
+      >
+        <stop offset="0%" stopColor="#24211f" />
+        <stop offset="23%" stopColor="#69625c" />
+        <stop offset="48%" stopColor="#b9b0a7" />
+        <stop offset="67%" stopColor="#5b554f" />
+        <stop offset="100%" stopColor="#211f1d" />
+      </linearGradient>
+
+      <filter
+        id="lld-mechanism-shadow-v8"
+        x="-35%"
+        y="-10%"
+        width="170%"
+        height="120%"
+      >
+        <feDropShadow
+          dx="0"
+          dy="2.5"
+          stdDeviation="2"
+          floodColor="#000000"
+          floodOpacity="0.42"
+        />
+      </filter>
+    </defs>
+
+    <g filter="url(#lld-mechanism-shadow-v8)">
+      <rect
+        x="63"
+        y="18"
+        width="34"
+        height="964"
+        rx="9"
+        className="lld-binder-mechanism-spine"
+      />
+
+      <rect
+        x="68"
+        y="34"
+        width="24"
+        height="932"
+        rx="6"
+        className="lld-binder-mechanism-spine-inner"
+      />
+
+      <rect
+        x="59"
+        y="8"
+        width="42"
+        height="24"
+        rx="6"
+        className="lld-binder-mechanism-cap"
+      />
+
+      <rect
+        x="59"
+        y="968"
+        width="42"
+        height="24"
+        rx="6"
+        className="lld-binder-mechanism-cap"
+      />
+
+      {[108, 270, 432, 594, 756, 918].map((y) => (
+        <g
+          key={y}
+          className="lld-binder-mechanism-ring-group"
+          transform={`translate(0 ${y})`}
+        >
+
+
+          <circle
+            cx="29"
+            cy="24"
+            r="6.9"
+            className="lld-binder-mechanism-paper-hole"
+          />
+
+          <circle
+            cx="131"
+            cy="24"
+            r="6.9"
+            className="lld-binder-mechanism-paper-hole"
+          />
+
+          <circle
+            cx="29"
+            cy="24"
+            r="5.25"
+            className="lld-binder-mechanism-paper-hole-inner"
+          />
+
+          <circle
+            cx="131"
+            cy="24"
+            r="5.25"
+            className="lld-binder-mechanism-paper-hole-inner"
+          />
+
+          <path
+            d="M29 24 C45 6.2 115 6.2 131 24"
+            fill="none"
+            stroke="url(#lld-ring-metal-v8)"
+            className="lld-binder-mechanism-ring"
+          />
+
+          <path
+            d="M34 21.1 C51 9.7 109 9.7 126 21.1"
+            className="lld-binder-mechanism-ring-highlight"
+          />
+
+
+        </g>
+      ))}
+
+      {[70, 216, 378, 540, 702, 864, 946].map((y) => (
+        <g
+          key={y}
+          className="lld-binder-mechanism-rivet"
+        >
+          <circle
+            cx="80"
+            cy={y}
+            r="5.5"
+          />
+
+          <circle
+            cx="78.3"
+            cy={y - 1.7}
+            r="1.5"
+            className="lld-binder-mechanism-rivet-highlight"
+          />
+        </g>
+      ))}
+    </g>
+  </svg>
 );
 
 const StatusChip = ({ children, tone = 'neutral' }) => (
@@ -136,42 +419,1404 @@ const DiaryEntry = ({ entry }) => {
   );
 };
 
-const WorkItem = ({ item, tone = 'standard', onOpen }) => (
-  <article className={`lld-binder-work-item lld-binder-work-item-${tone}`}>
-    <span className="lld-binder-checkbox" aria-hidden="true" />
+const WorkItem = ({
+  item,
+  tone = 'standard',
+  onOpen,
+  onComplete,
+  completionDisabled = false,
+  context = 'default',
+}) => {
+  const isCommunication = context === 'communications';
 
-    <div className="lld-binder-work-copy">
-      <strong>{getItemTitle(item)}</strong>
-      <p>{getItemMeta(item) || 'Open follow-up'}</p>
+  const title = isCommunication
+    ? getCommunicationItemTitle(item)
+    : getItemDisplayTitle(item);
 
-      <div className="lld-binder-chip-row">
-        {item?.priority && (
-          <StatusChip tone={
-            String(item.priority).toLowerCase() === 'critical' ||
-            String(item.priority).toLowerCase() === 'high'
-              ? 'danger'
-              : 'warning'
-          }>
-            {item.priority}
-          </StatusChip>
-        )}
+  const meta = isCommunication
+    ? [
+      getCommunicationItemLabels(item),
+      getItemMeta(item),
+    ].filter(Boolean).join(' · ')
+    : getItemMeta(item);
 
-        {item?.status && (
-          <StatusChip tone="blue">{item.status}</StatusChip>
-        )}
-      </div>
-    </div>
+  const canComplete = Boolean(item?.id && typeof onComplete === 'function');
+  const canOpen = typeof onOpen === 'function';
 
-    <button
-      type="button"
-      className="lld-binder-mini-button"
-      onClick={onOpen}
-    >
-      Open
-    </button>
-  </article>
+  return (
+    <article className={`lld-binder-work-item lld-binder-work-item-${tone}`}>
+      <button
+        type="button"
+        className="lld-binder-checkbox"
+        aria-label={`Mark ${title} complete`}
+        title={canComplete ? `Mark ${title} complete` : 'Open the action item to complete it'}
+        disabled={!canComplete || completionDisabled}
+        onClick={(event) => {
+          event.stopPropagation();
+
+          if (canComplete) {
+            onComplete(item);
+          }
+        }}
+      >
+        <span aria-hidden="true">
+          <CheckCircle2 />
+        </span>
+      </button>
+
+      <button
+        type="button"
+        className="lld-binder-work-open"
+        aria-label={`Open ${title}`}
+        disabled={!canOpen}
+        onClick={() => onOpen?.(item)}
+      >
+        <span className="lld-binder-work-copy">
+
+          <strong>{title}</strong>
+          <p>{meta || 'Open follow-up'}</p>
+        </span>
+
+
+      </button>
+    </article>
+  );
+};
+
+const MATERIAL_STATUS_LABELS = {
+  noted: 'Noted',
+  delivered: 'On site',
+  used: 'Used today',
+  short: 'Short / missing',
+  damaged: 'Damaged',
+  removed: 'Removed',
+};
+
+const getMaterialStatus = (row = {}) => (
+  safeText(row.status, 'noted').toLowerCase()
 );
 
+const getMaterialStatusLabel = (row = {}) => {
+  const status = getMaterialStatus(row);
+
+  return MATERIAL_STATUS_LABELS[status] ||
+    status
+      .replace(/[_-]+/g, ' ')
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
+const MaterialLedgerRow = ({
+  row = {},
+  index = 0,
+  onOpen,
+}) => {
+  const title = safeText(row.item, `Material ${index + 1}`);
+  const quantity = safeText(row.quantity);
+  const supplier = safeText(row.supplier_or_reference);
+  const notes = safeText(row.notes);
+  const status = getMaterialStatus(row);
+
+  const meta = [
+    quantity ? `Qty ${quantity}` : '',
+    supplier,
+    notes,
+  ].filter(Boolean);
+
+  const canOpen = typeof onOpen === 'function';
+
+  return (
+    <article
+      className={`lld-binder-material-row lld-binder-material-row-${status}`}
+      data-testid={`lld-binder-material-row-v8-9c-${index}`}
+    >
+      <span className="lld-binder-material-status">
+        {getMaterialStatusLabel(row)}
+      </span>
+
+      <button
+        type="button"
+        className="lld-binder-material-open"
+        onClick={() => onOpen?.(index)}
+        disabled={!canOpen}
+        aria-label={`Open materials workflow for ${title}`}
+      >
+        <strong>{title}</strong>
+
+        {meta.length > 0 && (
+          <p>{meta.join(' · ')}</p>
+        )}
+      </button>
+    </article>
+  );
+};
+
+const BinderMaterialDetail = ({
+  material = {},
+  materialSaving = false,
+  onChange,
+  onSave,
+  onRemove,
+  onClose,
+}) => (
+  <div
+    className="lld-binder-action-detail lld-binder-material-detail"
+    data-testid="lld-binder-material-detail-v8-9c2"
+    aria-busy={materialSaving}
+  >
+    <div className="lld-binder-page-heading lld-binder-action-detail-heading">
+      <div>
+        <p>Material record</p>
+        <h3>Material detail</h3>
+        <span>Edit this material without leaving the register.</span>
+      </div>
+
+      <button
+        type="button"
+        className="lld-binder-action-back"
+        onClick={onClose}
+        disabled={materialSaving}
+      >
+        ← Materials
+      </button>
+    </div>
+
+    <form
+      className="lld-binder-action-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSave?.();
+      }}
+    >
+      <label className="lld-binder-action-field lld-binder-action-field-wide">
+        <span>Material / item</span>
+        <input
+          type="text"
+          value={material.item || ''}
+          placeholder="Material or item"
+          onChange={(event) => onChange?.('item', event.target.value)}
+          disabled={materialSaving}
+          data-testid="lld-binder-material-item-v8-9c2"
+        />
+      </label>
+
+      <label className="lld-binder-action-field">
+        <span>Quantity</span>
+        <input
+          type="text"
+          value={material.quantity || ''}
+          placeholder="Quantity"
+          onChange={(event) => onChange?.('quantity', event.target.value)}
+          disabled={materialSaving}
+        />
+      </label>
+
+      <label className="lld-binder-action-field">
+        <span>Status</span>
+        <select
+          value={material.status || 'noted'}
+          onChange={(event) => onChange?.('status', event.target.value)}
+          disabled={materialSaving}
+          data-testid="lld-binder-material-status-v8-9c2"
+        >
+          <option value="noted">Noted</option>
+          <option value="delivered">On site</option>
+          <option value="used">Used today</option>
+          <option value="short">Short / missing</option>
+          <option value="damaged">Damaged</option>
+          <option value="removed">Removed</option>
+        </select>
+      </label>
+
+      <label className="lld-binder-action-field lld-binder-action-field-wide">
+        <span>Supplier / reference</span>
+        <input
+          type="text"
+          value={material.supplier_or_reference || ''}
+          placeholder="Supplier, delivery, docket or reference"
+          onChange={(event) => (
+            onChange?.('supplier_or_reference', event.target.value)
+          )}
+          disabled={materialSaving}
+        />
+      </label>
+
+      <label className="lld-binder-action-field lld-binder-action-field-wide">
+        <span>Notes</span>
+        <textarea
+          value={material.notes || ''}
+          placeholder="Location, condition, intended use or other site detail..."
+          onChange={(event) => onChange?.('notes', event.target.value)}
+          disabled={materialSaving}
+          rows="3"
+        />
+      </label>
+
+      <div className="lld-binder-action-controls">
+        <button
+          type="submit"
+          className="lld-binder-action-button lld-binder-action-button-primary"
+          disabled={
+            materialSaving ||
+            typeof onSave !== 'function'
+          }
+        >
+          {materialSaving ? 'Saving…' : 'Save material'}
+        </button>
+
+        <button
+          type="button"
+          className="lld-binder-action-button lld-binder-material-remove"
+          onClick={onRemove}
+          disabled={
+            materialSaving ||
+            typeof onRemove !== 'function'
+          }
+        >
+          Remove
+        </button>
+
+        <button
+          type="button"
+          className="lld-binder-action-button lld-binder-action-button-quiet"
+          onClick={onClose}
+          disabled={materialSaving}
+        >
+          Back to Materials
+        </button>
+      </div>
+    </form>
+  </div>
+);
+
+const formatRoadblockDate = (value) => {
+  const raw = safeText(value);
+
+  if (!raw) {
+    return '';
+  }
+
+  const datePart = raw.slice(0, 10);
+  const parsed = new Date(`${datePart}T12:00:00`);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return datePart;
+  }
+
+  return parsed.toLocaleDateString('en-NZ', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+const formatRoadblockStatus = (value) => (
+  safeText(value, 'Open')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+);
+
+const RoadblockLedgerRow = ({
+  item = {},
+  index = 0,
+  onOpen,
+}) => {
+  const title = safeText(
+    item.name || item.title,
+    `Roadblock ${index + 1}`
+  );
+
+  const requiredDate = formatRoadblockDate(
+    item.required_by_date
+  );
+
+  const expectedDate = formatRoadblockDate(
+    item.expected_complete_date
+  );
+
+  const metadata = [
+    safeText(item.owner_party || item.owner),
+    requiredDate ? `Required ${requiredDate}` : '',
+    expectedDate ? `Expected ${expectedDate}` : '',
+    item.is_hard_gate ? 'Hard gate' : '',
+  ].filter(Boolean);
+
+  return (
+    <button
+      type="button"
+      className="lld-binder-focused-record lld-binder-roadblock-row"
+      onClick={() => onOpen?.(item)}
+      data-testid={`lld-binder-roadblock-row-v8-9e1-${index}`}
+    >
+      <span className="lld-binder-roadblock-status">
+        {formatRoadblockStatus(item.status)}
+      </span>
+
+      <div>
+        <strong>{title}</strong>
+
+        {metadata.length > 0 && (
+          <small>{metadata.join(' · ')}</small>
+        )}
+      </div>
+    </button>
+  );
+};
+
+const BinderRoadblockDetail = ({
+  roadblock = {},
+  onOpenWorkflow,
+  onClose,
+}) => {
+  const title = safeText(
+    roadblock.name || roadblock.title,
+    'Roadblock / concern'
+  );
+
+  const requiredDate = formatRoadblockDate(
+    roadblock.required_by_date
+  );
+
+  const expectedDate = formatRoadblockDate(
+    roadblock.expected_complete_date
+  );
+
+  const description = safeText(
+    roadblock.description,
+    'No additional description or impact has been recorded.'
+  );
+
+  return (
+    <div
+      className="lld-binder-action-detail lld-binder-roadblock-detail"
+      data-testid="lld-binder-roadblock-detail-v8-9e1"
+    >
+      <div className="lld-binder-page-heading lld-binder-action-detail-heading">
+        <div>
+          <p>Roadblock record</p>
+          <h3>Roadblock detail</h3>
+          <span>
+            Review the issue without leaving the open binder.
+          </span>
+        </div>
+
+        <button
+          type="button"
+          className="lld-binder-action-back"
+          onClick={onClose}
+        >
+          ← Roadblocks
+        </button>
+      </div>
+
+      <div className="lld-binder-roadblock-detail-grid">
+        <div className="lld-binder-roadblock-field lld-binder-roadblock-field-wide">
+          <span>Roadblock / concern</span>
+          <strong>{title}</strong>
+        </div>
+
+        <div className="lld-binder-roadblock-field">
+          <span>Status</span>
+          <strong>
+            {formatRoadblockStatus(roadblock.status)}
+          </strong>
+        </div>
+
+        <div className="lld-binder-roadblock-field">
+          <span>Owner</span>
+          <strong>
+            {safeText(
+              roadblock.owner_party || roadblock.owner,
+              'Not assigned'
+            )}
+          </strong>
+        </div>
+
+        <div className="lld-binder-roadblock-field">
+          <span>Required by</span>
+          <strong>{requiredDate || 'Not set'}</strong>
+        </div>
+
+        <div className="lld-binder-roadblock-field">
+          <span>Expected complete</span>
+          <strong>{expectedDate || 'Not set'}</strong>
+        </div>
+
+        <div className="lld-binder-roadblock-field">
+          <span>Programme</span>
+          <strong>
+            {roadblock.linked_task_id
+              ? 'Linked to programme'
+              : 'Not linked'}
+          </strong>
+        </div>
+
+        <div className="lld-binder-roadblock-field">
+          <span>Control</span>
+          <strong>
+            {roadblock.is_hard_gate
+              ? 'Hard gate'
+              : roadblock.is_optional
+                ? 'Optional'
+                : 'Standard gate'}
+          </strong>
+        </div>
+
+        <div className="lld-binder-roadblock-field lld-binder-roadblock-field-wide">
+          <span>Description / impact</span>
+          <p>{description}</p>
+        </div>
+      </div>
+
+      <div className="lld-binder-roadblock-actions">
+        <button
+          type="button"
+          className="lld-binder-action-primary"
+          onClick={onOpenWorkflow}
+        >
+          Open full Roadblocks workflow
+        </button>
+
+        <button
+          type="button"
+          className="lld-binder-action-secondary"
+          onClick={onClose}
+        >
+          Back to Roadblocks
+        </button>
+      </div>
+    </div>
+  );
+};
+const formatWalkaroundDate = (value) => {
+  const raw = safeText(value);
+
+  if (!raw) {
+    return '';
+  }
+
+  const datePart = raw.slice(0, 10);
+  const parsed = new Date(`${datePart}T12:00:00`);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return datePart;
+  }
+
+  return parsed.toLocaleDateString('en-NZ', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+const formatWalkaroundDateTime = (value) => {
+  const raw = safeText(value);
+
+  if (!raw) {
+    return '';
+  }
+
+  const parsed = new Date(raw);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return raw;
+  }
+
+  return parsed.toLocaleString('en-NZ', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const getWalkaroundEntryDisplay = (entry = {}) => {
+  const rawNote = safeText(
+    entry.note,
+    'Walkaround observation'
+  );
+
+  const lines = rawNote.split(/\r?\n/);
+
+  const getLineValue = (prefix) => {
+    const upperPrefix = prefix.toUpperCase();
+
+    const line = lines
+      .map((candidate) => String(candidate || '').trim())
+      .find((candidate) => (
+        candidate.toUpperCase().startsWith(upperPrefix)
+      ));
+
+    return line
+      ? line.slice(prefix.length).trim()
+      : '';
+  };
+
+  const structuredPrefixes = [
+    'WALKAROUND CAPTURE - ',
+    'CAPTURE SITE ACTIVITY - ',
+    'PRIORITY - ',
+    'NEEDS SENDING - ',
+    'ACTION - ',
+    'SORT TO - ',
+  ];
+
+  const observation = lines
+    .map((line) => String(line || '').trim())
+    .filter((line) => (
+      line &&
+      !structuredPrefixes.some((prefix) => (
+        line.toUpperCase().startsWith(prefix)
+      ))
+    ))
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const category = (
+    getLineValue('WALKAROUND CAPTURE - ') ||
+    getLineValue('CAPTURE SITE ACTIVITY - ') ||
+    'Site observation'
+  );
+
+  const sendTo = getLineValue('NEEDS SENDING - ');
+  const action = getLineValue('ACTION - ');
+  const buckets = getLineValue('SORT TO - ');
+
+  const priority = safeText(
+    entry.priority ||
+      getLineValue('PRIORITY - '),
+    'medium'
+  ).toLowerCase();
+
+  return {
+    observation: observation || rawNote,
+    category,
+    sendTo,
+    action,
+    buckets,
+    priority,
+    owner: safeText(entry.owner, 'Not assigned'),
+    capturedAt: formatWalkaroundDateTime(entry.created_at),
+    dueDate: formatWalkaroundDate(entry.due_date),
+    expectedDate: formatWalkaroundDate(
+      entry.expected_complete_date
+    ),
+    photos: Array.isArray(entry.photos)
+      ? entry.photos.filter(Boolean)
+      : [],
+  };
+};
+
+const WalkaroundLedgerRow = ({
+  item = {},
+  index = 0,
+  onOpen,
+}) => {
+  const display = getWalkaroundEntryDisplay(item);
+
+  const metadata = [
+    display.category,
+    display.owner,
+    display.capturedAt,
+    display.photos.length > 0
+      ? `${display.photos.length} photo${display.photos.length === 1 ? '' : 's'}`
+      : '',
+  ].filter(Boolean);
+
+  const priorityLabel = (
+    display.priority === 'critical'
+      ? 'CRIT'
+      : display.priority === 'high'
+        ? 'HIGH'
+        : display.priority === 'low'
+          ? 'LOW'
+          : 'MED'
+  );
+
+  return (
+    <button
+      type="button"
+      className="lld-binder-focused-record lld-binder-walkaround-row"
+      onClick={() => onOpen?.(item)}
+      data-testid={`lld-binder-walkaround-row-v8-9f1-${index}`}
+    >
+      <span
+        className={`lld-binder-walkaround-priority lld-binder-walkaround-priority-${display.priority}`}
+      >
+        {priorityLabel}
+      </span>
+
+      <div className="lld-binder-walkaround-row-copy">
+        <strong>{display.observation}</strong>
+
+        {metadata.length > 0 && (
+          <small>{metadata.join(' · ')}</small>
+        )}
+      </div>
+
+      {display.photos[0] ? (
+        <img
+          src={display.photos[0]}
+          alt=""
+          className="lld-binder-walkaround-thumbnail"
+        />
+      ) : (
+        <span
+          className="lld-binder-walkaround-no-photo"
+          aria-label="No photo attached"
+        >
+          No photo
+        </span>
+      )}
+    </button>
+  );
+};
+
+const BinderWalkaroundDetail = ({
+  entry = {},
+  onOpenWorkflow,
+  onClose,
+}) => {
+  const display = getWalkaroundEntryDisplay(entry);
+
+  return (
+    <div
+      className="lld-binder-action-detail lld-binder-walkaround-detail"
+      data-testid="lld-binder-walkaround-detail-v8-9f1"
+    >
+      <div className="lld-binder-page-heading lld-binder-action-detail-heading">
+        <div>
+          <p>Site observation</p>
+          <h3>Walkaround detail</h3>
+          <span>
+            Review captured site evidence without leaving the binder.
+          </span>
+        </div>
+
+        <button
+          type="button"
+          className="lld-binder-action-back"
+          onClick={onClose}
+        >
+          ← Walkaround
+        </button>
+      </div>
+
+      <div className="lld-binder-walkaround-detail-grid">
+        <div className="lld-binder-walkaround-field lld-binder-walkaround-field-wide">
+          <span>Observation</span>
+          <strong>{display.observation}</strong>
+        </div>
+
+        <div className="lld-binder-walkaround-field">
+          <span>Category</span>
+          <strong>{display.category}</strong>
+        </div>
+
+        <div className="lld-binder-walkaround-field">
+          <span>Priority</span>
+          <strong>{display.priority.toUpperCase()}</strong>
+        </div>
+
+        <div className="lld-binder-walkaround-field">
+          <span>Owner</span>
+          <strong>{display.owner}</strong>
+        </div>
+
+        <div className="lld-binder-walkaround-field">
+          <span>Captured</span>
+          <strong>{display.capturedAt || 'Not recorded'}</strong>
+        </div>
+
+        <div className="lld-binder-walkaround-field">
+          <span>Due</span>
+          <strong>{display.dueDate || 'Not set'}</strong>
+        </div>
+
+        <div className="lld-binder-walkaround-field">
+          <span>Expected complete</span>
+          <strong>{display.expectedDate || 'Not set'}</strong>
+        </div>
+
+        <div className="lld-binder-walkaround-field">
+          <span>Roadblock link</span>
+          <strong>
+            {entry.gate_id
+              ? 'Linked to roadblock'
+              : 'Not linked'}
+          </strong>
+        </div>
+
+        <div className="lld-binder-walkaround-field">
+          <span>Programme link</span>
+          <strong>
+            {entry.task_id
+              ? 'Linked to programme'
+              : 'Not linked'}
+          </strong>
+        </div>
+
+        <div className="lld-binder-walkaround-field">
+          <span>Follow-up</span>
+          <strong>
+            {entry.action_item_id
+              ? 'Action Item created'
+              : display.action || 'Diary evidence only'}
+          </strong>
+        </div>
+
+        <div className="lld-binder-walkaround-field">
+          <span>Needs sending</span>
+          <strong>{display.sendTo || 'No'}</strong>
+        </div>
+
+        {display.buckets && (
+          <div className="lld-binder-walkaround-field lld-binder-walkaround-field-wide">
+            <span>Work-through categories</span>
+            <p>{display.buckets}</p>
+          </div>
+        )}
+      </div>
+
+      {display.photos.length > 0 && (
+        <div className="lld-binder-walkaround-evidence">
+          <div>
+            <span>Photo evidence</span>
+            <strong>
+              {display.photos.length} attached
+            </strong>
+          </div>
+
+          <div className="lld-binder-walkaround-photo-grid">
+            {display.photos.map((photo, photoIndex) => (
+              <img
+                key={`${entry.id || 'walkaround'}-${photoIndex}`}
+                src={photo}
+                alt={`Walkaround evidence ${photoIndex + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="lld-binder-walkaround-actions">
+        <button
+          type="button"
+          className="lld-binder-action-primary"
+          onClick={onOpenWorkflow}
+        >
+          Open full Walkaround workflow
+        </button>
+
+        <button
+          type="button"
+          className="lld-binder-action-secondary"
+          onClick={onClose}
+        >
+          Back to Walkaround
+        </button>
+      </div>
+    </div>
+  );
+};
+const formatStaffTime = (value) => {
+  const text = safeText(value);
+
+  if (!text) {
+    return 'Not set';
+  }
+
+  const match = text.match(/^(\d{1,2}):(\d{2})/);
+
+  if (!match) {
+    return text;
+  }
+
+  const hour = Number(match[1]);
+  const minute = match[2];
+  const suffix = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour % 12 || 12;
+
+  return `${displayHour}:${minute} ${suffix}`;
+};
+
+const formatStaffLunch = (value) => {
+  const minutes = safeText(value, '0');
+
+  if (minutes === '0') {
+    return 'No lunch';
+  }
+
+  return `${minutes} min`;
+};
+
+const getStaffRowDisplay = (row = {}) => {
+  const employeeName = safeText(row.employee_name, 'Unnamed staff member');
+  const numericHours = Number(row.total_hours || 0);
+  const hours = Number.isFinite(numericHours) ? numericHours : 0;
+  const rawStatus = safeText(row.sync_status || row.source).toLowerCase();
+
+  let handoffStatus = 'LLD diary row';
+
+  if (rawStatus.includes('import')) {
+    handoffStatus = 'Imported to Timesheet';
+  } else if (rawStatus.includes('pending_timesheet_staff')) {
+    handoffStatus = 'Site-only diary staff';
+  } else if (rawStatus.includes('timesheet')) {
+    handoffStatus = 'Timesheet-linked staff';
+  }
+
+  return {
+    employeeName,
+    initials: employeeName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join('') || 'ST',
+    start: formatStaffTime(row.start_time),
+    finish: formatStaffTime(row.finish_time),
+    lunch: formatStaffLunch(row.lunch_duration),
+    hours,
+    jobNumber: safeText(row.job_number, 'Not set'),
+    taskCode: safeText(row.task_code, 'Not set'),
+    notes: safeText(row.description || row.other, 'No notes recorded'),
+    source: safeText(row.source, 'LLD'),
+    handoffStatus,
+  };
+};
+
+const StaffLedgerRow = ({
+  item = {},
+  index = 0,
+  onOpen,
+}) => {
+  const display = getStaffRowDisplay(item);
+
+  const timeSummary =
+    display.start !== 'Not set' && display.finish !== 'Not set'
+      ? `${display.start} to ${display.finish}`
+      : display.start !== 'Not set'
+        ? `Started ${display.start}`
+        : display.finish !== 'Not set'
+          ? `Finished ${display.finish}`
+          : 'Time not entered'; // staff-missing-time-wording-v8-9h1-1
+
+  const metadata = [
+    timeSummary,
+    display.taskCode !== 'Not set' ? display.taskCode : '',
+    display.jobNumber !== 'Not set' ? display.jobNumber : '',
+  ].filter(Boolean);
+
+  return (
+    <button
+      type="button"
+      className="lld-binder-focused-record lld-binder-staff-row"
+      onClick={() => onOpen?.(item)}
+      data-testid={`lld-binder-staff-row-v8-9h1-${index}`}
+    >
+      <span className="lld-binder-staff-initials" aria-hidden="true">
+        {display.initials}
+      </span>
+
+      <div className="lld-binder-staff-row-copy">
+        <strong>{display.employeeName}</strong>
+
+        {metadata.length > 0 && (
+          <small>{metadata.join(' · ')}</small>
+        )}
+      </div>
+
+      <span className="lld-binder-staff-hours">
+        {display.hours.toFixed(2)}h
+      </span>
+    </button>
+  );
+};
+
+const BinderStaffDetail = ({
+  row = {},
+  onOpenWorkflow,
+  onClose,
+}) => {
+  const display = getStaffRowDisplay(row);
+
+  return (
+    <div
+      className="lld-binder-action-detail lld-binder-staff-detail"
+      data-testid="lld-binder-staff-detail-v8-9h1"
+    >
+      <div className="lld-binder-page-heading lld-binder-action-detail-heading">
+        <div>
+          <p>Daily labour</p>
+          <h3>Staff record</h3>
+          <small>
+            Review attendance, time and diary notes without leaving the binder.
+          </small>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="lld-binder-detail-back-link"
+        >
+          ← Staff
+        </button>
+      </div>
+
+      <div className="lld-binder-staff-person">
+        <span aria-hidden="true">{display.initials}</span>
+
+        <div>
+          <strong>{display.employeeName}</strong>
+          <small>{display.handoffStatus}</small>
+        </div>
+
+        <b>{display.hours.toFixed(2)}h</b>
+      </div>
+
+      <div className="lld-binder-staff-detail-grid">
+        <div className="lld-binder-staff-field">
+          <span>Start</span>
+          <strong>{display.start}</strong>
+        </div>
+
+        <div className="lld-binder-staff-field">
+          <span>Finish</span>
+          <strong>{display.finish}</strong>
+        </div>
+
+        <div className="lld-binder-staff-field">
+          <span>Lunch</span>
+          <strong>{display.lunch}</strong>
+        </div>
+
+        <div className="lld-binder-staff-field">
+          <span>Total hours</span>
+          <strong>{display.hours.toFixed(2)} h</strong>
+        </div>
+
+        <div className="lld-binder-staff-field">
+          <span>Job number</span>
+          <strong>{display.jobNumber}</strong>
+        </div>
+
+        <div className="lld-binder-staff-field">
+          <span>Task code</span>
+          <strong>{display.taskCode}</strong>
+        </div>
+
+        <div className="lld-binder-staff-field">
+          <span>Timesheet handoff</span>
+          <strong>{display.handoffStatus}</strong>
+        </div>
+
+        <div className="lld-binder-staff-field">
+          <span>Source</span>
+          <strong>{display.source}</strong>
+        </div>
+
+        <div className="lld-binder-staff-field lld-binder-staff-field-wide">
+          <span>Diary notes</span>
+          <strong>{display.notes}</strong>
+        </div>
+      </div>
+
+      <div className="lld-binder-staff-actions">
+        <button
+          type="button"
+          className="lld-binder-action-primary"
+          onClick={onOpenWorkflow}
+        >
+          Open Staff diary
+        </button>
+
+        <button
+          type="button"
+          className="lld-binder-action-secondary"
+          onClick={onClose}
+        >
+          Back to Staff
+        </button>
+      </div>
+    </div>
+  );
+};
+const PhotoEvidenceRow = ({
+  item = {},
+  index = 0,
+  onOpen,
+}) => {
+  const entry = item.entry || {};
+  const display = getWalkaroundEntryDisplay(entry);
+
+  const metadata = [
+    display.category,
+    display.owner,
+    display.capturedAt,
+  ].filter(Boolean);
+
+  return (
+    <button
+      type="button"
+      className="lld-binder-focused-record lld-binder-photo-row"
+      onClick={() => onOpen?.(item)}
+      data-testid={`lld-binder-photo-row-v8-9g1-${index}`}
+    >
+      <img
+        src={item.photo}
+        alt=""
+        className="lld-binder-photo-thumbnail"
+      />
+
+      <div className="lld-binder-photo-row-copy">
+        <strong>{display.observation}</strong>
+
+        {metadata.length > 0 && (
+          <small>{metadata.join(' · ')}</small>
+        )}
+      </div>
+
+      <span className="lld-binder-photo-number">
+        {String(index + 1).padStart(2, '0')}
+      </span>
+    </button>
+  );
+};
+
+const BinderPhotoDetail = ({
+  evidence = {},
+  onOpenWorkflow,
+  onClose,
+}) => {
+  const entry = evidence.entry || {};
+  const display = getWalkaroundEntryDisplay(entry);
+
+  return (
+    <div
+      className="lld-binder-action-detail lld-binder-photo-detail"
+      data-testid="lld-binder-photo-detail-v8-9g1"
+    >
+      <div className="lld-binder-page-heading lld-binder-action-detail-heading">
+        <div>
+          <p>Site evidence</p>
+          <h3>Photo detail</h3>
+          <span>
+            Review the captured image and its source record inside the binder.
+          </span>
+        </div>
+
+        <button
+          type="button"
+          className="lld-binder-action-back"
+          onClick={onClose}
+        >
+          ← Photos
+        </button>
+      </div>
+
+      <div className="lld-binder-photo-detail-layout">
+        <div className="lld-binder-photo-detail-image-wrap">
+          <img
+            src={evidence.photo}
+            alt={display.observation}
+            className="lld-binder-photo-detail-image"
+          />
+
+          <span>
+            Photo {(evidence.photoIndex || 0) + 1} of {evidence.photoCount || 1}
+          </span>
+        </div>
+
+        <div className="lld-binder-photo-detail-fields">
+          <div className="lld-binder-photo-field">
+            <span>Observation</span>
+            <strong>{display.observation}</strong>
+          </div>
+
+          <div className="lld-binder-photo-field">
+            <span>Category</span>
+            <strong>{display.category}</strong>
+          </div>
+
+          <div className="lld-binder-photo-field">
+            <span>Priority</span>
+            <strong>{display.priority.toUpperCase()}</strong>
+          </div>
+
+          <div className="lld-binder-photo-field">
+            <span>Owner</span>
+            <strong>{display.owner}</strong>
+          </div>
+
+          <div className="lld-binder-photo-field">
+            <span>Captured</span>
+            <strong>{display.capturedAt || 'Not recorded'}</strong>
+          </div>
+
+          <div className="lld-binder-photo-field">
+            <span>Follow-up</span>
+            <strong>
+              {entry.action_item_id
+                ? 'Action Item created'
+                : display.action || 'Diary evidence only'}
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      <div className="lld-binder-photo-actions">
+        <button
+          type="button"
+          className="lld-binder-action-primary"
+          onClick={onOpenWorkflow}
+        >
+          Open source Walkaround workflow
+        </button>
+
+        <button
+          type="button"
+          className="lld-binder-action-secondary"
+          onClick={onClose}
+        >
+          Back to Photos
+        </button>
+      </div>
+    </div>
+  );
+};
+const BinderTasksActionDetail = ({
+  selectedTask,
+  selectedTaskDraft,
+  taskDetailSaving = false,
+  taskCompletionPending = false,
+  onTaskDraftChange,
+  onSaveTask,
+  onCompleteSelectedTask,
+  onReopenSelectedTask,
+  onCloseTask,
+  detailContext = 'tasks',
+}) => {
+  const selectedTaskIsComplete = [
+    'complete',
+    'completed',
+    'closed',
+    'done',
+  ].includes(
+    String(
+      selectedTaskDraft?.status ||
+      selectedTask?.status ||
+      ''
+    ).toLowerCase()
+  );
+
+  return (
+    <div
+      className="lld-binder-action-detail"
+      data-testid="lld-binder-tasks-action-detail-v8-9b2"
+      data-communications-detail={
+        detailContext === 'emails'
+          ? 'lld-binder-communications-detail-v8-9d1'
+          : undefined
+      }
+      aria-busy={taskDetailSaving}
+    >
+      <div className="lld-binder-page-heading lld-binder-action-detail-heading">
+        <div>
+          <p>
+            {detailContext === 'emails'
+              ? 'Communication follow-up'
+              : 'Action record'}
+          </p>
+
+          <h3>
+            {detailContext === 'emails'
+              ? 'Communication detail'
+              : 'Action detail'}
+          </h3>
+
+          <span>
+            {detailContext === 'emails'
+              ? 'Edit this follow-up without leaving Emails / Calls.'
+              : 'Edit this action without leaving the Tasks ledger.'}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          className="lld-binder-action-back"
+          onClick={onCloseTask}
+          disabled={taskDetailSaving}
+        >
+          {detailContext === 'emails'
+            ? '← Emails / Calls'
+            : '← Tasks'}
+        </button>
+      </div>
+
+      <form
+        className="lld-binder-action-form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSaveTask?.();
+        }}
+      >
+        <label className="lld-binder-action-field lld-binder-action-field-wide">
+          <span>Title</span>
+          <input
+            type="text"
+            value={selectedTaskDraft.title || ''}
+            onChange={(event) => (
+              onTaskDraftChange?.('title', event.target.value)
+            )}
+            disabled={taskDetailSaving}
+          />
+        </label>
+
+        <label className="lld-binder-action-field">
+          <span>Owner</span>
+          <input
+            type="text"
+            value={selectedTaskDraft.owner || ''}
+            placeholder="Responsible person"
+            onChange={(event) => (
+              onTaskDraftChange?.('owner', event.target.value)
+            )}
+            disabled={taskDetailSaving}
+          />
+        </label>
+
+        <label className="lld-binder-action-field">
+          <span>Priority</span>
+          <select
+            value={selectedTaskDraft.priority || 'medium'}
+            onChange={(event) => (
+              onTaskDraftChange?.('priority', event.target.value)
+            )}
+            disabled={taskDetailSaving}
+          >
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+            <option value="deferred">Deferred</option>
+          </select>
+        </label>
+
+        <label className="lld-binder-action-field">
+          <span>Status</span>
+          <select
+            value={selectedTaskDraft.status || 'open'}
+            onChange={(event) => (
+              onTaskDraftChange?.('status', event.target.value)
+            )}
+            disabled={taskDetailSaving || selectedTaskIsComplete}
+          >
+            <option value="open">To Do</option>
+            <option value="in_progress">In Progress</option>
+            <option value="blocked">Blocked</option>
+
+            {selectedTaskIsComplete && (
+              <option value="completed">Complete</option>
+            )}
+          </select>
+        </label>
+
+        <label className="lld-binder-action-field">
+          <span>Due</span>
+          <input
+            type="date"
+            value={selectedTaskDraft.due_date || ''}
+            onChange={(event) => (
+              onTaskDraftChange?.('due_date', event.target.value)
+            )}
+            disabled={taskDetailSaving}
+          />
+        </label>
+
+        <label className="lld-binder-action-field">
+          <span>Expected complete</span>
+          <input
+            type="date"
+            value={selectedTaskDraft.expected_complete_date || ''}
+            onChange={(event) => (
+              onTaskDraftChange?.(
+                'expected_complete_date',
+                event.target.value
+              )
+            )}
+            disabled={taskDetailSaving}
+          />
+        </label>
+
+        <label className="lld-binder-action-field lld-binder-action-field-wide">
+          <span>Details</span>
+          <textarea
+            value={selectedTaskDraft.description || ''}
+            placeholder="Notes, instruction, required response, or site detail..."
+            onChange={(event) => (
+              onTaskDraftChange?.('description', event.target.value)
+            )}
+            disabled={taskDetailSaving}
+            rows="3"
+          />
+        </label>
+
+        <div className="lld-binder-action-controls">
+          <button
+            type="submit"
+            className="lld-binder-action-button lld-binder-action-button-primary"
+            disabled={
+              taskDetailSaving ||
+              typeof onSaveTask !== 'function'
+            }
+          >
+            {taskDetailSaving ? 'Saving…' : 'Save follow-up'}
+          </button>
+
+          {selectedTaskIsComplete ? (
+            <button
+              type="button"
+              className="lld-binder-action-button"
+              onClick={onReopenSelectedTask}
+              disabled={
+                taskDetailSaving ||
+                typeof onReopenSelectedTask !== 'function'
+              }
+            >
+              Reopen
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="lld-binder-action-button"
+              onClick={onCompleteSelectedTask}
+              disabled={
+                taskDetailSaving ||
+                taskCompletionPending ||
+                typeof onCompleteSelectedTask !== 'function'
+              }
+            >
+              Mark complete
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="lld-binder-action-button lld-binder-action-button-quiet"
+            onClick={onCloseTask}
+            disabled={taskDetailSaving}
+          >
+            {detailContext === 'emails'
+              ? 'Back to Emails / Calls'
+              : 'Back to Tasks'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
 const DigitalJobBinder = ({
   currentProject,
   selectedDateLabel,
@@ -183,22 +1828,53 @@ const DigitalJobBinder = ({
   taskItems = [],
   materials = [],
   labourCount = 0,
+  labourRows = [],
   quickNote = '',
   submitting = false,
   onQuickNoteChange,
   onQuickSubmit,
   onChangeDate,
+  onSelectDate,
   onOpenDiary,
   onOpenTasks,
+  onOpenTask,
+  onCompleteTask,
+  taskCompletionPending = false,
+  selectedTask = null,
+  selectedTaskDraft = null,
+  taskDetailSaving = false,
+  onTaskDraftChange,
+  onSaveTask,
+  onCompleteSelectedTask,
+  onReopenSelectedTask,
+  onCloseTask,
   onOpenMaterials,
+  selectedMaterial = null,
+  materialSaving = false,
+  onOpenMaterial,
+  onAddMaterial,
+  onMaterialChange,
+  onSaveMaterial,
+  onRemoveMaterial,
+  onCloseMaterial,
   onOpenEmails,
+  roadblocks = [],
+  selectedRoadblock = null,
+  onOpenRoadblock,
+  onCloseRoadblock,
   onOpenRoadblocks,
   onOpenWalkaround,
   onOpenPhotos,
   onOpenStaff,
   onCloseDay,
 }) => {
-  const [activeTab, setActiveTab] = useState('today');
+  const [activeTab, setActiveTab] = useState(() => {
+    const requestedTab = new URLSearchParams(window.location.search).get('tab');
+
+    return BINDER_TABS.some((tab) => tab.id === requestedTab)
+      ? requestedTab
+      : 'today';
+  });
 
   const projectName = currentProject
     ? `${currentProject.job_number ? `${currentProject.job_number} — ` : ''}${currentProject.name}`
@@ -209,44 +1885,445 @@ const DigitalJobBinder = ({
     [diaryEntries]
   );
 
+  const walkaroundItems = useMemo(
+    () => (Array.isArray(diaryEntries) ? [...diaryEntries] : [])
+      .sort((a, b) => (
+        safeText(b?.created_at).localeCompare(
+          safeText(a?.created_at)
+        )
+      )),
+    [diaryEntries]
+  );
+
+  const [selectedWalkaroundId, setSelectedWalkaroundId] = useState(null);
+
+  const selectedWalkaround = walkaroundItems.find((item) => (
+    String(item?.id || '') === String(selectedWalkaroundId || '')
+  )) || null;
+
   const urgent = useMemo(
     () => (Array.isArray(urgentItems) ? urgentItems.slice(0, 3) : []),
     [urgentItems]
   );
 
   const tasks = useMemo(
-    () => (Array.isArray(taskItems) ? taskItems.slice(0, 3) : []),
+    () => uniqueItemsByKey(Array.isArray(taskItems) ? taskItems : []),
     [taskItems]
   );
 
-  const materialRows = Array.isArray(materials) ? materials : [];
+  const allUrgentItems = useMemo(
+    () => uniqueItemsByKey(Array.isArray(urgentItems) ? urgentItems : []),
+    [urgentItems]
+  );
+
+  const allTaskItems = useMemo(
+    () => uniqueItemsByKey(Array.isArray(taskItems) ? taskItems : []),
+    [taskItems]
+  );
+
+  const urgentItemKeys = useMemo(
+    () => new Set(allUrgentItems.map((item) => getItemKey(item))),
+    [allUrgentItems]
+  );
+
+  const outstandingItems = useMemo(
+    () => uniqueItemsByKey([...allUrgentItems, ...allTaskItems]),
+    [allUrgentItems, allTaskItems]
+  );
+
+  const materialRows = useMemo(
+    () => (Array.isArray(materials) ? materials : [])
+      .filter((row) => safeText(row?.item)),
+    [materials]
+  );
+
+  const materialAttentionCount = useMemo(
+    () => materialRows.filter((row) => (
+      ['short', 'damaged'].includes(getMaterialStatus(row))
+    )).length,
+    [materialRows]
+  );
+
+  const materialOnSiteCount = useMemo(
+    () => materialRows.filter((row) => (
+      ['delivered', 'used'].includes(getMaterialStatus(row))
+    )).length,
+    [materialRows]
+  );
+
+  const materialNotedCount = useMemo(
+    () => materialRows.filter((row) => (
+      getMaterialStatus(row) === 'noted'
+    )).length,
+    [materialRows]
+  );
+
+  const selectedTaskIsComplete = [
+    'complete',
+    'completed',
+    'closed',
+    'done',
+  ].includes(
+    String(
+      selectedTaskDraft?.status ||
+      selectedTask?.status ||
+      ''
+    ).toLowerCase()
+  );
+
+  const actions = {
+    today: null,
+    diary: onOpenDiary,
+    tasks: onOpenTasks,
+    materials: onAddMaterial || onOpenMaterials,
+    emails: onOpenEmails,
+    roadblocks: onOpenRoadblocks,
+    walkaround: onOpenWalkaround,
+    photos: onOpenPhotos,
+    staff: onOpenStaff,
+    closeout: onCloseDay,
+  };
 
   const handleTab = (tabId) => {
+    if (!BINDER_TABS.some((tab) => tab.id === tabId)) return;
+
+    if (tabId !== activeTab) {
+      onCloseTask?.();
+    }
+
+    if (tabId !== 'materials') {
+      onCloseMaterial?.();
+    }
+
+    if (tabId !== 'roadblocks') {
+      onCloseRoadblock?.();
+    }
+
+    if (tabId !== 'walkaround') {
+      setSelectedWalkaroundId(null);
+    }
+
+    if (tabId !== 'photos') {
+      setSelectedPhotoId(null);
+    }
+
+    if (tabId !== 'staff') {
+      setSelectedStaffId(null);
+    }
+
     setActiveTab(tabId);
 
-    const actions = {
-      today: null,
-      diary: onOpenDiary,
-      tasks: onOpenTasks,
-      materials: onOpenMaterials,
-      emails: onOpenEmails,
-      roadblocks: onOpenRoadblocks,
-      walkaround: onOpenWalkaround,
-      photos: onOpenPhotos,
-      staff: onOpenStaff,
-      closeout: onCloseDay,
-    };
+    const params = new URLSearchParams(window.location.search);
 
-    const action = actions[tabId];
+    if (tabId === 'today') {
+      params.delete('tab');
+    } else {
+      params.set('tab', tabId);
+    }
+
+    window.history.pushState(
+      {},
+      '',
+      `/diary${params.toString() ? `?${params.toString()}` : ''}`
+    );
+  };
+
+  const openActiveWorkflow = () => {
+    const action = actions[activeTab];
 
     if (typeof action === 'function') {
       action();
     }
   };
 
+  const activeTabConfig =
+    BINDER_TABS.find((tab) => tab.id === activeTab) || BINDER_TABS[0];
+
+  const photoEvidenceItems = useMemo(
+    () => (Array.isArray(diaryEntries) ? diaryEntries : [])
+      .flatMap((entry, entryIndex) => {
+        const photos = Array.isArray(entry?.photos)
+          ? entry.photos.filter(Boolean)
+          : [];
+
+        return photos.map((photo, photoIndex) => ({
+          id: `${entry?.id || entry?.created_at || entryIndex}-${photoIndex}`,
+          photo,
+          photoIndex,
+          photoCount: photos.length,
+          entry,
+        }));
+      })
+      .sort((a, b) => (
+        safeText(b?.entry?.created_at).localeCompare(
+          safeText(a?.entry?.created_at)
+        )
+      )),
+    [diaryEntries]
+  );
+
+  const [selectedPhotoId, setSelectedPhotoId] = useState(null);
+
+  const selectedPhoto = photoEvidenceItems.find((item) => (
+    String(item.id) === String(selectedPhotoId || '')
+  )) || null;
+
+  const emailItems = useMemo(
+    () => outstandingItems.filter((item) => {
+      const searchable = [
+        item?.title,
+        item?.task_name,
+        item?.name,
+        item?.description,
+        item?.details,
+        item?.note,
+        item?.action_type,
+        item?.send_to,
+      ].filter(Boolean).join(' ').toLowerCase();
+
+      return [
+        'email',
+        'call',
+        'contact',
+        'needs sending',
+        'send to',
+        'reply',
+        'respond',
+        'communication',
+      ].some((term) => searchable.includes(term));
+    }),
+    [outstandingItems]
+  );
+
+  const roadblockItems = useMemo(
+    () => (Array.isArray(roadblocks) ? roadblocks : [])
+      .filter((item) => ![
+        'COMPLETED',
+        'COMPLETE',
+        'CLOSED',
+        'DONE',
+      ].includes(
+        safeText(item?.status).toUpperCase()
+      ))
+      .sort((a, b) => (
+        safeText(a?.required_by_date).localeCompare(
+          safeText(b?.required_by_date)
+        )
+      )),
+    [roadblocks]
+  );
+
+  const staffLedgerItems = useMemo(
+    () => (Array.isArray(labourRows) ? labourRows : [])
+      .map((row, index) => ({
+        ...row,
+        _binderStaffId:
+          row?.id ||
+          `${safeText(row?.employee_name, 'staff')}-${safeText(row?.start_time)}-${index}`,
+      }))
+      .filter((row) => [
+        row?.employee_name,
+        row?.start_time,
+        row?.finish_time,
+        row?.job_number,
+        row?.task_code,
+        row?.description,
+        row?.other,
+      ].some((value) => safeText(value))),
+    [labourRows]
+  );
+
+  const [selectedStaffId, setSelectedStaffId] = useState(null);
+
+  const selectedStaff = staffLedgerItems.find((row) => (
+    String(row._binderStaffId) === String(selectedStaffId || '')
+  )) || null;
+  const closeoutStaffHours = (
+    Array.isArray(labourRows) ? labourRows : []
+  ).reduce(
+    (sum, row) => sum + (Number.parseFloat(row?.total_hours) || 0),
+    0
+  );
+
+  const closeoutDailyCount = walkaroundItems.length;
+  const closeoutStaffCount = staffLedgerItems.length;
+  const closeoutRoadblockCount = roadblockItems.length;
+  const closeoutPhotoCount = photoEvidenceItems.length;
+  const closeoutMaterialCount = materialRows.length;
+
+  const getCloseoutDueDateKey = (item = {}) => safeText(
+    item?.due_date || item?.expected_complete_date,
+    ''
+  ).slice(0, 10);
+
+  const closeoutOverdueCount = allUrgentItems.filter((item) => {
+    const dueDate = getCloseoutDueDateKey(item);
+    return dueDate && dueDate < selectedDate;
+  }).length;
+
+  const closeoutDueThisDayCount = allUrgentItems.filter((item) => (
+    getCloseoutDueDateKey(item) === selectedDate
+  )).length;
+
+  const closeoutMissingCount =
+    (closeoutDailyCount > 0 ? 0 : 1) +
+    (closeoutStaffCount > 0 ? 0 : 1);
+
+  const closeoutAttentionCount =
+    closeoutMissingCount +
+    closeoutOverdueCount +
+    closeoutDueThisDayCount +
+    closeoutRoadblockCount;
+
+  const closeoutReady = closeoutAttentionCount === 0;
+
+  const closeoutMissingMessages = [
+    closeoutDailyCount === 0 ? 'Add the Daily record.' : null,
+    closeoutStaffCount === 0 ? 'Complete the Staff check.' : null,
+  ].filter(Boolean);
+
+  const closeoutReviewLabels = [
+    closeoutOverdueCount > 0
+      ? `${closeoutOverdueCount} overdue follow-up${closeoutOverdueCount === 1 ? '' : 's'}`
+      : null,
+    closeoutDueThisDayCount > 0
+      ? `${closeoutDueThisDayCount} due-this-day follow-up${closeoutDueThisDayCount === 1 ? '' : 's'}`
+      : null,
+    closeoutRoadblockCount > 0
+      ? `${closeoutRoadblockCount} roadblock${closeoutRoadblockCount === 1 ? '' : 's'}`
+      : null,
+  ].filter(Boolean);
+
+  const closeoutStatusMessage = closeoutReady
+    ? 'Daily record, Staff check and attention items are clear.'
+    : [
+        ...closeoutMissingMessages,
+        closeoutReviewLabels.length > 0
+          ? `Review ${closeoutReviewLabels.join(' and ')}.`
+          : null,
+      ].filter(Boolean).join(' ');
+  // closeout-count-definitions-v8-9j2
+  // closeout-status-message-v8-9j2-1
+
+  const closeoutChecklist = [
+    {
+      id: 'closeout-daily-record',
+      title: 'Daily record',
+      priority: closeoutDailyCount > 0 ? 'RECORDED' : 'MISSING',
+      status: closeoutDailyCount > 0
+        ? `${closeoutDailyCount} site record${closeoutDailyCount === 1 ? '' : 's'} captured`
+        : 'Add a diary note or site observation',
+    },
+    {
+      id: 'closeout-staff-on-site',
+      title: 'Staff on site',
+      priority: closeoutStaffCount > 0 ? 'RECORDED' : 'MISSING',
+      status: closeoutStaffCount > 0
+        ? `${closeoutStaffCount} staff · ${closeoutStaffHours.toFixed(2)} h checked`
+        : 'Complete the Staff diary check',
+    },
+    {
+      id: 'closeout-followups',
+      title: 'Follow-ups',
+      priority:
+        closeoutOverdueCount + closeoutDueThisDayCount > 0
+          ? 'REVIEW'
+          : 'CLEAR',
+      status:
+        closeoutOverdueCount + closeoutDueThisDayCount > 0
+          ? `${closeoutOverdueCount} overdue | ${closeoutDueThisDayCount} due this day`
+          : 'No overdue or due-this-day follow-ups',
+    },
+    {
+      id: 'closeout-roadblocks',
+      title: 'Roadblocks',
+      priority: closeoutRoadblockCount > 0 ? 'REVIEW' : 'CLEAR',
+      status: closeoutRoadblockCount > 0
+        ? `${closeoutRoadblockCount} current roadblock${closeoutRoadblockCount === 1 ? '' : 's'}`
+        : 'No current roadblocks',
+    },
+    {
+      id: 'closeout-photo-evidence',
+      title: 'Photo evidence',
+      priority: closeoutPhotoCount > 0 ? 'RECORDED' : 'OPTIONAL',
+      status: closeoutPhotoCount > 0
+        ? `${closeoutPhotoCount} evidence photo${closeoutPhotoCount === 1 ? '' : 's'}`
+        : 'No photo evidence attached',
+    },
+    {
+      id: 'closeout-materials',
+      title: 'Materials',
+      priority: closeoutMaterialCount > 0 ? 'RECORDED' : 'NONE',
+      status: closeoutMaterialCount > 0
+        ? `${closeoutMaterialCount} material record${closeoutMaterialCount === 1 ? '' : 's'}`
+        : 'No materials recorded for this day',
+    },
+  ]; // real-closeout-readiness-v8-9j1
+  const focusedItemsByTab = {
+    diary: entries,
+    tasks,
+    materials: materialRows,
+    emails: emailItems,
+    roadblocks: roadblockItems,
+    walkaround: walkaroundItems,
+    photos: photoEvidenceItems,
+    staff: staffLedgerItems,
+    closeout: closeoutChecklist,
+  };
+
+  const focusedItems = focusedItemsByTab[activeTab] || [];
+
+  const focusedCounts = {
+    diary: entries.length,
+    tasks: tasks.length,
+    materials: materialRows.length,
+    emails: emailItems.length,
+    roadblocks: roadblockItems.length,
+    walkaround: walkaroundItems.length,
+    photos: photoEvidenceItems.length,
+    staff: staffLedgerItems.length,
+    closeout: closeoutAttentionCount,
+  };
+
+  const focusedCount =
+    focusedCounts[activeTab] ?? focusedItems.length;
+
+  const focusedEmptyCopy = {
+    diary: 'No timestamped diary records have been captured for this day.',
+    tasks: 'No open actions or checks are waiting for review.',
+    materials: 'No materials have been recorded for this diary day.',
+    emails: 'No email or call follow-ups were identified for this day.',
+    roadblocks: 'No current roadblocks were identified for this diary day.',
+    walkaround: 'No walkaround observations have been recorded for this day.',
+    photos: 'No photographic evidence has been attached for this day.',
+    staff: 'No staff or labour rows have been recorded for this day.',
+    closeout: 'Review the current day before opening the full Diary readiness section.',
+  };
+
+  const getFocusedItemTitle = (item = {}, index = 0) => (
+    item?.title ||
+    item?.task_name ||
+    item?.name ||
+    item?.note ||
+    item?.description ||
+    item?.item ||
+    `Record ${index + 1}`
+  );
+
+  const getFocusedItemMeta = (item = {}) => [
+    item?.priority,
+    item?.owner,
+    item?.status,
+    item?.due_date
+      ? `Due ${String(item.due_date).slice(0, 10)}`
+      : '',
+    item?.quantity,
+    item?.supplier,
+  ].filter(Boolean).join(' · ');
+
   return (
     <section
-      className="lld-digital-job-binder"
+      className={`lld-digital-job-binder lld-binder-active-${activeTab}`}
       data-testid="lld-digital-job-binder-v1"
       data-commercial-readiness="lld-digital-job-binder-v1"
     >
@@ -260,7 +2337,10 @@ const DigitalJobBinder = ({
             </span>
           </div>
 
-          <div className="lld-binder-date-controls">
+          <div
+            className="lld-binder-date-controls"
+            data-testid="lld-binder-date-controls-v8-9i1"
+          >
             <button
               type="button"
               onClick={() => onChangeDate?.(-1)}
@@ -269,15 +2349,41 @@ const DigitalJobBinder = ({
               <ChevronLeft />
             </button>
 
-            <strong>{selectedDateLabel}</strong>
+            <label
+              className="lld-binder-date-picker"
+              title="Choose diary date"
+              data-testid="lld-binder-date-picker-v8-9i1"
+            >
+              <CalendarDays aria-hidden="true" />
+              <strong>{selectedDateLabel}</strong>
+              <input
+                type="date"
+                value={selectedDate}
+                max={today}
+                onChange={(event) => onSelectDate?.(event.target.value)}
+                aria-label="Choose diary date"
+              />
+            </label>
 
             <button
               type="button"
               onClick={() => onChangeDate?.(1)}
+              disabled={selectedDate >= today}
               aria-label="Next diary day"
             >
               <ChevronRight />
             </button>
+
+            {selectedDate !== today && (
+              <button
+                type="button"
+                className="lld-binder-date-today"
+                onClick={() => onSelectDate?.(today)}
+                data-testid="lld-binder-date-today-v8-9i1"
+              >
+                Today
+              </button>
+            )}
           </div>
         </div>
 
@@ -363,8 +2469,199 @@ const DigitalJobBinder = ({
               </button>
             </section>
 
-            <section className="lld-binder-page lld-binder-page-right">
-              <div className="lld-binder-page-heading">
+            <section
+              className={`lld-binder-page lld-binder-page-right${
+                selectedTask && selectedTaskDraft
+                  ? ' lld-binder-action-detail-page'
+                  : ''
+              }`}
+            >
+              {selectedTask && selectedTaskDraft ? (
+                <div
+                  className="lld-binder-action-detail"
+                  data-testid="lld-binder-native-action-detail-v8-9a6"
+                  aria-busy={taskDetailSaving}
+                >
+                  <div className="lld-binder-page-heading lld-binder-action-detail-heading">
+                    <div>
+                      <p>Action record</p>
+                      <h3>Action detail</h3>
+                      <span>
+                        Edit this follow-up without leaving the open diary.
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="lld-binder-action-back"
+                      onClick={onCloseTask}
+                      disabled={taskDetailSaving}
+                    >
+                      ← My Day
+                    </button>
+                  </div>
+
+                  <form
+                    className="lld-binder-action-form"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      onSaveTask?.();
+                    }}
+                  >
+                    <label className="lld-binder-action-field lld-binder-action-field-wide">
+                      <span>Title</span>
+                      <input
+                        type="text"
+                        value={selectedTaskDraft.title || ''}
+                        onChange={(event) => (
+                          onTaskDraftChange?.('title', event.target.value)
+                        )}
+                        disabled={taskDetailSaving}
+                        data-testid="lld-binder-action-title-input-v8-9a6"
+                      />
+                    </label>
+
+                    <label className="lld-binder-action-field">
+                      <span>Owner</span>
+                      <input
+                        type="text"
+                        value={selectedTaskDraft.owner || ''}
+                        placeholder="Responsible person"
+                        onChange={(event) => (
+                          onTaskDraftChange?.('owner', event.target.value)
+                        )}
+                        disabled={taskDetailSaving}
+                      />
+                    </label>
+
+                    <label className="lld-binder-action-field">
+                      <span>Priority</span>
+                      <select
+                        value={selectedTaskDraft.priority || 'medium'}
+                        onChange={(event) => (
+                          onTaskDraftChange?.('priority', event.target.value)
+                        )}
+                        disabled={taskDetailSaving}
+                      >
+                        <option value="critical">Critical</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                        <option value="deferred">Deferred</option>
+                      </select>
+                    </label>
+
+                    <label className="lld-binder-action-field">
+                      <span>Status</span>
+                      <select
+                        value={selectedTaskDraft.status || 'open'}
+                        onChange={(event) => (
+                          onTaskDraftChange?.('status', event.target.value)
+                        )}
+                        disabled={taskDetailSaving || selectedTaskIsComplete}
+                      >
+                        <option value="open">To Do</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="blocked">Blocked</option>
+                        {selectedTaskIsComplete && (
+                          <option value="completed">Complete</option>
+                        )}
+                      </select>
+                    </label>
+
+                    <label className="lld-binder-action-field">
+                      <span>Due</span>
+                      <input
+                        type="date"
+                        value={selectedTaskDraft.due_date || ''}
+                        onChange={(event) => (
+                          onTaskDraftChange?.('due_date', event.target.value)
+                        )}
+                        disabled={taskDetailSaving}
+                      />
+                    </label>
+
+                    <label className="lld-binder-action-field">
+                      <span>Expected complete</span>
+                      <input
+                        type="date"
+                        value={selectedTaskDraft.expected_complete_date || ''}
+                        onChange={(event) => (
+                          onTaskDraftChange?.(
+                            'expected_complete_date',
+                            event.target.value
+                          )
+                        )}
+                        disabled={taskDetailSaving}
+                      />
+                    </label>
+
+                    <label className="lld-binder-action-field lld-binder-action-field-wide">
+                      <span>Details</span>
+                      <textarea
+                        value={selectedTaskDraft.description || ''}
+                        placeholder="Notes, instruction, required response, or site detail..."
+                        onChange={(event) => (
+                          onTaskDraftChange?.(
+                            'description',
+                            event.target.value
+                          )
+                        )}
+                        disabled={taskDetailSaving}
+                        rows="3"
+                      />
+                    </label>
+
+                    <div className="lld-binder-action-controls">
+                      <button
+                        type="submit"
+                        className="lld-binder-action-button lld-binder-action-button-primary"
+                        disabled={taskDetailSaving || typeof onSaveTask !== 'function'}
+                      >
+                        {taskDetailSaving ? 'Saving…' : 'Save follow-up'}
+                      </button>
+
+                      {selectedTaskIsComplete ? (
+                        <button
+                          type="button"
+                          className="lld-binder-action-button"
+                          onClick={onReopenSelectedTask}
+                          disabled={
+                            taskDetailSaving ||
+                            typeof onReopenSelectedTask !== 'function'
+                          }
+                        >
+                          Reopen
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="lld-binder-action-button"
+                          onClick={onCompleteSelectedTask}
+                          disabled={
+                            taskDetailSaving ||
+                            taskCompletionPending ||
+                            typeof onCompleteSelectedTask !== 'function'
+                          }
+                        >
+                          Mark complete
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className="lld-binder-action-button lld-binder-action-button-quiet"
+                        onClick={onCloseTask}
+                        disabled={taskDetailSaving}
+                      >
+                        Back to My Day
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              ) : (
+                <>
+                  <div className="lld-binder-page-heading">
                 <div>
                   <p>Working day</p>
                   <h3>My Day</h3>
@@ -374,59 +2671,42 @@ const DigitalJobBinder = ({
                 <ClipboardCheck />
               </div>
 
-              <div className="lld-binder-attention-box">
+              <div className="lld-binder-attention-box lld-binder-outstanding-ledger">
                 <div className="lld-binder-section-title">
                   <span>
                     <AlertTriangle />
-                    Needs attention now
+                    Outstanding actions
                   </span>
 
-                  <strong>{urgent.length}</strong>
+                  <strong>{outstandingItems.length}</strong>
                 </div>
 
-                {urgent.length > 0 ? (
-                  urgent.map((item, index) => (
+                {outstandingItems.length > 0 ? (
+                  outstandingItems.slice(0, 6).map((item) => (
                     <WorkItem
-                      key={item?.id || index}
+                      key={getItemKey(item)}
                       item={item}
-                      tone="urgent"
-                      onOpen={onOpenTasks}
+                      tone={urgentItemKeys.has(getItemKey(item)) ? 'urgent' : 'standard'}
+                      onOpen={onOpenTask || onOpenTasks}
+                      onComplete={onCompleteTask}
+                      completionDisabled={taskCompletionPending}
                     />
                   ))
                 ) : (
                   <div className="lld-binder-empty lld-binder-empty-compact">
-                    No urgent or overdue items.
+                    No outstanding actions or checks.
                   </div>
                 )}
               </div>
 
-              <div className="lld-binder-tasks-box">
-                <div className="lld-binder-section-title">
-                  <span>
-                    <CheckCircle2 />
-                    Tasks and checks
-                  </span>
-
-                  <strong>{tasks.length}</strong>
-                </div>
-
-                {tasks.length > 0 ? (
-                  tasks.map((item, index) => (
-                    <WorkItem
-                      key={item?.id || index}
-                      item={item}
-                      onOpen={onOpenTasks}
-                    />
-                  ))
-                ) : (
-                  <div className="lld-binder-empty lld-binder-empty-compact">
-                    No open carry-forward tasks.
-                  </div>
-                )}
-              </div>
-
-              <div className="lld-binder-summary-grid">
-                <button type="button" onClick={onOpenMaterials}>
+              <div
+                className="lld-binder-summary-strip"
+                aria-label="Daily totals"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleTab('materials')}
+                >
                   <Package />
                   <strong>{materialRows.length}</strong>
                   <span>Materials</span>
@@ -434,17 +2714,389 @@ const DigitalJobBinder = ({
 
                 <button type="button" onClick={onOpenStaff}>
                   <Users />
-                  <strong>{labourCount}</strong>
+                  <strong>{staffLedgerItems.length}</strong>
                   <span>Staff</span>
                 </button>
 
                 <button type="button" onClick={onOpenPhotos}>
                   <Camera />
-                  <strong>{entries.filter((entry) => entry?.has_photos).length}</strong>
+                  <strong>{photoEvidenceItems.length}</strong>
                   <span>Evidence</span>
                 </button>
               </div>
+                </>
+              )}
             </section>
+
+        {activeTab !== 'today' && (
+          <section
+            key={activeTab}
+            className={`lld-binder-focused-spread${
+              activeTab === 'tasks'
+                ? ' lld-binder-tasks-ledger-spread'
+                : activeTab === 'materials'
+                  ? ' lld-binder-materials-ledger-spread'
+                  : activeTab === 'emails'
+                    ? ' lld-binder-tasks-ledger-spread lld-binder-communications-ledger-spread'
+                    : ''
+            }`}
+            data-testid={`lld-binder-focused-page-${activeTab}`}
+          >
+            <article className="lld-binder-focused-page lld-binder-focused-page-left">
+              <header className="lld-binder-focused-heading">
+                <p>{activeTabConfig.description}</p>
+                <h2>{activeTabConfig.label}</h2>
+                <span>{selectedDateLabel}</span>
+              </header>
+
+              <div className="lld-binder-focused-rule" />
+
+              {activeTab === 'closeout' && (
+                <div
+                  className={`lld-binder-closeout-status ${
+                    closeoutReady ? 'is-ready' : 'needs-attention'
+                  }`}
+                  data-testid="lld-binder-closeout-status-v8-9j1"
+                >
+                  {closeoutReady ? <CheckCircle2 /> : <AlertTriangle />}
+
+                  <div>
+                    <strong>
+                      {closeoutReady ? 'Ready to review' : 'Needs attention'}
+                    </strong>
+                    <span>
+                      {closeoutStatusMessage}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="lld-binder-focused-count">
+                <strong>{focusedCount}</strong>
+                <span>
+                  {activeTab === 'tasks'
+                    ? focusedCount === 1
+                      ? 'open action'
+                      : 'open actions'
+                    : activeTab === 'materials'
+                      ? focusedCount === 1
+                        ? 'material record'
+                        : 'material records'
+                      : activeTab === 'emails'
+                        ? focusedCount === 1
+                          ? 'communication follow-up'
+                          : 'communication follow-ups'
+                        : activeTab === 'roadblocks'
+                          ? focusedCount === 1
+                            ? 'active roadblock'
+                            : 'active roadblocks'
+                          : activeTab === 'walkaround'
+                            ? focusedCount === 1
+                              ? 'site observation'
+                              : 'site observations'
+                            : activeTab === 'photos'
+                              ? focusedCount === 1
+                                ? 'evidence photo'
+                                : 'evidence photos'
+                              : activeTab === 'staff'
+                                ? focusedCount === 1
+                                  ? 'staff member'
+                                  : 'staff members'
+                                : focusedCount === 1
+                                  ? 'record for this day'
+                                  : 'records for this day'}
+                </span>
+              </div>
+
+              {activeTab === 'materials' && (
+                <div
+                  className="lld-binder-material-tally"
+                  aria-label="Materials status totals"
+                >
+                  <span>
+                    <strong>{materialNotedCount}</strong>
+                    Noted
+                  </span>
+
+                  <span>
+                    <strong>{materialOnSiteCount}</strong>
+                    On site / used
+                  </span>
+
+                  <span
+                    className={
+                      materialAttentionCount > 0
+                        ? 'lld-binder-material-tally-attention'
+                        : ''
+                    }
+                  >
+                    <strong>{materialAttentionCount}</strong>
+                    Attention
+                  </span>
+                </div>
+              )}
+
+              <button
+                type="button"
+                className="lld-binder-focused-workflow-button"
+                onClick={openActiveWorkflow}
+              >
+                {activeTab === 'materials'
+                  ? 'Add / edit materials'
+                  : activeTab === 'emails'
+                    ? 'Open communications in Action Items'
+                    : activeTab === 'photos' ? 'Capture photo evidence' : activeTab === 'staff' ? 'Open Staff diary' : activeTab === 'closeout' ? 'Open full day review' : `Open full ${activeTabConfig.label} workflow`}
+              </button>
+            </article>
+
+            <article
+              className={`lld-binder-focused-page lld-binder-focused-page-right${
+                (
+                  ['tasks', 'emails'].includes(activeTab) &&
+                  selectedTask &&
+                  selectedTaskDraft
+                ) || (
+                  activeTab === 'materials' &&
+                  selectedMaterial
+                ) || (
+                  activeTab === 'roadblocks' &&
+                  selectedRoadblock
+                ) || (
+                  activeTab === 'walkaround' &&
+                  selectedWalkaround
+                ) || (
+                  activeTab === 'photos' &&
+                  selectedPhoto
+                ) || (
+                  activeTab === 'staff' &&
+                  selectedStaff
+                )
+                  ? ' lld-binder-action-detail-page'
+                  : ''
+              }`}
+            >
+              {activeTab === 'staff' &&
+              selectedStaff ? (
+                <BinderStaffDetail
+                  row={selectedStaff}
+                  onOpenWorkflow={onOpenStaff}
+                  onClose={() => setSelectedStaffId(null)}
+                />
+              ) : activeTab === 'photos' &&
+              selectedPhoto ? (
+                <BinderPhotoDetail
+                  evidence={selectedPhoto}
+                  onOpenWorkflow={onOpenPhotos}
+                  onClose={() => setSelectedPhotoId(null)}
+                />
+              ) : activeTab === 'walkaround' &&
+              selectedWalkaround ? (
+                <BinderWalkaroundDetail
+                  entry={selectedWalkaround}
+                  onOpenWorkflow={onOpenWalkaround}
+                  onClose={() => setSelectedWalkaroundId(null)}
+                />
+              ) : activeTab === 'roadblocks' &&
+              selectedRoadblock ? (
+                <BinderRoadblockDetail
+                  roadblock={selectedRoadblock}
+                  onOpenWorkflow={onOpenRoadblocks}
+                  onClose={onCloseRoadblock}
+                />
+              ) : ['tasks', 'emails'].includes(activeTab) &&
+              selectedTask &&
+              selectedTaskDraft ? (
+                <BinderTasksActionDetail
+                  selectedTask={selectedTask}
+                  selectedTaskDraft={selectedTaskDraft}
+                  detailContext={activeTab}
+                  taskDetailSaving={taskDetailSaving}
+                  taskCompletionPending={taskCompletionPending}
+                  onTaskDraftChange={onTaskDraftChange}
+                  onSaveTask={onSaveTask}
+                  onCompleteSelectedTask={onCompleteSelectedTask}
+                  onReopenSelectedTask={onReopenSelectedTask}
+                  onCloseTask={onCloseTask}
+                />
+              ) : activeTab === 'materials' &&
+                selectedMaterial ? (
+                <BinderMaterialDetail
+                  material={selectedMaterial}
+                  materialSaving={materialSaving}
+                  onChange={onMaterialChange}
+                  onSave={onSaveMaterial}
+                  onRemove={onRemoveMaterial}
+                  onClose={onCloseMaterial}
+                />
+              ) : (
+                <>
+              <header className="lld-binder-focused-list-heading">
+                <span>
+                  {activeTab === 'tasks'
+                    ? 'Open actions'
+                    : activeTab === 'materials'
+                      ? 'Materials register'
+                      : activeTab === 'emails'
+                        ? 'Communication follow-ups'
+                        : activeTab === 'roadblocks'
+                          ? 'Active roadblocks'
+                          : activeTab === 'walkaround'
+                            ? 'Site observations'
+                            : activeTab === 'photos'
+                              ? 'Photo evidence'
+                              : activeTab === 'staff'
+                                ? 'Staff on site'
+                                : 'Daily records'}
+                </span>
+                <strong>{focusedCount}</strong>
+              </header>
+
+              {focusedItems.length > 0 ? (
+                <div className="lld-binder-focused-list">
+                  {(
+                    activeTab === 'tasks' ||
+                    activeTab === 'materials' ||
+                    activeTab === 'emails' ||
+                    activeTab === 'roadblocks' ||
+                    activeTab === 'walkaround' ||
+                    activeTab === 'photos' ||
+                    activeTab === 'staff'
+                      ? focusedItems
+                      : focusedItems.slice(0, 8)
+                  ).map((item, index) => (
+                    activeTab === 'staff' ? (
+                      <StaffLedgerRow
+                        key={item._binderStaffId}
+                        item={item}
+                        index={index}
+                        onOpen={(staffRow) => (
+                          setSelectedStaffId(staffRow?._binderStaffId || null)
+                        )}
+                      />
+                    ) : activeTab === 'photos' ? (
+                      <PhotoEvidenceRow
+                        key={item.id}
+                        item={item}
+                        index={index}
+                        onOpen={(evidence) => (
+                          setSelectedPhotoId(evidence?.id || null)
+                        )}
+                      />
+                    ) : activeTab === 'walkaround' ? (
+                      <WalkaroundLedgerRow
+                        key={
+                          item?.id ||
+                          `${item?.note || 'walkaround'}-${index}`
+                        }
+                        item={item}
+                        index={index}
+                        onOpen={(entry) => (
+                          setSelectedWalkaroundId(entry?.id || null)
+                        )}
+                      />
+                    ) : activeTab === 'roadblocks' ? (
+                      <RoadblockLedgerRow
+                        key={
+                          item?.id ||
+                          `${item?.name || 'roadblock'}-${index}`
+                        }
+                        item={item}
+                        index={index}
+                        onOpen={onOpenRoadblock}
+                      />
+                    ) : activeTab === 'tasks' ||
+                    activeTab === 'emails' ? (
+                      <WorkItem
+                        key={getItemKey(item)}
+                        item={item}
+                        tone={
+                          urgentItemKeys.has(getItemKey(item))
+                            ? 'urgent'
+                            : 'standard'
+                        }
+                        context={
+                          activeTab === 'emails'
+                            ? 'communications'
+                            : 'default'
+                        }
+                        onOpen={onOpenTask || onOpenTasks}
+                        onComplete={onCompleteTask}
+                        completionDisabled={taskCompletionPending}
+                      />
+                    ) : activeTab === 'materials' ? (
+                      <MaterialLedgerRow
+                        key={
+                          item?.id ||
+                          `${item?.item || 'material'}-${index}`
+                        }
+                        row={item}
+                        index={index}
+                        onOpen={onOpenMaterial}
+                      />
+                    ) : (
+                      <div
+                        key={item?.id || `${activeTab}-${index}`}
+                        className="lld-binder-focused-record"
+                      >
+                        <span>
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+
+                        <div>
+                          <strong>
+                            {getFocusedItemTitle(item, index)}
+                          </strong>
+
+                          {getFocusedItemMeta(item) && (
+                            <small>
+                              {getFocusedItemMeta(item)}
+                            </small>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  ))}
+                </div>
+              ) : activeTab === 'materials' ? (
+                <div
+                  className="lld-binder-material-empty"
+                  data-testid="lld-binder-material-empty-v8-9c1"
+                >
+                  <span className="lld-binder-material-empty-kicker">
+                    Materials register
+                  </span>
+
+                  <strong>No materials recorded</strong>
+
+                  <p>
+                    Add materials when they are required, received,
+                    used, short, damaged or removed.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={openActiveWorkflow}
+                  >
+                    + Add first material
+                  </button>
+                </div>
+              ) : (
+                <div className="lld-binder-focused-empty">
+                  <strong>{activeTabConfig.label}</strong>
+                  <p>{focusedEmptyCopy[activeTab]}</p>
+
+                  <button
+                    type="button"
+                    onClick={openActiveWorkflow}
+                  >
+                    {activeTab === 'photos' ? 'Add photo evidence' : `Open ${activeTabConfig.label}`}
+                  </button>
+                </div>
+              )}
+                </>
+              )}            </article>
+          </section>
+        )}
           </div>
         </div>
 

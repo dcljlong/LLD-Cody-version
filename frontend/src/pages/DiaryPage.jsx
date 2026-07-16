@@ -114,6 +114,84 @@ class DiaryPageErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+const RESOURCE_SUMMARY_STATUS_LABELS = {
+  noted: 'Noted',
+  delivered: 'On site',
+  used: 'Used today',
+  short: 'Short / missing',
+  damaged: 'Damaged',
+  removed: 'Removed',
+};
+
+const getResourceSummaryStatusLabel = (status) => {
+  const value = String(status || 'noted')
+    .trim()
+    .toLowerCase();
+
+  return RESOURCE_SUMMARY_STATUS_LABELS[value] ||
+    value
+      .replace(/[_-]+/g, ' ')
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
+const ResourceSummaryRow = ({ row = {} }) => {
+  const item = String(row.item || '').trim() || 'Resource';
+  const quantity = String(row.quantity || '').trim();
+  const reference = String(
+    row.supplier_or_reference || ''
+  ).trim();
+  const notes = String(row.notes || '').trim();
+  const status = String(row.status || 'noted')
+    .trim()
+    .toLowerCase();
+
+  const meta = [
+    quantity ? `Qty ${quantity}` : '',
+    reference,
+    notes,
+  ].filter(Boolean);
+
+  const statusClassName = (
+    status === 'short' ||
+    status === 'damaged'
+  )
+    ? 'border-red-500/30 bg-red-500/10 text-red-600'
+    : (
+      status === 'delivered' ||
+      status === 'used'
+    )
+      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600'
+      : status === 'removed'
+        ? 'border-slate-400/30 bg-slate-500/10 text-slate-500'
+        : 'border-primary/25 bg-primary/10 text-primary';
+
+  return (
+    <div
+      className="rounded-lg border border-border/60 bg-background/70 px-3 py-2"
+      data-testid="diary-resource-summary-row-v8-9c3"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <p className="min-w-0 break-words text-sm font-black text-foreground">
+          {item}
+        </p>
+
+        <span
+          className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${statusClassName}`}
+        >
+          {getResourceSummaryStatusLabel(status)}
+        </span>
+      </div>
+
+      {meta.length > 0 && (
+        <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted-foreground">
+          {meta.join(' | ')}
+        </p>
+      )}
+    </div>
+  );
+};
+
 const DiaryPage = () => {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
@@ -132,6 +210,7 @@ const DiaryPage = () => {
   const [siteResources, setSiteResources] = useState({ materials: [], plant_equipment: [], subcontractors: [] }); // diary-subcontractors-on-site-v1
   const [resourcesLoading, setResourcesLoading] = useState(false);
   const [resourcesSaving, setResourcesSaving] = useState(false);
+  const [selectedBinderMaterialIndex, setSelectedBinderMaterialIndex] = useState(null); // diary-binder-native-material-editor-v8-9c2
   const [resourcesEditMode, setResourcesEditMode] = useState(false);
   const [activeResourceTab, setActiveResourceTab] = useState('materials'); // diary-command-header-tabs-v2
   const [timesheetReferenceOptions, setTimesheetReferenceOptions] = useState({
@@ -143,9 +222,10 @@ const DiaryPage = () => {
   const [selectedDate, setSelectedDate] = useState(() => getNzDateString());
   const [loading, setLoading] = useState(true);
   const [showQuickEntry, setShowQuickEntry] = useState(false);
-  const [selectedDiaryActionItem, setSelectedDiaryActionItem] = useState(null); // diary-action-inline-close-panel-v1
-  const [selectedDiaryActionDraft, setSelectedDiaryActionDraft] = useState(null); // diary-inline-action-edit-panel-v1
+  const [selectedDiaryActionItem, setSelectedDiaryActionItem] = useState(null); // legacy-action-open-marker-retired-v8-9a6
+  const [selectedDiaryActionDraft, setSelectedDiaryActionDraft] = useState(null); // legacy-action-card-marker-retired-v8-9a6
   const [diaryActionSaving, setDiaryActionSaving] = useState(false);
+  const [selectedDiaryRoadblock, setSelectedDiaryRoadblock] = useState(null); // diary-binder-real-roadblocks-v8-9e1
   const [followUpConfirm, setFollowUpConfirm] = useState(null); // diary-followup-app-confirm-v1-state
   const [followUpConfirmSaving, setFollowUpConfirmSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -400,6 +480,10 @@ const DiaryPage = () => {
   const resourceMaterials = Array.isArray(siteResources?.materials) ? siteResources.materials : [];
   const resourcePlantEquipment = Array.isArray(siteResources?.plant_equipment) ? siteResources.plant_equipment : [];
   const resourceSubcontractors = Array.isArray(siteResources?.subcontractors) ? siteResources.subcontractors : []; // diary-subcontractors-on-site-v1
+  const selectedBinderMaterial = (
+    Number.isInteger(selectedBinderMaterialIndex) &&
+    resourceMaterials[selectedBinderMaterialIndex]
+  ) || null;
   const resourcesTotalCount = resourceMaterials.length + resourcePlantEquipment.length + resourceSubcontractors.length;
   const toolTrackerUrl = process.env.REACT_APP_TOOL_TRACKER_URL || 'https://tool-tracker-enterprise.vercel.app';
 
@@ -897,11 +981,21 @@ const DiaryPage = () => {
     }
   }, [selectedProject, selectedDate]);
 
-  const saveSiteResources = async () => {
+  const saveSiteResources = async (resourceOverride = null) => {
     if (!selectedProject || !selectedDate) {
       toast.error('Select a project and date first');
-      return;
+      return false;
     }
+
+    const materialsToSave = Array.isArray(resourceOverride?.materials)
+      ? resourceOverride.materials
+      : resourceMaterials;
+    const plantToSave = Array.isArray(resourceOverride?.plant_equipment)
+      ? resourceOverride.plant_equipment
+      : resourcePlantEquipment;
+    const subcontractorsToSave = Array.isArray(resourceOverride?.subcontractors)
+      ? resourceOverride.subcontractors
+      : resourceSubcontractors;
 
     setResourcesSaving(true);
     try {
@@ -918,9 +1012,9 @@ const DiaryPage = () => {
 
       const res = await diaryApi.saveResources(selectedProject, {
         date: selectedDate,
-        materials: cleanRows(resourceMaterials),
-        plant_equipment: cleanRows(resourcePlantEquipment),
-        subcontractors: cleanRows(resourceSubcontractors)
+        materials: cleanRows(materialsToSave),
+        plant_equipment: cleanRows(plantToSave),
+        subcontractors: cleanRows(subcontractorsToSave)
       });
 
       setSiteResources({
@@ -934,10 +1028,113 @@ const DiaryPage = () => {
       toast.success('Site resources saved to diary');
       fetchDiary();
       fetchSiteResources();
+      return true;
     } catch (error) {
       toast.error('Failed to save site resources');
+      return false;
     } finally {
       setResourcesSaving(false);
+    }
+  };
+
+  const openBinderMaterial = (index) => {
+    if (
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index >= resourceMaterials.length
+    ) {
+      return;
+    }
+
+    setSelectedBinderMaterialIndex(index);
+  };
+
+  const addBinderMaterial = () => {
+    const reusableBlankIndex = resourceMaterials.findIndex((row) => (
+      !row?.id &&
+      ![
+        row?.item,
+        row?.supplier_or_reference,
+        row?.quantity,
+        row?.notes
+      ].some((value) => String(value || '').trim())
+    ));
+
+    if (reusableBlankIndex >= 0) {
+      setSelectedBinderMaterialIndex(reusableBlankIndex);
+      return;
+    }
+
+    const newIndex = resourceMaterials.length;
+    addResourceRow('materials');
+    setSelectedBinderMaterialIndex(newIndex);
+  };
+
+  const updateSelectedBinderMaterial = (field, value) => {
+    if (!Number.isInteger(selectedBinderMaterialIndex)) return;
+
+    updateResourceRow(
+      'materials',
+      selectedBinderMaterialIndex,
+      field,
+      value
+    );
+  };
+
+  const closeSelectedBinderMaterial = () => {
+    if (Number.isInteger(selectedBinderMaterialIndex)) {
+      const row = resourceMaterials[selectedBinderMaterialIndex];
+      const hasMeaningfulValue = [
+        row?.item,
+        row?.supplier_or_reference,
+        row?.quantity,
+        row?.notes
+      ].some((value) => String(value || '').trim());
+
+      if (row && !row.id && !hasMeaningfulValue) {
+        removeResourceRow('materials', selectedBinderMaterialIndex);
+      }
+    }
+
+    setSelectedBinderMaterialIndex(null);
+  };
+
+  const saveSelectedBinderMaterial = async () => {
+    if (!Number.isInteger(selectedBinderMaterialIndex)) return;
+
+    const row = resourceMaterials[selectedBinderMaterialIndex];
+
+    if (!row || !String(row.item || '').trim()) {
+      toast.error('Material or item is required');
+      return;
+    }
+
+    const saved = await saveSiteResources();
+
+    if (saved) {
+      setSelectedBinderMaterialIndex(null);
+    }
+  };
+
+  const removeSelectedBinderMaterial = async () => {
+    if (!Number.isInteger(selectedBinderMaterialIndex)) return;
+
+    const previousResources = siteResources;
+    const nextResources = {
+      ...siteResources,
+      materials: resourceMaterials.filter(
+        (_, index) => index !== selectedBinderMaterialIndex
+      )
+    };
+
+    setSiteResources(nextResources);
+
+    const saved = await saveSiteResources(nextResources);
+
+    if (saved) {
+      setSelectedBinderMaterialIndex(null);
+    } else {
+      setSiteResources(previousResources);
     }
   };
 
@@ -1260,6 +1457,15 @@ const DiaryPage = () => {
     setSelectedDate(formatDateInput(current));
   };
 
+  const selectDate = (dateValue) => {
+    const nextDate = String(dateValue || '').trim();
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(nextDate)) return;
+    if (nextDate > today) return;
+
+    setSelectedDate(nextDate);
+  }; // quick-date-picker-v8-9i1
+
   const formatDate = (dateStr) => {
     return parseDateInput(dateStr).toLocaleDateString('en-NZ', {
       timeZone: NZ_TIME_ZONE,
@@ -1329,12 +1535,22 @@ const DiaryPage = () => {
       .trim() || 'Follow-up item';
   }; // diary-epic-human-action-titles-v1
 
+  const prepareBinderActionItems = (items = []) => (
+    (Array.isArray(items) ? items : []).map((item) => ({
+      ...item,
+      binder_display_title: getHumanDiaryActionTitle(item)
+    }))
+  ); // diary-binder-shared-canonical-title-v8-9d4
+
   const requestDiaryFollowUpConfirm = (mode, item) => {
     if (!item?.id) {
       return;
     }
 
-    const label = item.title || item.task_name || item.name || item.note || "this follow-up";
+    const label =
+      item.binder_display_title ||
+      getHumanDiaryActionTitle(item) ||
+      "this follow-up";
     setFollowUpConfirm({ mode, item, label });
   }; // diary-followup-app-confirm-v1-request
 
@@ -1471,6 +1687,15 @@ const DiaryPage = () => {
     return due && due > selectedDate && due <= forecastEndDate;
   });
 
+  const binderUrgentItems = prepareBinderActionItems([
+    ...overdueDiaryItems,
+    ...dueTodayItems
+  ]);
+
+  const binderTaskItems = prepareBinderActionItems(
+    visibleRaisedActionItems
+  );
+
   const [activeDiaryView, setActiveDiaryView] = useState(() => {
     if (typeof window === 'undefined') return 'overview';
     return new URLSearchParams(window.location.search).get('view') || 'overview';
@@ -1556,6 +1781,15 @@ const DiaryPage = () => {
     if (selectedProject) params.set('project', selectedProject);
     window.location.assign(`/roadblocks?${params.toString()}`);
   }; // diary-nav-post-capture-v4
+
+  const openDiaryRoadblock = (roadblock) => {
+    if (!roadblock?.id) return;
+    setSelectedDiaryRoadblock(roadblock);
+  }; // diary-binder-real-roadblocks-v8-9e1
+
+  const closeDiaryRoadblock = () => {
+    setSelectedDiaryRoadblock(null);
+  }; // diary-binder-real-roadblocks-v8-9e1
 
   const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
     if (!capture) {
@@ -2047,12 +2281,7 @@ const DiaryPage = () => {
 
     setSelectedDiaryActionItem(item);
     setSelectedDiaryActionDraft(normaliseDiaryActionDraft(item));
-
-    window.requestAnimationFrame(() => {
-      document.getElementById('diary-action-detail-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  }; // diary-action-inline-close-panel-v1
-
+  }; // diary-binder-native-action-detail-v8-9a6
   const updateSelectedDiaryActionDraft = (field, value) => {
     setSelectedDiaryActionDraft((current) => ({
       ...(current || normaliseDiaryActionDraft(selectedDiaryActionItem || {})),
@@ -2096,23 +2325,11 @@ const DiaryPage = () => {
     }
   };
 
-  const completeSelectedDiaryActionItem = async () => {
+  const completeSelectedDiaryActionItem = () => {
     if (!selectedDiaryActionItem?.id) return;
 
-    setDiaryActionSaving(true);
-    try {
-      await actionItemsApi.complete(selectedDiaryActionItem.id);
-      toast.success('Follow-up marked complete');
-      setSelectedDiaryActionItem(null);
-      setSelectedDiaryActionDraft(null);
-      fetchDiary();
-    } catch (error) {
-      toast.error('Failed to complete follow-up');
-    } finally {
-      setDiaryActionSaving(false);
-    }
-  };
-
+    handleCompleteFollowUpFromDiary(selectedDiaryActionItem);
+  }; // diary-binder-native-action-confirmation-v8-9a6
   const reopenSelectedDiaryActionItem = async () => {
     if (!selectedDiaryActionItem?.id) return;
 
@@ -2133,11 +2350,7 @@ const DiaryPage = () => {
   const closeDiaryActionItem = () => {
     setSelectedDiaryActionItem(null);
     setSelectedDiaryActionDraft(null);
-    window.requestAnimationFrame(() => {
-      document.getElementById('daily-report-readiness')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  }; // diary-inline-action-edit-panel-v1
-
+  }; // diary-binder-native-action-close-v8-9a6
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -2165,22 +2378,47 @@ const DiaryPage = () => {
         today={today}
         draftStatus={draftStatus}
         diaryEntries={walkaroundEntries}
-        urgentItems={[...overdueDiaryItems, ...dueTodayItems]}
-        taskItems={visibleRaisedActionItems}
+        urgentItems={binderUrgentItems}
+        taskItems={binderTaskItems}
         materials={resourceMaterials}
+        selectedMaterial={selectedBinderMaterial}
+        materialSaving={resourcesSaving}
+        onOpenMaterial={openBinderMaterial}
+        onAddMaterial={addBinderMaterial}
+        onMaterialChange={updateSelectedBinderMaterial}
+        onSaveMaterial={saveSelectedBinderMaterial}
+        onRemoveMaterial={removeSelectedBinderMaterial}
+        onCloseMaterial={closeSelectedBinderMaterial}
         labourCount={labourRows.length}
+        labourRows={labourRows}
         quickNote={entryData.note}
         submitting={submitting}
         onQuickNoteChange={(note) => setEntryData((current) => ({ ...current, note }))}
         onQuickSubmit={handleQuickEntry}
         onChangeDate={changeDate}
+        onSelectDate={selectDate}
         onOpenDiary={() => openDiaryView('site-notes')}
         onOpenTasks={() => openActionItemsPage('today')}
+        onOpenTask={openDiaryActionItem}
+        onCompleteTask={handleCompleteFollowUpFromDiary}
+        taskCompletionPending={Boolean(followUpConfirm) || followUpConfirmSaving}
+        selectedTask={selectedDiaryActionItem}
+        selectedTaskDraft={selectedDiaryActionDraft}
+        taskDetailSaving={diaryActionSaving}
+        onTaskDraftChange={updateSelectedDiaryActionDraft}
+        onSaveTask={saveSelectedDiaryActionItem}
+        onCompleteSelectedTask={completeSelectedDiaryActionItem}
+        onReopenSelectedTask={reopenSelectedDiaryActionItem}
+        onCloseTask={closeDiaryActionItem}
         onOpenMaterials={() => openDiaryView('resources', 'materials')}
         onOpenEmails={() => openActionItemsPage('today')}
+        roadblocks={Array.isArray(diary?.blocked_gates) ? diary.blocked_gates : []}
+        selectedRoadblock={selectedDiaryRoadblock}
+        onOpenRoadblock={openDiaryRoadblock}
+        onCloseRoadblock={closeDiaryRoadblock}
         onOpenRoadblocks={openRoadblocksPage}
         onOpenWalkaround={() => window.location.assign(`/walkaround${selectedProject ? `?project=${selectedProject}` : ''}`)}
-        onOpenPhotos={() => openDiaryView('site-notes')}
+        onOpenPhotos={() => window.location.assign(`/walkaround${selectedProject ? `?project=${selectedProject}` : ''}`)} // photo-evidence-workflow-routing-v8-9g2
         onOpenStaff={() => {
           setStaffSectionExpanded(true);
           openDiaryView('staff');
@@ -2804,7 +3042,12 @@ const DiaryPage = () => {
       )}
 
       {/* Diary Command Strip / Clickable Checklist - diary-command-header-tabs-v2 */}
-      <Card className="ops-card" data-testid="daily-report-readiness">
+      <Card
+        id="daily-report-readiness"
+        className="ops-card"
+        data-testid="daily-report-readiness"
+        data-commercial-readiness="closeout-review-target-v8-9j1-1"
+      >
         <CardContent className="space-y-3 py-3 lg:space-y-4 lg:py-5" data-testid="diary-mobile-compression-v5" data-commercial-readiness="diary-desktop-density-hierarchy-v1">
             <div className="rounded-2xl border border-primary/30 bg-background/85 p-2 shadow-inner sm:p-3 lg:p-5" data-testid="diary-status-summary-v1" data-commercial-readiness="diary-status-summary-v1 diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2 diary-desktop-density-hierarchy-v1">
               <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
@@ -2825,7 +3068,7 @@ const DiaryPage = () => {
                 <p className="font-heading text-[11px] font-black uppercase tracking-[0.14em] text-orange-500">Needs attention</p>
                 <p className="mt-1 text-xs font-semibold text-muted-foreground">
                   {(diary?.blocked_gates?.length || 0) + (diary?.overdue_items?.length || 0) + dueTodayItems.length > 0
-                    ? `${diary?.blocked_gates?.length || 0} roadblocks | ${diary?.overdue_items?.length || 0} overdue | ${dueTodayItems.length} follow-ups`
+                    ? `${diary?.blocked_gates?.length || 0} roadblocks | ${diary?.overdue_items?.length || 0} overdue | ${dueTodayItems.length} due this day`
                     : 'No active roadblocks, overdue items, or carried-forward follow-ups.'}
                 </p>
               </div>
@@ -2840,7 +3083,7 @@ const DiaryPage = () => {
                 <button type="button" onClick={() => openActionItemsPage('today')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3 lg:p-4">
                   <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground">Follow-ups</span>
                   <span className="mt-0.5 block text-sm font-black text-foreground sm:text-lg">{dueTodayItems.length}</span>
-                  <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">Open / carry forward</span>
+                  <span className="mt-0.5 block truncate text-[10px] font-bold text-muted-foreground sm:text-[11px]">Due this diary day</span>
                 </button>
 
                 <button type="button" onClick={() => openDiaryView('site-notes')} className="rounded-xl border border-border/70 bg-secondary/30 px-2 py-2 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.99] sm:p-3 lg:p-4">
@@ -3004,136 +3247,6 @@ const DiaryPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {selectedDiaryActionItem && selectedDiaryActionDraft && (
-        <Card id="diary-action-detail-panel" className="ops-card border-primary/60 bg-card shadow-lg" data-testid="diary-inline-action-edit-panel-v1">
-          <CardHeader className="ops-card-header border-b border-primary/25 bg-primary/10 px-4 py-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Edit Follow-up In Diary</p>
-                <CardTitle className="mt-1 font-heading text-base font-black uppercase tracking-[0.12em]">
-                  {selectedDiaryActionDraft.title || 'Untitled action item'}
-                </CardTitle>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                  Edit, close, or reopen without leaving the diary.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="secondary" size="sm" onClick={closeDiaryActionItem} disabled={diaryActionSaving} data-testid="diary-action-close-inline">
-                  Close
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-4 px-4 py-4">
-            <div className="grid gap-3 lg:grid-cols-2">
-              <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Title</span>
-                <Input
-                  className="min-h-11 border-primary/45 bg-background text-foreground shadow-inner"
-                  value={selectedDiaryActionDraft.title}
-                  onChange={(e) => updateSelectedDiaryActionDraft('title', e.target.value)}
-                  data-testid="diary-action-title-input"
-                />
-              </label>
-
-              <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Owner</span>
-                <Input
-                  className="min-h-11 border-primary/45 bg-background text-foreground shadow-inner"
-                  value={selectedDiaryActionDraft.owner}
-                  onChange={(e) => updateSelectedDiaryActionDraft('owner', e.target.value)}
-                  placeholder="Responsible person"
-                  data-testid="diary-action-owner-input"
-                />
-              </label>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Priority</span>
-                <select
-                  className="input min-h-11 w-full border-primary/45 bg-background text-foreground shadow-inner"
-                  value={selectedDiaryActionDraft.priority}
-                  onChange={(e) => updateSelectedDiaryActionDraft('priority', e.target.value)}
-                  data-testid="diary-action-priority-select"
-                >
-                  <option value="critical">Critical</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                  <option value="deferred">Deferred</option>
-                </select>
-              </label>
-
-              <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Status</span>
-                <select
-                  className="input min-h-11 w-full border-primary/45 bg-background text-foreground shadow-inner"
-                  value={selectedDiaryActionDraft.status}
-                  onChange={(e) => updateSelectedDiaryActionDraft('status', e.target.value)}
-                  data-testid="diary-action-status-select"
-                >
-                  <option value="open">To Do</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="blocked">Blocked</option>
-                  <option value="completed">Complete</option>
-                </select>
-              </label>
-
-              <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Due</span>
-                <Input
-                  type="date"
-                  className="min-h-11 border-primary/45 bg-background text-foreground shadow-inner"
-                  value={selectedDiaryActionDraft.due_date}
-                  onChange={(e) => updateSelectedDiaryActionDraft('due_date', e.target.value)}
-                  data-testid="diary-action-due-date-input"
-                />
-              </label>
-
-              <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Expected Complete</span>
-                <Input
-                  type="date"
-                  className="min-h-11 border-primary/45 bg-background text-foreground shadow-inner"
-                  value={selectedDiaryActionDraft.expected_complete_date}
-                  onChange={(e) => updateSelectedDiaryActionDraft('expected_complete_date', e.target.value)}
-                  data-testid="diary-action-expected-date-input"
-                />
-              </label>
-            </div>
-
-            <label className="space-y-1">
-              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Details</span>
-              <Textarea
-                className="min-h-[90px] border-primary/45 bg-background text-foreground shadow-inner"
-                value={selectedDiaryActionDraft.description}
-                onChange={(e) => updateSelectedDiaryActionDraft('description', e.target.value)}
-                placeholder="Notes, instruction, required response, or site detail..."
-                data-testid="diary-action-description-input"
-              />
-            </label>
-
-            <div className="flex flex-col gap-2 border-t border-border/70 pt-3 sm:flex-row sm:flex-wrap">
-              <Button type="button" className="btn-primary" onClick={saveSelectedDiaryActionItem} disabled={diaryActionSaving} data-testid="diary-action-save-inline">
-                {diaryActionSaving ? 'Saving...' : 'Save Follow-up'}
-              </Button>
-              <Button type="button" variant="outline" onClick={completeSelectedDiaryActionItem} disabled={diaryActionSaving} data-testid="diary-action-complete-inline">
-                Mark Complete
-              </Button>
-              <Button type="button" variant="outline" onClick={reopenSelectedDiaryActionItem} disabled={diaryActionSaving} data-testid="diary-action-reopen-inline" data-commercial-readiness="diary-followup-panel-wording-polish-v1">
-                Reopen
-              </Button>
-              <Button type="button" variant="secondary" onClick={closeDiaryActionItem} disabled={diaryActionSaving}>
-                Close
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {draftStatus && (
         <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary" data-testid="diary-draft-autosave-v1-status">
           {draftStatus}
@@ -3243,9 +3356,9 @@ const DiaryPage = () => {
               <CardHeader className="ops-card-header border-b border-orange-500/25 border-l-4 border-l-orange-500 bg-orange-500/10 px-3 py-3 shadow-sm lg:px-4 lg:py-4" data-commercial-readiness="diary-heading-hierarchy-v4 diary-desktop-density-hierarchy-v1">
                 <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-orange-500 lg:text-xl" data-commercial-readiness="diary-heading-hierarchy-v3 diary-desktop-density-hierarchy-v1">
                   <Target className="w-4 h-4" />
-                  Follow-ups / Carry Forward ({dueTodayItems.length})
+                  Due This Diary Day ({dueTodayItems.length})
                 </CardTitle>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">Open items carried forward until closed out.</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">Items due on this diary date. Overdue items are listed separately above.</p>
               </CardHeader>
 
               <CardContent className="py-3">
