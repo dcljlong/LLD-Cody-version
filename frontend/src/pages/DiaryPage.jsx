@@ -3099,8 +3099,9 @@ const DiaryPage = () => {
             <div className="rounded-2xl border border-primary/30 bg-background/85 p-2 shadow-inner sm:p-3 lg:p-5" data-testid="diary-status-summary-v1" data-commercial-readiness="diary-status-summary-v1 diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2 diary-desktop-density-hierarchy-v1">
               <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary lg:text-base">Today's site diary</p>
-                  <p className="mt-1 text-xs font-semibold text-muted-foreground lg:text-sm">A quick check of today's staff, work, notes, follow-ups, and evidence.</p>
+                  <p className="font-heading text-xs font-black uppercase tracking-[0.18em] text-primary lg:text-base">{selectedDate === today ? "Today's site diary" : "Selected day site diary"}</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground lg:text-sm">{selectedDate === today ? "A quick check of today's staff, work, notes, follow-ups, and evidence." : "A quick check of the selected day's staff, work, notes, follow-ups, and evidence."}</p>
+                  {/* historical-diary-wording-v8-9j3-1 */}
                 </div>
                 <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] ${
                   labourRows.length > 0 && walkaroundEntriesCount > 0
