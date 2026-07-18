@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   BookOpen,
@@ -1879,6 +1879,7 @@ const DigitalJobBinder = ({
   onCloseDay,
 }) => {
   const [activeTab, setActiveTab] = useState(getRequestedBinderTab);
+  const mobileTabsRef = useRef(null);
 
   useEffect(() => {
     const syncActiveTabFromUrl = () => {
@@ -1899,6 +1900,76 @@ const DigitalJobBinder = ({
       window.removeEventListener('lld-binder-url-change', syncActiveTabFromUrl);
     };
   }, []); // binder-url-tab-sync-v8-9j4-2
+  useEffect(() => {
+    let frame = null;
+
+    const centreActiveMobileTab = () => {
+      if (frame !== null) {
+        window.cancelAnimationFrame(frame);
+      }
+
+      frame = window.requestAnimationFrame(() => {
+        frame = null;
+
+        const mobileTabs = mobileTabsRef.current;
+
+        if (!mobileTabs || window.innerWidth > 1280) return;
+
+        const activeButton = mobileTabs.querySelector(
+          `[data-binder-tab="${activeTab}"]`
+        );
+
+        if (!activeButton) return;
+
+        const containerRect = mobileTabs.getBoundingClientRect();
+        const buttonRect = activeButton.getBoundingClientRect();
+
+        const maxScrollLeft = Math.max(
+          0,
+          mobileTabs.scrollWidth - mobileTabs.clientWidth
+        );
+
+        const targetLeft = Math.min(
+          maxScrollLeft,
+          Math.max(
+            0,
+            mobileTabs.scrollLeft
+              + (buttonRect.left - containerRect.left)
+              - ((containerRect.width - buttonRect.width) / 2)
+          )
+        );
+
+        const prefersReducedMotion = window.matchMedia(
+          '(prefers-reduced-motion: reduce)'
+        ).matches;
+
+        mobileTabs.scrollTo({
+          left: targetLeft,
+          behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        });
+      });
+    };
+
+    centreActiveMobileTab();
+
+    window.addEventListener('resize', centreActiveMobileTab);
+    window.visualViewport?.addEventListener(
+      'resize',
+      centreActiveMobileTab
+    );
+
+    return () => {
+      window.removeEventListener('resize', centreActiveMobileTab);
+      window.visualViewport?.removeEventListener(
+        'resize',
+        centreActiveMobileTab
+      );
+
+      if (frame !== null) {
+        window.cancelAnimationFrame(frame);
+      }
+    };
+  }, [activeTab]); // active-mobile-tab-visibility-resize-v8-9j5-1
 
   const projectName = currentProject
     ? `${currentProject.job_number ? `${currentProject.job_number} — ` : ''}${currentProject.name}`
@@ -3156,6 +3227,7 @@ const DigitalJobBinder = ({
       </div>
 
       <nav
+        ref={mobileTabsRef}
         className="lld-binder-mobile-tabs"
         aria-label="Mobile digital job binder sections"
       >
@@ -3163,6 +3235,8 @@ const DigitalJobBinder = ({
           <button
             key={tab.id}
             type="button"
+            data-binder-tab={tab.id}
+            aria-current={activeTab === tab.id ? 'page' : undefined}
             className={activeTab === tab.id ? 'active' : ''}
             onClick={() => handleTab(tab.id)}
           >
