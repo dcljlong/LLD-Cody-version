@@ -2305,6 +2305,7 @@ const DigitalJobBinder = ({
   const closeoutChecklist = [
     {
       id: 'closeout-daily-record',
+      targetTab: 'diary',
       title: 'Daily record',
       priority: closeoutDailyCount > 0 ? 'RECORDED' : 'MISSING',
       status: closeoutDailyCount > 0
@@ -2313,6 +2314,7 @@ const DigitalJobBinder = ({
     },
     {
       id: 'closeout-staff-on-site',
+      targetTab: 'staff',
       title: 'Staff on site',
       priority: closeoutStaffCount > 0 ? 'RECORDED' : 'MISSING',
       status: closeoutStaffCount > 0
@@ -2321,6 +2323,7 @@ const DigitalJobBinder = ({
     },
     {
       id: 'closeout-followups',
+      targetTab: 'tasks',
       title: 'Follow-ups',
       priority:
         closeoutOverdueCount + closeoutDueThisDayCount > 0
@@ -2333,6 +2336,7 @@ const DigitalJobBinder = ({
     },
     {
       id: 'closeout-roadblocks',
+      targetTab: 'roadblocks',
       title: 'Roadblocks',
       priority: closeoutRoadblockCount > 0 ? 'REVIEW' : 'CLEAR',
       status: closeoutRoadblockCount > 0
@@ -2341,6 +2345,7 @@ const DigitalJobBinder = ({
     },
     {
       id: 'closeout-photo-evidence',
+      targetTab: 'photos',
       title: 'Photo evidence',
       priority: closeoutPhotoCount > 0 ? 'RECORDED' : 'OPTIONAL',
       status: closeoutPhotoCount > 0
@@ -2349,6 +2354,7 @@ const DigitalJobBinder = ({
     },
     {
       id: 'closeout-materials',
+      targetTab: 'materials',
       title: 'Materials',
       priority: closeoutMaterialCount > 0 ? 'RECORDED' : 'NONE',
       status: closeoutMaterialCount > 0
@@ -2356,6 +2362,7 @@ const DigitalJobBinder = ({
         : 'No materials recorded for this day',
     },
   ]; // real-closeout-readiness-v8-9j1
+  // actionable-closeout-readiness-v8-9j6-1
   const focusedItemsByTab = {
     diary: entries,
     tasks,
@@ -3139,6 +3146,38 @@ const DigitalJobBinder = ({
                         index={index}
                         onOpen={onOpenMaterial}
                       />
+                    ) : activeTab === 'closeout' ? (
+                      <button
+                        key={item?.id || `closeout-${index}`}
+                        type="button"
+                        className="lld-binder-focused-record lld-binder-readiness-link"
+                        onClick={() => handleTab(item.targetTab)}
+                        aria-label={`Open ${item.title} in the Digital Job Binder`}
+                        data-testid={`lld-binder-closeout-readiness-link-v8-9j6-1-${item.targetTab}`}
+                      >
+                        <span className="lld-binder-readiness-index">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+
+                        <div>
+                          <strong>
+                            {getFocusedItemTitle(item, index)}
+                          </strong>
+
+                          {getFocusedItemMeta(item) && (
+                            <small>
+                              {getFocusedItemMeta(item)}
+                            </small>
+                          )}
+                        </div>
+
+                        <span
+                          className="lld-binder-readiness-arrow"
+                          aria-hidden="true"
+                        >
+                          &rarr;
+                        </span>
+                      </button>
                     ) : (
                       <div
                         key={item?.id || `${activeTab}-${index}`}

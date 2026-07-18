@@ -4410,6 +4410,57 @@
     padding: 0.62rem 0.7rem;
   }
 
+  .lld-binder-active-closeout .lld-binder-readiness-link {
+    appearance: none;
+    width: 100%;
+    grid-template-columns: 2.1rem minmax(0, 1fr) auto;
+    align-items: center;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color 160ms ease,
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+
+  .lld-binder-active-closeout .lld-binder-readiness-link:hover {
+    border-color: rgba(15, 118, 110, 0.34);
+    border-left-color: #0f766e;
+    background: rgba(240, 253, 250, 0.72);
+  }
+
+  .lld-binder-active-closeout .lld-binder-readiness-link:active {
+    background: rgba(204, 251, 241, 0.7);
+  }
+
+  .lld-binder-active-closeout .lld-binder-readiness-link:focus-visible {
+    border-left-color: #0f766e;
+    outline: 2px solid rgba(15, 118, 110, 0.42);
+    outline-offset: 2px;
+  }
+
+  .lld-binder-active-closeout
+    .lld-binder-readiness-link
+    > .lld-binder-readiness-arrow {
+    justify-self: end;
+    color: #64748b;
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  .lld-binder-active-closeout
+    .lld-binder-readiness-link:hover
+    > .lld-binder-readiness-arrow,
+  .lld-binder-active-closeout
+    .lld-binder-readiness-link:focus-visible
+    > .lld-binder-readiness-arrow {
+    color: #0f766e;
+  }
+
   .lld-binder-active-closeout
     .lld-binder-focused-record
     > span {
@@ -4468,6 +4519,19 @@
     border: 1px solid #a3a3a3;
     border-left: 0.2rem solid #525252;
     background: transparent;
+  }
+
+  .lld-binder-active-closeout .lld-binder-readiness-link {
+    appearance: none;
+    width: 100%;
+    grid-template-columns: 2.1rem minmax(0, 1fr);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+  }
+
+  .lld-binder-active-closeout .lld-binder-readiness-arrow {
+    display: none;
   }
 }
 
