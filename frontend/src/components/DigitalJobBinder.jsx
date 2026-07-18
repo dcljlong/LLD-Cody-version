@@ -1876,6 +1876,10 @@ const DigitalJobBinder = ({
   onOpenWalkaround,
   onOpenPhotos,
   onOpenStaff,
+  dayReview = null,
+  reviewSaving = false,
+  onMarkDayReviewed,
+  onReopenDayReview,
   onCloseDay,
 }) => {
   const [activeTab, setActiveTab] = useState(getRequestedBinderTab);
@@ -2301,6 +2305,55 @@ const DigitalJobBinder = ({
       ].filter(Boolean).join(' ');
   // closeout-count-definitions-v8-9j2
   // closeout-status-message-v8-9j2-1
+
+  const dayReviewIsReviewed = dayReview?.status === 'reviewed';
+  const dayReviewNeedsChecking = dayReviewIsReviewed && !closeoutReady;
+
+  const dayReviewTimestamp = safeText(dayReview?.reviewed_at, '');
+
+  const dayReviewTimestampLabel = useMemo(() => {
+    if (!dayReviewTimestamp) return '';
+
+    const reviewedDate = new Date(dayReviewTimestamp);
+
+    if (Number.isNaN(reviewedDate.getTime())) return '';
+
+    return new Intl.DateTimeFormat('en-NZ', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'Pacific/Auckland',
+    }).format(reviewedDate);
+  }, [dayReviewTimestamp]);
+
+  const dayReviewReviewer = safeText(
+    dayReview?.reviewed_by_name,
+    'Authenticated user'
+  );
+
+  const dayReviewActionAvailable = dayReviewIsReviewed
+    ? typeof onReopenDayReview === 'function'
+    : typeof onMarkDayReviewed === 'function';
+
+  const closeoutStatusClass = dayReviewNeedsChecking
+    ? 'needs-attention'
+    : dayReviewIsReviewed || closeoutReady
+      ? 'is-ready'
+      : 'needs-attention';
+
+  const closeoutStatusTitle = dayReviewNeedsChecking
+    ? 'Review needs checking'
+    : dayReviewIsReviewed
+      ? 'Day reviewed'
+      : closeoutReady
+        ? 'Ready to review'
+        : 'Needs attention';
+
+  const closeoutDisplayedMessage = dayReviewNeedsChecking
+    ? 'A review was recorded, but attention is now present. Reopen the review and check this day again.'
+    : dayReviewIsReviewed
+      ? `Reviewed by ${dayReviewReviewer}${dayReviewTimestampLabel ? ` on ${dayReviewTimestampLabel}` : ''}.`
+      : closeoutStatusMessage;
+  // persisted-day-review-ui-v8-9j8-3
 
   const closeoutChecklist = [
     {
@@ -2866,19 +2919,20 @@ const DigitalJobBinder = ({
 
               {activeTab === 'closeout' && (
                 <div
-                  className={`lld-binder-closeout-status ${
-                    closeoutReady ? 'is-ready' : 'needs-attention'
-                  }`}
+                  className={`lld-binder-closeout-status ${closeoutStatusClass}`}
                   data-testid="lld-binder-closeout-status-v8-9j1"
+                  data-review-status={dayReviewIsReviewed ? 'reviewed' : 'needs-review'}
                 >
-                  {closeoutReady ? <CheckCircle2 /> : <AlertTriangle />}
+                  {closeoutStatusClass === 'is-ready'
+                    ? <CheckCircle2 />
+                    : <AlertTriangle />}
 
                   <div>
                     <strong>
-                      {closeoutReady ? 'Ready to review' : 'Needs attention'}
+                      {closeoutStatusTitle}
                     </strong>
                     <span>
-                      {closeoutStatusMessage}
+                      {closeoutDisplayedMessage}
                     </span>
                   </div>
                 </div>
@@ -2952,13 +3006,50 @@ const DigitalJobBinder = ({
               <button
                 type="button"
                 className="lld-binder-focused-workflow-button"
-                onClick={openActiveWorkflow}
+                onClick={
+                  activeTab === 'closeout'
+                    ? dayReviewIsReviewed
+                      ? onReopenDayReview
+                      : onMarkDayReviewed
+                    : openActiveWorkflow
+                }
+                disabled={
+                  activeTab === 'closeout' && (
+                    reviewSaving ||
+                    !dayReviewActionAvailable ||
+                    (!dayReviewIsReviewed && !closeoutReady)
+                  )
+                }
+                aria-busy={
+                  activeTab === 'closeout' && reviewSaving
+                    ? 'true'
+                    : undefined
+                }
+                data-testid={
+                  activeTab === 'closeout'
+                    ? 'lld-binder-day-review-action-v8-9j8-3'
+                    : undefined
+                }
               >
                 {activeTab === 'materials'
                   ? 'Add / edit materials'
                   : activeTab === 'emails'
                     ? 'Open communications in Action Items'
-                    : activeTab === 'photos' ? 'Capture photo evidence' : activeTab === 'staff' ? 'Open Staff diary' : activeTab === 'closeout' ? 'Open full day review' : `Open full ${activeTabConfig.label} workflow`}
+                    : activeTab === 'photos'
+                      ? 'Capture photo evidence'
+                      : activeTab === 'staff'
+                        ? 'Open Staff diary'
+                        : activeTab === 'closeout'
+                          ? reviewSaving
+                            ? dayReviewIsReviewed
+                              ? 'Reopening review...'
+                              : 'Saving review...'
+                            : dayReviewIsReviewed
+                              ? 'Reopen review'
+                              : closeoutReady
+                                ? 'Mark day reviewed'
+                                : 'Resolve attention points first'
+                          : `Open full ${activeTabConfig.label} workflow`}
               </button>
             </article>
 

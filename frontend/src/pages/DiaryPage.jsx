@@ -196,6 +196,7 @@ const DiaryPage = () => {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
   const [diary, setDiary] = useState(null);
+  const [reviewSaving, setReviewSaving] = useState(false);
   const [labourRows, setLabourRows] = useState([]);
   const [labourLoading, setLabourLoading] = useState(false);
   const [labourSaving, setLabourSaving] = useState(false);
@@ -1286,6 +1287,77 @@ const DiaryPage = () => {
     }
   }, [selectedProject, selectedDate]);
 
+
+  const markDayReviewed = async () => {
+    if (!selectedProject || !selectedDate) {
+      toast.error('Select a project and date first');
+      return;
+    }
+
+    const reviewProjectId = selectedProject;
+    const reviewDate = selectedDate;
+
+    setReviewSaving(true);
+
+    try {
+      const res = await diaryApi.markReviewed(reviewProjectId, {
+        date: reviewDate,
+      });
+
+      setDiary((current) => (
+        String(current?.project?.id || '') === String(reviewProjectId) &&
+        String(current?.date || '') === String(reviewDate)
+          ? {
+              ...(current || {}),
+              review: res.data,
+            }
+          : current
+      ));
+
+      toast.success('Day marked reviewed');
+    } catch (error) {
+      const detail = error?.response?.data?.detail;
+      toast.error(detail || 'Failed to mark day reviewed');
+    } finally {
+      setReviewSaving(false);
+    }
+  };
+
+  const reopenDayReview = async () => {
+    if (!selectedProject || !selectedDate) {
+      toast.error('Select a project and date first');
+      return;
+    }
+
+    const reviewProjectId = selectedProject;
+    const reviewDate = selectedDate;
+
+    setReviewSaving(true);
+
+    try {
+      const res = await diaryApi.reopenReview(reviewProjectId, {
+        date: reviewDate,
+      });
+
+      setDiary((current) => (
+        String(current?.project?.id || '') === String(reviewProjectId) &&
+        String(current?.date || '') === String(reviewDate)
+          ? {
+              ...(current || {}),
+              review: res.data,
+            }
+          : current
+      ));
+
+      toast.success('Day review reopened');
+    } catch (error) {
+      const detail = error?.response?.data?.detail;
+      toast.error(detail || 'Failed to reopen day review');
+    } finally {
+      setReviewSaving(false);
+    }
+  };
+  // diary-day-review-actions-v8-9j8-3
 
   const getDiaryProgrammeTaskWindowDate = (task = {}) => {
     return task.programme_start_date || task.start_date || task.start || task.end_date || task.due_date || '';
@@ -2471,6 +2543,10 @@ const DiaryPage = () => {
           setStaffSectionExpanded(true);
           openDiaryView('staff');
         }}
+        dayReview={diary?.review || null}
+        reviewSaving={reviewSaving}
+        onMarkDayReviewed={markDayReviewed}
+        onReopenDayReview={reopenDayReview}
         onCloseDay={() => openDiaryView('overview', 'closeout')}
         // closeout-full-review-context-v8-9j2-2
       />

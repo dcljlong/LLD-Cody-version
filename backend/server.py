@@ -223,6 +223,10 @@ class DailySiteResourcesSaveRequest(BaseModel):
     plant_equipment: List[DailySiteResourceItem] = []
     subcontractors: List[DailySiteResourceItem] = []  # diary-subcontractors-on-site-v1
 
+class DailyDiaryReviewRequest(BaseModel):
+    date: str
+
+
 class WalkaroundEntryCreate(BaseModel):
     project_id: str
     gate_id: Optional[str] = None
@@ -1897,6 +1901,265 @@ async def import_daily_labour_rows_to_timesheet(
         }
     }
 
+def validate_daily_diary_review_date(date_value: str) -> str:
+    clean_date = str(date_value or "").strip()
+
+    try:
+        parsed_date = datetime.strptime(
+            clean_date,
+            "%Y-%m-%d"
+        ).date()
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Date must use YYYY-MM-DD format"
+        )
+
+    normalised_date = parsed_date.isoformat()
+
+    if clean_date != normalised_date:
+        raise HTTPException(
+            status_code=400,
+            detail="Date must use YYYY-MM-DD format"
+        )
+
+    from zoneinfo import ZoneInfo
+
+    today_nz = datetime.now(
+        ZoneInfo("Pacific/Auckland")
+    ).date().isoformat()
+
+    if normalised_date > today_nz:
+        raise HTTPException(
+            status_code=400,
+            detail="Future diary days cannot be reviewed"
+        )
+
+    return normalised_date
+
+
+def build_daily_diary_review_response(
+    review: Optional[dict],
+    project_id: str,
+    date_value: str
+) -> dict:
+    source = review or {}
+    events = source.get("events")
+
+    if not isinstance(events, list):
+        events = []
+
+    status = (
+        "reviewed"
+        if source.get("status") == "reviewed"
+        else "needs_review"
+    )
+
+    return {
+        "id": source.get("id"),
+        "project_id": project_id,
+        "date": date_value,
+        "status": status,
+        "reviewed_at": source.get("reviewed_at"),
+        "reviewed_by_user_id": source.get("reviewed_by_user_id"),
+        "reviewed_by_name": source.get("reviewed_by_name"),
+        "reopened_at": source.get("reopened_at"),
+        "reopened_by_user_id": source.get("reopened_by_user_id"),
+        "reopened_by_name": source.get("reopened_by_name"),
+        "revision": int(source.get("revision") or 0),
+        "event_count": len(events),
+        "events": events[-20:],
+        "updated_at": source.get("updated_at"),
+        "honest_status": {
+            "human_review_recorded": status == "reviewed",
+            "locks_diary": False,
+            "formal_approval": False,
+            "server_certifies_readiness": False
+        }
+    }
+
+
+@api_router.post("/diary/{project_id}/review")
+async def mark_daily_diary_review(
+    project_id: str,
+    payload: DailyDiaryReviewRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Record an authenticated human review without locking the diary."""
+    project = await db.projects.find_one(
+        {
+            "id": project_id,
+            "user_id": current_user["id"]
+        },
+        {"_id": 0}
+    )
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    date_value = validate_daily_diary_review_date(payload.date)
+    review_key = f"{current_user['id']}:{project_id}:{date_value}"
+
+    existing = await db.daily_diary_reviews.find_one(
+        {"_id": review_key},
+        {"_id": 0}
+    )
+
+    if existing and existing.get("status") == "reviewed":
+        return build_daily_diary_review_response(
+            existing,
+            project_id,
+            date_value
+        )
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    reviewer_name = str(
+        current_user.get("name") or
+        current_user.get("email") or
+        "Authenticated user"
+    ).strip() or "Authenticated user"
+
+    event = {
+        "id": str(uuid.uuid4()),
+        "action": "reviewed",
+        "at": now,
+        "user_id": current_user["id"],
+        "user_name": reviewer_name
+    }
+
+    await db.daily_diary_reviews.update_one(
+        {"_id": review_key},
+        {
+            "$set": {
+                "status": "reviewed",
+                "reviewed_at": now,
+                "reviewed_by_user_id": current_user["id"],
+                "reviewed_by_name": reviewer_name,
+                "reopened_at": None,
+                "reopened_by_user_id": None,
+                "reopened_by_name": None,
+                "updated_at": now
+            },
+            "$setOnInsert": {
+                "id": review_key,
+                "project_id": project_id,
+                "date": date_value,
+                "user_id": current_user["id"],
+                "created_at": now
+            },
+            "$push": {
+                "events": event
+            },
+            "$inc": {
+                "revision": 1
+            }
+        },
+        upsert=True
+    )
+
+    updated = await db.daily_diary_reviews.find_one(
+        {"_id": review_key},
+        {"_id": 0}
+    )
+
+    return build_daily_diary_review_response(
+        updated,
+        project_id,
+        date_value
+    )
+
+
+@api_router.post("/diary/{project_id}/review/reopen")
+async def reopen_daily_diary_review(
+    project_id: str,
+    payload: DailyDiaryReviewRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Reopen a reviewed diary day without deleting review history."""
+    project = await db.projects.find_one(
+        {
+            "id": project_id,
+            "user_id": current_user["id"]
+        },
+        {"_id": 0}
+    )
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    date_value = validate_daily_diary_review_date(payload.date)
+    review_key = f"{current_user['id']}:{project_id}:{date_value}"
+
+    existing = await db.daily_diary_reviews.find_one(
+        {"_id": review_key},
+        {"_id": 0}
+    )
+
+    if not existing or existing.get("status") != "reviewed":
+        raise HTTPException(
+            status_code=400,
+            detail="This diary day is not currently marked reviewed"
+        )
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    reviewer_name = str(
+        current_user.get("name") or
+        current_user.get("email") or
+        "Authenticated user"
+    ).strip() or "Authenticated user"
+
+    event = {
+        "id": str(uuid.uuid4()),
+        "action": "reopened",
+        "at": now,
+        "user_id": current_user["id"],
+        "user_name": reviewer_name
+    }
+
+    result = await db.daily_diary_reviews.update_one(
+        {
+            "_id": review_key,
+            "status": "reviewed"
+        },
+        {
+            "$set": {
+                "status": "needs_review",
+                "reopened_at": now,
+                "reopened_by_user_id": current_user["id"],
+                "reopened_by_name": reviewer_name,
+                "updated_at": now
+            },
+            "$push": {
+                "events": event
+            },
+            "$inc": {
+                "revision": 1
+            }
+        }
+    )
+
+    if result.modified_count != 1:
+        raise HTTPException(
+            status_code=409,
+            detail="Diary review status changed before reopening completed"
+        )
+
+    updated = await db.daily_diary_reviews.find_one(
+        {"_id": review_key},
+        {"_id": 0}
+    )
+
+    return build_daily_diary_review_response(
+        updated,
+        project_id,
+        date_value
+    )
+
+
+# daily-diary-review-persistence-v8-9j8-3
+
 @api_router.get("/diary/{project_id}")
 async def get_project_diary(
     project_id: str,
@@ -1999,9 +2262,21 @@ async def get_project_diary(
         }
     }
 
+    review_key = f"{current_user['id']}:{project_id}:{target_date}"
+
+    review_doc = await db.daily_diary_reviews.find_one(
+        {"_id": review_key},
+        {"_id": 0}
+    )
+
     return {
         "project": project,
         "date": target_date,
+        "review": build_daily_diary_review_response(
+            review_doc,
+            project_id,
+            target_date
+        ),
         "summary": {
             "entries_count": len(entries),
             "items_opened": len(items_opened),

@@ -109,7 +109,9 @@ export const diaryApi = {
   saveLabour: (projectId, data) => api.post(`/diary/${projectId}/labour`, data),
   importLabourToTimesheet: (projectId, data) => api.post(`/diary/${projectId}/labour/import-timesheet`, data),
   getResources: (projectId, date) => api.get(`/diary/${projectId}/resources?date=${date}`),
-  saveResources: (projectId, data) => api.post(`/diary/${projectId}/resources`, data)
+  saveResources: (projectId, data) => api.post(`/diary/${projectId}/resources`, data),
+  markReviewed: (projectId, data) => api.post(`/diary/${projectId}/review`, data),
+  reopenReview: (projectId, data) => api.post(`/diary/${projectId}/review/reopen`, data)
 };
 
 export const timesheetsApi = {
