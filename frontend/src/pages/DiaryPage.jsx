@@ -1786,6 +1786,8 @@ const DiaryPage = () => {
     }
 
     window.history.pushState({}, '', `/diary?${params.toString()}`);
+    window.dispatchEvent(new Event('lld-binder-url-change'));
+    // binder-url-tab-sync-v8-9j4-2
 
     const targetMap = {
       overview: 'daily-report-readiness',

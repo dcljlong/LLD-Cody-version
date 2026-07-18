@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   BookOpen,
@@ -29,6 +29,16 @@ const BINDER_TABS = [
   { id: 'staff', label: 'Staff', description: 'Labour', color: 'pink' },
   { id: 'closeout', label: 'Closeout', description: 'Finish the day', color: 'slate' },
 ];
+
+const getRequestedBinderTab = () => {
+  if (typeof window === 'undefined') return 'today';
+
+  const requestedTab = new URLSearchParams(window.location.search).get('tab');
+
+  return BINDER_TABS.some((tab) => tab.id === requestedTab)
+    ? requestedTab
+    : 'today';
+};
 
 const safeText = (value, fallback = '') => {
   const text = String(value ?? '').trim();
@@ -1868,13 +1878,27 @@ const DigitalJobBinder = ({
   onOpenStaff,
   onCloseDay,
 }) => {
-  const [activeTab, setActiveTab] = useState(() => {
-    const requestedTab = new URLSearchParams(window.location.search).get('tab');
+  const [activeTab, setActiveTab] = useState(getRequestedBinderTab);
 
-    return BINDER_TABS.some((tab) => tab.id === requestedTab)
-      ? requestedTab
-      : 'today';
-  });
+  useEffect(() => {
+    const syncActiveTabFromUrl = () => {
+      const requestedTab = getRequestedBinderTab();
+
+      setActiveTab((currentTab) => (
+        currentTab === requestedTab ? currentTab : requestedTab
+      ));
+    };
+
+    syncActiveTabFromUrl();
+
+    window.addEventListener('popstate', syncActiveTabFromUrl);
+    window.addEventListener('lld-binder-url-change', syncActiveTabFromUrl);
+
+    return () => {
+      window.removeEventListener('popstate', syncActiveTabFromUrl);
+      window.removeEventListener('lld-binder-url-change', syncActiveTabFromUrl);
+    };
+  }, []); // binder-url-tab-sync-v8-9j4-2
 
   const projectName = currentProject
     ? `${currentProject.job_number ? `${currentProject.job_number} — ` : ''}${currentProject.name}`
@@ -2026,6 +2050,8 @@ const DigitalJobBinder = ({
       '',
       `/diary${params.toString() ? `?${params.toString()}` : ''}`
     );
+
+    window.dispatchEvent(new Event('lld-binder-url-change'));
   };
 
   const openActiveWorkflow = () => {

@@ -4470,3 +4470,45 @@
     background: transparent;
   }
 }
+
+/* LONG LINE DIARY / MOBILE FOCUSED BINDER VIEW V8.9J4.2 */
+/* mobile-focused-view-v8-9j4-2 */
+
+@media (max-width: 980px) {
+  .lld-digital-job-binder:not(.lld-binder-active-today) .lld-binder-pages > .lld-binder-page,
+  .lld-digital-job-binder:not(.lld-binder-active-today) .lld-binder-mechanism {
+    display: none;
+  }
+
+  .lld-digital-job-binder:not(.lld-binder-active-today) .lld-binder-focused-spread {
+    position: relative;
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .lld-digital-job-binder:not(.lld-binder-active-today) .lld-binder-focused-page-left {
+    display: block;
+    min-height: 0;
+    max-height: none;
+    border-radius: 0.72rem 0.72rem 0 0;
+  }
+
+  .lld-digital-job-binder:not(.lld-binder-active-today) .lld-binder-focused-page-right {
+    min-height: 0;
+    max-height: none;
+    border-top: 0.55rem solid rgba(93, 72, 54, 0.26);
+    border-radius: 0 0 0.72rem 0.72rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .lld-digital-job-binder:not(.lld-binder-active-today) .lld-binder-focused-page {
+    padding: 1.2rem 0.85rem 1.5rem 2.7rem;
+  }
+
+  .lld-digital-job-binder:not(.lld-binder-active-today) .lld-binder-focused-heading h2 {
+    font-size: clamp(2rem, 12vw, 3rem);
+  }
+}
