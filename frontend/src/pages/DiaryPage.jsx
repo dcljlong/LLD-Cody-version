@@ -1851,6 +1851,20 @@ const DiaryPage = () => {
 
     const params = new URLSearchParams(window.location.search);
     params.set('view', safeView);
+
+    if (selectedProject) {
+      params.set('project', selectedProject);
+    } else {
+      params.delete('project');
+    }
+
+    if (selectedDate) {
+      params.set('date', selectedDate);
+    } else {
+      params.delete('date');
+    }
+
+    // diary-open-view-explicit-context-v8-9j8-4
     if (tab) {
       params.set('tab', tab);
     } else {
