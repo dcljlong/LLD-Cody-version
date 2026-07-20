@@ -257,6 +257,7 @@ const DiaryPage = () => {
   const labourServerAutosaveTimerRef = useRef(null);
   const labourLastSavedPayloadRef = useRef('');
   const resourcesDraftReadyRef = useRef('');
+  const resourcesEditBaselineRef = useRef(null); // resource-edit-baseline-v8-9k2-3
   const quickEntryDraftReadyRef = useRef('');
   const [draftStatus, setDraftStatus] = useState('');
 
@@ -475,12 +476,29 @@ const DiaryPage = () => {
     });
   };
 
+  const cloneSiteResources = useCallback((resources = {}) => ({
+    materials: (Array.isArray(resources.materials) ? resources.materials : []).map((row) => ({ ...row })),
+    plant_equipment: (Array.isArray(resources.plant_equipment) ? resources.plant_equipment : []).map((row) => ({ ...row })),
+    subcontractors: (Array.isArray(resources.subcontractors) ? resources.subcontractors : []).map((row) => ({ ...row }))
+  }), []);
+
+  const beginSiteResourcesEdit = () => {
+    if (!resourcesEditMode) {
+      resourcesEditBaselineRef.current = cloneSiteResources(siteResources);
+    }
+
+    setResourcesEditMode(true);
+  }; // safe-resource-edit-entry-v8-9k2-3
+
   const addResourceRow = (category) => {
+    if (!resourcesEditMode) {
+      beginSiteResourcesEdit();
+    }
+
     setSiteResources((current) => ({
       ...current,
       [category]: [...(Array.isArray(current?.[category]) ? current[category] : []), createEmptyResourceRow()]
     }));
-    setResourcesEditMode(true);
   };
 
   const removeResourceRow = (category, index) => {
@@ -574,7 +592,8 @@ const DiaryPage = () => {
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    setResourcesEditMode(true);
+
+    beginSiteResourcesEdit();
   };
 
   const labourTotalHours = labourRows.reduce((sum, row) => sum + (parseFloat(row.total_hours) || 0), 0);
@@ -954,12 +973,21 @@ const DiaryPage = () => {
   const fetchSiteResources = useCallback(async () => {
     if (!selectedProject || !selectedDate) {
       setSiteResources({ materials: [], plant_equipment: [], subcontractors: [] });
+      resourcesEditBaselineRef.current = null;
       resourcesDraftReadyRef.current = '';
+      setResourcesEditMode(false);
+      setActiveResourceTab('materials');
+      setSelectedBinderMaterialIndex(null);
       return;
     }
 
     const draftKey = getDiaryDraftKey('resources');
+    resourcesEditBaselineRef.current = null;
+    setResourcesEditMode(false);
+    setActiveResourceTab('materials');
+    setSelectedBinderMaterialIndex(null);
     setResourcesLoading(true);
+
     try {
       const res = await diaryApi.getResources(selectedProject, selectedDate);
       const serverResources = {
@@ -967,14 +995,13 @@ const DiaryPage = () => {
         plant_equipment: Array.isArray(res.data?.plant_equipment) ? res.data.plant_equipment : [],
         subcontractors: Array.isArray(res.data?.subcontractors) ? res.data.subcontractors : []
       };
+
+      resourcesEditBaselineRef.current = cloneSiteResources(serverResources);
+
       const draft = readDiaryDraft('resources');
 
       if (draft?.resources && hasMeaningfulResourceRows(draft.resources)) {
-        setSiteResources({
-          materials: Array.isArray(draft.resources.materials) ? draft.resources.materials : [],
-          plant_equipment: Array.isArray(draft.resources.plant_equipment) ? draft.resources.plant_equipment : [],
-          subcontractors: Array.isArray(draft.resources.subcontractors) ? draft.resources.subcontractors : []
-        });
+        setSiteResources(cloneSiteResources(draft.resources));
         setResourcesEditMode(true);
         setDraftStatus('Resources draft restored on this device');
       } else {
@@ -984,23 +1011,49 @@ const DiaryPage = () => {
       resourcesDraftReadyRef.current = draftKey;
     } catch (error) {
       setDraftStatus('Site resources could not be loaded. Restoring any saved device draft if available.');
+
       const draft = readDiaryDraft('resources');
+
       if (draft?.resources && hasMeaningfulResourceRows(draft.resources)) {
-        setSiteResources({
-          materials: Array.isArray(draft.resources.materials) ? draft.resources.materials : [],
-          plant_equipment: Array.isArray(draft.resources.plant_equipment) ? draft.resources.plant_equipment : [],
-          subcontractors: Array.isArray(draft.resources.subcontractors) ? draft.resources.subcontractors : []
-        });
+        setSiteResources(cloneSiteResources(draft.resources));
         setResourcesEditMode(true);
         setDraftStatus('Resources draft restored on this device');
       } else {
         setSiteResources({ materials: [], plant_equipment: [], subcontractors: [] });
       }
+
       resourcesDraftReadyRef.current = draftKey;
     } finally {
       setResourcesLoading(false);
     }
-  }, [selectedProject, selectedDate]);
+  }, [selectedProject, selectedDate, cloneSiteResources]);
+
+  const cancelSiteResourcesEdit = () => {
+    const baseline = resourcesEditBaselineRef.current
+      ? cloneSiteResources(resourcesEditBaselineRef.current)
+      : null;
+
+    const currentResources = cloneSiteResources(siteResources);
+    const hasChanges = baseline
+      ? JSON.stringify(currentResources) !== JSON.stringify(baseline)
+      : hasMeaningfulResourceRows(currentResources);
+
+    if (hasChanges && !window.confirm('Discard unsaved site resource changes?')) {
+      return;
+    }
+
+    clearDiaryDraft('resources');
+    setResourcesEditMode(false);
+    setActiveResourceTab('materials');
+    setSelectedBinderMaterialIndex(null);
+    setDraftStatus(hasChanges ? 'Resource changes discarded' : 'Resource editing closed');
+
+    if (baseline) {
+      setSiteResources(baseline);
+    } else {
+      fetchSiteResources();
+    }
+  }; // safe-resource-edit-cancel-v8-9k2-3
 
   const saveSiteResources = async (resourceOverride = null) => {
     if (!selectedProject || !selectedDate) {
@@ -1019,6 +1072,7 @@ const DiaryPage = () => {
       : resourceSubcontractors;
 
     setResourcesSaving(true);
+
     try {
       const cleanRows = (rows) => (Array.isArray(rows) ? rows : [])
         .filter((row) => String(row.item || '').trim())
@@ -1038,14 +1092,19 @@ const DiaryPage = () => {
         subcontractors: cleanRows(subcontractorsToSave)
       });
 
-      setSiteResources({
+      const savedResources = {
         materials: Array.isArray(res.data?.materials) ? res.data.materials : [],
         plant_equipment: Array.isArray(res.data?.plant_equipment) ? res.data.plant_equipment : [],
         subcontractors: Array.isArray(res.data?.subcontractors) ? res.data.subcontractors : []
-      });
+      };
+
+      setSiteResources(savedResources);
+      resourcesEditBaselineRef.current = cloneSiteResources(savedResources);
       clearDiaryDraft('resources');
       setDraftStatus('Resources saved to diary');
       setResourcesEditMode(false);
+      setActiveResourceTab('materials');
+      setSelectedBinderMaterialIndex(null);
       toast.success('Site resources saved to diary');
       fetchDiary();
       fetchSiteResources();
@@ -1496,11 +1555,11 @@ const DiaryPage = () => {
 
   useEffect(() => {
     const key = getDiaryDraftKey('resources');
-    if (!key || resourcesDraftReadyRef.current !== key || resourcesSaving || resourcesLoading) return;
+    if (!resourcesEditMode || !key || resourcesDraftReadyRef.current !== key || resourcesSaving || resourcesLoading) return;
     if (hasMeaningfulResourceRows(siteResources)) {
       writeDiaryDraft('resources', { resources: siteResources }); // diary-draft-autosave-v1-resources
     }
-  }, [siteResources, selectedProject, selectedDate, resourcesSaving, resourcesLoading]);
+  }, [siteResources, selectedProject, selectedDate, resourcesSaving, resourcesLoading, resourcesEditMode]); // resource-draft-edit-mode-only-v8-9k2-3
 
   useEffect(() => {
     if (!labourEditMode || activeLabourIndex === null) return undefined;
@@ -4116,13 +4175,18 @@ const DiaryPage = () => {
 
                 <div className="flex flex-col gap-2 border-t border-border/70 pt-4 sm:flex-row sm:flex-wrap" data-testid="diary-resources-action-bar-v8-9k2-2">
                   {!resourcesEditMode ? (
-                    <Button type="button" variant="secondary" onClick={() => setResourcesEditMode(true)} data-testid="daily-site-resources-edit-button">
+                    <Button type="button" variant="secondary" onClick={beginSiteResourcesEdit} data-testid="daily-site-resources-edit-button">
                       {resourcesTotalCount === 0 ? 'Add resources' : 'Add / edit resources'}
                     </Button>
                   ) : (
-                    <Button type="button" onClick={saveSiteResources} disabled={resourcesSaving || !selectedProject} data-testid="daily-site-resources-save">
-                      {resourcesSaving ? 'Saving...' : 'Save resources'}
-                    </Button>
+                    <>
+                      <Button type="button" onClick={saveSiteResources} disabled={resourcesSaving || !selectedProject} data-testid="daily-site-resources-save">
+                        {resourcesSaving ? 'Saving...' : 'Save resources'}
+                      </Button>
+                      <Button type="button" variant="secondary" onClick={cancelSiteResourcesEdit} disabled={resourcesSaving} data-testid="daily-site-resources-cancel-v8-9k2-3">
+                        Cancel changes
+                      </Button>
+                    </>
                   )}
                 </div>
 
