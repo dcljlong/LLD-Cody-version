@@ -3240,6 +3240,7 @@ const DiaryPage = () => {
                 </button>
               </div>
             </div>
+            {(programmeLookaheadLoading || Boolean(programmeLookaheadError) || programmeLookaheadItems.length > 0) && ( /* simple-daily-hide-empty-lookahead-v8-9k2-1 */
             <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-2 shadow-inner sm:p-3 lg:p-5" data-testid="diary-programme-lookahead-v1" data-commercial-readiness="diary-programme-lookahead-v1 diary-above-fold-hierarchy-v1 diary-mobile-density-polish-v2 diary-desktop-density-hierarchy-v1">
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -3292,6 +3293,7 @@ const DiaryPage = () => {
                 )}
               </div>
             </div>
+            )}
           <div className="grid grid-cols-2 gap-2 md:grid-cols-5" data-testid="diary-attention-strip-v2" data-commercial-readiness="diary-lower-mobile-clutter-polish-v2 diary-attention-strip-compact-polish-v1">
             <button
               type="button"
@@ -3399,6 +3401,7 @@ const DiaryPage = () => {
           {/* Content Sections */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5" data-commercial-readiness="diary-desktop-density-hierarchy-v1">
             {/* Roadblocks / Critical Site Issues - diary-field-sheet-layout-v1 */}
+            {(diary.blocked_gates?.length || 0) > 0 && ( /* simple-daily-hide-empty-roadblocks-v8-9k2-1 */
             <Card id="diary-roadblocks-section" className="ops-card" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
               <CardHeader className="ops-card-header border-b border-red-500/25 border-l-4 border-l-red-500 bg-red-500/10 px-3 py-3 shadow-sm lg:px-4 lg:py-4" data-commercial-readiness="diary-heading-hierarchy-v4 diary-desktop-density-hierarchy-v1">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -3451,8 +3454,10 @@ const DiaryPage = () => {
                 )}
               </CardContent>
             </Card>
+            )}
 
             {/* Overdue Follow-ups - moved into critical hierarchy - diary-critical-hierarchy-staff-compact-v1 */}
+            {(diary.overdue_items?.length || 0) > 0 && ( /* simple-daily-hide-empty-overdue-v8-9k2-1 */
             <Card id="diary-overdue-followups" className="ops-card" data-testid="diary-overdue-top-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
               <CardHeader className="ops-card-header border-b border-red-400/25 border-l-4 border-l-red-400 bg-red-500/10 px-3 py-3 shadow-sm lg:px-4 lg:py-4" data-commercial-readiness="diary-heading-hierarchy-v4 diary-desktop-density-hierarchy-v1">
                 <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-red-400 lg:text-xl" data-commercial-readiness="diary-heading-hierarchy-v3 diary-desktop-density-hierarchy-v1">
@@ -3490,9 +3495,11 @@ const DiaryPage = () => {
                 )}
               </CardContent>
             </Card>
+            )}
 
 
             {/* Follow-ups / Carry Forward - diary-carry-forward-ui-clarity-v2 */}
+            {dueTodayItems.length > 0 && ( /* simple-daily-hide-empty-due-v8-9k2-1 */
             <Card id="diary-due-today-section" className="ops-card" data-testid="diary-due-today-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
               <CardHeader className="ops-card-header border-b border-orange-500/25 border-l-4 border-l-orange-500 bg-orange-500/10 px-3 py-3 shadow-sm lg:px-4 lg:py-4" data-commercial-readiness="diary-heading-hierarchy-v4 diary-desktop-density-hierarchy-v1">
                 <CardTitle className="font-heading text-[17px] font-black leading-tight tracking-tight flex items-center gap-2 text-orange-500 lg:text-xl" data-commercial-readiness="diary-heading-hierarchy-v3 diary-desktop-density-hierarchy-v1">
@@ -3543,6 +3550,7 @@ const DiaryPage = () => {
                 )}
               </CardContent>
             </Card>
+            )}
 
             {/* RFIs - diary-critical-hierarchy-staff-compact-v1 */}
             <Card id="diary-queries-section" className="ops-card" data-testid="diary-queries-rfis-section" data-commercial-readiness="diary-critical-sections-compact-polish-v1">
@@ -4122,6 +4130,7 @@ const DiaryPage = () => {
 
 
             {/* diary-remove-duplicate-followups-v1: duplicate lower open follow-up card removed; completed follow-ups kept in one section */}
+            {(diary.action_items_closed?.length || 0) > 0 && ( /* simple-daily-hide-empty-completed-v8-9k2-1 */
             <Card id="diary-action-completed-section" className="ops-card" data-testid="diary-closed-out-today-section" data-commercial-readiness="diary-closed-out-section-polish-v1">
               <CardHeader className="ops-card-header border-b border-emerald-500/25 border-l-4 border-l-emerald-500 bg-emerald-500/10 px-3 py-3 shadow-sm" data-commercial-readiness="diary-heading-hierarchy-v4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-emerald-500">
@@ -4172,6 +4181,7 @@ const DiaryPage = () => {
                 )}
               </CardContent>
             </Card>
+            )}
 
           </div>
         </>
