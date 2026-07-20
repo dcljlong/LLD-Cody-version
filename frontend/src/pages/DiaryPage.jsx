@@ -4062,7 +4062,8 @@ const DiaryPage = () => {
                   </div>
                 ) : resourcesTotalCount === 0 ? (
                   <div className="rounded-xl border border-dashed border-border/80 bg-secondary/20 px-3 py-3" data-testid="diary-compact-empty-resources-v1" data-commercial-readiness="diary-compact-empty-resources-v1">
-                    <p className="text-sm font-black text-foreground">No site resources recorded today.</p>
+                    <p className="text-sm font-black text-foreground">{selectedDate === today ? "No site resources recorded today." : "No site resources recorded for this day."}</p>
+                    {/* historical-resource-empty-state-v8-9j8-6 */}
                     <p className="mt-1 text-xs font-semibold text-muted-foreground">Add materials, plant, tools, or subcontractors only when they need to be part of the diary record.</p>
                   </div>
                 ) : (
