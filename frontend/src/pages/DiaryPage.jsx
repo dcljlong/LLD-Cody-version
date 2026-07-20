@@ -1876,7 +1876,7 @@ const DiaryPage = () => {
     // binder-url-tab-sync-v8-9j4-2
 
     const targetMap = {
-      overview: 'daily-report-readiness',
+      overview: tab === 'closeout' ? 'diary-binder-top' : 'daily-report-readiness', // day-review-landing-scroll-v8-9k1-1
       'site-notes': 'diary-work-section',
       resources: 'diary-resources-section',
       staff: 'diary-staff-section',
@@ -2504,7 +2504,7 @@ const DiaryPage = () => {
   }
 
   return (
-    <div className="space-y-4 md:space-y-5 lg:space-y-6" data-testid="diary-page" data-commercial-readiness="diary-natural-look-v1a-header-simple diary-natural-look-v1a-wording-cleanup diary-natural-look-v1b-confirmed-queue-copy diary-natural-look-v1c-safe-cleanup diary-desktop-density-hierarchy-v1 lld-digital-job-binder-live-v1">
+    <div id="diary-binder-top" className="space-y-4 md:space-y-5 lg:space-y-6" data-testid="diary-page" data-day-review-landing="v8-9k1-1" data-commercial-readiness="diary-natural-look-v1a-header-simple diary-natural-look-v1a-wording-cleanup diary-natural-look-v1b-confirmed-queue-copy diary-natural-look-v1c-safe-cleanup diary-desktop-density-hierarchy-v1 lld-digital-job-binder-live-v1">
       <DigitalJobBinder
         currentProject={currentProject}
         selectedDateLabel={selectedDateLabel}
