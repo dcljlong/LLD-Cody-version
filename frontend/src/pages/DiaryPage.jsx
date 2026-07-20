@@ -3963,6 +3963,7 @@ const DiaryPage = () => {
               </CardHeader>
 
               <CardContent className="space-y-3 px-3 py-3 sm:px-4">
+                {resourcesEditMode && ( /* simple-daily-resources-edit-only-tabs-v8-9k2-2 */
                 <div className="grid grid-cols-2 gap-2" data-testid="diary-resource-tabs-v2">
                   <button
                     type="button"
@@ -3996,6 +3997,7 @@ const DiaryPage = () => {
                   </button>
                 </div>
 
+                )}
                 {resourcesLoading ? (
                   <p className="text-sm text-muted-foreground">Loading site resources...</p>
                 ) : resourcesEditMode ? (
@@ -4112,13 +4114,16 @@ const DiaryPage = () => {
                   </div>
                 )}
 
-                <div className="flex flex-col gap-2 border-t border-border/70 pt-4 sm:flex-row sm:flex-wrap">
-                  <Button type="button" variant="secondary" onClick={() => setResourcesEditMode(true)} data-testid="daily-site-resources-edit-button">
-                    Add / edit
-                  </Button>
-                  <Button type="button" onClick={saveSiteResources} disabled={resourcesSaving || !selectedProject} data-testid="daily-site-resources-save">
-                    {resourcesSaving ? 'Saving...' : 'Save resources'}
-                  </Button>
+                <div className="flex flex-col gap-2 border-t border-border/70 pt-4 sm:flex-row sm:flex-wrap" data-testid="diary-resources-action-bar-v8-9k2-2">
+                  {!resourcesEditMode ? (
+                    <Button type="button" variant="secondary" onClick={() => setResourcesEditMode(true)} data-testid="daily-site-resources-edit-button">
+                      {resourcesTotalCount === 0 ? 'Add resources' : 'Add / edit resources'}
+                    </Button>
+                  ) : (
+                    <Button type="button" onClick={saveSiteResources} disabled={resourcesSaving || !selectedProject} data-testid="daily-site-resources-save">
+                      {resourcesSaving ? 'Saving...' : 'Save resources'}
+                    </Button>
+                  )}
                 </div>
 
                 <p className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
