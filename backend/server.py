@@ -976,6 +976,80 @@ async def create_default_gates(project_id: str, current_user: dict = Depends(get
 
     return {"message": f"Created {len(created_gates)} default gates", "gates": [GateResponse(**g) for g in created_gates]}
 
+def daily_labour_review_signature(rows):
+    fields = (
+        "employee_name", "employee_id", "work_date", "day",
+        "start_time", "lunch_duration", "finish_time", "total_hours",
+        "job_number", "task_code", "project_manager_id", "description", "other"
+    )
+    return [{field: row.get(field) for field in fields} for row in (rows or [])]
+
+
+def daily_resources_review_signature(resources):
+    fields = ("item", "supplier_or_reference", "quantity", "status", "notes")
+    source = resources or {}
+    return {
+        category: [
+            {field: row.get(field) for field in fields}
+            for row in (source.get(category) or [])
+        ]
+        for category in ("materials", "plant_equipment", "subcontractors")
+    }
+
+
+async def invalidate_daily_diary_review_after_change(
+    project_id: str,
+    date_value: str,
+    current_user: dict,
+    source: str,
+    reason: str
+) -> bool:
+    # Return a reviewed diary day to needs_review after persisted evidence changes.
+    clean_date = str(date_value or "").strip()
+    try:
+        normalised_date = datetime.strptime(clean_date, "%Y-%m-%d").date().isoformat()
+    except ValueError:
+        return False
+    if clean_date != normalised_date:
+        return False
+
+    review_key = f"{current_user['id']}:{project_id}:{normalised_date}"
+    now = datetime.now(timezone.utc).isoformat()
+    actor_name = str(
+        current_user.get("name") or current_user.get("email") or "Authenticated user"
+    ).strip() or "Authenticated user"
+
+    event = {
+        "id": str(uuid.uuid4()),
+        "action": "invalidated",
+        "at": now,
+        "user_id": current_user["id"],
+        "user_name": actor_name,
+        "source": source,
+        "reason": reason
+    }
+
+    result = await db.daily_diary_reviews.update_one(
+        {"_id": review_key, "status": "reviewed"},
+        {
+            "$set": {
+                "status": "needs_review",
+                "invalidated_at": now,
+                "invalidated_by_user_id": current_user["id"],
+                "invalidated_by_name": actor_name,
+                "invalidation_source": source,
+                "invalidation_reason": reason,
+                "updated_at": now
+            },
+            "$push": {"events": event},
+            "$inc": {"revision": 1}
+        }
+    )
+    return result.modified_count == 1
+
+
+# daily-diary-review-invalidation-helper-v8-9k3-1
+
 # ==================== ACTION ITEMS ROUTES ====================
 
 @api_router.post("/action-items", response_model=ActionItemResponse)
@@ -1139,6 +1213,20 @@ async def create_walkaround_entry(entry: WalkaroundEntryCreate, current_user: di
         "created_at": now
     }
     await db.walkaround_entries.insert_one(doc)
+
+    from zoneinfo import ZoneInfo
+    walkaround_date = datetime.fromisoformat(now).astimezone(
+        ZoneInfo("Pacific/Auckland")
+    ).date().isoformat()
+    await invalidate_daily_diary_review_after_change(
+        entry.project_id,
+        walkaround_date,
+        current_user,
+        "walkaround",
+        "Walkaround or site-note evidence added"
+    )
+    # walkaround-review-invalidation-v8-9k3-1
+
     return WalkaroundEntryResponse(**doc)
 
 @api_router.get("/walkaround", response_model=List[WalkaroundEntryResponse])
@@ -1619,6 +1707,11 @@ async def save_daily_labour_rows(
     }
 
     existing = await db.daily_labour_rows.find_one({"project_id": project_id, "date": date_value, "user_id": current_user["id"]})
+    labour_changed = (
+        daily_labour_review_signature(existing.get("rows", []) if existing else [])
+        != daily_labour_review_signature(rows)
+    )
+
     if existing:
         doc["created_at"] = existing.get("created_at", now)
     else:
@@ -1630,6 +1723,18 @@ async def save_daily_labour_rows(
         upsert=True
     )
 
+    review_invalidated = False
+    if labour_changed:
+        review_invalidated = await invalidate_daily_diary_review_after_change(
+            project_id,
+            date_value,
+            current_user,
+            "daily_labour",
+            "Daily labour evidence changed"
+        )
+    # daily-labour-review-invalidation-v8-9k3-1
+
+
     return {
         "project_id": project_id,
         "project_name": project.get("name"),
@@ -1637,6 +1742,7 @@ async def save_daily_labour_rows(
         "date": date_value,
         "source": "LLD",
         "sync_status": "local_only",
+        "review_invalidated": review_invalidated,
         "summary": doc["summary"],
         "rows": rows
     }
@@ -1755,6 +1861,11 @@ async def save_daily_site_resources(
     }
 
     existing = await db.daily_site_resources.find_one({"project_id": project_id, "date": date_value, "user_id": current_user["id"]})
+    resources_changed = (
+        daily_resources_review_signature(existing)
+        != daily_resources_review_signature(doc)
+    )
+
     if existing:
         doc["created_at"] = existing.get("created_at", now)
     else:
@@ -1766,6 +1877,18 @@ async def save_daily_site_resources(
         upsert=True
     )
 
+    review_invalidated = False
+    if resources_changed:
+        review_invalidated = await invalidate_daily_diary_review_after_change(
+            project_id,
+            date_value,
+            current_user,
+            "site_resources",
+            "Site resource evidence changed"
+        )
+    # daily-resources-review-invalidation-v8-9k3-1
+
+
     return {
         "project_id": project_id,
         "project_name": project.get("name"),
@@ -1774,6 +1897,7 @@ async def save_daily_site_resources(
         "source": "LLD",
         "sync_status": "local_only",
         "tool_tracker_linked": False,
+        "review_invalidated": review_invalidated,
         "summary": doc["summary"],
         "materials": materials,
         "plant_equipment": plant_equipment,
@@ -1966,6 +2090,11 @@ def build_daily_diary_review_response(
         "reopened_at": source.get("reopened_at"),
         "reopened_by_user_id": source.get("reopened_by_user_id"),
         "reopened_by_name": source.get("reopened_by_name"),
+        "invalidated_at": source.get("invalidated_at"),
+        "invalidated_by_user_id": source.get("invalidated_by_user_id"),
+        "invalidated_by_name": source.get("invalidated_by_name"),
+        "invalidation_source": source.get("invalidation_source"),
+        "invalidation_reason": source.get("invalidation_reason"),
         "revision": int(source.get("revision") or 0),
         "event_count": len(events),
         "events": events[-20:],
@@ -2039,6 +2168,11 @@ async def mark_daily_diary_review(
                 "reopened_at": None,
                 "reopened_by_user_id": None,
                 "reopened_by_name": None,
+                "invalidated_at": None,
+                "invalidated_by_user_id": None,
+                "invalidated_by_name": None,
+                "invalidation_source": None,
+                "invalidation_reason": None,
                 "updated_at": now
             },
             "$setOnInsert": {
