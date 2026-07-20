@@ -3876,7 +3876,8 @@ const DiaryPage = () => {
 
         {/* Daily Evidence - Site Notes / Observations - diary-daily-evidence-hierarchy-v2 site-notes-observations-naming-v1 */}
         <div className="lg:col-span-2 rounded-xl border border-primary/35 border-l-4 border-l-primary bg-primary/12 px-3 py-3 shadow-sm" data-testid="diary-daily-evidence-divider-v2" data-commercial-readiness="diary-heading-hierarchy-v4 diary-daily-evidence-resources-polish-v1">
-          <p className="font-heading text-sm font-black leading-tight tracking-tight text-primary" data-commercial-readiness="diary-heading-hierarchy-v3">Today's records</p>
+          <p className="font-heading text-sm font-black leading-tight tracking-tight text-primary" data-commercial-readiness="diary-heading-hierarchy-v3">{selectedDate === today ? "Today's records" : "Selected day's records"}</p>
+          {/* historical-evidence-heading-v8-9j8-5 */}
           <p className="mt-1 text-xs font-semibold text-muted-foreground">Site notes, resources, photos, and supporting records.</p>
         </div>
 
