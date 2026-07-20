@@ -2638,15 +2638,16 @@ const DiaryPage = () => {
             )}
             <Button
               type="button"
-              variant="outline"
-              onClick={() => document.getElementById('daily-report-readiness')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              className="min-h-10 justify-center whitespace-normal text-center text-sm font-black leading-tight sm:min-h-11 lg:min-h-12 lg:text-base"
+              variant="default"
+              onClick={() => openDiaryView('overview', 'closeout')}
+              className="col-span-2 min-h-11 justify-center whitespace-normal text-center text-sm font-black leading-tight lg:col-span-1 lg:min-h-12 lg:text-base"
               data-testid="review-close-day-button"
               data-commercial-readiness="diary-above-fold-hierarchy-v1"
             >
               <FileText className="w-4 h-4 mr-2" />
-              Review / Close Day
+              Review day
             </Button>
+            {/* diary-day-review-primary-action-v8-9k1 */}
             <Button
               type="button"
               variant="outline"
@@ -4120,14 +4121,14 @@ const DiaryPage = () => {
 
 
 
-            {/* diary-remove-duplicate-followups-v1: duplicate lower open follow-up card removed; completed section renamed to Closed Out Today */}            {/* Closed Out Today */}
+            {/* diary-remove-duplicate-followups-v1: duplicate lower open follow-up card removed; completed follow-ups kept in one section */}
             <Card id="diary-action-completed-section" className="ops-card" data-testid="diary-closed-out-today-section" data-commercial-readiness="diary-closed-out-section-polish-v1">
               <CardHeader className="ops-card-header border-b border-emerald-500/25 border-l-4 border-l-emerald-500 bg-emerald-500/10 px-3 py-3 shadow-sm" data-commercial-readiness="diary-heading-hierarchy-v4">
                 <CardTitle className="font-heading text-base font-black uppercase tracking-[0.14em] flex items-center gap-2 text-emerald-500">
                   <CheckCircle2 className="w-4 h-4" />
-                  Closed Out Today ({diary.action_items_closed?.length || 0})
+                  Completed follow-ups ({diary.action_items_closed?.length || 0})
                 </CardTitle>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">Closed today. Reopen if needed.</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">Completed for this day. Reopen only when work needs to continue.</p>
               </CardHeader>
 
               <CardContent className="py-3 max-h-80 overflow-y-auto">
@@ -4167,7 +4168,7 @@ const DiaryPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="rounded-lg border border-dashed border-emerald-500/25 bg-emerald-500/5 px-3 py-2 text-sm text-muted-foreground">No items closed today.</p>
+                  <p className="rounded-lg border border-dashed border-emerald-500/25 bg-emerald-500/5 px-3 py-2 text-sm text-muted-foreground">No completed follow-ups for this day.</p>
                 )}
               </CardContent>
             </Card>

@@ -27,7 +27,7 @@ const BINDER_TABS = [
   { id: 'walkaround', label: 'Walkaround', description: 'Site capture', color: 'indigo' },
   { id: 'photos', label: 'Photos', description: 'Evidence', color: 'purple' },
   { id: 'staff', label: 'Staff', description: 'Labour', color: 'pink' },
-  { id: 'closeout', label: 'Closeout', description: 'Finish the day', color: 'slate' },
+  { id: 'closeout', label: 'Day review', description: 'Check this day', color: 'slate' }, // day-review-language-v8-9k1
 ];
 
 const getRequestedBinderTab = () => {
@@ -2279,8 +2279,8 @@ const DigitalJobBinder = ({
   const closeoutReady = closeoutAttentionCount === 0;
 
   const closeoutMissingMessages = [
-    closeoutDailyCount === 0 ? 'Add the Daily record.' : null,
-    closeoutStaffCount === 0 ? 'Complete the Staff check.' : null,
+    closeoutDailyCount === 0 ? 'Add a diary note.' : null,
+    closeoutStaffCount === 0 ? 'Check staff on site.' : null,
   ].filter(Boolean);
 
   const closeoutReviewLabels = [
@@ -2296,7 +2296,7 @@ const DigitalJobBinder = ({
   ].filter(Boolean);
 
   const closeoutStatusMessage = closeoutReady
-    ? 'Daily record, Staff check and attention items are clear.'
+    ? 'Required diary items are complete.'
     : [
         ...closeoutMissingMessages,
         closeoutReviewLabels.length > 0
@@ -2346,7 +2346,10 @@ const DigitalJobBinder = ({
       ? 'Day reviewed'
       : closeoutReady
         ? 'Ready to review'
-        : 'Needs attention';
+        : closeoutAttentionCount === 1
+          ? '1 item to check'
+          : `${closeoutAttentionCount} items to check`;
+  // day-review-status-language-v8-9k1
 
   const closeoutDisplayedMessage = dayReviewNeedsChecking
     ? 'A review was recorded, but attention is now present. Reopen the review and check this day again.'
@@ -2969,9 +2972,13 @@ const DigitalJobBinder = ({
                                 ? focusedCount === 1
                                   ? 'staff member'
                                   : 'staff members'
-                                : focusedCount === 1
-                                  ? 'record for this day'
-                                  : 'records for this day'}
+                                : activeTab === 'closeout'
+                                  ? focusedCount === 1
+                                    ? 'item to check'
+                                    : 'items to check'
+                                  : focusedCount === 1
+                                    ? 'record for this day'
+                                    : 'records for this day'}
                 </span>
               </div>
 
@@ -3048,7 +3055,7 @@ const DigitalJobBinder = ({
                               ? 'Reopen review'
                               : closeoutReady
                                 ? 'Mark day reviewed'
-                                : 'Resolve attention points first'
+                                : 'Complete required items first'
                           : `Open full ${activeTabConfig.label} workflow`}
               </button>
             </article>
