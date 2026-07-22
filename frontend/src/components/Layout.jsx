@@ -13,6 +13,7 @@ import {
   BookOpen,
   Settings,
   Menu,
+  X,
   Sun,
   Moon,
   LogOut,
@@ -31,10 +32,33 @@ const Layout = () => {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [diaryOpeningVisible, setDiaryOpeningVisible] = useState(false);
   function closeMobileSidebar() {
     setSidebarOpen(false);
   }
   const [projects, setProjects] = useState([]);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!sidebarOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setSidebarOpen(false);
+      }
+    };
+
+    document.body.classList.add('lld-menu-is-open');
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.classList.remove('lld-menu-is-open');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [sidebarOpen]);
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -113,6 +137,74 @@ const Layout = () => {
 
   const displayName = user?.name || user?.full_name || user?.email || 'LLD User';
   const userInitial = (displayName.trim().charAt(0) || 'U').toUpperCase();
+  const diaryYear = new Date().getFullYear();
+  const diaryVolumeNumber = Math.max(1, diaryYear - 2022);
+  const diaryVolumeLabel = [
+    '',
+    'I',
+    'II',
+    'III',
+    'IV',
+    'V',
+    'VI',
+    'VII',
+    'VIII',
+    'IX',
+    'X',
+  ][diaryVolumeNumber] || String(diaryVolumeNumber);
+  const diaryOpeningUserKey = String(user?.id || user?.email || displayName)
+    .trim()
+    .toLowerCase();
+  const diaryOpeningKey = `lld-diary-opened-${diaryOpeningUserKey}-${diaryYear}`;
+
+  useEffect(() => {
+    if (!location.pathname.startsWith('/diary')) {
+      setDiaryOpeningVisible(false);
+      return;
+    }
+
+    try {
+      setDiaryOpeningVisible(sessionStorage.getItem(diaryOpeningKey) !== 'true');
+    } catch (error) {
+      setDiaryOpeningVisible(true);
+    }
+  }, [diaryOpeningKey, location.pathname]);
+
+  useEffect(() => {
+    if (!diaryOpeningVisible) return undefined;
+
+    const handleOpeningKeyDown = (event) => {
+      if (event.key === 'Enter' || event.key === 'Escape') {
+        event.preventDefault();
+
+        try {
+          sessionStorage.setItem(diaryOpeningKey, 'true');
+        } catch (error) {
+          // The diary still opens when browser storage is unavailable.
+        }
+
+        setDiaryOpeningVisible(false);
+      }
+    };
+
+    document.body.classList.add('lld-diary-opening-active');
+    window.addEventListener('keydown', handleOpeningKeyDown);
+
+    return () => {
+      document.body.classList.remove('lld-diary-opening-active');
+      window.removeEventListener('keydown', handleOpeningKeyDown);
+    };
+  }, [diaryOpeningKey, diaryOpeningVisible]);
+
+  const openDiaryForSession = () => {
+    try {
+      sessionStorage.setItem(diaryOpeningKey, 'true');
+    } catch (error) {
+      // The diary still opens when browser storage is unavailable.
+    }
+
+    setDiaryOpeningVisible(false);
+  };
 
   const handleFeedbackClick = () => {
     const subject = encodeURIComponent('[LLD Feedback] Pilot feedback');
@@ -161,7 +253,60 @@ const Layout = () => {
   return (
     <div className="app-container">
 
-      <aside className={`sidebar fo-desktop-brand-rail lld-fitoutos-rail ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      {diaryOpeningVisible && (
+        <section
+          className="lld-diary-opening"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="lld-diary-opening-title"
+          data-testid="lld-diary-opening-v1p"
+        >
+          <div className="lld-diary-opening-desk">
+            <button
+              type="button"
+              className="lld-diary-opening-book"
+              onClick={openDiaryForSession}
+              autoFocus
+              aria-label={`Open ${displayName}'s ${diaryYear} Long Line Diary`}
+            >
+              <span className="lld-diary-opening-spine" aria-hidden="true" />
+              <span className="lld-diary-opening-stitch" aria-hidden="true" />
+
+              <span className="lld-diary-opening-crest">
+                <img src={lldLogo} alt="" />
+              </span>
+
+              <span className="lld-diary-opening-kicker">
+                This diary belongs to
+              </span>
+
+              <strong id="lld-diary-opening-title">
+                {displayName}
+              </strong>
+
+              <span className="lld-diary-opening-brand">
+                Long Line Diary
+              </span>
+
+              <span className="lld-diary-opening-volume">
+                Volume {diaryVolumeLabel} · {diaryYear}
+              </span>
+
+              <span className="lld-diary-opening-action">
+                Open today’s diary
+              </span>
+            </button>
+
+            <p>Press Enter or tap the diary to begin.</p>
+          </div>
+        </section>
+      )}
+
+      <aside
+        id="lld-navigation-drawer"
+        className={`sidebar fo-desktop-brand-rail lld-fitoutos-rail lld-navigation-drawer ${sidebarOpen ? 'lld-navigation-drawer-open' : ''}`}
+        aria-hidden={!sidebarOpen}
+      >
 
         <div className="lld-sidebar-brand fo-rail-card">
           <div className="fo-rail-brand lld-rail-brand-lockup">
@@ -174,6 +319,15 @@ const Layout = () => {
               <p className="fo-rail-subtitle lld-rail-brand-subtitle">Site Diary</p>
             </div>
           </div>
+
+          <button
+            type="button"
+            className="lld-menu-close-button"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close navigation"
+          >
+            <X aria-hidden="true" />
+          </button>
         </div>
 
         <nav className="fo-rail-nav lld-rail-nav">
@@ -247,8 +401,16 @@ const Layout = () => {
 
       </aside>
 
+      <button
+        type="button"
+        className={`lld-navigation-backdrop ${sidebarOpen ? 'lld-navigation-backdrop-open' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+        aria-label="Close navigation"
+        tabIndex={sidebarOpen ? 0 : -1}
+      />
 
-      <main className="main-content fo-main-content lld-fitoutos-main">
+
+      <main className={`main-content fo-main-content lld-fitoutos-main ${location.pathname.startsWith('/diary') ? 'lld-diary-experience' : ''}`}>
         <header className="app-header">
 
           <div className="lld-compact-header-inner">
@@ -259,9 +421,11 @@ const Layout = () => {
                 <Button
                   variant="secondary"
                   size="icon"
-                  onClick={() => setSidebarOpen(true)}
+                  onClick={() => setSidebarOpen((current) => !current)}
                   className="lld-compact-menu-button"
                   aria-label="Open navigation"
+                  aria-controls="lld-navigation-drawer"
+                  aria-expanded={sidebarOpen}
                 >
                   <Menu className="w-5 h-5" />
                 </Button>
@@ -317,7 +481,7 @@ const Layout = () => {
 
             </div>
 
-            <div className="lld-compact-nav-row">
+            <div className="lld-compact-nav-row lld-legacy-top-navigation">
               <nav className="lld-compact-nav" aria-label="LLD compact navigation">
                 {operationsNav.map((item) => {
                   const Icon = item.icon;
@@ -325,10 +489,9 @@ const Layout = () => {
                     <NavLink
                       key={item.to}
                       to={item.to}
-              onClick={closeMobileSidebar}
-              data-testid="lld-sidebar-nav-link"
+                      onClick={closeMobileSidebar}
+                      data-testid="lld-sidebar-nav-link"
                       end={item.to === '/dashboard'}
-                      onClick={() => setSidebarOpen(false)}
                       className={({ isActive }) =>
                         `lld-compact-nav-link ${isActive ? 'active' : ''}`
                       }
@@ -368,7 +531,7 @@ const Layout = () => {
         </header>
 
 
-        <div className="p-4 sm:p-5 lg:p-6">
+        <div className={`lld-content-frame ${location.pathname.startsWith('/diary') ? 'lld-content-frame-diary' : ''}`}>
           <Outlet />
         </div>
 
@@ -379,7 +542,3 @@ const Layout = () => {
 };
 
 export default Layout;
-
-
-
-

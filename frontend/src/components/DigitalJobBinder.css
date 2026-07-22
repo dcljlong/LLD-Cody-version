@@ -801,6 +801,180 @@
   }
 }
 
+/* LONG LINE DIARY / PREMIUM QUICK CAPTURE V9.0 START
+   Turns the oversized software banner into a compact diary capture strip and
+   brings the project choice into the point of entry. */
+.lld-binder-capture-panel {
+  padding: 0.68rem 0.78rem;
+  border-radius: 0.92rem;
+  box-shadow: 0 0.7rem 1.7rem rgba(0, 0, 0, 0.16);
+}
+
+.lld-binder-capture-heading {
+  display: grid;
+  grid-template-columns: auto minmax(13rem, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lld-binder-capture-title {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+
+.lld-binder-capture-title p,
+.lld-binder-capture-title > span {
+  display: none;
+}
+
+.lld-binder-capture-title h2 {
+  margin: 0;
+  color: #f4fbff;
+  font-size: clamp(1.08rem, 1.4vw, 1.32rem);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.lld-binder-project-picker {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  min-width: 0;
+  align-items: center;
+  gap: 0.42rem;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 0.68rem;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 0.22rem 0.48rem;
+}
+
+.lld-binder-project-picker svg {
+  width: 0.92rem;
+  height: 0.92rem;
+  color: var(--lld-binder-teal);
+}
+
+.lld-binder-project-picker > span {
+  display: inline;
+  margin: 0;
+  color: #91aabd;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.lld-binder-project-picker select {
+  width: 100%;
+  min-width: 0;
+  height: 1.9rem;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #f4fbff;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+}
+
+.lld-binder-project-picker option {
+  color: #102235;
+  background: #fffdf6;
+}
+
+.lld-binder-date-controls {
+  gap: 0.32rem;
+}
+
+.lld-binder-date-controls button {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.62rem;
+}
+
+.lld-binder-date-picker {
+  min-height: 2rem;
+}
+
+.lld-binder-quick-form {
+  gap: 0.55rem;
+  margin-top: 0.52rem;
+}
+
+.lld-binder-quick-form textarea {
+  height: 2.85rem;
+  min-height: 2.85rem;
+  resize: none;
+  padding: 0.68rem 0.82rem;
+  line-height: 1.3;
+  transition: height 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.lld-binder-quick-form textarea:focus {
+  height: 4.45rem;
+}
+
+.lld-binder-quick-form button {
+  min-width: 7.8rem;
+  border-radius: 0.72rem;
+}
+
+.lld-binder-project-strip {
+  margin-top: 0.32rem;
+  font-size: 0.66rem;
+}
+
+.lld-binder-stage {
+  margin-top: 0.62rem;
+}
+
+@media (max-width: 980px) {
+  .lld-binder-capture-heading {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .lld-binder-capture-title {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .lld-binder-capture-heading {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  .lld-binder-date-controls {
+    width: 100%;
+    max-width: none;
+  }
+
+  .lld-binder-date-picker {
+    flex: 1 1 auto;
+  }
+
+  .lld-binder-quick-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lld-binder-quick-form textarea,
+  .lld-binder-quick-form textarea:focus {
+    height: 4rem;
+  }
+
+  .lld-binder-quick-form button {
+    min-height: 2.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lld-binder-quick-form textarea {
+    transition: none;
+  }
+}
+/* LONG LINE DIARY / PREMIUM QUICK CAPTURE V9.0 END */
+
 @media print {
   .lld-binder-capture-panel,
   .lld-binder-folder-tabs,
@@ -4576,3 +4750,915 @@
     font-size: clamp(2rem, 12vw, 3rem);
   }
 }
+
+/* LONG LINE DIARY / PREMIUM QUICK CAPTURE V9.0 CASCADE LOCK */
+.lld-binder-capture-panel {
+  padding: 0.68rem 0.78rem;
+  border-radius: 0.92rem;
+  box-shadow: 0 0.7rem 1.7rem rgba(0, 0, 0, 0.16);
+}
+
+.lld-binder-quick-form {
+  gap: 0.55rem;
+  margin-top: 0.52rem;
+}
+
+.lld-binder-quick-form textarea {
+  height: 2.85rem;
+  min-height: 2.85rem;
+  padding: 0.68rem 0.82rem;
+  line-height: 1.3;
+}
+
+.lld-binder-quick-form textarea:focus {
+  height: 4.45rem;
+}
+
+.lld-binder-quick-form button {
+  min-width: 7.8rem;
+}
+
+.lld-binder-project-strip {
+  margin-top: 0.32rem;
+}
+
+.lld-binder-stage {
+  margin-top: 0.62rem;
+}
+
+@media (max-width: 680px) {
+  .lld-binder-quick-form textarea,
+  .lld-binder-quick-form textarea:focus {
+    height: 4rem;
+  }
+}
+
+/* LONG LINE DIARY / HUMAN ACTION DATES V1F START */
+
+.lld-binder-work-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.18rem 0;
+}
+
+.lld-binder-work-meta > span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.lld-binder-work-meta > span + span::before {
+  content: "\00b7";
+  margin: 0 0.34rem;
+  color: rgba(84, 106, 119, 0.55);
+  font-weight: 900;
+}
+
+.lld-binder-work-meta-priority,
+.lld-binder-work-meta-owner,
+.lld-binder-work-meta-communication,
+.lld-binder-work-meta-status {
+  color: #5b717e;
+}
+
+.lld-binder-work-meta-overdue {
+  color: #a23545;
+  font-weight: 900;
+}
+
+.lld-binder-work-meta-today {
+  color: #a44a21;
+  font-weight: 900;
+}
+
+.lld-binder-work-meta-soon {
+  color: #8a601d;
+  font-weight: 820;
+}
+
+.lld-binder-work-meta-scheduled {
+  color: #496b7d;
+  font-weight: 760;
+}
+
+@media print {
+  .lld-binder-work-meta-overdue,
+  .lld-binder-work-meta-today,
+  .lld-binder-work-meta-soon,
+  .lld-binder-work-meta-scheduled {
+    color: #26343d;
+  }
+}
+
+/* LONG LINE DIARY / HUMAN ACTION DATES V1F END */
+
+/* LONG LINE DIARY / BALANCED DIARY PAGES V1G START */
+
+@media screen {
+  .lld-binder-active-today .lld-binder-page {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lld-binder-active-today .lld-binder-page-footer {
+    display: grid;
+    min-height: 2.25rem;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.7rem;
+    margin-top: auto;
+    border-top: 1px solid rgba(76, 111, 132, 0.19);
+    padding: 0.58rem 0.08rem 0;
+    color: #647985;
+    font-size: 0.58rem;
+    font-weight: 720;
+    letter-spacing: 0.015em;
+  }
+
+  .lld-binder-active-today .lld-binder-page-signature {
+    color: #8c6a46;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.62rem;
+    font-style: italic;
+    font-weight: 700;
+  }
+
+  .lld-binder-active-today .lld-binder-page-footer strong {
+    display: grid;
+    width: 1.55rem;
+    height: 1.55rem;
+    place-items: center;
+    border: 1px solid rgba(76, 111, 132, 0.2);
+    border-radius: 999px;
+    color: #496879;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.56rem;
+    font-weight: 800;
+  }
+
+  @media (max-width: 980px) {
+    .lld-binder-active-today .lld-binder-page-footer {
+      margin-top: 2.5rem;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .lld-binder-active-today .lld-binder-page-footer {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.5rem;
+      margin-top: 1.6rem;
+    }
+
+    .lld-binder-active-today .lld-binder-page-signature {
+      display: none;
+    }
+  }
+}
+
+@media print {
+  .lld-binder-page-footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    margin-top: auto;
+    border-top: 1px solid #aeb7bb;
+    padding-top: 0.35rem;
+    color: #4b5960;
+    font-size: 0.58rem;
+  }
+
+  .lld-binder-page-signature {
+    display: none;
+  }
+}
+
+/* LONG LINE DIARY / BALANCED DIARY PAGES V1G END */
+
+/* LONG LINE DIARY / MOBILE PAGE TURN V1H START */
+
+.lld-binder-today-mobile-switch {
+  display: none;
+}
+
+@media screen and (max-width: 980px) {
+  .lld-binder-active-today .lld-binder-today-mobile-switch {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.42rem;
+    margin: 0.7rem 0 0;
+    border: 1px solid rgba(18, 40, 55, 0.18);
+    border-radius: 0.82rem;
+    background: rgba(12, 27, 38, 0.88);
+    padding: 0.34rem;
+    box-shadow: 0 0.55rem 1.25rem rgba(0, 0, 0, 0.13);
+  }
+
+  .lld-binder-today-mobile-switch button {
+    appearance: none;
+    display: flex;
+    min-width: 0;
+    min-height: 3.15rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    border: 1px solid transparent;
+    border-radius: 0.62rem;
+    background: transparent;
+    padding: 0.48rem 0.7rem;
+    color: #9fb2bf;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color 150ms ease,
+      background-color 150ms ease,
+      color 150ms ease,
+      transform 150ms ease;
+  }
+
+  .lld-binder-today-mobile-switch button:hover {
+    color: #eef3f5;
+  }
+
+  .lld-binder-today-mobile-switch button:active {
+    transform: translateY(1px);
+  }
+
+  .lld-binder-today-mobile-switch button:focus-visible {
+    outline: 2px solid rgba(222, 170, 67, 0.72);
+    outline-offset: 1px;
+  }
+
+  .lld-binder-today-mobile-switch button.active {
+    border-color: rgba(190, 145, 64, 0.48);
+    background: #f6f0e4;
+    color: #17384c;
+    box-shadow:
+      0 0.28rem 0.68rem rgba(0, 0, 0, 0.25),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+  }
+
+  .lld-binder-today-mobile-switch svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    flex: 0 0 auto;
+  }
+
+  .lld-binder-today-mobile-switch span,
+  .lld-binder-today-mobile-switch strong,
+  .lld-binder-today-mobile-switch small {
+    display: block;
+    min-width: 0;
+  }
+
+  .lld-binder-today-mobile-switch strong {
+    font-size: 0.74rem;
+    font-weight: 900;
+    line-height: 1.15;
+  }
+
+  .lld-binder-today-mobile-switch small {
+    margin-top: 0.14rem;
+    font-size: 0.56rem;
+    font-weight: 720;
+    opacity: 0.72;
+  }
+
+  .lld-binder-active-today .lld-binder-pages {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: clamp(33rem, calc(100svh - 16rem), 42rem);
+  }
+
+  .lld-binder-active-today .lld-binder-page {
+    min-height: clamp(33rem, calc(100svh - 16rem), 42rem);
+    border: 0;
+    border-radius: 0.72rem;
+  }
+
+  .lld-binder-active-today.lld-binder-mobile-page-my-day
+    .lld-binder-page-left,
+  .lld-binder-active-today.lld-binder-mobile-page-diary
+    .lld-binder-page-right {
+    display: none;
+  }
+
+  .lld-binder-active-today.lld-binder-mobile-page-diary
+    .lld-binder-page-left,
+  .lld-binder-active-today.lld-binder-mobile-page-my-day
+    .lld-binder-page-right {
+    display: flex;
+  }
+
+  .lld-binder-active-today .lld-binder-page-right {
+    border-top: 0;
+  }
+
+  .lld-binder-active-today .lld-binder-page-footer {
+    margin-top: auto;
+  }
+}
+
+@media screen and (max-width: 680px) {
+  .lld-binder-active-today .lld-binder-today-mobile-switch {
+    margin-top: 0.55rem;
+  }
+
+  .lld-binder-today-mobile-switch button {
+    min-height: 3rem;
+    padding-right: 0.48rem;
+    padding-left: 0.48rem;
+  }
+
+  .lld-binder-active-today .lld-binder-pages,
+  .lld-binder-active-today .lld-binder-page {
+    min-height: 34rem;
+  }
+}
+
+@media print {
+  .lld-binder-today-mobile-switch {
+    display: none !important;
+  }
+}
+
+/* LONG LINE DIARY / MOBILE PAGE TURN V1H END */
+
+/* LONG LINE DIARY / MOBILE SECTION RAIL V1I START */
+
+@media screen and (max-width: 1280px) {
+  .lld-digital-job-binder {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lld-binder-capture-panel {
+    order: 1;
+  }
+
+  .lld-binder-today-mobile-switch {
+    order: 2;
+  }
+
+  .lld-binder-mobile-tabs {
+    order: 3;
+    width: 100%;
+    gap: 0.34rem;
+    margin: 0.62rem 0 0;
+    overflow-x: auto;
+    border: 1px solid rgba(18, 40, 55, 0.16);
+    border-radius: 0.78rem;
+    background: rgba(12, 27, 38, 0.92);
+    padding: 0.34rem;
+    box-shadow: 0 0.52rem 1.12rem rgba(0, 0, 0, 0.12);
+    scroll-padding-inline: 0.34rem;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(208, 164, 77, 0.52) transparent;
+  }
+
+  .lld-binder-mobile-tabs::-webkit-scrollbar {
+    height: 0.28rem;
+  }
+
+  .lld-binder-mobile-tabs::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .lld-binder-mobile-tabs::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(208, 164, 77, 0.52);
+  }
+
+  .lld-binder-mobile-tabs button {
+    min-height: 2.35rem;
+    scroll-snap-align: center;
+    border-color: transparent;
+    border-radius: 0.52rem;
+    background: transparent;
+    padding: 0.48rem 0.68rem;
+    color: #aebdc6;
+    font-size: 0.62rem;
+    font-weight: 820;
+    transition:
+      border-color 150ms ease,
+      background-color 150ms ease,
+      color 150ms ease,
+      transform 150ms ease;
+  }
+
+  .lld-binder-mobile-tabs button:hover {
+    background: rgba(255, 255, 255, 0.055);
+    color: #f3f6f7;
+  }
+
+  .lld-binder-mobile-tabs button:active {
+    transform: translateY(1px);
+  }
+
+  .lld-binder-mobile-tabs button:focus-visible {
+    outline: 2px solid rgba(222, 170, 67, 0.72);
+    outline-offset: 1px;
+  }
+
+  .lld-binder-mobile-tabs button.active {
+    border-color: rgba(190, 145, 64, 0.48);
+    background: #f6f0e4;
+    color: #17384c;
+    box-shadow:
+      0 0.24rem 0.58rem rgba(0, 0, 0, 0.24),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.66);
+  }
+
+  .lld-binder-stage {
+    order: 4;
+  }
+}
+
+@media screen and (max-width: 680px) {
+  .lld-binder-mobile-tabs {
+    margin-top: 0.5rem;
+  }
+
+  .lld-binder-mobile-tabs button {
+    min-height: 2.5rem;
+    padding-right: 0.72rem;
+    padding-left: 0.72rem;
+  }
+}
+
+@media print {
+  .lld-binder-mobile-tabs {
+    display: none !important;
+  }
+}
+
+/* LONG LINE DIARY / MOBILE SECTION RAIL V1I END */
+
+/* LONG LINE DIARY / STICKY MOBILE SECTION RAIL V1J START */
+
+@media screen and (max-width: 1280px) {
+  .lld-binder-mobile-tabs {
+    position: sticky;
+    top: 0.42rem;
+    z-index: 55;
+  }
+}
+
+@media screen and (max-width: 680px) {
+  .lld-binder-mobile-tabs {
+    top: 4.72rem;
+    z-index: 28;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lld-binder-mobile-tabs {
+    scroll-behavior: auto;
+  }
+}
+
+/* LONG LINE DIARY / STICKY MOBILE SECTION RAIL V1J END */
+
+/* LONG LINE DIARY / HERITAGE INDEX TABS V1K START */
+
+@media screen and (min-width: 1281px) {
+  .lld-binder-folder-tabs {
+    gap: 0.3rem;
+  }
+
+  .lld-binder-folder-tab {
+    --lld-tab-top: #7d8991;
+    --lld-tab-bottom: #65717a;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 249, 235, 0.2);
+    background:
+      linear-gradient(
+        145deg,
+        var(--lld-tab-top),
+        var(--lld-tab-bottom)
+      );
+    color: #fffaf0;
+    box-shadow:
+      0 0.38rem 0.82rem rgba(0, 0, 0, 0.26),
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.22);
+    filter: saturate(0.82);
+  }
+
+  .lld-binder-folder-tab::before {
+    content: "";
+    position: absolute;
+    top: 0.48rem;
+    bottom: 0.48rem;
+    left: 0.42rem;
+    width: 1px;
+    border-radius: 999px;
+    background: rgba(255, 228, 171, 0.48);
+    box-shadow: 1px 0 rgba(0, 0, 0, 0.12);
+  }
+
+  .lld-binder-folder-tab:hover {
+    transform: translateX(0.14rem);
+    filter: saturate(0.94) brightness(1.05);
+  }
+
+  .lld-binder-folder-tab.active {
+    transform: translateX(-0.14rem);
+    outline: 0;
+    filter: saturate(0.92) brightness(1.05);
+    box-shadow:
+      0 0.48rem 0.9rem rgba(0, 0, 0, 0.3),
+      inset 0 0 0 2px rgba(255, 245, 221, 0.72),
+      inset 0.3rem 0 0 rgba(208, 161, 70, 0.82),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+
+  .lld-binder-folder-tab strong {
+    letter-spacing: 0.01em;
+  }
+
+  .lld-binder-folder-tab span {
+    opacity: 0.78;
+  }
+
+  .lld-binder-tab-coral {
+    --lld-tab-top: #bd6b73;
+    --lld-tab-bottom: #9f4f5b;
+  }
+
+  .lld-binder-tab-orange {
+    --lld-tab-top: #c08a4b;
+    --lld-tab-bottom: #9f6b31;
+  }
+
+  .lld-binder-tab-yellow {
+    --lld-tab-top: #b5a54f;
+    --lld-tab-bottom: #8f8133;
+  }
+
+  .lld-binder-tab-green {
+    --lld-tab-top: #6e9879;
+    --lld-tab-bottom: #4e785e;
+  }
+
+  .lld-binder-tab-teal {
+    --lld-tab-top: #5b9991;
+    --lld-tab-bottom: #3f7975;
+  }
+
+  .lld-binder-tab-blue {
+    --lld-tab-top: #648ca8;
+    --lld-tab-bottom: #486e8b;
+  }
+
+  .lld-binder-tab-indigo {
+    --lld-tab-top: #727da8;
+    --lld-tab-bottom: #555f8a;
+  }
+
+  .lld-binder-tab-purple {
+    --lld-tab-top: #8b72a0;
+    --lld-tab-bottom: #6d547f;
+  }
+
+  .lld-binder-tab-pink {
+    --lld-tab-top: #a76c8c;
+    --lld-tab-bottom: #895170;
+  }
+
+  .lld-binder-tab-slate {
+    --lld-tab-top: #87939b;
+    --lld-tab-bottom: #69757e;
+  }
+}
+
+/* LONG LINE DIARY / HERITAGE INDEX TABS V1K END */
+
+/* LONG LINE DIARY / COMPACT HISTORICAL MODE V1L START */
+
+.lld-binder-capture-panel-history {
+  padding-bottom: 0.62rem;
+}
+
+.lld-binder-capture-panel-history .lld-binder-history-message {
+  display: flex;
+  min-height: 2.15rem;
+  align-items: center;
+  gap: 0.46rem;
+  margin-top: 0.48rem;
+  border-color: rgba(198, 157, 76, 0.2);
+  border-radius: 0.62rem;
+  background: rgba(255, 255, 255, 0.025);
+  padding: 0.42rem 0.65rem;
+  color: #aabccb;
+}
+
+.lld-binder-capture-panel-history .lld-binder-history-message svg {
+  width: 0.84rem;
+  height: 0.84rem;
+  flex: 0 0 auto;
+  color: #d1a14b;
+}
+
+.lld-binder-capture-panel-history .lld-binder-history-message strong {
+  color: #e4ebef;
+  font-size: 0.61rem;
+  font-weight: 900;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.lld-binder-capture-panel-history .lld-binder-history-message span {
+  color: #91aabd;
+  font-size: 0.64rem;
+  font-weight: 680;
+}
+
+@media screen and (max-width: 680px) {
+  .lld-binder-capture-panel-history .lld-binder-history-message {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .lld-binder-capture-panel-history .lld-binder-history-message span {
+    grid-column: 2;
+  }
+}
+
+/* LONG LINE DIARY / COMPACT HISTORICAL MODE V1L END */
+
+/* LONG LINE DIARY / DAY REVIEW PRINT HANDOFF V1M START */
+
+.lld-binder-closeout-print-button {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 2.35rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.72rem;
+  border: 1px solid rgba(148, 111, 45, 0.32);
+  border-radius: 999px;
+  background: rgba(255, 252, 242, 0.76);
+  padding: 0.5rem 0.78rem;
+  color: #17384c;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow:
+    0 0.32rem 0.7rem rgba(62, 45, 28, 0.08),
+    inset 0 1px rgba(255, 255, 255, 0.7);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.lld-binder-closeout-print-button > svg {
+  width: 1rem;
+  height: 1rem;
+  color: #9a6d20;
+}
+
+.lld-binder-closeout-print-button:hover {
+  border-color: rgba(154, 109, 32, 0.62);
+  background: rgba(255, 248, 229, 0.94);
+  transform: translateY(-1px);
+}
+
+.lld-binder-closeout-print-button:focus-visible {
+  outline: 2px solid rgba(154, 109, 32, 0.5);
+  outline-offset: 2px;
+}
+
+.lld-binder-closeout-print-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+@media screen and (max-width: 680px) {
+  .lld-binder-closeout-print-button {
+    min-height: 2.6rem;
+    margin-top: 0.62rem;
+  }
+}
+
+@media print {
+  .lld-binder-closeout-print-button,
+  .lld-binder-focused-workflow-button {
+    display: none !important;
+  }
+}
+
+/* LONG LINE DIARY / DAY REVIEW PRINT HANDOFF V1M END */
+
+/* LONG LINE DIARY / CLEAN A4 DIARY REPORT V1N START */
+
+@page {
+  size: A4 portrait;
+  margin: 10mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .lld-compact-menu-button,
+  .lld-binder-mechanism,
+  .lld-binder-pages::after {
+    display: none !important;
+  }
+
+  .lld-digital-job-binder,
+  .lld-binder-stage,
+  .lld-binder-cover,
+  .lld-binder-pages {
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .lld-binder-stage,
+  .lld-binder-cover {
+    margin: 0 !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+
+  .lld-binder-pages {
+    display: block !important;
+    border: 1px solid #9aa4a9 !important;
+  }
+
+  .lld-digital-job-binder:not(.lld-binder-active-today)
+    .lld-binder-pages
+    > .lld-binder-page {
+    display: none !important;
+  }
+
+  .lld-digital-job-binder:not(.lld-binder-active-today)
+    .lld-binder-focused-spread {
+    position: relative !important;
+    inset: auto !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    animation: none !important;
+  }
+
+  .lld-digital-job-binder:not(.lld-binder-active-today)
+    .lld-binder-focused-page {
+    display: block !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    padding: 8mm 9mm !important;
+    box-shadow: none !important;
+  }
+
+  .lld-digital-job-binder:not(.lld-binder-active-today)
+    .lld-binder-focused-page-left {
+    border-bottom: 1px solid #9aa4a9 !important;
+  }
+
+  .lld-binder-focused-heading h2 {
+    margin-top: 2mm;
+    font-size: 26pt !important;
+    line-height: 1;
+  }
+
+  .lld-binder-focused-heading p {
+    font-size: 7pt;
+    letter-spacing: 0.14em;
+  }
+
+  .lld-binder-focused-heading span {
+    margin-top: 2mm;
+    font-size: 7.5pt;
+  }
+
+  .lld-binder-focused-rule {
+    margin: 4mm 0 !important;
+  }
+
+  .lld-binder-closeout-status {
+    display: grid !important;
+    grid-template-columns: 7mm minmax(0, 1fr) !important;
+    gap: 3mm !important;
+    align-items: start !important;
+    margin: 0 0 4mm !important;
+    padding: 3mm !important;
+  }
+
+  .lld-binder-closeout-status > svg {
+    width: 5mm !important;
+    height: 5mm !important;
+  }
+
+  .lld-binder-closeout-status strong,
+  .lld-binder-closeout-status span {
+    display: block !important;
+  }
+
+  .lld-binder-closeout-status strong {
+    font-size: 9pt;
+  }
+
+  .lld-binder-closeout-status span {
+    margin-top: 1mm;
+    font-size: 7.5pt;
+    line-height: 1.35;
+  }
+
+  .lld-binder-active-closeout .lld-binder-focused-count {
+    display: inline-flex !important;
+    width: auto !important;
+    gap: 3mm !important;
+    margin: 0 !important;
+    border: 1px solid #b5bdc1 !important;
+    background: #fff !important;
+    padding: 2.5mm 4mm !important;
+    box-shadow: none !important;
+  }
+
+  .lld-binder-active-closeout .lld-binder-focused-count strong {
+    font-size: 20pt !important;
+  }
+
+  .lld-binder-active-closeout .lld-binder-focused-count span {
+    max-width: none !important;
+    font-size: 7pt !important;
+    text-transform: uppercase;
+  }
+
+  .lld-binder-focused-list-heading {
+    min-height: 0 !important;
+    padding-bottom: 2.5mm !important;
+  }
+
+  .lld-binder-focused-list-heading span {
+    font-size: 8pt !important;
+    letter-spacing: 0.1em;
+  }
+
+  .lld-binder-focused-list-heading strong {
+    width: 7mm !important;
+    height: 7mm !important;
+    font-size: 7pt !important;
+  }
+
+  .lld-binder-focused-list {
+    margin-top: 2mm !important;
+  }
+
+  .lld-binder-active-closeout .lld-binder-focused-record {
+    min-height: 0 !important;
+    margin: 0 0 1.5mm !important;
+    border-width: 1px 1px 1px 2px !important;
+    border-radius: 0 !important;
+    padding: 2.5mm 3mm !important;
+  }
+
+  .lld-binder-active-closeout .lld-binder-readiness-link {
+    display: grid !important;
+    grid-template-columns: 8mm minmax(0, 1fr) !important;
+    gap: 2mm !important;
+  }
+
+  .lld-binder-active-closeout .lld-binder-focused-record strong {
+    font-size: 8pt !important;
+  }
+
+  .lld-binder-active-closeout .lld-binder-focused-record small {
+    display: block !important;
+    margin-top: 0.7mm !important;
+    font-size: 6.5pt !important;
+  }
+}
+
+/* LONG LINE DIARY / CLEAN A4 DIARY REPORT V1N END */
+
+/* LONG LINE DIARY / PRINT CHROME CORRECTION V1N1 START */
+
+@media print {
+  body .app-container main.lld-diary-experience > .app-header,
+  body .app-container main.lld-diary-experience .lld-compact-menu-button {
+    display: none !important;
+  }
+}
+
+/* LONG LINE DIARY / PRINT CHROME CORRECTION V1N1 END */

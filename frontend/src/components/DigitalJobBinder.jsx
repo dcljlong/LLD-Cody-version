@@ -12,6 +12,7 @@ import {
   Mail,
   Package,
   Plus,
+  Printer,
   Route,
   Users,
 } from 'lucide-react';
@@ -132,17 +133,94 @@ const getCommunicationItemLabels = (item = {}) => {
   return labels.join(' · ');
 };
 
-const getItemMeta = (item = {}) => {
+const humaniseItemLabel = (value) => safeText(value)
+  .replace(/[_-]+/g, ' ')
+  .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+const getDiaryDateNumber = (value) => {
+  const dateKey = safeText(value).slice(0, 10);
+  const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (!match) return null;
+
+  return Date.UTC(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3])
+  );
+};
+
+const formatDiaryDueDate = (value) => {
+  const dateKey = safeText(value).slice(0, 10);
+  const parsed = new Date(`${dateKey}T12:00:00`);
+
+  if (Number.isNaN(parsed.getTime())) return dateKey;
+
+  return parsed.toLocaleDateString('en-NZ', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+};
+
+const getItemDueMeta = (item = {}, referenceDate = '') => {
   const dueDate = item.due_date || item.expected_complete_date;
 
-  const parts = [
-    item.priority,
-    item.owner,
-    dueDate ? `Due ${String(dueDate).slice(0, 10)}` : '',
-    item.status,
-  ].filter(Boolean);
+  if (!dueDate) return null;
 
-  return parts.join(' · ');
+  const dueNumber = getDiaryDateNumber(dueDate);
+  const referenceNumber = getDiaryDateNumber(referenceDate);
+
+  if (dueNumber === null || referenceNumber === null) {
+    return {
+      label: `Due ${formatDiaryDueDate(dueDate)}`,
+      tone: 'scheduled',
+    };
+  }
+
+  const dayDifference = Math.round(
+    (dueNumber - referenceNumber) / 86400000
+  );
+
+  if (dayDifference < 0) {
+    const overdueDays = Math.abs(dayDifference);
+
+    return {
+      label: `${overdueDays} day${overdueDays === 1 ? '' : 's'} overdue`,
+      tone: 'overdue',
+    };
+  }
+
+  if (dayDifference === 0) {
+    return { label: 'Due today', tone: 'today' };
+  }
+
+  if (dayDifference === 1) {
+    return { label: 'Due tomorrow', tone: 'soon' };
+  }
+
+  return {
+    label: `Due ${formatDiaryDueDate(dueDate)}`,
+    tone: dayDifference <= 7 ? 'soon' : 'scheduled',
+  };
+};
+
+const getItemMetaTokens = (item = {}, referenceDate = '') => {
+  const dueMeta = getItemDueMeta(item, referenceDate);
+  const status = safeText(item.status).toLowerCase();
+
+  return [
+    item.priority
+      ? { label: humaniseItemLabel(item.priority), tone: 'priority' }
+      : null,
+    item.owner
+      ? { label: safeText(item.owner), tone: 'owner' }
+      : null,
+    dueMeta,
+    status && status !== 'open'
+      ? { label: humaniseItemLabel(status), tone: 'status' }
+      : null,
+  ].filter(Boolean);
 };
 
 const getItemKey = (item = {}) => {
@@ -385,10 +463,8 @@ const StatusChip = ({ children, tone = 'neutral' }) => (
   </span>
 );
 
-const DiaryEntry = ({ entry }) => {
-  const priority = safeText(entry?.priority).toLowerCase();
-  const entryType = safeText(entry?.entry_type || entry?.action_type || 'Diary');
-  const title = safeText(
+const getDiaryEntryDisplay = (entry = {}) => {
+  const rawTitle = safeText(
     entry?.display_note ||
     entry?.raw_note ||
     entry?.note ||
@@ -396,12 +472,99 @@ const DiaryEntry = ({ entry }) => {
     'Diary entry'
   );
 
+  const structuredCapture = /(?:WALKAROUND CAPTURE|CAPTURE SITE ACTIVITY)\s*-/i.test(rawTitle);
+
+  if (!structuredCapture) {
+    return {
+      title: rawTitle,
+      entryType: safeText(entry?.entry_type || entry?.action_type, 'Diary'),
+      priority: safeText(entry?.priority).toLowerCase(),
+    };
+  }
+
+  const normalised = rawTitle
+    .replace(/\s+(?=PRIORITY\s*-)/gi, '\n')
+    .replace(/\s+(?=NEEDS SENDING\s*-)/gi, '\n')
+    .replace(/\s+(?=ACTION\s*-)/gi, '\n')
+    .replace(/\s+(?=SORT TO\s*-)/gi, '\n');
+
+  const lines = normalised
+    .split(/\r?\n/)
+    .map((line) => String(line || '').trim())
+    .filter(Boolean);
+
+  const getLineValue = (prefix) => {
+    const line = lines.find((candidate) => (
+      candidate.toUpperCase().startsWith(prefix.toUpperCase())
+    ));
+
+    return line ? line.slice(prefix.length).trim() : '';
+  };
+
+  const category = (
+    getLineValue('WALKAROUND CAPTURE - ') ||
+    getLineValue('CAPTURE SITE ACTIVITY - ') ||
+    safeText(entry?.entry_type, 'Site note')
+  );
+
+  const priority = safeText(
+    entry?.priority || getLineValue('PRIORITY - ')
+  ).toLowerCase();
+
+  const sortIndex = lines.findIndex((line) => (
+    line.toUpperCase().startsWith('SORT TO - ')
+  ));
+
+  const knownBucket = [
+    'High Priority',
+    'Needs Sending',
+    'Questions / RFIs',
+    'Roadblocks / Hold Ups',
+    'Materials / Plant',
+    'H&S',
+    'To Do / Follow Up',
+    'Diary Only',
+  ].map((value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+
+  const bucketPrefix = new RegExp(
+    `^(?:${knownBucket})(?:\\s*\\|\\s*(?:${knownBucket}))*\\s*`,
+    'i'
+  );
+
+  const observationParts = [];
+
+  if (sortIndex >= 0) {
+    const sortValue = lines[sortIndex].slice('SORT TO - '.length).trim();
+    const inlineObservation = sortValue.replace(bucketPrefix, '').trim();
+
+    if (inlineObservation) {
+      observationParts.push(inlineObservation);
+    }
+
+    observationParts.push(...lines.slice(sortIndex + 1));
+  }
+
+  const observation = observationParts
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return {
+    title: observation || category || 'Diary entry',
+    entryType: category,
+    priority,
+  };
+};
+
+const DiaryEntry = ({ entry }) => {
+  const display = getDiaryEntryDisplay(entry);
+
   return (
     <article className="lld-binder-diary-entry">
       <time className="lld-binder-entry-time">{getEntryTime(entry)}</time>
 
       <div className="lld-binder-entry-copy">
-        <strong>{title}</strong>
+        <strong>{display.title}</strong>
 
         {(entry?.owner || entry?.linked_task?.name) && (
           <p>
@@ -412,13 +575,13 @@ const DiaryEntry = ({ entry }) => {
         )}
 
         <div className="lld-binder-chip-row">
-          {priority && (
-            <StatusChip tone={priority === 'critical' || priority === 'high' ? 'danger' : 'warning'}>
-              {priority}
+          {display.priority && (
+            <StatusChip tone={display.priority === 'critical' || display.priority === 'high' ? 'danger' : 'warning'}>
+              {display.priority}
             </StatusChip>
           )}
 
-          <StatusChip tone="teal">{entryType}</StatusChip>
+          <StatusChip tone="teal">{display.entryType}</StatusChip>
 
           {entry?.has_photos && (
             <StatusChip tone="blue">Evidence</StatusChip>
@@ -436,6 +599,7 @@ const WorkItem = ({
   onComplete,
   completionDisabled = false,
   context = 'default',
+  referenceDate = '',
 }) => {
   const isCommunication = context === 'communications';
 
@@ -443,12 +607,15 @@ const WorkItem = ({
     ? getCommunicationItemTitle(item)
     : getItemDisplayTitle(item);
 
-  const meta = isCommunication
-    ? [
-      getCommunicationItemLabels(item),
-      getItemMeta(item),
-    ].filter(Boolean).join(' · ')
-    : getItemMeta(item);
+  const metaTokens = [
+    isCommunication
+      ? {
+        label: getCommunicationItemLabels(item),
+        tone: 'communication',
+      }
+      : null,
+    ...getItemMetaTokens(item, referenceDate),
+  ].filter((token) => token?.label);
 
   const canComplete = Boolean(item?.id && typeof onComplete === 'function');
   const canOpen = typeof onOpen === 'function';
@@ -484,7 +651,20 @@ const WorkItem = ({
         <span className="lld-binder-work-copy">
 
           <strong>{title}</strong>
-          <p>{meta || 'Open follow-up'}</p>
+          {metaTokens.length > 0 ? (
+            <p className="lld-binder-work-meta">
+              {metaTokens.map((token, index) => (
+                <span
+                  key={`${token.tone}-${token.label}-${index}`}
+                  className={`lld-binder-work-meta-${token.tone}`}
+                >
+                  {token.label}
+                </span>
+              ))}
+            </p>
+          ) : (
+            <p>Open follow-up</p>
+          )}
         </span>
 
 
@@ -1881,8 +2061,13 @@ const DigitalJobBinder = ({
   onMarkDayReviewed,
   onReopenDayReview,
   onCloseDay,
+  onPrintDiary,
+  projects = [],
+  selectedProject = '',
+  onSelectProject,
 }) => {
   const [activeTab, setActiveTab] = useState(getRequestedBinderTab);
+  const [mobileTodayPage, setMobileTodayPage] = useState('my-day');
   const mobileTabsRef = useRef(null);
 
   useEffect(() => {
@@ -2351,6 +2536,24 @@ const DigitalJobBinder = ({
           : `${closeoutAttentionCount} items to check`;
   // day-review-status-language-v8-9k1
 
+  const diaryRecordCount = Array.isArray(diaryEntries)
+    ? diaryEntries.length
+    : 0;
+
+  const diaryRecordSummary = [
+    `${diaryRecordCount} diary ${diaryRecordCount === 1 ? 'record' : 'records'}`,
+    `${photoEvidenceItems.length} ${photoEvidenceItems.length === 1 ? 'photo' : 'photos'}`,
+  ].join(' · ');
+
+  const myDaySummary = [
+    `${outstandingItems.length} ${outstandingItems.length === 1 ? 'action' : 'actions'} open`,
+    dayReviewIsReviewed
+      ? 'Day reviewed'
+      : closeoutReady
+        ? 'Ready to review'
+        : `${closeoutAttentionCount} to check`,
+  ].join(' · ');
+
   const closeoutDisplayedMessage = dayReviewNeedsChecking
     ? 'A review was recorded, but attention is now present. Reopen the review and check this day again.'
     : dayReviewIsReviewed
@@ -2483,19 +2686,48 @@ const DigitalJobBinder = ({
 
   return (
     <section
-      className={`lld-digital-job-binder lld-binder-active-${activeTab}`}
+      className={`lld-digital-job-binder lld-binder-active-${activeTab} lld-binder-mobile-page-${mobileTodayPage}`}
       data-testid="lld-digital-job-binder-v1"
       data-commercial-readiness="lld-digital-job-binder-v1"
     >
-      <header className="lld-binder-capture-panel">
+      <header
+        className={`lld-binder-capture-panel${
+          selectedDate === today
+            ? ''
+            : ' lld-binder-capture-panel-history'
+        }`}
+        data-capture-mode={selectedDate === today ? 'today' : 'history'}
+      >
         <div className="lld-binder-capture-heading">
-          <div>
-            <p>Digital Job Binder</p>
-            <h2>Write it down</h2>
+          <div className="lld-binder-capture-title">
+            <p>{selectedDate === today ? 'Digital Job Binder' : 'Diary archive'}</p>
+            <h2>{selectedDate === today ? 'Write it down' : 'Past diary day'}</h2>
             <span>
-              LLD timestamps the entry and keeps important work visible.
+              {selectedDate === today
+                ? 'LLD timestamps the entry and keeps important work visible.'
+                : 'Review the recorded day without changing today\'s working diary.'}
             </span>
           </div>
+
+          <label className="lld-binder-project-picker">
+            <BookOpen aria-hidden="true" />
+            <span>Project</span>
+            <select
+              value={selectedProject}
+              onChange={(event) => onSelectProject?.(event.target.value)}
+              disabled={projects.length === 0}
+              aria-label="Choose diary project"
+              data-testid="lld-binder-project-select-v9-0"
+            >
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.job_number
+                    ? `${project.job_number} — ${project.name}`
+                    : project.name}
+                </option>
+              ))}
+            </select>
+          </label>
 
           <div
             className="lld-binder-date-controls"
@@ -2556,7 +2788,7 @@ const DigitalJobBinder = ({
               value={quickNote}
               onChange={(event) => onQuickNoteChange?.(event.target.value)}
               placeholder="Write anything you need to remember, do, order, email, check, chase or record..."
-              rows={2}
+              rows={1}
               data-testid="lld-binder-quick-note-v1"
             />
 
@@ -2570,30 +2802,70 @@ const DigitalJobBinder = ({
             </button>
           </form>
         ) : (
-          <div className="lld-binder-history-message">
-            Historical diary view — use Today to add a new entry.
+          <div
+            className="lld-binder-history-message"
+            data-testid="lld-binder-history-status-v1l"
+          >
+            <CalendarDays aria-hidden="true" />
+            <strong>Historical record</strong>
+            <span>Use Today to return to live capture.</span>
           </div>
         )}
 
-        <div className="lld-binder-project-strip">
-          <span>
-            <BookOpen />
-            {projectName}
-          </span>
+        {selectedDate === today && (
+          <div className="lld-binder-project-strip">
+            <span>Today</span>
 
-          <span>
-            {selectedDate === today ? 'Today' : selectedDateLabel}
-            {draftStatus ? ` · ${draftStatus}` : ''}
-          </span>
-        </div>
+            <span>
+              {draftStatus || projectName}
+            </span>
+          </div>
+        )}
       </header>
+
+      <nav
+        className="lld-binder-today-mobile-switch"
+        aria-label="Choose Today diary page"
+        data-testid="lld-binder-mobile-page-switch-v1h"
+      >
+        <button
+          type="button"
+          className={mobileTodayPage === 'diary' ? 'active' : ''}
+          aria-pressed={mobileTodayPage === 'diary'}
+          aria-controls="lld-binder-diary-page"
+          onClick={() => setMobileTodayPage('diary')}
+        >
+          <BookOpen aria-hidden="true" />
+          <span>
+            <strong>Diary</strong>
+            <small>{diaryRecordCount} {diaryRecordCount === 1 ? 'record' : 'records'}</small>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className={mobileTodayPage === 'my-day' ? 'active' : ''}
+          aria-pressed={mobileTodayPage === 'my-day'}
+          aria-controls="lld-binder-my-day-page"
+          onClick={() => setMobileTodayPage('my-day')}
+        >
+          <ClipboardCheck aria-hidden="true" />
+          <span>
+            <strong>My Day</strong>
+            <small>{outstandingItems.length} {outstandingItems.length === 1 ? 'action' : 'actions'}</small>
+          </span>
+        </button>
+      </nav>
 
       <div className="lld-binder-stage">
         <div className="lld-binder-cover">
           <div className="lld-binder-pages">
             <BinderRings />
 
-            <section className="lld-binder-page lld-binder-page-left">
+            <section
+              id="lld-binder-diary-page"
+              className="lld-binder-page lld-binder-page-left"
+            >
               <div className="lld-binder-page-heading">
                 <div>
                   <p>Site diary</p>
@@ -2627,9 +2899,20 @@ const DigitalJobBinder = ({
                 <FileText />
                 Open full diary record
               </button>
+
+              <footer
+                className="lld-binder-page-footer"
+                aria-label={`Diary page summary: ${diaryRecordSummary}`}
+                data-testid="lld-binder-diary-page-footer-v1g"
+              >
+                <span>{diaryRecordSummary}</span>
+                <span className="lld-binder-page-signature">Long Line Diary</span>
+                <strong aria-label="Page 1">01</strong>
+              </footer>
             </section>
 
             <section
+              id="lld-binder-my-day-page"
               className={`lld-binder-page lld-binder-page-right${
                 selectedTask && selectedTaskDraft
                   ? ' lld-binder-action-detail-page'
@@ -2850,6 +3133,7 @@ const DigitalJobBinder = ({
                       onOpen={onOpenTask || onOpenTasks}
                       onComplete={onCompleteTask}
                       completionDisabled={taskCompletionPending}
+                      referenceDate={selectedDate}
                     />
                   ))
                 ) : (
@@ -2885,6 +3169,18 @@ const DigitalJobBinder = ({
                 </button>
               </div>
                 </>
+              )}
+
+              {!(selectedTask && selectedTaskDraft) && (
+                <footer
+                  className="lld-binder-page-footer"
+                  aria-label={`My Day page summary: ${myDaySummary}`}
+                  data-testid="lld-binder-my-day-page-footer-v1g"
+                >
+                  <span>{myDaySummary}</span>
+                  <span className="lld-binder-page-signature">My Day</span>
+                  <strong aria-label="Page 2">02</strong>
+                </footer>
               )}
             </section>
 
@@ -3058,6 +3354,19 @@ const DigitalJobBinder = ({
                                 : 'Complete required items first'
                           : `Open full ${activeTabConfig.label} workflow`}
               </button>
+
+              {activeTab === 'closeout' && (
+                <button
+                  type="button"
+                  className="lld-binder-closeout-print-button"
+                  onClick={onPrintDiary}
+                  disabled={typeof onPrintDiary !== 'function'}
+                  data-testid="lld-binder-day-review-print-v1m"
+                >
+                  <Printer aria-hidden="true" />
+                  <span>Print / Save PDF</span>
+                </button>
+              )}
             </article>
 
             <article
@@ -3157,9 +3466,15 @@ const DigitalJobBinder = ({
                               ? 'Photo evidence'
                               : activeTab === 'staff'
                                 ? 'Staff on site'
-                                : 'Daily records'}
+                                : activeTab === 'closeout'
+                                  ? 'Day readiness'
+                                  : 'Daily records'}
                 </span>
-                <strong>{focusedCount}</strong>
+                <strong>
+                  {activeTab === 'closeout'
+                    ? focusedItems.length
+                    : focusedCount}
+                </strong>
               </header>
 
               {focusedItems.length > 0 ? (
@@ -3233,6 +3548,7 @@ const DigitalJobBinder = ({
                         onOpen={onOpenTask || onOpenTasks}
                         onComplete={onCompleteTask}
                         completionDisabled={taskCompletionPending}
+                        referenceDate={selectedDate}
                       />
                     ) : activeTab === 'materials' ? (
                       <MaterialLedgerRow

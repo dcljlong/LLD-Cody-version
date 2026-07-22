@@ -3700,3 +3700,539 @@ main.main-content.fo-main-content.lld-fitoutos-main {
         display: none !important;
     }
 }
+
+/* LLD / PREMIUM DIARY SHELL V1 START
+   The diary owns the screen. Navigation is an intentional drawer on every
+   device, while the shared header stays compact and route controls remain
+   available without reserving permanent desktop space. */
+body.lld-menu-is-open {
+  overflow: hidden;
+}
+
+.app-container > aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail.lld-navigation-drawer,
+aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail.lld-navigation-drawer {
+  display: flex !important;
+  position: fixed !important;
+  inset: 0 auto 0 0 !important;
+  z-index: 80 !important;
+  width: min(19rem, calc(100vw - 2rem)) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  transform: translateX(-105%) !important;
+  visibility: hidden;
+  transition:
+    transform 180ms ease,
+    visibility 0s linear 180ms !important;
+  box-shadow: 1.5rem 0 3rem rgba(2, 6, 23, 0.34) !important;
+}
+
+.app-container > aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail.lld-navigation-drawer.lld-navigation-drawer-open,
+aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail.lld-navigation-drawer.lld-navigation-drawer-open {
+  transform: translateX(0) !important;
+  visibility: visible;
+  transition-delay: 0s !important;
+}
+
+.lld-sidebar-brand {
+  position: relative;
+  padding-right: 3.8rem !important;
+}
+
+.lld-menu-close-button {
+  position: absolute;
+  top: 1rem;
+  right: 0.9rem;
+  display: inline-flex;
+  width: 2.45rem;
+  height: 2.45rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(245, 190, 80, 0.24);
+  border-radius: 999px;
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.055);
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.lld-menu-close-button:hover {
+  border-color: rgba(245, 190, 80, 0.58);
+  background: rgba(245, 190, 80, 0.12);
+}
+
+.lld-menu-close-button svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.lld-navigation-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: rgba(2, 6, 23, 0.54);
+  backdrop-filter: blur(2px);
+  transition: opacity 180ms ease;
+}
+
+.lld-navigation-backdrop-open {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.app-container > main.main-content.fo-main-content.lld-fitoutos-main,
+main.main-content.fo-main-content.lld-fitoutos-main {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+}
+
+main.main-content.fo-main-content.lld-fitoutos-main > .app-header {
+  display: block !important;
+  padding: 0 !important;
+}
+
+.lld-compact-brand-row {
+  min-height: 3.9rem !important;
+  padding: 0.58rem clamp(0.75rem, 2vw, 1.35rem) !important;
+}
+
+.lld-compact-menu-button {
+  display: inline-flex !important;
+}
+
+.lld-legacy-top-navigation {
+  display: none !important;
+}
+
+.lld-content-frame {
+  width: 100%;
+  min-width: 0;
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.lld-content-frame-diary {
+  padding: clamp(0.65rem, 1.25vw, 1.15rem);
+}
+
+@media (max-width: 640px) {
+  .lld-compact-brand-copy {
+    display: none !important;
+  }
+
+  .lld-compact-brand-left {
+    gap: 0.55rem !important;
+  }
+
+  .lld-compact-actions {
+    gap: 0.35rem !important;
+  }
+
+  .lld-content-frame,
+  .lld-content-frame-diary {
+    padding: 0.65rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-container > aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail.lld-navigation-drawer,
+  aside.sidebar.fo-desktop-brand-rail.lld-fitoutos-rail.lld-navigation-drawer,
+  .lld-navigation-backdrop {
+    transition: none !important;
+  }
+}
+/* LLD / PREMIUM DIARY SHELL V1 END */
+
+/* LLD / DESKTOP DIARY CHROME REDUCTION V1D START
+   On the Diary route, the physical diary replaces generic application chrome.
+   The menu remains persistent and accessible; account controls stay in the
+   drawer. Other routes retain the complete shared header. */
+@media (min-width: 681px) {
+  main.lld-diary-experience > .app-header {
+    position: sticky !important;
+    top: 0;
+    z-index: 60;
+    display: block !important;
+    width: 100%;
+    height: 0;
+    min-height: 0;
+    overflow: visible;
+    border: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    pointer-events: none;
+  }
+
+  main.lld-diary-experience .lld-compact-header-inner,
+  main.lld-diary-experience .lld-compact-brand-row {
+    width: 100%;
+    height: 0;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
+  main.lld-diary-experience .lld-compact-brand-left {
+    position: absolute;
+    top: calc(clamp(0.65rem, 1.25vw, 1.15rem) + 0.72rem);
+    left: calc(clamp(0.65rem, 1.25vw, 1.15rem) + 0.72rem);
+    z-index: 65;
+    display: block;
+    pointer-events: auto;
+  }
+
+  main.lld-diary-experience .lld-compact-menu-button {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    border-color: rgba(245, 190, 80, 0.28) !important;
+    border-radius: 0.7rem !important;
+    background: rgba(3, 15, 26, 0.72) !important;
+    color: #f5be50 !important;
+    box-shadow: 0 0.45rem 1rem rgba(0, 0, 0, 0.2) !important;
+    backdrop-filter: blur(8px);
+  }
+
+  main.lld-diary-experience .lld-compact-menu-button:hover {
+    border-color: rgba(245, 190, 80, 0.62) !important;
+    background: rgba(245, 190, 80, 0.13) !important;
+  }
+
+  main.lld-diary-experience .lld-compact-brand-link,
+  main.lld-diary-experience .lld-compact-actions,
+  main.lld-diary-experience .lld-legacy-top-navigation {
+    display: none !important;
+  }
+
+  main.lld-diary-experience .lld-binder-capture-panel {
+    padding-left: 4rem !important;
+  }
+}
+/* LLD / DESKTOP DIARY CHROME REDUCTION V1D END */
+
+/* LLD / FULL DIARY DETAIL DISCLOSURE V1E START */
+.lld-legacy-diary-details:not(.is-open) {
+  display: none;
+}
+
+.lld-full-diary-return-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid rgba(148, 111, 45, 0.25);
+  border-radius: 0.9rem;
+  background: rgba(255, 253, 246, 0.9);
+  padding: 0.72rem 0.85rem;
+  box-shadow: 0 0.55rem 1.4rem rgba(66, 48, 30, 0.08);
+}
+
+.lld-full-diary-return-bar > div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.lld-full-diary-return-bar span {
+  color: #9a6415;
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.lld-full-diary-return-bar strong {
+  overflow: hidden;
+  color: #17344a;
+  font-size: 0.86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lld-full-diary-return-bar button {
+  flex: 0 0 auto;
+  border: 1px solid rgba(148, 111, 45, 0.34);
+  border-radius: 0.68rem;
+  background: rgba(154, 100, 21, 0.08);
+  padding: 0.55rem 0.75rem;
+  color: #70480f;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.lld-full-diary-return-bar button:hover {
+  border-color: rgba(148, 111, 45, 0.62);
+  background: rgba(154, 100, 21, 0.14);
+}
+
+.dark .lld-full-diary-return-bar {
+  border-color: rgba(245, 190, 80, 0.24);
+  background: rgba(7, 18, 31, 0.92);
+}
+
+.dark .lld-full-diary-return-bar strong {
+  color: #f8fafc;
+}
+
+.dark .lld-full-diary-return-bar button {
+  border-color: rgba(245, 190, 80, 0.28);
+  background: rgba(245, 190, 80, 0.1);
+  color: #f5be50;
+}
+
+@media (max-width: 640px) {
+  .lld-full-diary-return-bar > div {
+    display: block;
+  }
+
+  .lld-full-diary-return-bar strong {
+    display: block;
+    margin-top: 0.15rem;
+  }
+}
+/* LLD / FULL DIARY DETAIL DISCLOSURE V1E END */
+
+/* LLD / PERSONAL DIARY OPENING V1P START */
+
+body.lld-diary-opening-active {
+  overflow: hidden;
+}
+
+.lld-diary-opening {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  background:
+    radial-gradient(circle at 50% 32%, rgba(255, 246, 218, 0.13), transparent 30rem),
+    linear-gradient(145deg, #18221e, #0b1412 58%, #050908);
+  padding: clamp(1rem, 3vw, 2.5rem);
+  animation: lld-diary-opening-arrive 420ms ease-out both;
+}
+
+.lld-diary-opening::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.34;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.055) 0 1px, transparent 1px 7px);
+}
+
+.lld-diary-opening-desk {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  perspective: 90rem;
+}
+
+.lld-diary-opening-book {
+  position: relative;
+  display: flex;
+  width: min(25rem, calc(100vw - 3rem));
+  min-height: min(34rem, calc(100vh - 7rem));
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 0.55rem solid #17100c;
+  border-radius: 0.75rem 1.45rem 1.45rem 0.75rem;
+  background:
+    radial-gradient(circle at 28% 14%, rgba(255, 255, 255, 0.08), transparent 14rem),
+    radial-gradient(circle at 74% 83%, rgba(0, 0, 0, 0.28), transparent 18rem),
+    linear-gradient(135deg, #342016, #20120d 48%, #120a07);
+  padding: 3rem 2.4rem;
+  color: #e7bd60;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transform: rotateY(-5deg) rotateX(1deg);
+  transform-origin: left center;
+  box-shadow:
+    1.2rem 1.5rem 2.6rem rgba(0, 0, 0, 0.52),
+    0.35rem 0.2rem 0 #e6dfd0,
+    0.65rem 0.38rem 0 #a99f8d,
+    inset 0 0 0 1px rgba(234, 194, 109, 0.18),
+    inset 1.2rem 0 1.8rem rgba(0, 0, 0, 0.28);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.lld-diary-opening-book:hover {
+  transform: rotateY(-2deg) rotateX(0) translateY(-0.35rem);
+  box-shadow:
+    1.45rem 1.8rem 3rem rgba(0, 0, 0, 0.56),
+    0.35rem 0.2rem 0 #e6dfd0,
+    0.65rem 0.38rem 0 #a99f8d,
+    inset 0 0 0 1px rgba(234, 194, 109, 0.24),
+    inset 1.2rem 0 1.8rem rgba(0, 0, 0, 0.28);
+}
+
+.lld-diary-opening-book:focus-visible {
+  outline: 3px solid #e7bd60;
+  outline-offset: 0.55rem;
+}
+
+.lld-diary-opening-spine {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2rem;
+  border-right: 1px solid rgba(231, 189, 96, 0.2);
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.5), transparent 42%, rgba(255, 255, 255, 0.04));
+  box-shadow: inset -0.35rem 0 0.7rem rgba(0, 0, 0, 0.32);
+}
+
+.lld-diary-opening-stitch {
+  position: absolute;
+  inset: 0.8rem;
+  border: 1px dashed rgba(224, 179, 87, 0.56);
+  border-radius: 0.35rem 0.95rem 0.95rem 0.35rem;
+  pointer-events: none;
+}
+
+.lld-diary-opening-crest {
+  display: grid;
+  width: 6.6rem;
+  height: 6.6rem;
+  place-items: center;
+  margin-bottom: 1.6rem;
+  border: 1px solid rgba(231, 189, 96, 0.55);
+  border-radius: 999px;
+  background: rgba(5, 8, 7, 0.48);
+  padding: 0.35rem;
+  box-shadow:
+    0 0.7rem 1.4rem rgba(0, 0, 0, 0.25),
+    inset 0 0 0 3px rgba(231, 189, 96, 0.08);
+}
+
+.lld-diary-opening-crest img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.lld-diary-opening-kicker,
+.lld-diary-opening-brand,
+.lld-diary-opening-volume,
+.lld-diary-opening-action {
+  display: block;
+  text-transform: uppercase;
+}
+
+.lld-diary-opening-kicker {
+  color: #c9a962;
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+}
+
+.lld-diary-opening-book > strong {
+  max-width: 18rem;
+  margin-top: 0.72rem;
+  color: #f1d486;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.8rem, 5vw, 2.7rem);
+  font-weight: 700;
+  line-height: 1.05;
+  text-shadow: 0 2px 1px rgba(0, 0, 0, 0.6);
+}
+
+.lld-diary-opening-brand {
+  margin-top: 2.25rem;
+  color: #dfb75e;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+
+.lld-diary-opening-volume {
+  margin-top: 0.48rem;
+  color: rgba(231, 189, 96, 0.78);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.lld-diary-opening-action {
+  margin-top: 2.5rem;
+  border: 1px solid rgba(231, 189, 96, 0.42);
+  border-radius: 999px;
+  background: rgba(231, 189, 96, 0.08);
+  padding: 0.68rem 1rem;
+  color: #f0ce7b;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+}
+
+.lld-diary-opening-desk > p {
+  margin: 2rem 0 0;
+  color: rgba(247, 241, 225, 0.66);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+@keyframes lld-diary-opening-arrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .lld-diary-opening {
+    padding: 0.8rem;
+  }
+
+  .lld-diary-opening-book {
+    width: min(21rem, calc(100vw - 2rem));
+    min-height: min(30rem, calc(100vh - 5rem));
+    padding: 2.3rem 1.7rem;
+    transform: rotateY(-3deg);
+  }
+
+  .lld-diary-opening-crest {
+    width: 5.6rem;
+    height: 5.6rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .lld-diary-opening-action {
+    margin-top: 1.8rem;
+  }
+
+  .lld-diary-opening-desk > p {
+    margin-top: 1.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lld-diary-opening,
+  .lld-diary-opening-book {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media print {
+  .lld-diary-opening {
+    display: none !important;
+  }
+}
+
+/* LLD / PERSONAL DIARY OPENING V1P END */

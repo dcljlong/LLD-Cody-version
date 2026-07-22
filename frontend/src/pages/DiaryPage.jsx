@@ -235,6 +235,9 @@ const DiaryPage = () => {
   }); // diary-context-url-date-init-v8-9j2-2
   const [loading, setLoading] = useState(true);
   const [showQuickEntry, setShowQuickEntry] = useState(false);
+  const [fullDiaryOpen, setFullDiaryOpen] = useState(() => (
+    Boolean(new URLSearchParams(window.location.search).get('view'))
+  ));
   const [selectedDiaryActionItem, setSelectedDiaryActionItem] = useState(null); // legacy-action-open-marker-retired-v8-9a6
   const [selectedDiaryActionDraft, setSelectedDiaryActionDraft] = useState(null); // legacy-action-card-marker-retired-v8-9a6
   const [diaryActionSaving, setDiaryActionSaving] = useState(false);
@@ -1891,21 +1894,29 @@ const DiaryPage = () => {
   const openDiarySection = (sectionId, tab = null) => {
     if (tab) setActiveResourceTab(tab);
     window.requestAnimationFrame(() => {
-      const target = document.getElementById(sectionId);
-      if (!target) return;
+      window.requestAnimationFrame(() => {
+        const target = document.getElementById(sectionId);
+        if (!target) return;
 
-      const stickyHeaderOffset = window.innerWidth < 768 ? 168 : 120; // diary-jump-scroll-offset-v2
-      const targetTop = target.getBoundingClientRect().top + window.scrollY - stickyHeaderOffset;
+        const stickyHeaderOffset = window.innerWidth < 768 ? 168 : 48; // premium-diary-detail-scroll-v1e
+        const targetTop = target.getBoundingClientRect().top + window.scrollY - stickyHeaderOffset;
 
-      window.scrollTo({
-        top: Math.max(targetTop, 0),
-        behavior: 'smooth',
+        window.scrollTo({
+          top: Math.max(targetTop, 0),
+          behavior: 'smooth',
+        });
       });
     });
   };
 
   const openDiaryView = (view = 'overview', tab = null) => {
     const safeView = view || 'overview';
+    const isBinderCloseout = safeView === 'overview' && tab === 'closeout';
+
+    if (!isBinderCloseout) {
+      setFullDiaryOpen(true);
+    }
+
     setActiveDiaryView(safeView);
 
     const params = new URLSearchParams(window.location.search);
@@ -1945,6 +1956,21 @@ const DiaryPage = () => {
     const target = targetMap[safeView] || 'daily-report-readiness';
     openDiarySection(target, tab);
   }; // diary-nav-post-capture-v4
+
+  const closeFullDiaryRecord = () => {
+    setFullDiaryOpen(false);
+
+    const params = new URLSearchParams(window.location.search);
+    params.delete('view');
+
+    window.history.pushState(
+      {},
+      '',
+      `/diary${params.toString() ? `?${params.toString()}` : ''}`
+    );
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }; // premium-diary-detail-disclosure-v1e
 
   const getCaptureDiaryView = (capture) => {
     if (!capture) return 'overview';
@@ -2566,6 +2592,12 @@ const DiaryPage = () => {
     <div id="diary-binder-top" className="space-y-4 md:space-y-5 lg:space-y-6" data-testid="diary-page" data-day-review-landing="v8-9k1-1" data-commercial-readiness="diary-natural-look-v1a-header-simple diary-natural-look-v1a-wording-cleanup diary-natural-look-v1b-confirmed-queue-copy diary-natural-look-v1c-safe-cleanup diary-desktop-density-hierarchy-v1 lld-digital-job-binder-live-v1">
       <DigitalJobBinder
         currentProject={currentProject}
+        projects={projects}
+        selectedProject={selectedProject}
+        onSelectProject={(projectId) => {
+          setSelectedProject(projectId);
+          localStorage.setItem('lld_last_project_id', projectId);
+        }}
         selectedDateLabel={selectedDateLabel}
         selectedDate={selectedDate}
         today={today}
@@ -2621,8 +2653,25 @@ const DiaryPage = () => {
         onMarkDayReviewed={markDayReviewed}
         onReopenDayReview={reopenDayReview}
         onCloseDay={() => openDiaryView('overview', 'closeout')}
+        onPrintDiary={handlePrintReport}
         // closeout-full-review-context-v8-9j2-2
       />
+
+      <div
+        className={`lld-legacy-diary-details space-y-4 md:space-y-5 lg:space-y-6 ${fullDiaryOpen ? 'is-open' : ''}`}
+        aria-hidden={!fullDiaryOpen}
+        data-testid="lld-full-diary-record-v1e"
+      >
+        <div className="lld-full-diary-return-bar">
+          <div>
+            <span>Full diary record</span>
+            <strong>{selectedDateLabel}</strong>
+          </div>
+
+          <button type="button" onClick={closeFullDiaryRecord}>
+            Close details
+          </button>
+        </div>
 
       <div className="rounded-2xl border border-border bg-card/95 p-3 shadow-sm sm:p-4 lg:p-6" data-testid="diary-command-header-v2" data-commercial-readiness="diary-desktop-density-hierarchy-v1">
         <div className="flex flex-col gap-3 lg:gap-4" data-commercial-readiness="diary-top-header-responsive-stack-v1 diary-desktop-density-hierarchy-v1">
@@ -4255,6 +4304,7 @@ const DiaryPage = () => {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 };
