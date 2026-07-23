@@ -4194,6 +4194,507 @@ body.lld-diary-opening-active {
   }
 }
 
+/* LLD / PROPORTIONAL PAGE REVEAL V1R START */
+
+.lld-diary-opening.lld-diary-opening-leaving {
+  pointer-events: none;
+  animation:
+    lld-diary-opening-reveal 640ms cubic-bezier(0.42, 0, 0.2, 1) both;
+}
+
+.lld-diary-opening-leaving .lld-diary-opening-book {
+  transform-origin: 7% 50%;
+  animation:
+    lld-diary-cover-open 580ms cubic-bezier(0.42, 0, 0.2, 1) both;
+}
+
+.lld-diary-opening-leaving .lld-diary-opening-desk > p {
+  animation: lld-diary-opening-prompt-away 180ms ease-out both;
+}
+
+main.lld-diary-experience.lld-diary-page-revealing {
+  pointer-events: none;
+  transform-origin: 50% 12%;
+  will-change: transform, clip-path, opacity;
+  animation:
+    lld-diary-page-grow 980ms cubic-bezier(0.22, 0.72, 0.22, 1) both;
+}
+
+@keyframes lld-diary-cover-open {
+  0% {
+    opacity: 1;
+    transform: rotateY(-5deg) rotateX(1deg);
+  }
+
+  38% {
+    opacity: 1;
+    transform:
+      rotateY(-22deg)
+      rotateX(1deg)
+      translateX(-0.6rem)
+      scale(1.01);
+  }
+
+  100% {
+    opacity: 0.04;
+    transform:
+      rotateY(-82deg)
+      rotateX(1deg)
+      translateX(-4.5rem)
+      scale(0.94);
+  }
+}
+
+@keyframes lld-diary-opening-reveal {
+  0%,
+  42% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes lld-diary-page-grow {
+  0%,
+  28% {
+    opacity: 0.24;
+    clip-path: inset(3% 30% 10% 30% round 1.4rem);
+    transform:
+      translateY(5vh)
+      scale(0.72);
+  }
+
+  58% {
+    opacity: 0.82;
+    clip-path: inset(2% 18% 6% 18% round 1rem);
+    transform:
+      translateY(2vh)
+      scale(0.84);
+  }
+
+  78% {
+    opacity: 1;
+    clip-path: inset(1% 7% 2% 7% round 0.65rem);
+    transform:
+      translateY(0.6vh)
+      scale(0.94);
+  }
+
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0 round 0);
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+@keyframes lld-diary-opening-prompt-away {
+  to {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main.lld-diary-experience.lld-diary-page-revealing {
+    animation: none;
+  }
+}
+
+/* LLD / PROPORTIONAL PAGE REVEAL V1R END */
+/* LLD / SAME-BOOK CONTINUITY V1S START */
+@media (min-width: 641px) {
+  .lld-diary-opening-book {
+    width: min(32rem, calc(100vw - 8rem));
+    min-height: min(41rem, calc(100vh - 6rem));
+    transform-origin: 7% 50%;
+  }
+
+  main.lld-diary-experience {
+    box-sizing: border-box;
+    border: 0.38rem solid #123d2c;
+    border-left-width: 0.58rem;
+    border-radius: 0.85rem;
+  }
+
+  .lld-diary-opening-leaving .lld-diary-opening-book {
+    animation:
+      lld-diary-cover-open-v1s 640ms cubic-bezier(0.42, 0, 0.2, 1) both;
+  }
+
+  main.lld-diary-experience.lld-diary-page-revealing {
+    animation:
+      lld-diary-page-grow-v1s 980ms cubic-bezier(0.22, 0.72, 0.22, 1) both;
+  }
+
+  @keyframes lld-diary-cover-open-v1s {
+    0% {
+      opacity: 1;
+      transform:
+        rotateY(-3deg)
+        rotateX(1deg);
+    }
+
+    40% {
+      opacity: 1;
+      transform:
+        rotateY(-34deg)
+        rotateX(1deg)
+        translateX(-2rem)
+        scale(1.01);
+    }
+
+    72% {
+      opacity: 0.76;
+      transform:
+        rotateY(-68deg)
+        rotateX(1deg)
+        translateX(-8rem)
+        scale(1);
+    }
+
+    100% {
+      opacity: 0.08;
+      transform:
+        rotateY(-88deg)
+        rotateX(1deg)
+        translateX(-15rem)
+        scale(0.98);
+    }
+  }
+
+  @keyframes lld-diary-page-grow-v1s {
+    0%,
+    24% {
+      opacity: 0.18;
+      clip-path: inset(5% 27.5% 5.5% 27.5% round 1.25rem);
+      transform:
+        translateY(1.5vh)
+        scale(0.85);
+    }
+
+    52% {
+      opacity: 0.72;
+      clip-path: inset(3% 18% 4% 18% round 1rem);
+      transform:
+        translateY(0.8vh)
+        scale(0.9);
+    }
+
+    76% {
+      opacity: 1;
+      clip-path: inset(1% 7% 2% 7% round 0.65rem);
+      transform:
+        translateY(0.25vh)
+        scale(0.96);
+    }
+
+    100% {
+      opacity: 1;
+      clip-path: inset(0 0 0 0 round 0);
+      transform:
+        translateY(0)
+        scale(1);
+    }
+  }
+}
+/* LLD / SAME-BOOK CONTINUITY V1S END */
+/* LLD / PHYSICAL BOOK DESK CORRECTION V1U START */
+@media (min-width: 641px) {
+  body:has(main.lld-diary-experience) {
+    min-height: 100vh;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(18, 7, 2, 0.24),
+        transparent 18%,
+        rgba(255, 219, 165, 0.04) 50%,
+        transparent 82%,
+        rgba(18, 7, 2, 0.24)
+      ),
+      repeating-linear-gradient(
+        0deg,
+        #56301f 0,
+        #56301f 5.9rem,
+        #351b11 5.94rem,
+        #6a3d27 6.02rem,
+        #4a291b 11.9rem,
+        #2c170f 12rem
+      ) !important;
+  }
+
+  body:has(main.lld-diary-experience) #root,
+  body:has(main.lld-diary-experience) #root > * {
+    min-height: 100vh;
+    background: transparent !important;
+  }
+
+  body:has(main.lld-diary-experience)
+  main.lld-diary-experience {
+    position: relative !important;
+    z-index: 2 !important;
+    box-sizing: border-box !important;
+    inline-size: min(64rem, calc(100vw - 14rem)) !important;
+    width: min(64rem, calc(100vw - 14rem)) !important;
+    max-inline-size: 64rem !important;
+    max-width: 64rem !important;
+    block-size: auto !important;
+    height: auto !important;
+    min-block-size: 0 !important;
+    min-height: 0 !important;
+    margin: 2rem auto 4rem !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  body:has(main.lld-diary-experience)
+  main.lld-diary-experience::after {
+    display: none !important;
+    width: 0 !important;
+    content: none !important;
+    background: none !important;
+  }
+
+  body:has(main.lld-diary-experience) #root::before,
+  body:has(main.lld-diary-experience) #root::after {
+    content: none;
+  }
+}
+
+@media (min-width: 1550px) {
+  body:has(main.lld-diary-experience) #root {
+    position: relative;
+    isolation: isolate;
+  }
+
+  body:has(main.lld-diary-experience) #root::before {
+    position: fixed;
+    z-index: 1;
+    top: 19rem;
+    left: 3.5rem;
+    display: block;
+    width: 17rem;
+    height: 12rem;
+    pointer-events: none;
+    content: "";
+    transform: rotate(-5deg);
+    border: 0.12rem solid rgba(95, 76, 48, 0.55);
+    background:
+      linear-gradient(rgba(77, 111, 126, 0.15) 1px, transparent 1px)
+        0 0 / 100% 1.6rem,
+      linear-gradient(90deg, rgba(77, 111, 126, 0.15) 1px, transparent 1px)
+        0 0 / 1.6rem 100%,
+      linear-gradient(145deg, #fbf7e9, #e8dec5);
+    box-shadow:
+      0.8rem 0.85rem 0 #ddd1b7,
+      1.15rem 1.35rem 1.4rem rgba(24, 10, 3, 0.42);
+  }
+
+  body:has(main.lld-diary-experience) #root::after {
+    position: fixed;
+    z-index: 1;
+    right: 3.5rem;
+    bottom: 5rem;
+    display: block;
+    width: 17rem;
+    height: 14rem;
+    pointer-events: none;
+    content: "";
+    background:
+      linear-gradient(
+        90deg,
+        #d39b20 0 78%,
+        #ead39b 78% 91%,
+        #313233 91%
+      )
+      right 0.4rem top 1.8rem / 14rem 0.82rem no-repeat,
+      repeating-linear-gradient(
+        90deg,
+        transparent 0 0.62rem,
+        rgba(53, 56, 57, 0.65) 0.64rem 0.68rem
+      )
+      right 1rem bottom 0.8rem / 13rem 2.25rem no-repeat,
+      linear-gradient(
+        180deg,
+        #dce2e3,
+        #899397
+      )
+      right 1rem bottom 0.8rem / 13rem 2.25rem no-repeat,
+      radial-gradient(
+        circle at 50% 50%,
+        #252a2d 0 13%,
+        #d0a22c 14% 53%,
+        #a97816 54% 67%,
+        transparent 68%
+      )
+      left 0 bottom 3.9rem / 7.2rem 7.2rem no-repeat;
+    filter: drop-shadow(0 0.8rem 0.75rem rgba(24, 10, 3, 0.42));
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1320px) {
+  body:has(main.lld-diary-experience)
+  main.lld-diary-experience {
+    inline-size: min(64rem, calc(100vw - 4rem)) !important;
+    width: min(64rem, calc(100vw - 4rem)) !important;
+  }
+}
+/* LLD / PHYSICAL BOOK DESK CORRECTION V1U END */
+/* LLD / DESKTOP FLEX-WIDTH CORRECTION V1V START */
+@media (min-width: 1321px) {
+  body:has(main.lld-diary-experience)
+  main.lld-diary-experience {
+    flex-grow: 0 !important;
+    flex-shrink: 1 !important;
+    flex-basis: min(64rem, calc(100vw - 20rem)) !important;
+    inline-size: min(64rem, calc(100vw - 20rem)) !important;
+    width: min(64rem, calc(100vw - 20rem)) !important;
+  }
+
+  body:has(main.lld-diary-experience)
+  main.lld-diary-experience
+  > .lld-content-frame-diary {
+    box-sizing: border-box;
+    inline-size: 100%;
+    width: 100%;
+    max-inline-size: 100%;
+    max-width: 100%;
+  }
+}
+/* LLD / DESKTOP FLEX-WIDTH CORRECTION V1V END */
+/* LLD / PHYSICAL BOOK SHELL ONLY V1Y START */
+@media (min-width: 981px) {
+  body:has(main.lld-diary-experience)
+  main.lld-diary-experience
+  .lld-digital-job-binder
+  > .lld-binder-stage {
+    box-sizing: border-box !important;
+    position: relative !important;
+    inline-size: min(72vw, 1120px) !important;
+    width: min(72vw, 1120px) !important;
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+    max-inline-size: 1120px !important;
+    max-width: 1120px !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+    overflow: visible !important;
+  }
+
+  body:has(main.lld-diary-experience)
+  main.lld-diary-experience
+  .lld-digital-job-binder
+  > .lld-binder-stage
+  > .lld-binder-cover {
+    box-sizing: border-box !important;
+    inline-size: 100% !important;
+    width: 100% !important;
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+    max-inline-size: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  body:has(main.lld-diary-experience)
+  main.lld-diary-experience
+  .lld-binder-cover
+  > .lld-binder-pages {
+    box-sizing: border-box !important;
+    inline-size: 100% !important;
+    width: 100% !important;
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+    max-inline-size: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+@media (min-width: 1100px) {
+  body:has(main.lld-diary-experience) #root {
+    position: relative !important;
+    isolation: isolate !important;
+  }
+
+  body:has(main.lld-diary-experience)
+  main.main-content.lld-diary-experience {
+    position: relative !important;
+    z-index: 2 !important;
+  }
+
+  body:has(main.lld-diary-experience) #root::before {
+    position: fixed !important;
+    z-index: 1 !important;
+    top: 17rem !important;
+    left: 2.5vw !important;
+    display: block !important;
+    width: 12rem !important;
+    height: 9rem !important;
+    pointer-events: none !important;
+    content: "" !important;
+    transform: rotate(-6deg) !important;
+    border: 0.1rem solid rgba(91, 72, 43, 0.62) !important;
+    background:
+      linear-gradient(rgba(67, 105, 124, 0.16) 1px, transparent 1px)
+        0 0 / 100% 1.2rem,
+      linear-gradient(90deg, rgba(67, 105, 124, 0.16) 1px, transparent 1px)
+        0 0 / 1.2rem 100%,
+      linear-gradient(145deg, #fffdf3, #e7dcc1) !important;
+    box-shadow:
+      0.65rem 0.7rem 0 #d8cbae,
+      0.95rem 1.1rem 1.3rem rgba(25, 10, 3, 0.42) !important;
+  }
+
+  body:has(main.lld-diary-experience) #root::after {
+    position: fixed !important;
+    z-index: 1 !important;
+    right: 1.5vw !important;
+    bottom: 4rem !important;
+    display: block !important;
+    width: 10rem !important;
+    height: 12rem !important;
+    pointer-events: none !important;
+    content: "" !important;
+    background:
+      linear-gradient(
+        90deg,
+        #d39b20 0 76%,
+        #ead39b 76% 90%,
+        #303233 90%
+      )
+      right 0 top 0.8rem / 9rem 0.72rem no-repeat,
+      repeating-linear-gradient(
+        90deg,
+        transparent 0 0.5rem,
+        rgba(50, 53, 54, 0.65) 0.52rem 0.56rem
+      )
+      right 0 bottom 0 / 9rem 1.8rem no-repeat,
+      linear-gradient(
+        180deg,
+        #dce2e3,
+        #899397
+      )
+      right 0 bottom 0 / 9rem 1.8rem no-repeat,
+      radial-gradient(
+        circle at 50% 50%,
+        #252a2d 0 13%,
+        #d0a22c 14% 53%,
+        #a97816 54% 67%,
+        transparent 68%
+      )
+      left 0 bottom 2.7rem / 6.2rem 6.2rem no-repeat !important;
+    filter:
+      drop-shadow(0 0.7rem 0.65rem rgba(24, 10, 3, 0.44)) !important;
+  }
+}
+/* LLD / PHYSICAL BOOK SHELL ONLY V1Y END */
 @media (max-width: 640px) {
   .lld-diary-opening {
     padding: 0.8rem;

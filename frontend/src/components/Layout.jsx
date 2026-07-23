@@ -33,6 +33,7 @@ const Layout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [diaryOpeningVisible, setDiaryOpeningVisible] = useState(false);
+  const [diaryPageRevealing, setDiaryPageRevealing] = useState(false);
   function closeMobileSidebar() {
     setSidebarOpen(false);
   }
@@ -160,6 +161,7 @@ const Layout = () => {
   useEffect(() => {
     if (!location.pathname.startsWith('/diary')) {
       setDiaryOpeningVisible(false);
+      setDiaryPageRevealing(false);
       return;
     }
 
@@ -196,14 +198,40 @@ const Layout = () => {
     };
   }, [diaryOpeningKey, diaryOpeningVisible]);
 
-  const openDiaryForSession = () => {
+  const openDiaryForSession = (event) => {
     try {
       sessionStorage.setItem(diaryOpeningKey, 'true');
     } catch (error) {
       // The diary still opens when browser storage is unavailable.
     }
 
-    setDiaryOpeningVisible(false);
+    const openingElement = event?.currentTarget?.closest(
+      '.lld-diary-opening'
+    );
+    const reduceMotion = window.matchMedia?.(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    if (!openingElement || reduceMotion) {
+      setDiaryOpeningVisible(false);
+      setDiaryPageRevealing(false);
+      return;
+    }
+
+    if (openingElement.classList.contains('lld-diary-opening-leaving')) {
+      return;
+    }
+
+    setDiaryPageRevealing(true);
+    openingElement.classList.add('lld-diary-opening-leaving');
+
+    window.setTimeout(() => {
+      setDiaryOpeningVisible(false);
+    }, 640);
+
+    window.setTimeout(() => {
+      setDiaryPageRevealing(false);
+    }, 980);
   };
 
   const handleFeedbackClick = () => {
@@ -410,7 +438,7 @@ const Layout = () => {
       />
 
 
-      <main className={`main-content fo-main-content lld-fitoutos-main ${location.pathname.startsWith('/diary') ? 'lld-diary-experience' : ''}`}>
+      <main className={`main-content fo-main-content lld-fitoutos-main ${location.pathname.startsWith('/diary') ? 'lld-diary-experience' : ''} ${diaryPageRevealing ? 'lld-diary-page-revealing' : ''}`}>
         <header className="app-header">
 
           <div className="lld-compact-header-inner">
