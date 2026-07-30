@@ -2617,12 +2617,20 @@ const DiaryPage = () => {
         labourCount={labourRows.length}
         labourRows={labourRows}
         quickNote={entryData.note}
+        diaryDraft={entryData}
+        diaryCategoryOptions={smartCaptureOptions}
+        diaryPriorityOptions={priorityOptions}
+        diarySendToOptions={sendToOptions}
         submitting={submitting}
         onQuickNoteChange={(note) => setEntryData((current) => ({ ...current, note }))}
+        onDiaryDraftChange={(field, value) => setEntryData((current) => ({
+          ...current,
+          [field]: value
+        }))}
+        onDiaryPhotoUpload={handlePhotoUpload}
         onQuickSubmit={handleQuickEntry}
         onChangeDate={changeDate}
         onSelectDate={selectDate}
-        onOpenDiary={() => openDiaryView('site-notes')}
         onOpenTasks={() => openActionItemsPage('today')}
         onOpenTask={openDiaryActionItem}
         onCompleteTask={handleCompleteFollowUpFromDiary}

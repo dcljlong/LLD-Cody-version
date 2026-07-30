@@ -4737,3 +4737,116 @@ main.lld-diary-experience.lld-diary-page-revealing {
 }
 
 /* LLD / PERSONAL DIARY OPENING V1P END */
+
+/* LLD / PHOTOGRAPHIC DESK REALISM RESET V2A START */
+/*
+ * Replaces the repeating CSS timber and gradient-drawn desk props with
+ * one consistent photographic desktop shared by the closed and open diary.
+ */
+@media screen and (min-width: 641px) {
+  body:has(main.lld-diary-experience) {
+    background-color: #2b190f !important;
+    background-image:
+      linear-gradient(
+        115deg,
+        rgba(20, 10, 5, 0.08),
+        transparent 38%,
+        rgba(12, 6, 3, 0.18)
+      ),
+      url("./assets/lld-desk-walnut-v2a.png") !important;
+    background-position: center center !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+  }
+
+  body:has(main.lld-diary-experience) #root::before,
+  body:has(main.lld-diary-experience) #root::after {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    content: none !important;
+    background: none !important;
+    filter: none !important;
+  }
+
+  .lld-diary-opening {
+    background-color: #2b190f;
+    background-image:
+      linear-gradient(
+        115deg,
+        rgba(12, 6, 3, 0.06),
+        transparent 40%,
+        rgba(7, 3, 2, 0.26)
+      ),
+      url("./assets/lld-desk-walnut-v2a.png");
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+
+  .lld-diary-opening::before {
+    opacity: 1;
+    background:
+      radial-gradient(
+        ellipse at 50% 46%,
+        transparent 20%,
+        rgba(8, 4, 2, 0.08) 68%,
+        rgba(5, 2, 1, 0.22) 100%
+      );
+  }
+
+  body:has(main.lld-diary-experience)
+  main.lld-diary-experience
+  .lld-binder-cover {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 226, 174, 0.07),
+      inset 0 0 3rem rgba(0, 0, 0, 0.36),
+      0 0.35rem 0.65rem rgba(31, 17, 8, 0.28),
+      0 1.8rem 3.2rem rgba(15, 7, 3, 0.48) !important;
+  }
+
+  body:has(main.lld-diary-experience)
+  main.lld-diary-experience
+  .lld-binder-capture-panel {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 239, 207, 0.11),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.72),
+      0 0.45rem 0.75rem rgba(25, 12, 5, 0.25),
+      0 1.45rem 2.6rem rgba(15, 7, 3, 0.39) !important;
+  }
+}
+/* LLD / PHOTOGRAPHIC DESK REALISM RESET V2A END */
+
+/* LLD / UNIFIED BINDER WORKSPACE CONTRACT V2R START */
+@media screen and (min-width: 981px) {
+  body:has(main.lld-diary-experience)
+  main.main-content.lld-diary-experience {
+    box-sizing: border-box !important;
+    flex: 0 1 auto !important;
+    inline-size: min(96vw, 92rem) !important;
+    width: min(96vw, 92rem) !important;
+    max-inline-size: 92rem !important;
+    max-width: 92rem !important;
+    margin: 1.25rem auto 3.5rem !important;
+  }
+
+  body:has(main.lld-diary-experience)
+  main.lld-diary-experience
+  > .lld-content-frame-diary {
+    box-sizing: border-box;
+    inline-size: 100%;
+    width: 100%;
+    max-inline-size: 100%;
+    max-width: 100%;
+  }
+}
+
+@media screen and (min-width: 981px) and (max-width: 1280px) {
+  body:has(main.lld-diary-experience)
+  main.main-content.lld-diary-experience {
+    inline-size: calc(100vw - 2rem) !important;
+    width: calc(100vw - 2rem) !important;
+  }
+}
+/* LLD / UNIFIED BINDER WORKSPACE CONTRACT V2R END */

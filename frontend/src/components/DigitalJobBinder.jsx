@@ -8,7 +8,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
-  FileText,
   Mail,
   Package,
   Plus,
@@ -30,6 +29,74 @@ const BINDER_TABS = [
   { id: 'staff', label: 'Staff', description: 'Labour', color: 'pink' },
   { id: 'closeout', label: 'Day review', description: 'Check this day', color: 'slate' }, // day-review-language-v8-9k1
 ];
+
+const BINDER_REGISTER_COPY = {
+  tasks: {
+    listTitle: 'Open actions',
+    detailTitle: 'Action desk',
+    unit: 'action',
+    emptyAction: 'Open Tasks',
+    selection: 'Select an action to review.',
+  },
+  materials: {
+    listTitle: 'Materials register',
+    detailTitle: 'Material desk',
+    unit: 'material record',
+    emptyAction: 'Add material',
+    selection: 'Select a material to review.',
+  },
+  emails: {
+    listTitle: 'Communication follow-ups',
+    detailTitle: 'Communication desk',
+    unit: 'follow-up',
+    emptyAction: 'Open communications',
+    selection: 'Select a follow-up to review.',
+  },
+  roadblocks: {
+    listTitle: 'Active roadblocks',
+    detailTitle: 'Roadblock desk',
+    unit: 'roadblock',
+    emptyAction: 'Open Roadblocks',
+    selection: 'Select a roadblock to review.',
+  },
+  walkaround: {
+    listTitle: 'Site observations',
+    detailTitle: 'Observation desk',
+    unit: 'observation',
+    emptyAction: 'Open Walkaround',
+    selection: 'Select an observation to review.',
+  },
+  photos: {
+    listTitle: 'Photo evidence',
+    detailTitle: 'Evidence desk',
+    unit: 'photo',
+    emptyAction: 'Add photo evidence',
+    selection: 'Select a photo to review.',
+  },
+  staff: {
+    listTitle: 'Staff on site',
+    detailTitle: 'Staff desk',
+    unit: 'staff member',
+    emptyAction: 'Open Staff diary',
+    selection: 'Select a staff entry to review.',
+  },
+  closeout: {
+    listTitle: 'Day readiness',
+    detailTitle: 'Review desk',
+    unit: 'check',
+    emptyAction: 'Open day review',
+    selection: 'Work through the readiness register.',
+  },
+};
+
+const getBinderPageNumber = (tabId, pageOffset = 0) => {
+  const tabIndex = Math.max(
+    0,
+    BINDER_TABS.findIndex((tab) => tab.id === tabId)
+  );
+
+  return String((tabIndex * 2) + pageOffset + 1).padStart(2, '0');
+};
 
 const getRequestedBinderTab = () => {
   if (typeof window === 'undefined') return 'today';
@@ -589,6 +656,267 @@ const DiaryEntry = ({ entry }) => {
         </div>
       </div>
     </article>
+  );
+};
+
+const BinderEditorShell = ({
+  kicker,
+  title,
+  context,
+  busy = false,
+  onClose,
+  children,
+}) => {
+  const closeButtonRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  const busyRef = useRef(busy);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    busyRef.current = busy;
+  }, [busy, onClose]);
+
+  useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    closeButtonRef.current?.focus({ preventScroll: true });
+
+    const handleKeyDown = (event) => {
+      if (event.key !== 'Escape' || busyRef.current) return;
+
+      event.preventDefault();
+      onCloseRef.current?.();
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, []);
+
+  return (
+    <section
+      className="lld-binder-editor-shell"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="lld-binder-editor-title"
+      data-testid="lld-binder-editor-shell-v2s1"
+    >
+      <header className="lld-binder-editor-header">
+        <div>
+          <p>{kicker}</p>
+          <h2 id="lld-binder-editor-title">{title}</h2>
+          <span>{context}</span>
+        </div>
+
+        <button
+          ref={closeButtonRef}
+          type="button"
+          className="lld-binder-editor-close"
+          onClick={onClose}
+          disabled={busy}
+        >
+          Back to binder
+        </button>
+      </header>
+
+      <div className="lld-binder-editor-body">
+        {children}
+      </div>
+    </section>
+  );
+};
+
+const BinderDiaryEditor = ({
+  projectName,
+  selectedDateLabel,
+  draft = {},
+  draftStatus = '',
+  categoryOptions = [],
+  priorityOptions = [],
+  sendToOptions = [],
+  saving = false,
+  onChange,
+  onPhotoUpload,
+  onSubmit,
+  onClose,
+}) => {
+  const cameraInputRef = useRef(null);
+  const uploadInputRef = useRef(null);
+  const photos = Array.isArray(draft.photos) ? draft.photos : [];
+
+  return (
+    <BinderEditorShell
+      kicker="Detailed diary entry"
+      title="Add details & photos"
+      context={`${selectedDateLabel} · ${projectName}`}
+      busy={saving}
+      onClose={onClose}
+    >
+      <form
+        className="lld-binder-diary-editor-form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSubmit?.(event);
+        }}
+      >
+        <div className="lld-binder-diary-editor-main">
+          <label className="lld-binder-action-field lld-binder-action-field-wide">
+            <span>What happened on site?</span>
+            <textarea
+              value={draft.note || ''}
+              placeholder="Work completed, delays, deliveries, visitors, incidents, decisions or anything else that belongs in today's record..."
+              onChange={(event) => onChange?.('note', event.target.value)}
+              disabled={saving}
+              rows="8"
+              data-testid="lld-binder-diary-note-v2s1"
+            />
+          </label>
+
+          <div className="lld-binder-diary-editor-fields">
+            <label className="lld-binder-action-field">
+              <span>Category</span>
+              <select
+                value={draft.entry_type || categoryOptions[0]?.value || ''}
+                onChange={(event) => onChange?.('entry_type', event.target.value)}
+                disabled={saving}
+                data-testid="lld-binder-diary-category-v2s1"
+              >
+                {categoryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="lld-binder-action-field">
+              <span>Priority</span>
+              <select
+                value={draft.priority || priorityOptions[0]?.value || ''}
+                onChange={(event) => onChange?.('priority', event.target.value)}
+                disabled={saving}
+                data-testid="lld-binder-diary-priority-v2s1"
+              >
+                {priorityOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="lld-binder-action-field">
+              <span>Needs sending</span>
+              <select
+                value={draft.send_to || 'none'}
+                onChange={(event) => onChange?.('send_to', event.target.value)}
+                disabled={saving}
+                data-testid="lld-binder-diary-send-to-v2s1"
+              >
+                {sendToOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <aside className="lld-binder-diary-editor-side">
+          <div className="lld-binder-diary-editor-card">
+            <Camera aria-hidden="true" />
+            <div>
+              <strong>Photo evidence</strong>
+              <span>
+                {photos.length > 0
+                  ? `${photos.length} photo${photos.length === 1 ? '' : 's'} ready`
+                  : 'No photos attached'}
+              </span>
+            </div>
+
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              className="lld-binder-editor-file-input"
+              onChange={onPhotoUpload}
+              disabled={saving}
+              data-testid="lld-binder-diary-camera-input-v2s1"
+            />
+
+            <input
+              ref={uploadInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="lld-binder-editor-file-input"
+              onChange={onPhotoUpload}
+              disabled={saving}
+              data-testid="lld-binder-diary-upload-input-v2s1"
+            />
+
+            <div className="lld-binder-diary-editor-photo-actions">
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                disabled={saving}
+              >
+                Take photo
+              </button>
+
+              <button
+                type="button"
+                onClick={() => uploadInputRef.current?.click()}
+                disabled={saving}
+              >
+                Upload
+              </button>
+            </div>
+          </div>
+
+          <div className="lld-binder-diary-editor-card lld-binder-diary-editor-draft">
+            <BookOpen aria-hidden="true" />
+            <div>
+              <strong>Draft protection</strong>
+              <span>
+                {draftStatus || 'Changes stay in the existing device draft until saved.'}
+              </span>
+            </div>
+          </div>
+        </aside>
+
+        <div className="lld-binder-diary-editor-actions">
+          <button
+            type="submit"
+            className="lld-binder-action-button lld-binder-action-button-primary"
+            disabled={
+              saving ||
+              !safeText(draft.note) ||
+              typeof onSubmit !== 'function'
+            }
+            data-testid="lld-binder-diary-save-v2s1"
+          >
+            {saving ? 'Saving diary entry...' : 'Save to diary'}
+          </button>
+
+          <button
+            type="button"
+            className="lld-binder-action-button lld-binder-action-button-quiet"
+            onClick={onClose}
+            disabled={saving}
+          >
+            Keep draft and go back
+          </button>
+        </div>
+      </form>
+    </BinderEditorShell>
   );
 };
 
@@ -2020,12 +2348,17 @@ const DigitalJobBinder = ({
   labourCount = 0,
   labourRows = [],
   quickNote = '',
+  diaryDraft = {},
+  diaryCategoryOptions = [],
+  diaryPriorityOptions = [],
+  diarySendToOptions = [],
   submitting = false,
   onQuickNoteChange,
+  onDiaryDraftChange,
+  onDiaryPhotoUpload,
   onQuickSubmit,
   onChangeDate,
   onSelectDate,
-  onOpenDiary,
   onOpenTasks,
   onOpenTask,
   onCompleteTask,
@@ -2068,7 +2401,50 @@ const DigitalJobBinder = ({
 }) => {
   const [activeTab, setActiveTab] = useState(getRequestedBinderTab);
   const [mobileTodayPage, setMobileTodayPage] = useState('my-day');
+  const [diaryEditorOpen, setDiaryEditorOpen] = useState(false);
   const mobileTabsRef = useRef(null);
+  const diaryEditorReturnFocusRef = useRef(null);
+  const diarySaveWasPendingRef = useRef(false);
+
+  const restoreDiaryEditorFocus = () => {
+    window.requestAnimationFrame(() => {
+      diaryEditorReturnFocusRef.current?.focus?.({ preventScroll: true });
+    });
+  };
+
+  const closeDiaryEditor = () => {
+    if (submitting) return;
+
+    setDiaryEditorOpen(false);
+    restoreDiaryEditorFocus();
+  };
+
+  const openDiaryEditor = (triggerElement = null) => {
+    if (selectedDate !== today) return;
+
+    diaryEditorReturnFocusRef.current = triggerElement || document.activeElement;
+    setDiaryEditorOpen(true);
+  };
+
+  useEffect(() => {
+    const saveWasPending = diarySaveWasPendingRef.current;
+
+    diarySaveWasPendingRef.current = submitting;
+
+    if (
+      diaryEditorOpen &&
+      saveWasPending &&
+      !submitting &&
+      !safeText(diaryDraft?.note)
+    ) {
+      setDiaryEditorOpen(false);
+      restoreDiaryEditorFocus();
+    }
+  }, [diaryDraft?.note, diaryEditorOpen, submitting]);
+
+  useEffect(() => {
+    setDiaryEditorOpen(false);
+  }, [selectedDate, selectedProject]);
 
   useEffect(() => {
     const syncActiveTabFromUrl = () => {
@@ -2195,6 +2571,31 @@ const DigitalJobBinder = ({
     [taskItems]
   );
 
+  const taskDateSummary = useMemo(() => {
+    const summary = {
+      overdue: 0,
+      dueToday: 0,
+      noDate: 0,
+    };
+
+    tasks.forEach((item) => {
+      const dueDate = safeText(
+        item?.due_date || item?.expected_complete_date,
+        ''
+      ).slice(0, 10);
+
+      if (!dueDate) {
+        summary.noDate += 1;
+      } else if (dueDate < selectedDate) {
+        summary.overdue += 1;
+      } else if (dueDate === selectedDate) {
+        summary.dueToday += 1;
+      }
+    });
+
+    return summary;
+  }, [tasks, selectedDate]); // task-date-summary-v2r-1
+
   const allUrgentItems = useMemo(
     () => uniqueItemsByKey(Array.isArray(urgentItems) ? urgentItems : []),
     [urgentItems]
@@ -2257,7 +2658,7 @@ const DigitalJobBinder = ({
 
   const actions = {
     today: null,
-    diary: onOpenDiary,
+    diary: openDiaryEditor,
     tasks: onOpenTasks,
     materials: onAddMaterial || onOpenMaterials,
     emails: onOpenEmails,
@@ -2684,6 +3085,46 @@ const DigitalJobBinder = ({
     item?.supplier,
   ].filter(Boolean).join(' · ');
 
+  const focusedRegisterCopy =
+    BINDER_REGISTER_COPY[activeTab] || {
+      listTitle: activeTabConfig.label,
+      detailTitle: `${activeTabConfig.label} desk`,
+      unit: 'record',
+      emptyAction: `Open ${activeTabConfig.label}`,
+      selection: `Select a ${activeTabConfig.label.toLowerCase()} record to review it.`,
+    };
+
+  const focusedHasDetail = Boolean(
+    (
+      ['tasks', 'emails'].includes(activeTab) &&
+      selectedTask &&
+      selectedTaskDraft
+    ) || (
+      activeTab === 'materials' &&
+      selectedMaterial
+    ) || (
+      activeTab === 'roadblocks' &&
+      selectedRoadblock
+    ) || (
+      activeTab === 'walkaround' &&
+      selectedWalkaround
+    ) || (
+      activeTab === 'photos' &&
+      selectedPhoto
+    ) || (
+      activeTab === 'staff' &&
+      selectedStaff
+    )
+  );
+
+  const focusedRegisterSummary = [
+    `${focusedItems.length} ${focusedRegisterCopy.unit}${
+      focusedItems.length === 1 ? '' : 's'
+    }`,
+    selectedDateLabel,
+  ].join(' · ');
+
+
   return (
     <section
       className={`lld-digital-job-binder lld-binder-active-${activeTab} lld-binder-mobile-page-${mobileTodayPage}`}
@@ -2747,7 +3188,14 @@ const DigitalJobBinder = ({
               data-testid="lld-binder-date-picker-v8-9i1"
             >
               <CalendarDays aria-hidden="true" />
-              <strong>{selectedDateLabel}</strong>
+              <strong>
+                {new Intl.DateTimeFormat('en-NZ', {
+                  weekday: 'short',
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                }).format(new Date(`${selectedDate}T12:00:00`))}
+              </strong>
               <input
                 type="date"
                 value={selectedDate}
@@ -2792,14 +3240,32 @@ const DigitalJobBinder = ({
               data-testid="lld-binder-quick-note-v1"
             />
 
-            <button
-              type="submit"
-              disabled={submitting || !safeText(quickNote)}
-              data-testid="lld-binder-quick-save-v1"
+            <div
+              className="lld-binder-quick-actions"
+              aria-label="Diary note actions"
+              data-testid="lld-binder-unified-capture-v2s2"
             >
-              <Plus />
-              {submitting ? 'Saving...' : 'Add to diary'}
-            </button>
+              <button
+                type="submit"
+                className="lld-binder-quick-save"
+                disabled={submitting || !safeText(quickNote)}
+                data-testid="lld-binder-quick-save-v1"
+              >
+                <Plus />
+                {submitting ? 'Saving...' : 'Add to diary'}
+              </button>
+
+              <button
+                type="button"
+                className="lld-binder-quick-details"
+                onClick={(event) => openDiaryEditor(event.currentTarget)}
+                disabled={submitting}
+                data-testid="lld-binder-quick-details-v2s2"
+              >
+                <Camera aria-hidden="true" />
+                Add details & photos
+              </button>
+            </div>
           </form>
         ) : (
           <div
@@ -2866,14 +3332,54 @@ const DigitalJobBinder = ({
               id="lld-binder-diary-page"
               className="lld-binder-page lld-binder-page-left"
             >
-              <div className="lld-binder-page-heading">
-                <div>
-                  <p>Site diary</p>
-                  <h3>{selectedDateLabel}</h3>
+                            <div
+                className="lld-binder-page-heading lld-binder-diary-date-heading"
+                data-testid="lld-binder-diary-date-navigation-v2q-6"
+              >
+                <button
+                  type="button"
+                  className="lld-binder-page-day-nav lld-binder-page-day-nav-previous"
+                  onClick={() => onChangeDate?.(-1)}
+                  aria-label="Previous diary day"
+                  title="Previous day"
+                >
+                  <ChevronLeft aria-hidden="true" />
+                  <span>Previous day</span>
+                </button>
+
+                <div className="lld-binder-diary-date-title">
+                  <p>
+                    {new Intl.DateTimeFormat('en-NZ', {
+                      weekday: 'long',
+                    }).format(new Date(`${selectedDate}T12:00:00`))}
+                  </p>
+
+                  <h3>
+                    {new Intl.DateTimeFormat('en-NZ', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    }).format(new Date(`${selectedDate}T12:00:00`))}
+                  </h3>
+
                   <span>{projectName}</span>
                 </div>
 
-                <BookOpen />
+                <button
+                  type="button"
+                  className="lld-binder-page-day-nav lld-binder-page-day-nav-next"
+                  onClick={() => onChangeDate?.(1)}
+                  disabled={selectedDate >= today}
+                  aria-label="Next diary day"
+                  title={
+                    selectedDate >= today
+                      ? 'This is the latest diary day'
+                      : 'Next day'
+                  }
+                >
+                  <span>Next day</span>
+                  <ChevronRight aria-hidden="true" />
+                </button>
               </div>
 
               <div className="lld-binder-diary-list">
@@ -2890,15 +3396,6 @@ const DigitalJobBinder = ({
                   </div>
                 )}
               </div>
-
-              <button
-                type="button"
-                className="lld-binder-page-action"
-                onClick={onOpenDiary}
-              >
-                <FileText />
-                Open full diary record
-              </button>
 
               <footer
                 className="lld-binder-page-footer"
@@ -3106,7 +3603,11 @@ const DigitalJobBinder = ({
                 <>
                   <div className="lld-binder-page-heading">
                 <div>
-                  <p>Working day</p>
+                  <p>
+                    {new Date(`${selectedDate}T12:00:00`).getDay() === 0
+                      ? 'Non-working day'
+                      : 'Working day'}
+                  </p>
                   <h3>My Day</h3>
                   <span>Important items remain visible until dealt with.</span>
                 </div>
@@ -3184,10 +3685,148 @@ const DigitalJobBinder = ({
               )}
             </section>
 
-        {activeTab !== 'today' && (
+        {activeTab === 'diary' && (
+          <section
+            key="diary"
+            className="lld-binder-focused-spread lld-binder-diary-focused-spread"
+            data-testid="lld-binder-diary-spread-v2q-7"
+          >
+            <article className="lld-binder-focused-page lld-binder-diary-focused-page lld-binder-diary-focused-page-left">
+              <div className="lld-binder-page-heading lld-binder-diary-date-heading">
+                <button
+                  type="button"
+                  className="lld-binder-page-day-nav lld-binder-page-day-nav-previous"
+                  onClick={() => onChangeDate?.(-1)}
+                  aria-label="Previous diary day"
+                  title="Previous day"
+                >
+                  <ChevronLeft aria-hidden="true" />
+                  <span>Previous day</span>
+                </button>
+
+                <div className="lld-binder-diary-date-title">
+                  <p>
+                    {new Intl.DateTimeFormat('en-NZ', {
+                      weekday: 'long',
+                    }).format(new Date(`${selectedDate}T12:00:00`))}
+                  </p>
+
+                  <h3>
+                    {new Intl.DateTimeFormat('en-NZ', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    }).format(new Date(`${selectedDate}T12:00:00`))}
+                  </h3>
+
+                  <span>{projectName}</span>
+                </div>
+
+                <button
+                  type="button"
+                  className="lld-binder-page-day-nav lld-binder-page-day-nav-next"
+                  onClick={() => onChangeDate?.(1)}
+                  disabled={selectedDate >= today}
+                  aria-label="Next diary day"
+                  title={
+                    selectedDate >= today
+                      ? 'This is the latest diary day'
+                      : 'Next day'
+                  }
+                >
+                  <span>Next day</span>
+                  <ChevronRight aria-hidden="true" />
+                </button>
+              </div>
+
+              <div className="lld-binder-focused-rule" />
+
+              <div className="lld-binder-diary-focused-list">
+                {entries.length > 0 ? (
+                  entries
+                    .slice(0, Math.max(1, Math.ceil(entries.length / 2)))
+                    .map((entry, index) => (
+                      <DiaryEntry
+                        key={entry?.id || entry?.saved_at || entry?.created_at || index}
+                        entry={entry}
+                      />
+                    ))
+                ) : (
+                  <div className="lld-binder-diary-focused-empty">
+                    <BookOpen aria-hidden="true" />
+                    <strong>No entries recorded</strong>
+                    <p>This diary page is ready for the first site record of the day.</p>
+                  </div>
+                )}
+              </div>
+
+              <footer
+                className="lld-binder-page-footer"
+                aria-label={`Diary page summary: ${diaryRecordSummary}`}
+              >
+                <span>{diaryRecordSummary}</span>
+                <span className="lld-binder-page-signature">Diary</span>
+                <strong aria-label="Page 3">
+                  {getBinderPageNumber('diary')}
+                </strong>
+              </footer>
+            </article>
+
+            <article className="lld-binder-focused-page lld-binder-diary-focused-page lld-binder-diary-focused-page-right">
+              <header className="lld-binder-page-heading lld-binder-diary-continuation-heading">
+                <div>
+                  <p>Daily record</p>
+                  <h3>
+                    {entries.length > 1 ? 'Continued' : 'Supporting notes'}
+                  </h3>
+                  {/* diary-supporting-notes-v2r-1 */}
+                  <span>{projectName}</span>
+                </div>
+
+                <BookOpen aria-hidden="true" />
+              </header>
+
+              <div className="lld-binder-focused-rule" />
+
+              <div className="lld-binder-diary-focused-list">
+                {entries.length > 1 ? (
+                  entries
+                    .slice(Math.max(1, Math.ceil(entries.length / 2)))
+                    .map((entry, index) => (
+                      <DiaryEntry
+                        key={entry?.id || entry?.saved_at || entry?.created_at || index}
+                        entry={entry}
+                      />
+                    ))
+                ) : (
+                  <div className="lld-binder-diary-continuation-empty">
+                    <BookOpen aria-hidden="true" />
+                    <p>Additional entries and supporting details will continue here.</p>
+                  </div>
+                )}
+              </div>
+
+              <footer
+                className="lld-binder-page-footer"
+                aria-label={`Supporting evidence: ${photoEvidenceItems.length} photos`}
+              >
+                <span>
+                  {photoEvidenceItems.length}{' '}
+                  {photoEvidenceItems.length === 1 ? 'photo' : 'photos'}
+                </span>
+                <span className="lld-binder-page-signature">Long Line Diary</span>
+                <strong aria-label="Page 4">
+                  {getBinderPageNumber('diary', 1)}
+                </strong>
+              </footer>
+            </article>
+          </section>
+        )}
+
+        {activeTab !== 'today' && activeTab !== 'diary' && (
           <section
             key={activeTab}
-            className={`lld-binder-focused-spread${
+            className={`lld-binder-focused-spread lld-binder-register-spread${
               activeTab === 'tasks'
                 ? ' lld-binder-tasks-ledger-spread'
                 : activeTab === 'materials'
@@ -3198,11 +3837,16 @@ const DigitalJobBinder = ({
             }`}
             data-testid={`lld-binder-focused-page-${activeTab}`}
           >
-            <article className="lld-binder-focused-page lld-binder-focused-page-left">
-              <header className="lld-binder-focused-heading">
-                <p>{activeTabConfig.description}</p>
-                <h2>{activeTabConfig.label}</h2>
-                <span>{selectedDateLabel}</span>
+            <article className="lld-binder-focused-page lld-binder-focused-page-left lld-binder-register-index-page">
+              <header className="lld-binder-page-heading lld-binder-register-index-heading">
+                <div>
+                  <p>{activeTabConfig.description}</p>
+                  <h3>{activeTabConfig.label}</h3>
+                  <span>
+                    {selectedDateLabel}
+                    {activeTab === 'closeout' ? '' : ` · ${projectName}`}
+                  </span>
+                </div>
                 {activeTab === 'closeout' && (
                   <span
                     className="lld-binder-closeout-project-v8-9j4-1"
@@ -3270,17 +3914,45 @@ const DigitalJobBinder = ({
                                   : 'staff members'
                                 : activeTab === 'closeout'
                                   ? focusedCount === 1
-                                    ? 'item to check'
-                                    : 'items to check'
+                                    ? 'attention point'
+                                    : 'attention points'
                                   : focusedCount === 1
                                     ? 'record for this day'
                                     : 'records for this day'}
                 </span>
               </div>
 
+              {activeTab === 'tasks' && (
+                <div
+                  className="lld-binder-register-tally lld-binder-task-tally"
+                  aria-label="Open action date totals"
+                >
+                  <span
+                    className={
+                      taskDateSummary.overdue > 0
+                        ? 'lld-binder-register-tally-attention'
+                        : ''
+                    }
+                  >
+                    <strong>{taskDateSummary.overdue}</strong>
+                    Overdue
+                  </span>
+
+                  <span>
+                    <strong>{taskDateSummary.dueToday}</strong>
+                    Due today
+                  </span>
+
+                  <span>
+                    <strong>{taskDateSummary.noDate}</strong>
+                    No due date
+                  </span>
+                </div>
+              )} {/* register-tally-v2r-1 */}
+
               {activeTab === 'materials' && (
                 <div
-                  className="lld-binder-material-tally"
+                  className="lld-binder-material-tally lld-binder-register-tally"
                   aria-label="Materials status totals"
                 >
                   <span>
@@ -3296,7 +3968,7 @@ const DigitalJobBinder = ({
                   <span
                     className={
                       materialAttentionCount > 0
-                        ? 'lld-binder-material-tally-attention'
+                        ? 'lld-binder-material-tally-attention lld-binder-register-tally-attention'
                         : ''
                     }
                   >
@@ -3367,10 +4039,25 @@ const DigitalJobBinder = ({
                   <span>Print / Save PDF</span>
                 </button>
               )}
+
+              <footer
+                className="lld-binder-page-footer"
+                aria-label={`${activeTabConfig.label} section summary: ${focusedRegisterSummary}`}
+              >
+                <span>{focusedRegisterSummary}</span>
+                <span className="lld-binder-page-signature">
+                  {activeTabConfig.label}
+                </span>
+                <strong
+                  aria-label={`Page ${getBinderPageNumber(activeTab)}`}
+                >
+                  {getBinderPageNumber(activeTab)}
+                </strong>
+              </footer>
             </article>
 
             <article
-              className={`lld-binder-focused-page lld-binder-focused-page-right${
+              className={`lld-binder-focused-page lld-binder-focused-page-right lld-binder-register-list-page${
                 (
                   ['tasks', 'emails'].includes(activeTab) &&
                   selectedTask &&
@@ -3395,6 +4082,7 @@ const DigitalJobBinder = ({
                   : ''
               }`}
             >
+              <div className="lld-binder-register-page-body">
               {activeTab === 'staff' &&
               selectedStaff ? (
                 <BinderStaffDetail
@@ -3450,8 +4138,10 @@ const DigitalJobBinder = ({
                 />
               ) : (
                 <>
-              <header className="lld-binder-focused-list-heading">
-                <span>
+              <header className="lld-binder-page-heading lld-binder-focused-list-heading">
+                <div>
+                  <p>Daily register</p>
+                  <h3>
                   {activeTab === 'tasks'
                     ? 'Open actions'
                     : activeTab === 'materials'
@@ -3469,7 +4159,9 @@ const DigitalJobBinder = ({
                                 : activeTab === 'closeout'
                                   ? 'Day readiness'
                                   : 'Daily records'}
-                </span>
+                  </h3>
+                  <span>{selectedDateLabel}</span>
+                </div>
                 <strong>
                   {activeTab === 'closeout'
                     ? focusedItems.length
@@ -3653,8 +4345,46 @@ const DigitalJobBinder = ({
                 </div>
               )}
                 </>
-              )}            </article>
+              )}
+              </div>
+
+              <footer
+                className="lld-binder-page-footer"
+                aria-label={`${focusedRegisterCopy.detailTitle}: ${focusedRegisterSummary}`}
+              >
+                <span>
+                  {focusedHasDetail
+                    ? `${focusedRegisterCopy.detailTitle} open`
+                    : focusedRegisterCopy.selection}
+                </span>
+                <span className="lld-binder-page-signature">
+                  Long Line Diary
+                </span>
+                <strong
+                  aria-label={`Page ${getBinderPageNumber(activeTab, 1)}`}
+                >
+                  {getBinderPageNumber(activeTab, 1)}
+                </strong>
+              </footer>
+            </article>
           </section>
+        )}
+
+        {diaryEditorOpen && (
+          <BinderDiaryEditor
+            projectName={projectName}
+            selectedDateLabel={selectedDateLabel}
+            draft={diaryDraft}
+            draftStatus={draftStatus}
+            categoryOptions={diaryCategoryOptions}
+            priorityOptions={diaryPriorityOptions}
+            sendToOptions={diarySendToOptions}
+            saving={submitting}
+            onChange={onDiaryDraftChange}
+            onPhotoUpload={onDiaryPhotoUpload}
+            onSubmit={onQuickSubmit}
+            onClose={closeDiaryEditor}
+          />
         )}
           </div>
         </div>

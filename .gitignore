@@ -115,3 +115,5 @@ backups/
 *.disable_secondary_loads.bak_*
 *.reenable_gates.bak_*
 # LONG LINE SUITE / PUBLIC REPO BACKUP ARTIFACT IGNORE END
+frontend/node_modules/.cache/default-development/22.pack
+frontend/node_modules/.cache/default-development/24.pack
