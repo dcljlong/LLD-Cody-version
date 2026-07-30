@@ -1853,24 +1853,31 @@ const StaffLedgerRow = ({
   );
 };
 
-const BinderStaffDetail = ({
-  row = {},
-  onOpenWorkflow,
+const BinderStaffAdd = ({
+  employeeOptions = [],
+  staffSaving = false,
+  onAddEmployee,
+  onAddSiteStaff,
   onClose,
 }) => {
-  const display = getStaffRowDisplay(row);
+  const [employeeValue, setEmployeeValue] = useState('');
+  const [siteOnlyName, setSiteOnlyName] = useState('');
+
+  const options = Array.isArray(employeeOptions)
+    ? employeeOptions
+    : [];
 
   return (
     <div
       className="lld-binder-action-detail lld-binder-staff-detail"
-      data-testid="lld-binder-staff-detail-v8-9h1"
+      data-testid="lld-binder-staff-add-v2s2b"
     >
       <div className="lld-binder-page-heading lld-binder-action-detail-heading">
         <div>
           <p>Daily labour</p>
-          <h3>Staff record</h3>
+          <h3>Add staff member</h3>
           <small>
-            Review attendance, time and diary notes without leaving the binder.
+            Add Timesheet staff or record a site-only person without leaving the binder.
           </small>
         </div>
 
@@ -1878,6 +1885,133 @@ const BinderStaffDetail = ({
           type="button"
           onClick={onClose}
           className="lld-binder-detail-back-link"
+          disabled={staffSaving}
+        >
+          ← Staff
+        </button>
+      </div>
+
+      <div className="lld-binder-action-form">
+        <label className="lld-binder-action-field lld-binder-action-field-wide">
+          <span>Timesheet staff</span>
+          <select
+            value={employeeValue}
+            onChange={(event) => setEmployeeValue(event.target.value)}
+            disabled={staffSaving}
+            data-testid="lld-binder-staff-add-employee-v2s2b"
+          >
+            <option value="">Select staff member</option>
+
+            {options.map((option, index) => (
+              <option
+                key={`${option.value || option.label || 'staff'}-${index}`}
+                value={option.value || ''}
+              >
+                {option.label || option.value}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="lld-binder-action-field lld-binder-action-field-wide">
+          <span>Site-only staff name</span>
+          <input
+            type="text"
+            value={siteOnlyName}
+            placeholder="Name for this diary only"
+            onChange={(event) => setSiteOnlyName(event.target.value)}
+            disabled={staffSaving}
+            data-testid="lld-binder-staff-add-site-only-v2s2b"
+          />
+        </label>
+
+        <div className="lld-binder-action-controls">
+          <button
+            type="button"
+            className="lld-binder-action-button lld-binder-action-button-primary"
+            onClick={() => onAddEmployee?.(employeeValue)}
+            disabled={staffSaving || !employeeValue}
+          >
+            Add Timesheet staff
+          </button>
+
+          <button
+            type="button"
+            className="lld-binder-action-button"
+            onClick={() => onAddSiteStaff?.(siteOnlyName.trim())}
+            disabled={staffSaving || !siteOnlyName.trim()}
+          >
+            Add site-only staff
+          </button>
+
+          <button
+            type="button"
+            className="lld-binder-action-button lld-binder-action-button-quiet"
+            onClick={onClose}
+            disabled={staffSaving}
+          >
+            Back to Staff
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// binder-native-staff-entry-v2s2b
+const BinderStaffDetail = ({
+  row = {},
+  rowIndex = -1,
+  currentProject = null,
+  staffSaving = false,
+  staffImporting = false,
+  staffSaveStatus = '',
+  getEmployeeOptions,
+  getJobOptions,
+  getTaskOptions,
+  onEmployeeChange,
+  onChange,
+  onSave,
+  onRemove,
+  onImport,
+  onClose,
+}) => {
+  const display = getStaffRowDisplay(row);
+
+  const employeeOptions =
+    typeof getEmployeeOptions === 'function'
+      ? getEmployeeOptions(row.employee_id || row.employee_name || '')
+      : [];
+
+  const jobOptions =
+    typeof getJobOptions === 'function'
+      ? getJobOptions(row.job_number || currentProject?.job_number || '')
+      : [];
+
+  const taskOptions =
+    typeof getTaskOptions === 'function'
+      ? getTaskOptions(row.task_code || '')
+      : [];
+
+  return (
+    <div
+      className="lld-binder-action-detail lld-binder-staff-detail"
+      data-testid="lld-binder-staff-detail-v2s2b"
+    >
+      <div className="lld-binder-page-heading lld-binder-action-detail-heading">
+        <div>
+          <p>Daily labour</p>
+          <h3>Staff entry</h3>
+          <small>
+            Attendance, hours, job allocation and diary notes stay inside the binder.
+          </small>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="lld-binder-detail-back-link"
+          disabled={staffSaving}
         >
           ← Staff
         </button>
@@ -1888,76 +2022,219 @@ const BinderStaffDetail = ({
 
         <div>
           <strong>{display.employeeName}</strong>
-          <small>{display.handoffStatus}</small>
+          <small>
+            {display.handoffStatus}
+            {staffSaveStatus ? ` · ${staffSaveStatus}` : ''}
+          </small>
         </div>
 
         <b>{display.hours.toFixed(2)}h</b>
       </div>
 
-      <div className="lld-binder-staff-detail-grid">
-        <div className="lld-binder-staff-field">
+      <form
+        className="lld-binder-action-form lld-binder-staff-form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSave?.();
+        }}
+      >
+        <label className="lld-binder-action-field lld-binder-action-field-wide">
+          <span>Timesheet staff</span>
+          <select
+            value={row.employee_id || row.employee_name || ''}
+            onChange={(event) => (
+              onEmployeeChange?.(rowIndex, event.target.value)
+            )}
+            disabled={staffSaving}
+            data-testid="lld-binder-staff-employee-v2s2b"
+          >
+            <option value="">Select staff member</option>
+
+            {(Array.isArray(employeeOptions) ? employeeOptions : []).map(
+              (option, index) => (
+                <option
+                  key={`${option.value || option.label || 'staff'}-${index}`}
+                  value={option.value || ''}
+                >
+                  {option.label || option.value}
+                </option>
+              )
+            )}
+          </select>
+        </label>
+
+        <label className="lld-binder-action-field lld-binder-action-field-wide">
+          <span>Staff name / site-only person</span>
+          <input
+            type="text"
+            value={row.employee_name || ''}
+            placeholder="Staff member name"
+            onChange={(event) => {
+              onChange?.(rowIndex, 'employee_id', '');
+              onChange?.(rowIndex, 'employee_name', event.target.value);
+            }}
+            disabled={staffSaving}
+          />
+        </label>
+
+        <label className="lld-binder-action-field">
           <span>Start</span>
-          <strong>{display.start}</strong>
-        </div>
+          <input
+            type="time"
+            step="60"
+            value={row.start_time || ''}
+            onChange={(event) => (
+              onChange?.(rowIndex, 'start_time', event.target.value)
+            )}
+            disabled={staffSaving}
+          />
+        </label>
 
-        <div className="lld-binder-staff-field">
+        <label className="lld-binder-action-field">
           <span>Finish</span>
-          <strong>{display.finish}</strong>
-        </div>
+          <input
+            type="time"
+            step="60"
+            value={row.finish_time || ''}
+            onChange={(event) => (
+              onChange?.(rowIndex, 'finish_time', event.target.value)
+            )}
+            disabled={staffSaving}
+          />
+        </label>
 
-        <div className="lld-binder-staff-field">
+        <label className="lld-binder-action-field">
           <span>Lunch</span>
-          <strong>{display.lunch}</strong>
-        </div>
+          <select
+            value={String(row.lunch_duration ?? '30')}
+            onChange={(event) => (
+              onChange?.(rowIndex, 'lunch_duration', event.target.value)
+            )}
+            disabled={staffSaving}
+          >
+            <option value="0">No lunch</option>
+            <option value="30">30 minutes</option>
+            <option value="60">60 minutes</option>
+          </select>
+        </label>
 
-        <div className="lld-binder-staff-field">
+        <label className="lld-binder-action-field">
           <span>Total hours</span>
-          <strong>{display.hours.toFixed(2)} h</strong>
-        </div>
+          <input
+            type="text"
+            value={`${(Number.parseFloat(row.total_hours) || 0).toFixed(2)} h`}
+            readOnly
+            aria-readonly="true"
+          />
+        </label>
 
-        <div className="lld-binder-staff-field">
-          <span>Job number</span>
-          <strong>{display.jobNumber}</strong>
-        </div>
+        <label className="lld-binder-action-field">
+          <span>Job #</span>
+          <select
+            value={row.job_number || currentProject?.job_number || ''}
+            onChange={(event) => (
+              onChange?.(rowIndex, 'job_number', event.target.value)
+            )}
+            disabled={staffSaving}
+          >
+            <option value="">Job #</option>
 
-        <div className="lld-binder-staff-field">
+            {(Array.isArray(jobOptions) ? jobOptions : []).map(
+              (option, index) => (
+                <option
+                  key={`${option.value || option.label || 'job'}-${index}`}
+                  value={option.value || ''}
+                >
+                  {option.label || option.value}
+                </option>
+              )
+            )}
+          </select>
+        </label>
+
+        <label className="lld-binder-action-field">
           <span>Task code</span>
-          <strong>{display.taskCode}</strong>
+          <select
+            value={row.task_code || ''}
+            onChange={(event) => (
+              onChange?.(rowIndex, 'task_code', event.target.value)
+            )}
+            disabled={staffSaving}
+          >
+            <option value="">Task code</option>
+
+            {(Array.isArray(taskOptions) ? taskOptions : []).map(
+              (option, index) => (
+                <option
+                  key={`${option.value || option.label || 'task'}-${index}`}
+                  value={option.value || ''}
+                >
+                  {option.label || option.value}
+                </option>
+              )
+            )}
+          </select>
+        </label>
+
+        <label className="lld-binder-action-field lld-binder-action-field-wide">
+          <span>Staff notes</span>
+          <textarea
+            value={row.description || row.other || ''}
+            placeholder="Location, early finish, induction or other diary details..."
+            onChange={(event) => (
+              onChange?.(rowIndex, 'description', event.target.value)
+            )}
+            disabled={staffSaving}
+            rows="3"
+          />
+        </label>
+
+        <div className="lld-binder-action-controls">
+          <button
+            type="submit"
+            className="lld-binder-action-button lld-binder-action-button-primary"
+            disabled={staffSaving || typeof onSave !== 'function'}
+          >
+            {staffSaving ? 'Saving…' : 'Save staff'}
+          </button>
+
+          <button
+            type="button"
+            className="lld-binder-action-button"
+            onClick={onImport}
+            disabled={
+              staffSaving ||
+              staffImporting ||
+              typeof onImport !== 'function'
+            }
+          >
+            {staffImporting
+              ? 'Importing…'
+              : 'Import saved rows to Timesheet'}
+          </button>
+
+          <button
+            type="button"
+            className="lld-binder-action-button lld-binder-material-remove"
+            onClick={() => {
+              onRemove?.(rowIndex);
+              onClose?.();
+            }}
+            disabled={staffSaving || typeof onRemove !== 'function'}
+          >
+            Remove
+          </button>
+
+          <button
+            type="button"
+            className="lld-binder-action-button lld-binder-action-button-quiet"
+            onClick={onClose}
+            disabled={staffSaving}
+          >
+            Back to Staff
+          </button>
         </div>
-
-        <div className="lld-binder-staff-field">
-          <span>Timesheet handoff</span>
-          <strong>{display.handoffStatus}</strong>
-        </div>
-
-        <div className="lld-binder-staff-field">
-          <span>Source</span>
-          <strong>{display.source}</strong>
-        </div>
-
-        <div className="lld-binder-staff-field lld-binder-staff-field-wide">
-          <span>Diary notes</span>
-          <strong>{display.notes}</strong>
-        </div>
-      </div>
-
-      <div className="lld-binder-staff-actions">
-        <button
-          type="button"
-          className="lld-binder-action-primary"
-          onClick={onOpenWorkflow}
-        >
-          Open Staff diary
-        </button>
-
-        <button
-          type="button"
-          className="lld-binder-action-secondary"
-          onClick={onClose}
-        >
-          Back to Staff
-        </button>
-      </div>
+      </form>
     </div>
   );
 };
@@ -2347,6 +2624,19 @@ const DigitalJobBinder = ({
   materials = [],
   labourCount = 0,
   labourRows = [],
+  staffSaving = false,
+  staffImporting = false,
+  staffSaveStatus = '',
+  getStaffEmployeeOptions,
+  getStaffJobOptions,
+  getStaffTaskOptions,
+  onAddStaffEmployee,
+  onAddSiteStaff,
+  onStaffEmployeeChange,
+  onStaffChange,
+  onSaveStaff,
+  onRemoveStaff,
+  onImportStaff,
   quickNote = '',
   diaryDraft = {},
   diaryCategoryOptions = [],
@@ -2388,7 +2678,6 @@ const DigitalJobBinder = ({
   onOpenRoadblocks,
   onOpenWalkaround,
   onOpenPhotos,
-  onOpenStaff,
   dayReview = null,
   reviewSaving = false,
   onMarkDayReviewed,
@@ -2402,6 +2691,7 @@ const DigitalJobBinder = ({
   const [activeTab, setActiveTab] = useState(getRequestedBinderTab);
   const [mobileTodayPage, setMobileTodayPage] = useState('my-day');
   const [diaryEditorOpen, setDiaryEditorOpen] = useState(false);
+  const [staffAddOpen, setStaffAddOpen] = useState(false); // binder-native-staff-entry-v2s2b
   const mobileTabsRef = useRef(null);
   const diaryEditorReturnFocusRef = useRef(null);
   const diarySaveWasPendingRef = useRef(false);
@@ -2665,7 +2955,7 @@ const DigitalJobBinder = ({
     roadblocks: onOpenRoadblocks,
     walkaround: onOpenWalkaround,
     photos: onOpenPhotos,
-    staff: onOpenStaff,
+    staff: null,
     closeout: onCloseDay,
   };
 
@@ -2700,6 +2990,7 @@ const DigitalJobBinder = ({
 
     if (tabId !== 'staff') {
       setSelectedStaffId(null);
+      setStaffAddOpen(false);
     }
 
     setActiveTab(tabId);
@@ -2722,6 +3013,12 @@ const DigitalJobBinder = ({
   };
 
   const openActiveWorkflow = () => {
+    if (activeTab === 'staff') {
+      setSelectedStaffId(null);
+      setStaffAddOpen(true);
+      return;
+    }
+
     const action = actions[activeTab];
 
     if (typeof action === 'function') {
@@ -2810,9 +3107,8 @@ const DigitalJobBinder = ({
     () => (Array.isArray(labourRows) ? labourRows : [])
       .map((row, index) => ({
         ...row,
-        _binderStaffId:
-          row?.id ||
-          `${safeText(row?.employee_name, 'staff')}-${safeText(row?.start_time)}-${index}`,
+        _binderStaffIndex: index,
+        _binderStaffId: `binder-staff-${index}`,
       }))
       .filter((row) => [
         row?.employee_name,
@@ -3119,7 +3415,7 @@ const DigitalJobBinder = ({
       selectedPhoto
     ) || (
       activeTab === 'staff' &&
-      selectedStaff
+      (selectedStaff || staffAddOpen)
     )
   );
 
@@ -3663,7 +3959,7 @@ const DigitalJobBinder = ({
                   <span>Materials</span>
                 </button>
 
-                <button type="button" onClick={onOpenStaff}>
+                <button type="button" onClick={() => handleTab('staff')}>
                   <Users />
                   <strong>{staffLedgerItems.length}</strong>
                   <span>Staff</span>
@@ -4019,7 +4315,7 @@ const DigitalJobBinder = ({
                     : activeTab === 'photos'
                       ? 'Capture photo evidence'
                       : activeTab === 'staff'
-                        ? 'Open Staff diary'
+                        ? 'Add staff member'
                         : activeTab === 'closeout'
                           ? reviewSaving
                             ? dayReviewIsReviewed
@@ -4082,7 +4378,7 @@ const DigitalJobBinder = ({
                   selectedPhoto
                 ) || (
                   activeTab === 'staff' &&
-                  selectedStaff
+                  (selectedStaff || staffAddOpen)
                 )
                   ? ' lld-binder-action-detail-page'
                   : ''
@@ -4090,10 +4386,45 @@ const DigitalJobBinder = ({
             >
               <div className="lld-binder-register-page-body">
               {activeTab === 'staff' &&
+              staffAddOpen ? (
+                <BinderStaffAdd
+                  employeeOptions={
+                    typeof getStaffEmployeeOptions === 'function'
+                      ? getStaffEmployeeOptions('')
+                      : []
+                  }
+                  staffSaving={staffSaving}
+                  onAddEmployee={(value) => {
+                    const nextIndex = labourRows.length;
+                    onAddStaffEmployee?.(value);
+                    setStaffAddOpen(false);
+                    setSelectedStaffId(`binder-staff-${nextIndex}`);
+                  }}
+                  onAddSiteStaff={(name) => {
+                    const nextIndex = labourRows.length;
+                    onAddSiteStaff?.(name);
+                    setStaffAddOpen(false);
+                    setSelectedStaffId(`binder-staff-${nextIndex}`);
+                  }}
+                  onClose={() => setStaffAddOpen(false)}
+                />
+              ) : activeTab === 'staff' &&
               selectedStaff ? (
                 <BinderStaffDetail
                   row={selectedStaff}
-                  onOpenWorkflow={onOpenStaff}
+                  rowIndex={selectedStaff._binderStaffIndex}
+                  currentProject={currentProject}
+                  staffSaving={staffSaving}
+                  staffImporting={staffImporting}
+                  staffSaveStatus={staffSaveStatus}
+                  getEmployeeOptions={getStaffEmployeeOptions}
+                  getJobOptions={getStaffJobOptions}
+                  getTaskOptions={getStaffTaskOptions}
+                  onEmployeeChange={onStaffEmployeeChange}
+                  onChange={onStaffChange}
+                  onSave={onSaveStaff}
+                  onRemove={onRemoveStaff}
+                  onImport={onImportStaff}
                   onClose={() => setSelectedStaffId(null)}
                 />
               ) : activeTab === 'photos' &&

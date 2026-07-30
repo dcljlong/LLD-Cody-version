@@ -2616,6 +2616,30 @@ const DiaryPage = () => {
         onCloseMaterial={closeSelectedBinderMaterial}
         labourCount={labourRows.length}
         labourRows={labourRows}
+        staffSaving={labourSaving}
+        staffImporting={labourImporting}
+        staffSaveStatus={labourSaveStatus}
+        getStaffEmployeeOptions={employeePickerOptions}
+        getStaffJobOptions={jobNumberOptionsForRow}
+        getStaffTaskOptions={taskCodeOptionsForRow}
+        onAddStaffEmployee={(value) => {
+          const employeeOption = resolveEmployeeSelection(value);
+          if (employeeOption) {
+            addStaffRowFromEmployee(employeeOption);
+          }
+        }}
+        onAddSiteStaff={(name) => {
+          addStaffRowFromEmployee({
+            employee_id: '',
+            employee_name: name,
+            linked_to_timesheet: false
+          });
+        }}
+        onStaffEmployeeChange={updateLabourRowEmployee}
+        onStaffChange={updateLabourRow}
+        onSaveStaff={saveLabourRows}
+        onRemoveStaff={removeLabourRow}
+        onImportStaff={importLabourRowsToTimesheet}
         quickNote={entryData.note}
         diaryDraft={entryData}
         diaryCategoryOptions={smartCaptureOptions}
@@ -2652,10 +2676,6 @@ const DiaryPage = () => {
         onOpenRoadblocks={openRoadblocksPage}
         onOpenWalkaround={() => window.location.assign(`/walkaround${selectedProject ? `?project=${selectedProject}` : ''}`)}
         onOpenPhotos={() => window.location.assign(`/walkaround${selectedProject ? `?project=${selectedProject}` : ''}`)} // photo-evidence-workflow-routing-v8-9g2
-        onOpenStaff={() => {
-          setStaffSectionExpanded(true);
-          openDiaryView('staff');
-        }}
         dayReview={diary?.review || null}
         reviewSaving={reviewSaving}
         onMarkDayReviewed={markDayReviewed}
