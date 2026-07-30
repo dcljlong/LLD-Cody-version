@@ -2672,6 +2672,12 @@ const DigitalJobBinder = ({
   const handleTab = (tabId) => {
     if (!BINDER_TABS.some((tab) => tab.id === tabId)) return;
 
+    // diary-editor-tab-release-v2s2a
+    if (diaryEditorOpen) {
+      if (submitting) return;
+      setDiaryEditorOpen(false);
+    }
+
     if (tabId !== activeTab) {
       onCloseTask?.();
     }
