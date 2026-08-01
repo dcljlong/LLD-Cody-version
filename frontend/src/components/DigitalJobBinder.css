@@ -7986,3 +7986,102 @@
     min-width: 790px;
   }
 }
+
+/* staff-register-full-page-workspace-v1 */
+@media (min-width: 1281px) {
+  .lld-binder-active-staff .lld-binder-pages {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lld-binder-active-staff .lld-binder-page-left {
+    display: none;
+  }
+
+  .lld-binder-active-staff .lld-binder-mechanism {
+    display: none;
+  }
+
+  .lld-binder-active-staff .lld-binder-page-right {
+    width: 100%;
+    min-width: 0;
+    border-left: 0;
+    background:
+      linear-gradient(
+        90deg,
+        transparent 0 3rem,
+        var(--lld-binder-paper-margin) 3rem 3.1rem,
+        transparent 3.1rem
+      ),
+      repeating-linear-gradient(
+        180deg,
+        var(--lld-binder-paper) 0 2.15rem,
+        var(--lld-binder-paper-line) 2.15rem 2.22rem
+      );
+    padding: 1.45rem 2rem 2rem 4.15rem;
+  }
+
+  .lld-binder-active-staff .lld-binder-focused-list-heading {
+    min-height: 4.25rem;
+  }
+
+  .lld-binder-active-staff .lld-staff-daily-register {
+    margin-top: 0.8rem;
+  }
+
+  .lld-binder-active-staff .lld-staff-daily-table {
+    min-width: 760px;
+  }
+
+  .lld-binder-active-staff .lld-staff-weekly-dashboard {
+    margin-top: 0.25rem;
+  }
+}
+
+@media (min-width: 1500px) {
+  .lld-binder-active-staff .lld-binder-page-right {
+    padding-right: 2.4rem;
+    padding-left: 4.4rem;
+  }
+
+  .lld-binder-active-staff .lld-staff-daily-table {
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .lld-binder-active-staff .lld-staff-daily-table th:nth-child(1),
+  .lld-binder-active-staff .lld-staff-daily-table td:nth-child(1) {
+    width: 16%;
+  }
+
+  .lld-binder-active-staff .lld-staff-daily-table th:nth-child(2),
+  .lld-binder-active-staff .lld-staff-daily-table td:nth-child(2) {
+    width: 15%;
+  }
+
+  .lld-binder-active-staff .lld-staff-daily-table th:nth-child(3),
+  .lld-binder-active-staff .lld-staff-daily-table td:nth-child(3),
+  .lld-binder-active-staff .lld-staff-daily-table th:nth-child(4),
+  .lld-binder-active-staff .lld-staff-daily-table td:nth-child(4) {
+    width: 10%;
+  }
+
+  .lld-binder-active-staff .lld-staff-daily-table th:nth-child(5),
+  .lld-binder-active-staff .lld-staff-daily-table td:nth-child(5) {
+    width: 10%;
+  }
+
+  .lld-binder-active-staff .lld-staff-daily-table th:nth-child(6),
+  .lld-binder-active-staff .lld-staff-daily-table td:nth-child(6) {
+    width: 8%;
+  }
+
+  .lld-binder-active-staff .lld-staff-daily-table th:nth-child(7),
+  .lld-binder-active-staff .lld-staff-daily-table td:nth-child(7) {
+    width: 23%;
+  }
+
+  .lld-binder-active-staff .lld-staff-daily-table th:nth-child(8),
+  .lld-binder-active-staff .lld-staff-daily-table td:nth-child(8) {
+    width: 8%;
+  }
+}
