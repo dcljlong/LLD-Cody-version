@@ -192,6 +192,23 @@ const ResourceSummaryRow = ({ row = {} }) => {
   );
 };
 
+// staff-register-attendance-foundation-v1
+const STAFF_ATTENDANCE_OPTIONS = [
+  { value: 'at_work', label: 'At work' },
+  { value: 'sick', label: 'Sick' },
+  { value: 'annual_leave', label: 'Annual leave' },
+  { value: 'public_holiday', label: 'Public holiday' },
+  { value: 'away_other_site', label: 'Away / other site' },
+  { value: 'no_work', label: 'No work' }
+];
+
+const STAFF_NON_WORKING_STATUSES = new Set([
+  'sick',
+  'annual_leave',
+  'public_holiday',
+  'no_work'
+]);
+
 const DiaryPage = () => {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
@@ -280,8 +297,55 @@ const DiaryPage = () => {
     return davidOption?.value || currentProject?.project_manager_id || projectManagers[0]?.value || '';
   };
 
+  // staff-register-normal-day-speed-v1
+  const getNormalDayLabourValues = () => {
+    const date = new Date(`${selectedDate}T12:00:00`);
+    const dayOfWeek = Number.isNaN(date.getTime())
+      ? 1
+      : date.getDay();
+
+    if (dayOfWeek === 6) {
+      return {
+        attendance_status: 'at_work',
+        start_time: '07:00',
+        finish_time: '13:00',
+        lunch_duration: '0',
+        total_hours: 6
+      };
+    }
+
+    if (dayOfWeek === 5) {
+      return {
+        attendance_status: 'at_work',
+        start_time: '07:00',
+        finish_time: '15:30',
+        lunch_duration: '30',
+        total_hours: 8
+      };
+    }
+
+    if (dayOfWeek >= 1 && dayOfWeek <= 4) {
+      return {
+        attendance_status: 'at_work',
+        start_time: '07:00',
+        finish_time: '16:30',
+        lunch_duration: '30',
+        total_hours: 9
+      };
+    }
+
+    return {
+      attendance_status: 'at_work',
+      start_time: '',
+      finish_time: '',
+      lunch_duration: '0',
+      total_hours: 0
+    };
+  };
+
   const createEmptyLabourRow = () => ({
     employee_name: '',
+    attendance_status: 'at_work',
     work_date: selectedDate,
     day: selectedDateLabel || '',
     start_time: '', // diary-staff-manual-time-entry-v1
@@ -320,15 +384,27 @@ const DiaryPage = () => {
   };
 
   const normaliseLabourRow = (row = {}) => {
+    const attendance_status = STAFF_ATTENDANCE_OPTIONS.some(
+      (option) => option.value === row.attendance_status
+    )
+      ? row.attendance_status
+      : 'at_work';
+
     const start_time = normaliseTimeValue(row.start_time);
     const finish_time = normaliseTimeValue(row.finish_time);
     const lunch_duration = String(row.lunch_duration ?? '30');
+
+    const total_hours = STAFF_NON_WORKING_STATUSES.has(attendance_status)
+      ? 0
+      : calculateLabourHours(start_time, finish_time, lunch_duration);
+
     return {
       ...row,
+      attendance_status,
       start_time,
       finish_time,
       lunch_duration,
-      total_hours: calculateLabourHours(start_time, finish_time, lunch_duration)
+      total_hours
     };
   };
 
@@ -336,9 +412,30 @@ const DiaryPage = () => {
     setLabourRows((current) => current.map((row, rowIndex) => {
       if (rowIndex !== index) return row;
       const updated = { ...row, [field]: value };
-      if (['start_time', 'finish_time', 'lunch_duration'].includes(field)) {
-        updated.total_hours = calculateLabourHours(updated.start_time, updated.finish_time, updated.lunch_duration);
+      if (field === 'attendance_status') {
+        if (STAFF_NON_WORKING_STATUSES.has(value)) {
+          updated.start_time = '';
+          updated.finish_time = '';
+          updated.total_hours = 0;
+        } else {
+          updated.total_hours = calculateLabourHours(
+            updated.start_time,
+            updated.finish_time,
+            updated.lunch_duration
+          );
+        }
       }
+
+      if (['start_time', 'finish_time', 'lunch_duration'].includes(field)) {
+        updated.total_hours = STAFF_NON_WORKING_STATUSES.has(updated.attendance_status)
+          ? 0
+          : calculateLabourHours(
+              updated.start_time,
+              updated.finish_time,
+              updated.lunch_duration
+            );
+      }
+
       if (field === 'description') {
         updated.other = value;
       }
@@ -395,6 +492,7 @@ const DiaryPage = () => {
       ...current,
       {
         ...createEmptyLabourRow(),
+        ...getNormalDayLabourValues(),
         employee_id: employeeOption.employee_id || '',
         employee_name: staffName,
         sync_status: employeeOption.linked_to_timesheet ? 'local_only' : 'local_pending_timesheet_staff'
@@ -457,6 +555,18 @@ const DiaryPage = () => {
   const removeLabourRow = (index) => {
     setLabourRows((current) => current.filter((_, rowIndex) => rowIndex !== index));
     setActiveLabourIndex(null);
+  };
+
+  const markAllStaffAtWork = () => {
+    const defaults = getNormalDayLabourValues();
+
+    setLabourRows((current) => current.map((row) => ({
+      ...row,
+      ...defaults
+    })));
+
+    setLabourSaveStatus('Normal day applied — saving');
+    toast.success('All listed staff marked at work with normal hours');
   };
 
   const createEmptyResourceRow = () => ({
@@ -2637,6 +2747,7 @@ const DiaryPage = () => {
         }}
         onStaffEmployeeChange={updateLabourRowEmployee}
         onStaffChange={updateLabourRow}
+        onSetAllStaffNormalDay={markAllStaffAtWork}
         onSaveStaff={saveLabourRows}
         onRemoveStaff={removeLabourRow}
         onImportStaff={importLabourRowsToTimesheet}

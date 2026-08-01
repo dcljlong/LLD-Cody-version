@@ -1769,6 +1769,22 @@ const formatStaffLunch = (value) => {
   return `${minutes} min`;
 };
 
+// staff-register-daily-attendance-v1
+const STAFF_ATTENDANCE_OPTIONS = [
+  { value: 'at_work', label: 'At work' },
+  { value: 'sick', label: 'Sick' },
+  { value: 'annual_leave', label: 'Annual leave' },
+  { value: 'public_holiday', label: 'Public holiday' },
+  { value: 'away_other_site', label: 'Away / other site' },
+  { value: 'no_work', label: 'No work' }
+];
+
+const getStaffAttendanceLabel = (value) => (
+  STAFF_ATTENDANCE_OPTIONS.find(
+    (option) => option.value === value
+  )?.label || 'At work'
+);
+
 const getStaffRowDisplay = (row = {}) => {
   const employeeName = safeText(row.employee_name, 'Unnamed staff member');
   const numericHours = Number(row.total_hours || 0);
@@ -1797,6 +1813,10 @@ const getStaffRowDisplay = (row = {}) => {
     finish: formatStaffTime(row.finish_time),
     lunch: formatStaffLunch(row.lunch_duration),
     hours,
+    attendanceStatus: row.attendance_status || 'at_work',
+    attendanceLabel: getStaffAttendanceLabel(
+      row.attendance_status || 'at_work'
+    ),
     jobNumber: safeText(row.job_number, 'Not set'),
     taskCode: safeText(row.task_code, 'Not set'),
     notes: safeText(row.description || row.other, 'No notes recorded'),
@@ -1813,13 +1833,15 @@ const StaffLedgerRow = ({
   const display = getStaffRowDisplay(item);
 
   const timeSummary =
-    display.start !== 'Not set' && display.finish !== 'Not set'
-      ? `${display.start} to ${display.finish}`
-      : display.start !== 'Not set'
-        ? `Started ${display.start}`
-        : display.finish !== 'Not set'
-          ? `Finished ${display.finish}`
-          : 'Time not entered'; // staff-missing-time-wording-v8-9h1-1
+    display.attendanceStatus !== 'at_work'
+      ? display.attendanceLabel
+      : display.start !== 'Not set' && display.finish !== 'Not set'
+        ? `${display.start} to ${display.finish}`
+        : display.start !== 'Not set'
+          ? `Started ${display.start}`
+          : display.finish !== 'Not set'
+            ? `Finished ${display.finish}`
+            : 'Time not entered'; // staff-missing-time-wording-v8-9h1-1
 
   const metadata = [
     timeSummary,
@@ -2077,6 +2099,31 @@ const BinderStaffDetail = ({
           />
         </label>
 
+        <label className="lld-binder-action-field lld-binder-action-field-wide">
+          <span>Attendance</span>
+          <select
+            value={row.attendance_status || 'at_work'}
+            onChange={(event) => (
+              onChange?.(
+                rowIndex,
+                'attendance_status',
+                event.target.value
+              )
+            )}
+            disabled={staffSaving}
+            data-testid="lld-staff-attendance-status-v1"
+          >
+            {STAFF_ATTENDANCE_OPTIONS.map((option) => (
+              <option
+                key={option.value}
+                value={option.value}
+              >
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label className="lld-binder-action-field">
           <span>Start</span>
           <input
@@ -2086,7 +2133,12 @@ const BinderStaffDetail = ({
             onChange={(event) => (
               onChange?.(rowIndex, 'start_time', event.target.value)
             )}
-            disabled={staffSaving}
+            disabled={
+              staffSaving ||
+              ['sick', 'annual_leave', 'public_holiday', 'no_work'].includes(
+                row.attendance_status
+              )
+            }
           />
         </label>
 
@@ -2099,7 +2151,12 @@ const BinderStaffDetail = ({
             onChange={(event) => (
               onChange?.(rowIndex, 'finish_time', event.target.value)
             )}
-            disabled={staffSaving}
+            disabled={
+              staffSaving ||
+              ['sick', 'annual_leave', 'public_holiday', 'no_work'].includes(
+                row.attendance_status
+              )
+            }
           />
         </label>
 
@@ -2634,6 +2691,7 @@ const DigitalJobBinder = ({
   onAddSiteStaff,
   onStaffEmployeeChange,
   onStaffChange,
+  onSetAllStaffNormalDay,
   onSaveStaff,
   onRemoveStaff,
   onImportStaff,
@@ -4505,6 +4563,30 @@ const DigitalJobBinder = ({
                     : focusedCount}
                 </strong>
               </header>
+
+              {activeTab === 'staff' && focusedItems.length > 0 && (
+                <div
+                  className="lld-binder-action-controls"
+                  data-testid="staff-register-mark-all-at-work-v1"
+                >
+                  <button
+                    type="button"
+                    className="lld-binder-action-button lld-binder-action-button-primary"
+                    onClick={onSetAllStaffNormalDay}
+                    disabled={
+                      staffSaving ||
+                      typeof onSetAllStaffNormalDay !== 'function'
+                    }
+                  >
+                    Mark all at work
+                  </button>
+
+                  <small>
+                    Applies the normal hours for {selectedDateLabel}.
+                    Change only sick, leave, away or unusual hours.
+                  </small>
+                </div>
+              )}
 
               {focusedItems.length > 0 ? (
                 <div className="lld-binder-focused-list">

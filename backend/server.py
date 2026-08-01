@@ -185,6 +185,7 @@ class DailyLabourRow(BaseModel):
     id: Optional[str] = None
     employee_id: Optional[str] = None
     employee_name: str
+    attendance_status: Optional[str] = "at_work"  # staff-register-attendance-foundation-v1
     work_date: Optional[str] = None
     day: Optional[str] = None
     start_time: Optional[str] = None
