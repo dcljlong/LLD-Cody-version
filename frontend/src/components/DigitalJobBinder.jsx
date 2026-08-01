@@ -4719,8 +4719,15 @@ const DigitalJobBinder = ({
                   ? ' lld-binder-materials-ledger-spread'
                   : activeTab === 'emails'
                     ? ' lld-binder-tasks-ledger-spread lld-binder-communications-ledger-spread'
-                    : ''
+                    : activeTab === 'staff'
+                      ? ' lld-binder-active-staff'
+                      : ''
             }`}
+            data-staff-workspace={
+              activeTab === 'staff'
+                ? 'staff-workspace-active-class-v1'
+                : undefined
+            }
             data-testid={`lld-binder-focused-page-${activeTab}`}
           >
             <article className="lld-binder-focused-page lld-binder-focused-page-left lld-binder-register-index-page">
