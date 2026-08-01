@@ -1875,6 +1875,324 @@ const StaffLedgerRow = ({
   );
 };
 
+// staff-register-compact-daily-v1
+const STAFF_NON_WORKING_STATUSES = new Set([
+  'sick',
+  'annual_leave',
+  'public_holiday',
+  'no_work'
+]);
+
+const CompactDailyStaffRegister = ({
+  rows = [],
+  selectedDateLabel = '',
+  staffSaving = false,
+  staffSaveStatus = '',
+  onChange,
+  onOpenDetails,
+  onAddStaff,
+  onSetAllNormalDay
+}) => {
+  const staffRows = Array.isArray(rows) ? rows : [];
+
+  const summary = staffRows.reduce((result, row) => {
+    const status = row.attendance_status || 'at_work';
+    const hours = Number(row.total_hours || 0);
+
+    result.total += 1;
+    result.hours += Number.isFinite(hours) ? hours : 0;
+
+    if (status === 'at_work') result.working += 1;
+    if (status === 'sick') result.sick += 1;
+    if (status === 'annual_leave') result.leave += 1;
+    if (status === 'away_other_site') result.otherSite += 1;
+    if (status === 'public_holiday') result.publicHoliday += 1;
+    if (status === 'no_work') result.noWork += 1;
+
+    return result;
+  }, {
+    total: 0,
+    hours: 0,
+    working: 0,
+    sick: 0,
+    leave: 0,
+    otherSite: 0,
+    publicHoliday: 0,
+    noWork: 0
+  });
+
+  return (
+    <section
+      className="lld-staff-daily-register"
+      data-testid="staff-register-compact-daily-v1"
+      aria-label="Daily Staff Register"
+    >
+      <div className="lld-staff-daily-heading">
+        <div>
+          <p>Today</p>
+          <h3>Daily Staff Register</h3>
+          <small>{selectedDateLabel}</small>
+        </div>
+
+        <div className="lld-staff-daily-heading-actions">
+          <button
+            type="button"
+            className="lld-binder-action-button"
+            onClick={onAddStaff}
+            disabled={
+              staffSaving ||
+              typeof onAddStaff !== 'function'
+            }
+          >
+            + Add staff
+          </button>
+
+          <button
+            type="button"
+            className="lld-binder-action-button lld-binder-action-button-primary"
+            onClick={onSetAllNormalDay}
+            disabled={
+              staffSaving ||
+              staffRows.length === 0 ||
+              typeof onSetAllNormalDay !== 'function'
+            }
+          >
+            Mark all at work
+          </button>
+        </div>
+      </div>
+
+      <div className="lld-staff-daily-summary">
+        <span>
+          <strong>{summary.working}</strong>
+          <small>Working</small>
+        </span>
+
+        <span>
+          <strong>{summary.sick}</strong>
+          <small>Sick</small>
+        </span>
+
+        <span>
+          <strong>{summary.leave}</strong>
+          <small>Leave</small>
+        </span>
+
+        <span>
+          <strong>{summary.otherSite}</strong>
+          <small>Other site</small>
+        </span>
+
+        <span>
+          <strong>{summary.hours.toFixed(2)}h</strong>
+          <small>Total hours</small>
+        </span>
+      </div>
+
+      {staffRows.length === 0 ? (
+        <div className="lld-staff-daily-empty">
+          <strong>No staff added for this day</strong>
+          <p>
+            Add staff once, then use Mark all at work and edit only
+            the exceptions.
+          </p>
+
+          <button
+            type="button"
+            onClick={onAddStaff}
+            disabled={
+              staffSaving ||
+              typeof onAddStaff !== 'function'
+            }
+          >
+            Add first staff member
+          </button>
+        </div>
+      ) : (
+        <div className="lld-staff-daily-table-wrap">
+          <table className="lld-staff-daily-table">
+            <thead>
+              <tr>
+                <th>Staff</th>
+                <th>Status</th>
+                <th>Start</th>
+                <th>Finish</th>
+                <th>Lunch</th>
+                <th>Hours</th>
+                <th>Notes</th>
+                <th aria-label="Staff actions" />
+              </tr>
+            </thead>
+
+            <tbody>
+              {staffRows.map((row, index) => {
+                const status = row.attendance_status || 'at_work';
+
+                const timeDisabled =
+                  staffSaving ||
+                  STAFF_NON_WORKING_STATUSES.has(status);
+
+                return (
+                  <tr
+                    key={
+                      row._binderStaffId ||
+                      row.id ||
+                      row.employee_id ||
+                      `${row.employee_name || 'staff'}-${index}`
+                    }
+                    data-attendance-status={status}
+                  >
+                    <td className="lld-staff-daily-name">
+                      <strong>
+                        {row.employee_name || `Staff ${index + 1}`}
+                      </strong>
+
+                      <small>
+                        {row.task_code || row.job_number || 'Daily staff'}
+                      </small>
+                    </td>
+
+                    <td>
+                      <select
+                        value={status}
+                        onChange={(event) => (
+                          onChange?.(
+                            index,
+                            'attendance_status',
+                            event.target.value
+                          )
+                        )}
+                        disabled={staffSaving}
+                        aria-label={`Attendance for ${
+                          row.employee_name || `staff ${index + 1}`
+                        }`}
+                      >
+                        {STAFF_ATTENDANCE_OPTIONS.map((option) => (
+                          <option
+                            key={option.value}
+                            value={option.value}
+                          >
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+
+                    <td>
+                      <input
+                        type="time"
+                        value={row.start_time || ''}
+                        onChange={(event) => (
+                          onChange?.(
+                            index,
+                            'start_time',
+                            event.target.value
+                          )
+                        )}
+                        disabled={timeDisabled}
+                        aria-label={`Start time for ${
+                          row.employee_name || `staff ${index + 1}`
+                        }`}
+                      />
+                    </td>
+
+                    <td>
+                      <input
+                        type="time"
+                        value={row.finish_time || ''}
+                        onChange={(event) => (
+                          onChange?.(
+                            index,
+                            'finish_time',
+                            event.target.value
+                          )
+                        )}
+                        disabled={timeDisabled}
+                        aria-label={`Finish time for ${
+                          row.employee_name || `staff ${index + 1}`
+                        }`}
+                      />
+                    </td>
+
+                    <td>
+                      <select
+                        value={String(row.lunch_duration ?? '30')}
+                        onChange={(event) => (
+                          onChange?.(
+                            index,
+                            'lunch_duration',
+                            event.target.value
+                          )
+                        )}
+                        disabled={timeDisabled}
+                        aria-label={`Lunch for ${
+                          row.employee_name || `staff ${index + 1}`
+                        }`}
+                      >
+                        <option value="0">0</option>
+                        <option value="30">30 min</option>
+                        <option value="60">60 min</option>
+                      </select>
+                    </td>
+
+                    <td className="lld-staff-daily-hours">
+                      {Number(row.total_hours || 0).toFixed(2)}h
+                    </td>
+
+                    <td>
+                      <input
+                        type="text"
+                        value={row.description || row.other || ''}
+                        placeholder="Optional note"
+                        onChange={(event) => (
+                          onChange?.(
+                            index,
+                            'description',
+                            event.target.value
+                          )
+                        )}
+                        disabled={staffSaving}
+                        aria-label={`Notes for ${
+                          row.employee_name || `staff ${index + 1}`
+                        }`}
+                      />
+                    </td>
+
+                    <td className="lld-staff-daily-actions">
+                      <button
+                        type="button"
+                        onClick={() => onOpenDetails?.(row, index)}
+                        disabled={
+                          staffSaving ||
+                          typeof onOpenDetails !== 'function'
+                        }
+                      >
+                        Details
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="lld-staff-daily-footer">
+        <span>
+          {summary.total} staff · {summary.hours.toFixed(2)} hours
+        </span>
+
+        <span>
+          {staffSaving
+            ? 'Saving…'
+            : staffSaveStatus || 'Changes auto-save'}
+        </span>
+      </div>
+    </section>
+  );
+};
+
 // staff-register-weekly-dashboard-v1
 const WEEKLY_STAFF_DAY_LABELS = [
   'Mon',
@@ -4773,38 +5091,29 @@ const DigitalJobBinder = ({
               </header>
 
               {activeTab === 'staff' && (
-                <WeeklyStaffDashboard
-                  weeklyLabour={weeklyLabour}
-                  loading={weeklyLabourLoading}
-                  error={weeklyLabourError}
-                />
+                <>
+                  <CompactDailyStaffRegister
+                    rows={labourRows}
+                    selectedDateLabel={selectedDateLabel}
+                    staffSaving={staffSaving}
+                    staffSaveStatus={staffSaveStatus}
+                    onChange={onStaffChange}
+                    onSetAllNormalDay={onSetAllStaffNormalDay}
+                    onAddStaff={() => setStaffAddOpen(true)}
+                    onOpenDetails={(row) => (
+                      setSelectedStaffId(row?._binderStaffId || null)
+                    )}
+                  />
+
+                  <WeeklyStaffDashboard
+                    weeklyLabour={weeklyLabour}
+                    loading={weeklyLabourLoading}
+                    error={weeklyLabourError}
+                  />
+                </>
               )}
 
-              {activeTab === 'staff' && focusedItems.length > 0 && (
-                <div
-                  className="lld-binder-action-controls"
-                  data-testid="staff-register-mark-all-at-work-v1"
-                >
-                  <button
-                    type="button"
-                    className="lld-binder-action-button lld-binder-action-button-primary"
-                    onClick={onSetAllStaffNormalDay}
-                    disabled={
-                      staffSaving ||
-                      typeof onSetAllStaffNormalDay !== 'function'
-                    }
-                  >
-                    Mark all at work
-                  </button>
-
-                  <small>
-                    Applies the normal hours for {selectedDateLabel}.
-                    Change only sick, leave, away or unusual hours.
-                  </small>
-                </div>
-              )}
-
-              {focusedItems.length > 0 ? (
+              {activeTab !== 'staff' && focusedItems.length > 0 ? (
                 <div className="lld-binder-focused-list">
                   {(
                     activeTab === 'tasks' ||
