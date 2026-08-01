@@ -1875,6 +1875,211 @@ const StaffLedgerRow = ({
   );
 };
 
+// staff-register-weekly-dashboard-v1
+const WEEKLY_STAFF_DAY_LABELS = [
+  'Mon',
+  'Tue',
+  'Wed',
+  'Thu',
+  'Fri',
+  'Sat',
+  'Sun'
+];
+
+const WEEKLY_STAFF_STATUS_CLASSES = {
+  at_work: 'is-at-work',
+  sick: 'is-sick',
+  annual_leave: 'is-annual-leave',
+  public_holiday: 'is-public-holiday',
+  away_other_site: 'is-other-site',
+  no_work: 'is-no-work'
+};
+
+const formatWeeklyStaffDate = (value) => {
+  if (!value) return '';
+
+  const date = new Date(`${value}T12:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString('en-NZ', {
+    day: 'numeric',
+    month: 'short'
+  });
+};
+
+const WeeklyStaffDashboard = ({
+  weeklyLabour = {},
+  loading = false,
+  error = ''
+}) => {
+  const dates = Array.isArray(weeklyLabour?.dates)
+    ? weeklyLabour.dates
+    : [];
+
+  const staff = Array.isArray(weeklyLabour?.staff)
+    ? weeklyLabour.staff
+    : [];
+
+  const totals = weeklyLabour?.totals || {};
+
+  return (
+    <section
+      className="lld-staff-weekly-dashboard"
+      data-testid="staff-register-weekly-dashboard-v1"
+      aria-label="Weekly staff summary"
+    >
+      <div className="lld-staff-weekly-heading">
+        <div>
+          <p>This week</p>
+          <h3>Weekly crew summary</h3>
+          <small>
+            {weeklyLabour?.week_start && weeklyLabour?.week_end
+              ? `${formatWeeklyStaffDate(
+                  weeklyLabour.week_start
+                )} to ${formatWeeklyStaffDate(
+                  weeklyLabour.week_end
+                )}`
+              : 'Monday to Sunday'}
+          </small>
+        </div>
+
+        <strong>{Number(weeklyLabour?.staff_count || 0)}</strong>
+      </div>
+
+      <div className="lld-staff-weekly-totals">
+        <span>
+          <strong>{Number(totals.hours || 0).toFixed(2)}h</strong>
+          <small>Total hours</small>
+        </span>
+
+        <span>
+          <strong>{Number(totals.at_work || 0)}</strong>
+          <small>Worked</small>
+        </span>
+
+        <span>
+          <strong>{Number(totals.sick || 0)}</strong>
+          <small>Sick</small>
+        </span>
+
+        <span>
+          <strong>{Number(totals.annual_leave || 0)}</strong>
+          <small>Leave</small>
+        </span>
+
+        <span>
+          <strong>{Number(totals.away_other_site || 0)}</strong>
+          <small>Other site</small>
+        </span>
+
+        <span>
+          <strong>{Number(totals.public_holiday || 0)}</strong>
+          <small>Public holiday</small>
+        </span>
+      </div>
+
+      {loading ? (
+        <p className="lld-staff-weekly-message">
+          Loading weekly staff summary…
+        </p>
+      ) : error ? (
+        <p
+          className="lld-staff-weekly-message is-error"
+          role="alert"
+        >
+          {error}
+        </p>
+      ) : staff.length === 0 ? (
+        <p className="lld-staff-weekly-message">
+          No saved staff records exist for this week yet.
+        </p>
+      ) : (
+        <>
+          <div className="lld-staff-weekly-table-wrap">
+            <table className="lld-staff-weekly-table">
+              <thead>
+                <tr>
+                  <th className="lld-staff-weekly-name-cell">
+                    Staff
+                  </th>
+
+                  {dates.map((date, index) => (
+                    <th key={date}>
+                      <span>{WEEKLY_STAFF_DAY_LABELS[index]}</span>
+                      <small>{formatWeeklyStaffDate(date)}</small>
+                    </th>
+                  ))}
+
+                  <th className="lld-staff-weekly-total-cell">
+                    Total
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {staff.map((person) => (
+                  <tr key={person.key || person.employee_name}>
+                    <td className="lld-staff-weekly-name-cell">
+                      {person.employee_name}
+                    </td>
+
+                    {dates.map((date) => {
+                      const day = person.days?.[date];
+                      const statusClass = day
+                        ? WEEKLY_STAFF_STATUS_CLASSES[day.status] || ''
+                        : 'is-missing';
+
+                      return (
+                        <td
+                          key={`${person.key}-${date}`}
+                          title={
+                            day
+                              ? `${day.status_label}${
+                                  Number(day.hours || 0) > 0
+                                    ? ` · ${Number(day.hours).toFixed(2)}h`
+                                    : ''
+                                }`
+                              : 'No saved entry'
+                          }
+                        >
+                          <span
+                            className={`lld-staff-weekly-status ${statusClass}`}
+                          >
+                            {day?.code || '—'}
+                          </span>
+
+                          {Number(day?.hours || 0) > 0 && (
+                            <small className="lld-staff-weekly-hours">
+                              {Number(day.hours).toFixed(1)}h
+                            </small>
+                          )}
+                        </td>
+                      );
+                    })}
+
+                    <td className="lld-staff-weekly-total-cell">
+                      {Number(person.total_hours || 0).toFixed(2)}h
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <small className="lld-staff-weekly-legend">
+            W = worked · S = sick · AL = annual leave ·
+            PH = public holiday · OS = other site · NW = no work ·
+            — = no saved entry
+          </small>
+        </>
+      )}
+    </section>
+  );
+};
+
 const BinderStaffAdd = ({
   employeeOptions = [],
   staffSaving = false,
@@ -2684,6 +2889,9 @@ const DigitalJobBinder = ({
   staffSaving = false,
   staffImporting = false,
   staffSaveStatus = '',
+  weeklyLabour = {},
+  weeklyLabourLoading = false,
+  weeklyLabourError = '',
   getStaffEmployeeOptions,
   getStaffJobOptions,
   getStaffTaskOptions,
@@ -4563,6 +4771,14 @@ const DigitalJobBinder = ({
                     : focusedCount}
                 </strong>
               </header>
+
+              {activeTab === 'staff' && (
+                <WeeklyStaffDashboard
+                  weeklyLabour={weeklyLabour}
+                  loading={weeklyLabourLoading}
+                  error={weeklyLabourError}
+                />
+              )}
 
               {activeTab === 'staff' && focusedItems.length > 0 && (
                 <div

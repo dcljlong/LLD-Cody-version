@@ -106,6 +106,9 @@ export const integrationsApi = {
 export const diaryApi = {
   get: (projectId, date) => api.get(`/diary/${projectId}?date=${date}`),
   getLabour: (projectId, date) => api.get(`/diary/${projectId}/labour?date=${date}`),
+  // staff-register-weekly-client-v1
+  getWeeklyLabour: (projectId, date) =>
+    api.get(`/diary/${projectId}/labour/week?date=${date}`),
   saveLabour: (projectId, data) => api.post(`/diary/${projectId}/labour`, data),
   importLabourToTimesheet: (projectId, data) => api.post(`/diary/${projectId}/labour/import-timesheet`, data),
   getResources: (projectId, date) => api.get(`/diary/${projectId}/resources?date=${date}`),

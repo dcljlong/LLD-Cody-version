@@ -1634,6 +1634,156 @@ async def get_daily_labour_rows(
         "rows": rows
     }
 
+# staff-register-weekly-api-v1
+@api_router.get("/diary/{project_id}/labour/week")
+async def get_weekly_labour_rows(
+    project_id: str,
+    date: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Return the selected Monday-Sunday Staff Register week."""
+
+    try:
+        selected_day = datetime.strptime(date, "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=400,
+            detail="A valid date in YYYY-MM-DD format is required"
+        )
+
+    week_start = selected_day - timedelta(days=selected_day.weekday())
+    week_end = week_start + timedelta(days=6)
+
+    week_dates = [
+        (week_start + timedelta(days=offset)).isoformat()
+        for offset in range(7)
+    ]
+
+    cursor = db.daily_labour_rows.find(
+        {
+            "project_id": project_id,
+            "user_id": current_user["id"],
+            "date": {
+                "$gte": week_start.isoformat(),
+                "$lte": week_end.isoformat()
+            }
+        },
+        {"_id": 0}
+    ).sort("date", 1)
+
+    documents = await cursor.to_list(length=20)
+
+    status_labels = {
+        "at_work": "At work",
+        "sick": "Sick",
+        "annual_leave": "Annual leave",
+        "public_holiday": "Public holiday",
+        "away_other_site": "Away / other site",
+        "no_work": "No work"
+    }
+
+    status_codes = {
+        "at_work": "W",
+        "sick": "S",
+        "annual_leave": "AL",
+        "public_holiday": "PH",
+        "away_other_site": "OS",
+        "no_work": "NW"
+    }
+
+    totals = {
+        "hours": 0.0,
+        "at_work": 0,
+        "sick": 0,
+        "annual_leave": 0,
+        "public_holiday": 0,
+        "away_other_site": 0,
+        "no_work": 0,
+        "recorded_entries": 0
+    }
+
+    staff_map = {}
+
+    for document in documents:
+        document_date = document.get("date")
+        rows = document.get("rows", [])
+
+        if document_date not in week_dates or not isinstance(rows, list):
+            continue
+
+        for row_index, row in enumerate(rows):
+            if not isinstance(row, dict):
+                continue
+
+            employee_name = str(
+                row.get("employee_name") or "Unnamed staff member"
+            ).strip()
+
+            employee_id = str(row.get("employee_id") or "").strip()
+            staff_key = employee_id or employee_name.lower()
+
+            raw_status = str(
+                row.get("attendance_status") or "at_work"
+            ).strip()
+
+            attendance_status = (
+                raw_status
+                if raw_status in status_labels
+                else "at_work"
+            )
+
+            try:
+                hours = round(float(row.get("total_hours") or 0), 2)
+            except (TypeError, ValueError):
+                hours = 0.0
+
+            if staff_key not in staff_map:
+                staff_map[staff_key] = {
+                    "key": staff_key,
+                    "employee_id": employee_id,
+                    "employee_name": employee_name,
+                    "days": {},
+                    "total_hours": 0.0
+                }
+
+            staff_map[staff_key]["days"][document_date] = {
+                "status": attendance_status,
+                "status_label": status_labels[attendance_status],
+                "code": status_codes[attendance_status],
+                "hours": hours,
+                "start_time": row.get("start_time") or "",
+                "finish_time": row.get("finish_time") or "",
+                "notes": row.get("description") or row.get("other") or "",
+                "row_index": row_index
+            }
+
+            staff_map[staff_key]["total_hours"] = round(
+                staff_map[staff_key]["total_hours"] + hours,
+                2
+            )
+
+            totals["hours"] = round(totals["hours"] + hours, 2)
+            totals[attendance_status] += 1
+            totals["recorded_entries"] += 1
+
+    staff = sorted(
+        staff_map.values(),
+        key=lambda item: item["employee_name"].lower()
+    )
+
+    return {
+        "project_id": project_id,
+        "selected_date": selected_day.isoformat(),
+        "week_start": week_start.isoformat(),
+        "week_end": week_end.isoformat(),
+        "dates": week_dates,
+        "staff": staff,
+        "totals": totals,
+        "staff_count": len(staff),
+        "source": "lld_daily_labour_rows"
+    }
+
+
 @api_router.post("/diary/{project_id}/labour")
 async def save_daily_labour_rows(
     project_id: str,

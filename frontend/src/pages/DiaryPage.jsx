@@ -219,6 +219,17 @@ const DiaryPage = () => {
   const [labourSaving, setLabourSaving] = useState(false);
   const [labourSaveStatus, setLabourSaveStatus] = useState(''); // staff-diary-backend-autosave-v4
   const [labourImporting, setLabourImporting] = useState(false);
+  // staff-register-weekly-state-v1
+  const [weeklyLabour, setWeeklyLabour] = useState({
+    dates: [],
+    staff: [],
+    totals: {},
+    staff_count: 0,
+    week_start: '',
+    week_end: ''
+  });
+  const [weeklyLabourLoading, setWeeklyLabourLoading] = useState(false);
+  const [weeklyLabourError, setWeeklyLabourError] = useState('');
   const [labourEditMode, setLabourEditMode] = useState(false);
   const [activeLabourIndex, setActiveLabourIndex] = useState(null);
   const [selectedStaffEmployeeValue, setSelectedStaffEmployeeValue] = useState('');
@@ -1044,6 +1055,55 @@ const DiaryPage = () => {
   useEffect(() => {
     fetchTimesheetReferenceOptions();
   }, [fetchTimesheetReferenceOptions]);
+  const fetchWeeklyLabour = useCallback(async () => {
+    if (!selectedProject || !selectedDate) {
+      setWeeklyLabour({
+        dates: [],
+        staff: [],
+        totals: {},
+        staff_count: 0,
+        week_start: '',
+        week_end: ''
+      });
+      setWeeklyLabourError('');
+      return;
+    }
+
+    setWeeklyLabourLoading(true);
+    setWeeklyLabourError('');
+
+    try {
+      const response = await diaryApi.getWeeklyLabour(
+        selectedProject,
+        selectedDate
+      );
+
+      setWeeklyLabour({
+        dates: Array.isArray(response.data?.dates)
+          ? response.data.dates
+          : [],
+        staff: Array.isArray(response.data?.staff)
+          ? response.data.staff
+          : [],
+        totals: response.data?.totals || {},
+        staff_count: Number(response.data?.staff_count || 0),
+        week_start: response.data?.week_start || '',
+        week_end: response.data?.week_end || ''
+      });
+    } catch (error) {
+      setWeeklyLabourError(
+        error.response?.data?.detail ||
+        'Weekly staff summary could not be loaded'
+      );
+    } finally {
+      setWeeklyLabourLoading(false);
+    }
+  }, [selectedProject, selectedDate]);
+
+  useEffect(() => {
+    fetchWeeklyLabour();
+  }, [fetchWeeklyLabour]);
+
   const fetchLabourRows = useCallback(async () => {
     if (!selectedProject || !selectedDate) {
       setLabourRows([]);
@@ -1398,6 +1458,7 @@ const DiaryPage = () => {
       setDraftStatus('Staff diary check autosaved');
       setLabourSaveStatus('Saved');
       fetchDiary();
+      fetchWeeklyLabour();
     } catch (error) {
       setLabourSaveStatus('Save failed');
       if (!silent) {
@@ -2729,6 +2790,9 @@ const DiaryPage = () => {
         staffSaving={labourSaving}
         staffImporting={labourImporting}
         staffSaveStatus={labourSaveStatus}
+        weeklyLabour={weeklyLabour}
+        weeklyLabourLoading={weeklyLabourLoading}
+        weeklyLabourError={weeklyLabourError}
         getStaffEmployeeOptions={employeePickerOptions}
         getStaffJobOptions={jobNumberOptionsForRow}
         getStaffTaskOptions={taskCodeOptionsForRow}
