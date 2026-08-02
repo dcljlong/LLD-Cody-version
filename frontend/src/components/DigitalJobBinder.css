@@ -8407,3 +8407,94 @@
     max-height: 19rem;
   }
 }
+
+/* large-desktop-diary-shell-v1 */
+@media (min-width: 1281px) {
+  .lld-digital-job-binder {
+    grid-template-columns:
+      minmax(15.5rem, 17.5rem)
+      minmax(0, 1fr)
+      minmax(5.6rem, 6.3rem);
+    column-gap: clamp(0.7rem, 1vw, 1.15rem);
+    width: 100%;
+    max-width: none;
+    padding-right: clamp(0.65rem, 1vw, 1rem);
+    padding-left: clamp(0.65rem, 1vw, 1rem);
+  }
+
+  .lld-binder-stage {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    justify-self: stretch;
+  }
+
+  .lld-binder-cover {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .lld-binder-pages {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    min-height: clamp(38rem, calc(100vh - 8.5rem), 49rem);
+  }
+
+  .lld-binder-focused-spread,
+  .lld-binder-register-spread,
+  .lld-binder-diary-focused-spread {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .lld-binder-focused-page,
+  .lld-binder-page {
+    min-width: 0;
+  }
+
+  .lld-binder-capture-panel {
+    width: 100%;
+    max-width: 17.5rem;
+    justify-self: stretch;
+  }
+
+  .lld-binder-tabs {
+    width: 100%;
+    max-width: 6.3rem;
+  }
+}
+
+@media (min-width: 1500px) {
+  .lld-digital-job-binder {
+    grid-template-columns:
+      minmax(16rem, 17.8rem)
+      minmax(0, 1fr)
+      minmax(5.8rem, 6.5rem);
+    column-gap: clamp(0.85rem, 1.15vw, 1.35rem);
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .lld-binder-pages {
+    min-height: clamp(40rem, calc(100vh - 8rem), 51rem);
+  }
+}
+
+@media (min-width: 1800px) {
+  .lld-digital-job-binder {
+    grid-template-columns:
+      18rem
+      minmax(0, 1fr)
+      6.6rem;
+    column-gap: 1.25rem;
+    padding-right: 1.2rem;
+    padding-left: 1.2rem;
+  }
+
+  .lld-binder-pages {
+    min-height: clamp(42rem, calc(100vh - 8rem), 53rem);
+  }
+}
