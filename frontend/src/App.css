@@ -4850,3 +4850,181 @@ main.lld-diary-experience.lld-diary-page-revealing {
   }
 }
 /* LLD / UNIFIED BINDER WORKSPACE CONTRACT V2R END */
+
+/* LLD / FINAL FULL-WIDTH DESKTOP DIARY CONTRACT V1 START */
+/* lld-final-full-width-desktop-diary-v1
+   This final rule intentionally overrides the older V1V, V1Y and V2R
+   desktop width contracts. The diary workspace owns the desktop viewport. */
+
+@media screen and (min-width: 1281px) {
+  body:has(main.main-content.lld-diary-experience)
+  main.main-content.lld-diary-experience {
+    box-sizing: border-box !important;
+    flex: 0 0 auto !important;
+    flex-basis: auto !important;
+
+    inline-size: calc(100vw - 1.5rem) !important;
+    width: calc(100vw - 1.5rem) !important;
+
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+
+    max-inline-size: none !important;
+    max-width: none !important;
+
+    margin: 0.7rem auto 2rem !important;
+    padding: 0 !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  main.main-content.lld-diary-experience
+  > .lld-content-frame-diary {
+    box-sizing: border-box !important;
+
+    inline-size: 100% !important;
+    width: 100% !important;
+
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+
+    max-inline-size: none !important;
+    max-width: none !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  .lld-content-frame-diary
+  > .lld-digital-job-binder {
+    box-sizing: border-box !important;
+
+    display: grid !important;
+    grid-template-columns:
+      clamp(14.5rem, 16.5vw, 17.5rem)
+      minmax(0, 1fr)
+      clamp(5.6rem, 6vw, 6.5rem) !important;
+
+    column-gap: clamp(0.55rem, 0.8vw, 1rem) !important;
+
+    inline-size: 100% !important;
+    width: 100% !important;
+
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+
+    max-inline-size: none !important;
+    max-width: none !important;
+
+    margin: 0 !important;
+    padding:
+      0
+      clamp(0.45rem, 0.7vw, 0.85rem)
+      !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  .lld-digital-job-binder
+  > .lld-binder-stage {
+    box-sizing: border-box !important;
+
+    inline-size: 100% !important;
+    width: 100% !important;
+
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+
+    max-inline-size: none !important;
+    max-width: none !important;
+
+    justify-self: stretch !important;
+
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  .lld-digital-job-binder
+  > .lld-binder-stage
+  > .lld-binder-cover {
+    box-sizing: border-box !important;
+
+    inline-size: 100% !important;
+    width: 100% !important;
+
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+
+    max-inline-size: none !important;
+    max-width: none !important;
+
+    margin: 0 !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  .lld-digital-job-binder
+  > .lld-binder-stage
+  > .lld-binder-cover
+  > .lld-binder-pages {
+    box-sizing: border-box !important;
+
+    inline-size: 100% !important;
+    width: 100% !important;
+
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+
+    max-inline-size: none !important;
+    max-width: none !important;
+
+    min-height: clamp(39rem, calc(100vh - 5.5rem), 53rem) !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  .lld-binder-capture-panel {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    justify-self: stretch !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  .lld-binder-tabs {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    justify-self: stretch !important;
+  }
+}
+
+@media screen and (min-width: 1600px) {
+  body:has(main.main-content.lld-diary-experience)
+  main.main-content.lld-diary-experience {
+    inline-size: calc(100vw - 1rem) !important;
+    width: calc(100vw - 1rem) !important;
+    margin-top: 0.45rem !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  .lld-content-frame-diary
+  > .lld-digital-job-binder {
+    grid-template-columns:
+      clamp(14rem, 15.5vw, 17rem)
+      minmax(0, 1fr)
+      6.4rem !important;
+
+    column-gap: clamp(0.5rem, 0.7vw, 0.9rem) !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  .lld-digital-job-binder
+  > .lld-binder-stage
+  > .lld-binder-cover
+  > .lld-binder-pages {
+    min-height: clamp(41rem, calc(100vh - 4.8rem), 55rem) !important;
+  }
+}
+
+/* LLD / FINAL FULL-WIDTH DESKTOP DIARY CONTRACT V1 END */
