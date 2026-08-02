@@ -287,6 +287,7 @@ const DiaryPage = () => {
   const labourDraftReadyRef = useRef('');
   const labourServerAutosaveTimerRef = useRef(null);
   const labourLastSavedPayloadRef = useRef('');
+  const labourSaveInFlightRef = useRef(false); // staff-autosave-flash-loop-repair-v1
   const resourcesDraftReadyRef = useRef('');
   const resourcesEditBaselineRef = useRef(null); // resource-edit-baseline-v8-9k2-3
   const quickEntryDraftReadyRef = useRef('');
@@ -1455,7 +1456,13 @@ const DiaryPage = () => {
       return;
     }
 
+    if (labourSaveInFlightRef.current) {
+      return;
+    }
+
+    labourSaveInFlightRef.current = true;
     setLabourSaving(true);
+
     try {
       const startedRows = labourRows
         .map((row, index) => ({ row, rowNumber: index + 1 }))
@@ -1509,13 +1516,37 @@ const DiaryPage = () => {
         rows: cleanRows
       });
 
-      const savedRows = Array.isArray(res.data?.rows) ? res.data.rows.map(normaliseLabourRow) : [];
+      const savedRows = Array.isArray(res.data?.rows)
+        ? res.data.rows.map(normaliseLabourRow)
+        : [];
+
+      const savedComparableRows = savedRows
+        .filter((row) => [
+          row.employee_name,
+          row.start_time,
+          row.finish_time,
+          row.job_number,
+          row.task_code,
+          row.description,
+          row.other
+        ].some((value) => String(value || '').trim()))
+        .map((row) => normaliseLabourRow({
+          ...row,
+          source: 'LLD',
+          source_diary_project_id: selectedProject,
+          source_diary_date: selectedDate,
+          sync_status: 'diary_check_only',
+          project_manager_id: ''
+        }));
+
+      labourLastSavedPayloadRef.current =
+        JSON.stringify(savedComparableRows);
+
       setLabourRows(savedRows);
-      labourLastSavedPayloadRef.current = cleanRowsPayload;
       clearDiaryDraft('labour');
       setDraftStatus('Staff diary check autosaved');
       setLabourSaveStatus('Saved');
-      fetchDiary();
+
       fetchWeeklyLabour();
     } catch (error) {
       setLabourSaveStatus('Save failed');
@@ -1523,6 +1554,7 @@ const DiaryPage = () => {
         toast.error('Failed to autosave staff diary check');
       }
     } finally {
+      labourSaveInFlightRef.current = false;
       setLabourSaving(false);
     }
   };
@@ -1815,8 +1847,23 @@ const DiaryPage = () => {
 
   useEffect(() => {
     const key = getDiaryDraftKey('labour');
-    if (!key || labourDraftReadyRef.current !== key || labourLoading || labourSaving) return undefined;
-    if (!selectedProject || !selectedDate || !hasMeaningfulLabourRows(labourRows)) return undefined;
+
+    if (
+      !key ||
+      labourDraftReadyRef.current !== key ||
+      labourLoading ||
+      labourSaveInFlightRef.current
+    ) {
+      return undefined;
+    }
+
+    if (
+      !selectedProject ||
+      !selectedDate ||
+      !hasMeaningfulLabourRows(labourRows)
+    ) {
+      return undefined;
+    }
 
     const pendingRows = labourRows
       .filter((row) => [
@@ -1850,6 +1897,10 @@ const DiaryPage = () => {
     }
 
     labourServerAutosaveTimerRef.current = window.setTimeout(() => {
+      if (labourSaveInFlightRef.current) {
+        return;
+      }
+
       saveLabourRows({ silent: true });
     }, 900);
 
@@ -1858,7 +1909,7 @@ const DiaryPage = () => {
         window.clearTimeout(labourServerAutosaveTimerRef.current);
       }
     };
-  }, [labourRows, selectedProject, selectedDate, labourLoading, labourSaving]); // staff-diary-backend-autosave-v4
+  }, [labourRows, selectedProject, selectedDate, labourLoading]); // staff-diary-backend-autosave-v4
 
   const changeDate = (days) => {
     const current = parseDateInput(selectedDate);
