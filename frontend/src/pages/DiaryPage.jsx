@@ -513,6 +513,64 @@ const DiaryPage = () => {
     window.requestAnimationFrame(() => openLabourEditor(labourRows.length));
   };
 
+  // staff-register-add-allocation-row-v1
+  const addLabourAllocationForStaff = (sourceIndex) => {
+    const sourceRow = labourRows[sourceIndex];
+
+    if (!sourceRow) {
+      toast.error('Selected staff row could not be found');
+      return -1;
+    }
+
+    const employeeName = String(sourceRow.employee_name || '').trim();
+
+    if (!employeeName) {
+      toast.error('Add the staff member name before adding another task');
+      return -1;
+    }
+
+    const nextIndex = labourRows.length;
+
+    const nextRow = normaliseLabourRow({
+      ...createEmptyLabourRow(),
+      employee_id: sourceRow.employee_id || '',
+      employee_name: employeeName,
+      attendance_status: sourceRow.attendance_status || 'at_work',
+      job_number:
+        sourceRow.job_number ||
+        currentProject?.job_number ||
+        '',
+      task_code: '',
+      start_time: '',
+      finish_time: '',
+      lunch_duration: '0',
+      total_hours: 0,
+      description: '',
+      other: '',
+      source: 'LLD',
+      source_diary_project_id: selectedProject || '',
+      source_diary_date: selectedDate,
+      sync_status:
+        sourceRow.sync_status ||
+        (
+          sourceRow.employee_id
+            ? 'local_only'
+            : 'local_pending_timesheet_staff'
+        )
+    });
+
+    setLabourRows((current) => [
+      ...current,
+      nextRow
+    ]);
+
+    setLabourSaveStatus(
+      'New task row added — enter times and task'
+    );
+
+    return nextIndex;
+  };
+
   const addSelectedStaffToDiary = () => {
     const employeeOption = resolveEmployeeSelection(selectedStaffEmployeeValue);
     if (!employeeOption) {
@@ -2814,6 +2872,7 @@ const DiaryPage = () => {
         onSetAllStaffNormalDay={markAllStaffAtWork}
         onSaveStaff={saveLabourRows}
         onRemoveStaff={removeLabourRow}
+        onAddStaffAllocation={addLabourAllocationForStaff}
         onImportStaff={importLabourRowsToTimesheet}
         quickNote={entryData.note}
         diaryDraft={entryData}

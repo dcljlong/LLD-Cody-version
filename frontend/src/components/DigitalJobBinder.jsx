@@ -2775,6 +2775,7 @@ const BinderStaffDetail = ({
   onChange,
   onSave,
   onRemove,
+  onAddAllocation,
   onImport,
   onClose,
 }) => {
@@ -3026,7 +3027,23 @@ const BinderStaffDetail = ({
           />
         </label>
 
-        <div className="lld-binder-action-controls">
+        <div
+          className="lld-binder-action-controls"
+          data-testid="staff-register-multiple-task-button-v1"
+        >
+          <button
+            type="button"
+            className="lld-binder-action-button"
+            onClick={() => onAddAllocation?.(rowIndex)}
+            disabled={
+              staffSaving ||
+              typeof onAddAllocation !== 'function' ||
+              !String(row.employee_name || '').trim()
+            }
+          >
+            + Add another job / task
+          </button>
+
           <button
             type="submit"
             className="lld-binder-action-button lld-binder-action-button-primary"
@@ -3477,6 +3494,7 @@ const DigitalJobBinder = ({
   onSetAllStaffNormalDay,
   onSaveStaff,
   onRemoveStaff,
+  onAddStaffAllocation,
   onImportStaff,
   quickNote = '',
   diaryDraft = {},
@@ -5290,6 +5308,19 @@ const DigitalJobBinder = ({
                   onChange={onStaffChange}
                   onSave={onSaveStaff}
                   onRemove={onRemoveStaff}
+                  onAddAllocation={(sourceIndex) => {
+                    const nextIndex =
+                      onAddStaffAllocation?.(sourceIndex);
+
+                    if (
+                      Number.isInteger(nextIndex) &&
+                      nextIndex >= 0
+                    ) {
+                      setSelectedStaffId(
+                        `binder-staff-${nextIndex}`
+                      );
+                    }
+                  }}
                   onImport={onImportStaff}
                   onClose={() => setSelectedStaffId(null)}
                 />
