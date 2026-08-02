@@ -2805,6 +2805,7 @@ const BinderStaffAdd = ({
 const BinderStaffDetail = ({
   row = {},
   rowIndex = -1,
+  allocationRows = [],
   currentProject = null,
   staffSaving = false,
   staffImporting = false,
@@ -2817,10 +2818,52 @@ const BinderStaffDetail = ({
   onSave,
   onRemove,
   onAddAllocation,
+  onSelectAllocation,
   onImport,
   onClose,
 }) => {
   const display = getStaffRowDisplay(row);
+
+  // staff-register-allocation-switcher-v1
+  const workerAllocations = (
+    Array.isArray(allocationRows)
+      ? allocationRows
+      : []
+  ).map((allocation, index) => {
+    const allocationIndex =
+      Number.isInteger(allocation?._binderStaffIndex)
+        ? allocation._binderStaffIndex
+        : index;
+
+    const allocationId =
+      allocation?._binderStaffId ||
+      `binder-staff-${allocationIndex}`;
+
+    const job =
+      String(allocation?.job_number || '').trim() ||
+      'No job';
+
+    const task =
+      String(allocation?.task_code || '').trim() ||
+      'No task';
+
+    const hours =
+      Number(allocation?.total_hours || 0);
+
+    return {
+      ...allocation,
+      allocationIndex,
+      allocationId,
+      job,
+      task,
+      hours
+    };
+  });
+
+  const workerTotalHours = workerAllocations.reduce(
+    (total, allocation) => total + allocation.hours,
+    0
+  );
 
   const employeeOptions =
     typeof getEmployeeOptions === 'function'
@@ -2872,8 +2915,80 @@ const BinderStaffDetail = ({
           </small>
         </div>
 
-        <b>{display.hours.toFixed(2)}h</b>
+        <b>{workerTotalHours.toFixed(2)}h</b>
       </div>
+
+      <section
+        className="lld-staff-allocation-switcher"
+        data-testid="staff-register-allocation-switcher-v1"
+        aria-label="Worker job and task allocations"
+      >
+        <div className="lld-staff-allocation-switcher-heading">
+          <div>
+            <span>Daily allocations</span>
+            <strong>
+              {workerAllocations.length}
+              {' '}
+              {workerAllocations.length === 1
+                ? 'job / task'
+                : 'jobs / tasks'}
+            </strong>
+          </div>
+
+          <b>{workerTotalHours.toFixed(2)}h total</b>
+        </div>
+
+        <div className="lld-staff-allocation-switcher-list">
+          {workerAllocations.map((allocation, index) => {
+            const isSelected =
+              allocation.allocationIndex === rowIndex;
+
+            return (
+              <button
+                key={allocation.allocationId}
+                type="button"
+                className={`lld-staff-allocation-switcher-row ${
+                  isSelected ? 'is-selected' : ''
+                }`}
+                onClick={() => (
+                  onSelectAllocation?.(allocation)
+                )}
+                disabled={staffSaving}
+                aria-pressed={isSelected}
+              >
+                <span>{index + 1}</span>
+
+                <strong>
+                  {allocation.job}
+                  {' · '}
+                  {allocation.task}
+                </strong>
+
+                <small>
+                  {allocation.start_time || '--:--'}
+                  {'–'}
+                  {allocation.finish_time || '--:--'}
+                </small>
+
+                <b>{allocation.hours.toFixed(2)}h</b>
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          className="lld-staff-allocation-add"
+          onClick={() => onAddAllocation?.(rowIndex)}
+          disabled={
+            staffSaving ||
+            typeof onAddAllocation !== 'function' ||
+            !String(row.employee_name || '').trim()
+          }
+        >
+          + Add another job / task
+        </button>
+      </section>
 
       <form
         className="lld-binder-action-form lld-binder-staff-form"
@@ -3072,18 +3187,6 @@ const BinderStaffDetail = ({
           className="lld-binder-action-controls"
           data-testid="staff-register-multiple-task-button-v1"
         >
-          <button
-            type="button"
-            className="lld-binder-action-button"
-            onClick={() => onAddAllocation?.(rowIndex)}
-            disabled={
-              staffSaving ||
-              typeof onAddAllocation !== 'function' ||
-              !String(row.employee_name || '').trim()
-            }
-          >
-            + Add another job / task
-          </button>
 
           <button
             type="submit"
@@ -5338,6 +5441,26 @@ const DigitalJobBinder = ({
                 <BinderStaffDetail
                   row={selectedStaff}
                   rowIndex={selectedStaff._binderStaffIndex}
+                  allocationRows={staffLedgerItems.filter((item) => {
+                    const selectedEmployeeId =
+                      String(selectedStaff.employee_id || '').trim();
+
+                    const itemEmployeeId =
+                      String(item.employee_id || '').trim();
+
+                    if (selectedEmployeeId) {
+                      return itemEmployeeId === selectedEmployeeId;
+                    }
+
+                    return (
+                      String(item.employee_name || '')
+                        .trim()
+                        .toLowerCase() ===
+                      String(selectedStaff.employee_name || '')
+                        .trim()
+                        .toLowerCase()
+                    );
+                  })}
                   currentProject={currentProject}
                   staffSaving={staffSaving}
                   staffImporting={staffImporting}
@@ -5361,6 +5484,12 @@ const DigitalJobBinder = ({
                         `binder-staff-${nextIndex}`
                       );
                     }
+                  }}
+                  onSelectAllocation={(allocation) => {
+                    setSelectedStaffId(
+                      allocation?._binderStaffId ||
+                      `binder-staff-${allocation?._binderStaffIndex}`
+                    );
                   }}
                   onImport={onImportStaff}
                   onClose={() => setSelectedStaffId(null)}
