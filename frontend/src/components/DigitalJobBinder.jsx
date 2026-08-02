@@ -1875,6 +1875,263 @@ const StaffLedgerRow = ({
   );
 };
 
+// staff-register-compact-crew-list-v1
+const STAFF_STATUS_DISPLAY = {
+  at_work: {
+    label: 'Working',
+    shortLabel: 'Work',
+    className: 'is-working'
+  },
+  sick: {
+    label: 'Sick',
+    shortLabel: 'Sick',
+    className: 'is-sick'
+  },
+  annual_leave: {
+    label: 'Annual leave',
+    shortLabel: 'Leave',
+    className: 'is-leave'
+  },
+  public_holiday: {
+    label: 'Public holiday',
+    shortLabel: 'Holiday',
+    className: 'is-holiday'
+  },
+  away_other_site: {
+    label: 'Other site',
+    shortLabel: 'Other',
+    className: 'is-other-site'
+  },
+  no_work: {
+    label: 'No work',
+    shortLabel: 'No work',
+    className: 'is-no-work'
+  }
+};
+
+const CompactStaffCrewList = ({
+  rows = [],
+  selectedStaffId = null,
+  selectedDateLabel = '',
+  staffSaving = false,
+  onSelect,
+  onAddStaff,
+  onSetAllNormalDay
+}) => {
+  const [search, setSearch] = useState('');
+
+  const staffRows = Array.isArray(rows) ? rows : [];
+
+  const filteredRows = staffRows.filter((row) => {
+    const query = search.trim().toLowerCase();
+
+    if (!query) return true;
+
+    return [
+      row.employee_name,
+      row.job_number,
+      row.task_code,
+      row.description,
+      row.other
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .includes(query);
+  });
+
+  const totals = staffRows.reduce((result, row) => {
+    const status = row.attendance_status || 'at_work';
+
+    result.total += 1;
+
+    if (status === 'at_work') result.working += 1;
+    else if (status === 'sick') result.sick += 1;
+    else if (status === 'annual_leave') result.leave += 1;
+    else if (status === 'away_other_site') result.otherSite += 1;
+
+    return result;
+  }, {
+    total: 0,
+    working: 0,
+    sick: 0,
+    leave: 0,
+    otherSite: 0
+  });
+
+  return (
+    <section
+      className="lld-staff-crew-index"
+      data-testid="staff-register-compact-crew-list-v1"
+      aria-label="Staff crew list"
+    >
+      <div className="lld-staff-crew-index-heading">
+        <div>
+          <p>Labour</p>
+          <h3>Staff on site</h3>
+          <span>{selectedDateLabel}</span>
+        </div>
+
+        <strong>{totals.total}</strong>
+      </div>
+
+      <div
+        className="lld-staff-crew-totals"
+        aria-label="Daily staff totals"
+      >
+        <span>
+          <strong>{totals.working}</strong>
+          Working
+        </span>
+
+        <span>
+          <strong>{totals.sick}</strong>
+          Sick
+        </span>
+
+        <span>
+          <strong>{totals.leave}</strong>
+          Leave
+        </span>
+
+        <span>
+          <strong>{totals.otherSite}</strong>
+          Other
+        </span>
+      </div>
+
+      <div className="lld-staff-crew-actions">
+        <button
+          type="button"
+          onClick={onAddStaff}
+          disabled={
+            staffSaving ||
+            typeof onAddStaff !== 'function'
+          }
+        >
+          + Add staff
+        </button>
+
+        <button
+          type="button"
+          onClick={onSetAllNormalDay}
+          disabled={
+            staffSaving ||
+            staffRows.length === 0 ||
+            typeof onSetAllNormalDay !== 'function'
+          }
+        >
+          Mark all at work
+        </button>
+      </div>
+
+      <label className="lld-staff-crew-search">
+        <span className="sr-only">Search staff</span>
+        <input
+          type="search"
+          value={search}
+          placeholder="Search staff, job or task..."
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </label>
+
+      {staffRows.length === 0 ? (
+        <div className="lld-staff-crew-empty">
+          <strong>No staff added</strong>
+          <p>Add the crew once, then update only daily exceptions.</p>
+
+          <button
+            type="button"
+            onClick={onAddStaff}
+            disabled={
+              staffSaving ||
+              typeof onAddStaff !== 'function'
+            }
+          >
+            Add first staff member
+          </button>
+        </div>
+      ) : filteredRows.length === 0 ? (
+        <div className="lld-staff-crew-empty lld-staff-crew-empty-search">
+          <strong>No matching staff</strong>
+          <p>Try a different name, job number or task code.</p>
+        </div>
+      ) : (
+        <div className="lld-staff-crew-list">
+          {filteredRows.map((row, index) => {
+            const rowId =
+              row._binderStaffId ||
+              `binder-staff-${row._binderStaffIndex ?? index}`;
+
+            const status = row.attendance_status || 'at_work';
+
+            const statusDisplay =
+              STAFF_STATUS_DISPLAY[status] ||
+              STAFF_STATUS_DISPLAY.at_work;
+
+            const jobNumber =
+              String(row.job_number || '').trim() || 'No job';
+
+            const taskCode =
+              String(row.task_code || '').trim() || 'No task';
+
+            const hours = Number(row.total_hours || 0);
+
+            return (
+              <button
+                key={rowId}
+                type="button"
+                className={`lld-staff-crew-row ${
+                  String(selectedStaffId || '') === String(rowId)
+                    ? 'is-selected'
+                    : ''
+                }`}
+                data-attendance-status={status}
+                onClick={() => onSelect?.(row)}
+                aria-pressed={
+                  String(selectedStaffId || '') === String(rowId)
+                }
+              >
+                <span
+                  className={`lld-staff-crew-status-dot ${statusDisplay.className}`}
+                  title={statusDisplay.label}
+                  aria-label={statusDisplay.label}
+                />
+
+                <span className="lld-staff-crew-person">
+                  <strong>
+                    {row.employee_name || `Staff ${index + 1}`}
+                  </strong>
+
+                  <small>
+                    {jobNumber} · {taskCode}
+                  </small>
+                </span>
+
+                <span className="lld-staff-crew-status">
+                  {statusDisplay.shortLabel}
+                </span>
+
+                <span className="lld-staff-crew-hours">
+                  {Number.isFinite(hours) ? hours.toFixed(2) : '0.00'}h
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <footer className="lld-staff-crew-index-footer">
+        <span>
+          Select a person to open their daily timesheet.
+        </span>
+
+        <strong>{filteredRows.length}</strong>
+      </footer>
+    </section>
+  );
+};
+
 // staff-register-compact-daily-v1
 const STAFF_NON_WORKING_STATUSES = new Set([
   'sick',
@@ -4752,6 +5009,24 @@ const DigitalJobBinder = ({
               </header>
 
               <div className="lld-binder-focused-rule" />
+
+              {activeTab === 'staff' && (
+                <CompactStaffCrewList
+                  rows={staffLedgerItems}
+                  selectedStaffId={selectedStaffId}
+                  selectedDateLabel={selectedDateLabel}
+                  staffSaving={staffSaving}
+                  onAddStaff={() => {
+                    setSelectedStaffId(null);
+                    setStaffAddOpen(true);
+                  }}
+                  onSetAllNormalDay={onSetAllStaffNormalDay}
+                  onSelect={(row) => {
+                    setStaffAddOpen(false);
+                    setSelectedStaffId(row?._binderStaffId || null);
+                  }}
+                />
+              )}
 
               {activeTab === 'closeout' && (
                 <div
