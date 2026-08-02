@@ -5028,3 +5028,108 @@ main.lld-diary-experience.lld-diary-page-revealing {
 }
 
 /* LLD / FINAL FULL-WIDTH DESKTOP DIARY CONTRACT V1 END */
+
+/* LLD / DIARY WRAPPER SELECTOR CORRECTION V1 START */
+/* lld-diary-wrapper-selector-correction-v1
+   DiaryPage renders:
+   .lld-content-frame-diary > #diary-binder-top > .lld-digital-job-binder
+*/
+
+@media screen and (min-width: 1281px) {
+  body:has(main.main-content.lld-diary-experience)
+  main.main-content.lld-diary-experience {
+    inline-size: calc(100vw - 1rem) !important;
+    width: calc(100vw - 1rem) !important;
+    max-inline-size: none !important;
+    max-width: none !important;
+    margin: 0.4rem auto 1.5rem !important;
+    padding: 0 !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  main.main-content.lld-diary-experience
+  > .lld-content-frame-diary {
+    inline-size: 100% !important;
+    width: 100% !important;
+    max-inline-size: none !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  .lld-content-frame-diary
+  > #diary-binder-top {
+    box-sizing: border-box !important;
+    inline-size: 100% !important;
+    width: 100% !important;
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+    max-inline-size: none !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  .lld-content-frame-diary
+  > #diary-binder-top
+  > .lld-digital-job-binder {
+    box-sizing: border-box !important;
+    display: grid !important;
+
+    grid-template-columns:
+      clamp(15rem, 17vw, 18rem)
+      minmax(0, 1fr)
+      clamp(5.8rem, 6.2vw, 6.6rem)
+      !important;
+
+    column-gap: clamp(0.45rem, 0.7vw, 0.85rem) !important;
+
+    inline-size: 100% !important;
+    width: 100% !important;
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+    max-inline-size: none !important;
+    max-width: none !important;
+
+    margin: 0 !important;
+    padding: 0 0.45rem !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  #diary-binder-top
+  > .lld-digital-job-binder
+  > .lld-binder-stage {
+    inline-size: 100% !important;
+    width: 100% !important;
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+    max-inline-size: none !important;
+    max-width: none !important;
+    justify-self: stretch !important;
+    margin: 0 !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  #diary-binder-top
+  .lld-binder-cover,
+  body:has(main.main-content.lld-diary-experience)
+  #diary-binder-top
+  .lld-binder-pages {
+    inline-size: 100% !important;
+    width: 100% !important;
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+    max-inline-size: none !important;
+    max-width: none !important;
+  }
+
+  body:has(main.main-content.lld-diary-experience)
+  #diary-binder-top
+  .lld-binder-pages {
+    min-height: clamp(41rem, calc(100vh - 4.25rem), 55rem) !important;
+  }
+}
+
+/* LLD / DIARY WRAPPER SELECTOR CORRECTION V1 END */
