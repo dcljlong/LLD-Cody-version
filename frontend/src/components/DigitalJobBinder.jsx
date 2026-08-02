@@ -1919,29 +1919,97 @@ const CompactStaffCrewList = ({
   onSetAllNormalDay
 }) => {
   const [search, setSearch] = useState('');
-
   const staffRows = Array.isArray(rows) ? rows : [];
 
-  const filteredRows = staffRows.filter((row) => {
-    const query = search.trim().toLowerCase();
+  // staff-register-grouped-crew-list-v1
+  const groupedStaff = useMemo(() => {
+    const groups = new Map();
 
-    if (!query) return true;
+    staffRows.forEach((row, index) => {
+      const employeeId = String(row.employee_id || '').trim();
+      const employeeName = String(row.employee_name || '').trim();
 
-    return [
-      row.employee_name,
-      row.job_number,
-      row.task_code,
-      row.description,
-      row.other
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase()
-      .includes(query);
-  });
+      const groupKey = employeeId
+        ? `employee:${employeeId}`
+        : `name:${employeeName.toLowerCase() || `staff-${index}`}`;
 
-  const totals = staffRows.reduce((result, row) => {
-    const status = row.attendance_status || 'at_work';
+      const rowId =
+        row._binderStaffId ||
+        `binder-staff-${row._binderStaffIndex ?? index}`;
+
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, {
+          groupKey,
+          employee_name: employeeName || `Staff ${index + 1}`,
+          attendance_status: row.attendance_status || 'at_work',
+          firstRow: row,
+          allocationRows: [],
+          total_hours: 0
+        });
+      }
+
+      const group = groups.get(groupKey);
+
+      group.allocationRows.push({
+        ...row,
+        _groupRowId: rowId
+      });
+
+      group.total_hours += Number(row.total_hours || 0);
+
+      if (
+        group.attendance_status === 'at_work' &&
+        row.attendance_status &&
+        row.attendance_status !== 'at_work'
+      ) {
+        group.attendance_status = row.attendance_status;
+      }
+    });
+
+    return Array.from(groups.values()).map((group) => {
+      const allocationLabels = Array.from(
+        new Set(
+          group.allocationRows.map((row) => {
+            const job =
+              String(row.job_number || '').trim() || 'No job';
+
+            const task =
+              String(row.task_code || '').trim() || 'No task';
+
+            return `${job} · ${task}`;
+          })
+        )
+      );
+
+      return {
+        ...group,
+        allocationSummary:
+          allocationLabels.join(' | ') ||
+          'No job or task allocated',
+        searchText: [
+          group.employee_name,
+          ...group.allocationRows.flatMap((row) => [
+            row.job_number,
+            row.task_code,
+            row.description,
+            row.other
+          ])
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+      };
+    });
+  }, [staffRows]);
+
+  const query = search.trim().toLowerCase();
+
+  const filteredStaff = groupedStaff.filter(
+    (worker) => !query || worker.searchText.includes(query)
+  );
+
+  const totals = groupedStaff.reduce((result, worker) => {
+    const status = worker.attendance_status || 'at_work';
 
     result.total += 1;
 
@@ -1963,6 +2031,7 @@ const CompactStaffCrewList = ({
     <section
       className="lld-staff-crew-index"
       data-testid="staff-register-compact-crew-list-v1"
+      data-grouped-crew="staff-register-grouped-crew-list-v1"
       aria-label="Staff crew list"
     >
       <div className="lld-staff-crew-index-heading">
@@ -1979,35 +2048,17 @@ const CompactStaffCrewList = ({
         className="lld-staff-crew-totals"
         aria-label="Daily staff totals"
       >
-        <span>
-          <strong>{totals.working}</strong>
-          Working
-        </span>
-
-        <span>
-          <strong>{totals.sick}</strong>
-          Sick
-        </span>
-
-        <span>
-          <strong>{totals.leave}</strong>
-          Leave
-        </span>
-
-        <span>
-          <strong>{totals.otherSite}</strong>
-          Other
-        </span>
+        <span><strong>{totals.working}</strong>Working</span>
+        <span><strong>{totals.sick}</strong>Sick</span>
+        <span><strong>{totals.leave}</strong>Leave</span>
+        <span><strong>{totals.otherSite}</strong>Other</span>
       </div>
 
       <div className="lld-staff-crew-actions">
         <button
           type="button"
           onClick={onAddStaff}
-          disabled={
-            staffSaving ||
-            typeof onAddStaff !== 'function'
-          }
+          disabled={staffSaving || typeof onAddStaff !== 'function'}
         >
           + Add staff
         </button>
@@ -2035,7 +2086,7 @@ const CompactStaffCrewList = ({
         />
       </label>
 
-      {staffRows.length === 0 ? (
+      {groupedStaff.length === 0 ? (
         <div className="lld-staff-crew-empty">
           <strong>No staff added</strong>
           <p>Add the crew once, then update only daily exceptions.</p>
@@ -2043,54 +2094,41 @@ const CompactStaffCrewList = ({
           <button
             type="button"
             onClick={onAddStaff}
-            disabled={
-              staffSaving ||
-              typeof onAddStaff !== 'function'
-            }
+            disabled={staffSaving || typeof onAddStaff !== 'function'}
           >
             Add first staff member
           </button>
         </div>
-      ) : filteredRows.length === 0 ? (
+      ) : filteredStaff.length === 0 ? (
         <div className="lld-staff-crew-empty lld-staff-crew-empty-search">
           <strong>No matching staff</strong>
           <p>Try a different name, job number or task code.</p>
         </div>
       ) : (
         <div className="lld-staff-crew-list">
-          {filteredRows.map((row, index) => {
-            const rowId =
-              row._binderStaffId ||
-              `binder-staff-${row._binderStaffIndex ?? index}`;
-
-            const status = row.attendance_status || 'at_work';
+          {filteredStaff.map((worker) => {
+            const status = worker.attendance_status || 'at_work';
 
             const statusDisplay =
               STAFF_STATUS_DISPLAY[status] ||
               STAFF_STATUS_DISPLAY.at_work;
 
-            const jobNumber =
-              String(row.job_number || '').trim() || 'No job';
-
-            const taskCode =
-              String(row.task_code || '').trim() || 'No task';
-
-            const hours = Number(row.total_hours || 0);
+            const selected = worker.allocationRows.some((row) => (
+              String(selectedStaffId || '') ===
+              String(row._groupRowId || '')
+            ));
 
             return (
               <button
-                key={rowId}
+                key={worker.groupKey}
                 type="button"
                 className={`lld-staff-crew-row ${
-                  String(selectedStaffId || '') === String(rowId)
-                    ? 'is-selected'
-                    : ''
+                  selected ? 'is-selected' : ''
                 }`}
                 data-attendance-status={status}
-                onClick={() => onSelect?.(row)}
-                aria-pressed={
-                  String(selectedStaffId || '') === String(rowId)
-                }
+                data-allocation-count={worker.allocationRows.length}
+                onClick={() => onSelect?.(worker.firstRow)}
+                aria-pressed={selected}
               >
                 <span
                   className={`lld-staff-crew-status-dot ${statusDisplay.className}`}
@@ -2099,21 +2137,21 @@ const CompactStaffCrewList = ({
                 />
 
                 <span className="lld-staff-crew-person">
-                  <strong>
-                    {row.employee_name || `Staff ${index + 1}`}
-                  </strong>
+                  <strong>{worker.employee_name}</strong>
 
-                  <small>
-                    {jobNumber} · {taskCode}
+                  <small title={worker.allocationSummary}>
+                    {worker.allocationSummary}
                   </small>
                 </span>
 
                 <span className="lld-staff-crew-status">
-                  {statusDisplay.shortLabel}
+                  {worker.allocationRows.length > 1
+                    ? `${worker.allocationRows.length} tasks`
+                    : statusDisplay.shortLabel}
                 </span>
 
                 <span className="lld-staff-crew-hours">
-                  {Number.isFinite(hours) ? hours.toFixed(2) : '0.00'}h
+                  {Number(worker.total_hours || 0).toFixed(2)}h
                 </span>
               </button>
             );
@@ -2122,11 +2160,14 @@ const CompactStaffCrewList = ({
       )}
 
       <footer className="lld-staff-crew-index-footer">
-        <span>
-          Select a person to open their daily timesheet.
-        </span>
+        <span>Select a person to open their daily timesheet.</span>
 
-        <strong>{filteredRows.length}</strong>
+        <strong>
+          {filteredStaff.length}
+          {staffRows.length !== groupedStaff.length
+            ? ` people · ${staffRows.length} rows`
+            : ''}
+        </strong>
       </footer>
     </section>
   );
