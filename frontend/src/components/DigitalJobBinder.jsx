@@ -3521,26 +3521,31 @@ const BinderStaffDetail = ({
 
         <label className="lld-binder-action-field">
           <span>Job #</span>
-          <select
-            value={row.job_number || currentProject?.job_number || ''}
+          <input
+            type="text"
+            list={`lld-staff-job-options-${rowIndex}`}
+            value={row.job_number || ''}
+            placeholder={currentProject?.job_number || 'Enter job number'}
             onChange={(event) => (
               onChange?.(rowIndex, 'job_number', event.target.value)
             )}
             disabled={staffSaving}
-          >
-            <option value="">Job #</option>
+            autoComplete="off"
+            data-testid="staff-manual-job-number-entry-v1"
+          />
 
+          <datalist id={`lld-staff-job-options-${rowIndex}`}>
             {(Array.isArray(jobOptions) ? jobOptions : []).map(
               (option, index) => (
                 <option
                   key={`${option.value || option.label || 'job'}-${index}`}
                   value={option.value || ''}
                 >
-                  {option.label || option.value}
+                  {option.label || option.value || ''}
                 </option>
               )
             )}
-          </select>
+          </datalist>
         </label>
 
         <label className="lld-binder-action-field">

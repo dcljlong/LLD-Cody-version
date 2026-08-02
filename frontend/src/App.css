@@ -5133,3 +5133,132 @@ main.lld-diary-experience.lld-diary-page-revealing {
 }
 
 /* LLD / DIARY WRAPPER SELECTOR CORRECTION V1 END */
+
+/* staff-desktop-viewport-containment-v1
+   Keep the desktop binder inside the visible application viewport.
+   Individual diary pages scroll internally instead of moving the whole browser page.
+*/
+@media screen and (min-width: 1281px) {
+  html:has(.lld-content-frame-diary),
+  body:has(.lld-content-frame-diary),
+  #root:has(.lld-content-frame-diary) {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .lld-content-frame-diary {
+    box-sizing: border-box;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+    padding-block: 0.45rem !important;
+  }
+
+  .lld-content-frame-diary > #diary-binder-top {
+    height: calc(100dvh - 0.9rem) !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 0.9rem) !important;
+    overflow: hidden !important;
+  }
+
+  .lld-content-frame-diary
+    > #diary-binder-top
+    > .lld-digital-job-binder {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .lld-content-frame-diary
+    > #diary-binder-top
+    > .lld-digital-job-binder
+    > .lld-binder-stage,
+  .lld-content-frame-diary
+    > #diary-binder-top
+    > .lld-digital-job-binder
+    > .lld-binder-stage
+    > .lld-binder-cover,
+  .lld-content-frame-diary
+    > #diary-binder-top
+    > .lld-digital-job-binder
+    > .lld-binder-stage
+    > .lld-binder-cover
+    > .lld-binder-pages {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+  }
+
+  .lld-binder-active-staff .lld-binder-page-left,
+  .lld-binder-active-staff .lld-binder-page-right {
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .lld-binder-active-staff .lld-binder-page-left {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .lld-binder-active-staff .lld-staff-crew-index {
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
+  }
+
+  .lld-binder-active-staff .lld-staff-crew-list {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .lld-binder-active-staff .lld-binder-page-right {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .lld-binder-active-staff .lld-binder-staff-detail,
+  .lld-binder-active-staff .lld-binder-staff-detail-form,
+  .lld-binder-active-staff .lld-binder-register-detail {
+    min-height: 0 !important;
+  }
+
+  .lld-binder-active-staff .lld-binder-staff-detail {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding-right: 0.35rem;
+  }
+
+  /* Raw labour-row count duplicates the grouped worker count and counts tasks as people. */
+  .lld-binder-active-staff .lld-binder-page-left
+    > .lld-binder-register-summary,
+  .lld-binder-active-staff .lld-binder-page-left
+    > .lld-binder-register-footer {
+    display: none !important;
+  }
+
+  .lld-binder-active-staff input[list^="lld-staff-job-options-"] {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    border-bottom: 1px solid rgba(23, 52, 74, 0.18);
+    border-radius: 0;
+    background: transparent;
+    color: #17344a;
+    padding: 0.4rem 0.2rem;
+    font: inherit;
+    font-weight: 700;
+  }
+
+  .lld-binder-active-staff input[list^="lld-staff-job-options-"]:focus {
+    border-bottom-color: rgba(47, 203, 187, 0.85);
+    outline: none;
+    box-shadow: 0 1px 0 rgba(47, 203, 187, 0.45);
+  }
+}
