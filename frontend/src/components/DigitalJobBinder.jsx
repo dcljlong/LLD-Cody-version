@@ -1919,6 +1919,7 @@ const CompactStaffCrewList = ({
   onSetAllNormalDay
 }) => {
   const [search, setSearch] = useState('');
+  const [reportJobFilter, setReportJobFilter] = useState('');
   const staffRows = Array.isArray(rows) ? rows : [];
 
   // staff-register-grouped-crew-list-v1
@@ -2001,6 +2002,354 @@ const CompactStaffCrewList = ({
       };
     });
   }, [staffRows]);
+
+  // staff-register-report-exports-v1
+  const reportJobOptions = Array.from(
+    new Set(
+      staffRows
+        .map((row) => String(row.job_number || '').trim())
+        .filter(Boolean)
+    )
+  ).sort((a, b) => a.localeCompare(b, undefined, {
+    numeric: true,
+    sensitivity: 'base'
+  }));
+
+  const escapeReportHtml = (value) => String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+
+  const getReportStatus = (value) => (
+    STAFF_STATUS_DISPLAY[value || 'at_work']?.label ||
+    STAFF_STATUS_DISPLAY.at_work.label
+  );
+
+  const openStaffReport = (reportType) => {
+    const filteredRows = staffRows.filter((row) => (
+      !reportJobFilter ||
+      String(row.job_number || '').trim() === reportJobFilter
+    ));
+
+    if (filteredRows.length === 0) {
+      window.alert('No staff rows match the selected job filter.');
+      return;
+    }
+
+    const reportGroups = new Map();
+
+    filteredRows.forEach((row, index) => {
+      const employeeId = String(row.employee_id || '').trim();
+      const employeeName =
+        String(row.employee_name || '').trim() ||
+        `Staff ${index + 1}`;
+
+      const groupKey = employeeId
+        ? `employee:${employeeId}`
+        : `name:${employeeName.toLowerCase()}`;
+
+      if (!reportGroups.has(groupKey)) {
+        reportGroups.set(groupKey, {
+          employeeName,
+          status: row.attendance_status || 'at_work',
+          rows: [],
+          totalHours: 0
+        });
+      }
+
+      const group = reportGroups.get(groupKey);
+
+      group.rows.push(row);
+      group.totalHours += Number(row.total_hours || 0);
+
+      if (
+        group.status === 'at_work' &&
+        row.attendance_status &&
+        row.attendance_status !== 'at_work'
+      ) {
+        group.status = row.attendance_status;
+      }
+    });
+
+    const people = Array.from(reportGroups.values());
+
+    const reportTitle =
+      reportType === 'full'
+        ? 'Detailed Labour Report'
+        : 'Site Labour Summary';
+
+    const jobLabel =
+      reportJobFilter || 'All job numbers';
+
+    const summaryRows = people.map((person) => {
+      const jobs = Array.from(new Set(
+        person.rows.map((row) => (
+          String(row.job_number || '').trim() || 'Not allocated'
+        ))
+      )).join(', ');
+
+      const tasks = Array.from(new Set(
+        person.rows.map((row) => (
+          String(row.task_code || '').trim() || 'Not allocated'
+        ))
+      )).join(', ');
+
+      return `
+        <tr>
+          <td>${escapeReportHtml(person.employeeName)}</td>
+          <td>${escapeReportHtml(jobs)}</td>
+          <td>${escapeReportHtml(tasks)}</td>
+          <td>${escapeReportHtml(getReportStatus(person.status))}</td>
+          <td class="number">${person.totalHours.toFixed(2)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const fullRows = filteredRows.map((row, index) => `
+      <tr>
+        <td>${escapeReportHtml(row.employee_name || `Staff ${index + 1}`)}</td>
+        <td>${escapeReportHtml(row.job_number || 'Not allocated')}</td>
+        <td>${escapeReportHtml(row.task_code || 'Not allocated')}</td>
+        <td>${escapeReportHtml(getReportStatus(row.attendance_status))}</td>
+        <td>${escapeReportHtml(row.start_time || '')}</td>
+        <td>${escapeReportHtml(row.finish_time || '')}</td>
+        <td class="number">${escapeReportHtml(row.lunch_duration || '0')}</td>
+        <td class="number">${Number(row.total_hours || 0).toFixed(2)}</td>
+        <td>${escapeReportHtml(row.description || row.other || '')}</td>
+      </tr>
+    `).join('');
+
+    const table =
+      reportType === 'full'
+        ? `
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Job number</th>
+                <th>Task code / task</th>
+                <th>Status</th>
+                <th>Start</th>
+                <th>Finish</th>
+                <th>Lunch</th>
+                <th>Hours</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>${fullRows}</tbody>
+          </table>
+        `
+        : `
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Job number</th>
+                <th>Task code / task</th>
+                <th>Status</th>
+                <th>Total hours</th>
+              </tr>
+            </thead>
+            <tbody>${summaryRows}</tbody>
+          </table>
+        `;
+
+    const totalHours = filteredRows.reduce(
+      (total, row) => total + Number(row.total_hours || 0),
+      0
+    );
+
+    const reportWindow = window.open(
+      '',
+      '_blank',
+      'noopener,noreferrer'
+    );
+
+    if (!reportWindow) {
+      window.alert(
+        'The report window was blocked. Allow pop-ups for this site and try again.'
+      );
+      return;
+    }
+
+    reportWindow.document.open();
+    reportWindow.document.write(`
+      <!doctype html>
+      <html lang="en">
+        <head>
+          <meta charset="utf-8" />
+          <title>${escapeReportHtml(reportTitle)}</title>
+          <style>
+            @page {
+              size: A4 landscape;
+              margin: 12mm;
+            }
+
+            * {
+              box-sizing: border-box;
+            }
+
+            body {
+              margin: 0;
+              color: #111;
+              background: #fff;
+              font-family: Arial, Helvetica, sans-serif;
+              font-size: 10px;
+              line-height: 1.35;
+            }
+
+            header {
+              display: flex;
+              align-items: flex-start;
+              justify-content: space-between;
+              gap: 24px;
+              margin-bottom: 12px;
+              border-bottom: 2px solid #111;
+              padding-bottom: 8px;
+            }
+
+            h1 {
+              margin: 0 0 4px;
+              font-size: 20px;
+            }
+
+            header p,
+            footer p {
+              margin: 2px 0;
+            }
+
+            .meta {
+              text-align: right;
+              white-space: nowrap;
+            }
+
+            .totals {
+              display: flex;
+              gap: 20px;
+              margin: 0 0 10px;
+              border: 1px solid #bbb;
+              padding: 7px 9px;
+              font-size: 11px;
+            }
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              table-layout: auto;
+            }
+
+            thead {
+              display: table-header-group;
+            }
+
+            tr {
+              break-inside: avoid;
+              page-break-inside: avoid;
+            }
+
+            th,
+            td {
+              border: 1px solid #999;
+              padding: 5px 6px;
+              vertical-align: top;
+              text-align: left;
+            }
+
+            th {
+              background: #eee;
+              font-weight: 700;
+            }
+
+            td.number,
+            th.number {
+              text-align: right;
+              white-space: nowrap;
+            }
+
+            footer {
+              margin-top: 10px;
+              border-top: 1px solid #999;
+              padding-top: 7px;
+              color: #444;
+              font-size: 9px;
+            }
+
+            .screen-actions {
+              display: flex;
+              justify-content: flex-end;
+              gap: 8px;
+              margin-bottom: 10px;
+            }
+
+            .screen-actions button {
+              border: 1px solid #333;
+              border-radius: 4px;
+              background: #fff;
+              padding: 7px 12px;
+              cursor: pointer;
+              font-weight: 700;
+            }
+
+            @media print {
+              .screen-actions {
+                display: none;
+              }
+            }
+          </style>
+        </head>
+
+        <body>
+          <div class="screen-actions">
+            <button type="button" onclick="window.print()">
+              Print / Save PDF
+            </button>
+            <button type="button" onclick="window.close()">
+              Close
+            </button>
+          </div>
+
+          <header>
+            <div>
+              <h1>${escapeReportHtml(reportTitle)}</h1>
+              <p>Project: ${escapeReportHtml(selectedDateLabel || 'Selected diary day')}</p>
+              <p>Job filter: ${escapeReportHtml(jobLabel)}</p>
+            </div>
+
+            <div class="meta">
+              <p>Date: ${escapeReportHtml(selectedDateLabel)}</p>
+              <p>Generated: ${escapeReportHtml(
+                new Intl.DateTimeFormat('en-NZ', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                  timeZone: 'Pacific/Auckland'
+                }).format(new Date())
+              )}</p>
+            </div>
+          </header>
+
+          <div class="totals">
+            <strong>${people.length} people</strong>
+            <strong>${filteredRows.length} job/task rows</strong>
+            <strong>${totalHours.toFixed(2)} total hours</strong>
+          </div>
+
+          ${table}
+
+          <footer>
+            <p>
+              Information only. This report records labour attendance and work allocation
+              supplied for site coordination. It is not a signed timesheet or payroll approval.
+            </p>
+          </footer>
+        </body>
+      </html>
+    `);
+
+    reportWindow.document.close();
+    reportWindow.focus();
+  };
 
   const query = search.trim().toLowerCase();
 
@@ -2085,6 +2434,54 @@ const CompactStaffCrewList = ({
           onChange={(event) => setSearch(event.target.value)}
         />
       </label>
+
+      <section
+        className="lld-staff-report-controls"
+        data-testid="staff-register-report-exports-v1"
+        aria-label="Staff reports"
+      >
+        <label>
+          <span>Report job</span>
+
+          <select
+            value={reportJobFilter}
+            onChange={(event) => (
+              setReportJobFilter(event.target.value)
+            )}
+            disabled={staffSaving || staffRows.length === 0}
+          >
+            <option value="">All job numbers</option>
+
+            {reportJobOptions.map((jobNumber) => (
+              <option key={jobNumber} value={jobNumber}>
+                {jobNumber}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div>
+          <button
+            type="button"
+            onClick={() => openStaffReport('summary')}
+            disabled={staffSaving || staffRows.length === 0}
+          >
+            Summary Report
+          </button>
+
+          <button
+            type="button"
+            onClick={() => openStaffReport('full')}
+            disabled={staffSaving || staffRows.length === 0}
+          >
+            Full Report
+          </button>
+        </div>
+
+        <small>
+          Plain information-only reports. No signatures or LLD branding.
+        </small>
+      </section>
 
       {groupedStaff.length === 0 ? (
         <div className="lld-staff-crew-empty">
