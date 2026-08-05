@@ -907,6 +907,9 @@ const DiaryPage = () => {
       return true;
     };
 
+    // staff-picker-name-dedupe-v2s2d
+    const seenNames = new Set();
+
     sourceEmployees.forEach((employee) => {
       if (!isCleanStaffOption(employee)) return;
       const employeeId = String(employee.employee_id || employee.id || employee.value || '').trim();
@@ -922,9 +925,17 @@ const DiaryPage = () => {
       const displayName = employeeName || employeeId;
       const value = employeeId || displayName;
 
-      if (!value || seen.has(value)) return;
+      const nameKey = displayName.toLocaleLowerCase().replace(/\s+/g, ' ').trim();
+      const isCurrentValue = String(currentValue || '').trim() === value;
+
+      if (
+        !value ||
+        seen.has(value) ||
+        (seenNames.has(nameKey) && !isCurrentValue)
+      ) return;
 
       seen.add(value);
+      seenNames.add(nameKey);
       options.push({
         value,
         label: displayName,
