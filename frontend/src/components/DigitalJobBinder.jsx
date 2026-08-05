@@ -5985,9 +5985,14 @@ const DigitalJobBinder = ({
                     onChange={onStaffChange}
                     onSetAllNormalDay={onSetAllStaffNormalDay}
                     onAddStaff={() => setStaffAddOpen(true)}
-                    onOpenDetails={(row) => (
-                      setSelectedStaffId(row?._binderStaffId || null)
-                    )}
+                    // staff-details-raw-row-index-fix-v2s2c
+                    onOpenDetails={(row, rowIndex) => {
+                      setStaffAddOpen(false);
+                      setSelectedStaffId(
+                        row?._binderStaffId ||
+                        `binder-staff-${rowIndex}`
+                      );
+                    }}
                   />
 
                   <WeeklyStaffDashboard
