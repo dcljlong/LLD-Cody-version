@@ -46,11 +46,11 @@ const BINDER_REGISTER_COPY = {
     selection: 'Select a material to review.',
   },
   emails: {
-    listTitle: 'Communication follow-ups',
+    listTitle: 'Communications log',
     detailTitle: 'Communication desk',
-    unit: 'follow-up',
-    emptyAction: 'Open communications',
-    selection: 'Select a follow-up to review.',
+    unit: 'communication',
+    emptyAction: 'Add communication',
+    selection: 'Select a communication to review.',
   },
   roadblocks: {
     listTitle: 'Active roadblocks',
@@ -3781,6 +3781,183 @@ const BinderPhotoDetail = ({
     </div>
   );
 };
+// binder-native-communication-editor-v2s2e
+const BinderCommunicationAdd = ({
+  saving = false,
+  onSave,
+  onClose,
+}) => {
+  const [draft, setDraft] = useState({
+    type: 'Email',
+    contact: '',
+    subject: '',
+    notes: '',
+    follow_up_required: false,
+    owner: '',
+    due_date: '',
+  });
+
+  const updateDraft = (field, value) => {
+    setDraft((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+
+    if (!draft.subject.trim()) return;
+
+    const saved = await onSave?.(draft);
+
+    if (saved !== false) {
+      onClose?.();
+    }
+  };
+
+  return (
+    <div
+      className="lld-binder-action-detail lld-binder-communication-add"
+      data-testid="lld-binder-communication-add-v2s2e"
+      aria-busy={saving}
+    >
+      <div className="lld-binder-page-heading lld-binder-action-detail-heading">
+        <div>
+          <p>Communication record</p>
+          <h3>Add communication</h3>
+          <span>
+            Record the email, call or conversation without leaving the Diary.
+          </span>
+        </div>
+
+        <button
+          type="button"
+          className="lld-binder-action-back"
+          onClick={onClose}
+          disabled={saving}
+        >
+          ← Emails / Calls
+        </button>
+      </div>
+
+      <form
+        className="lld-binder-action-form"
+        onSubmit={submit}
+      >
+        <label className="lld-binder-action-field">
+          <span>Type</span>
+          <select
+            value={draft.type}
+            onChange={(event) => updateDraft('type', event.target.value)}
+            disabled={saving}
+          >
+            <option value="Email">Email</option>
+            <option value="Call">Call</option>
+            <option value="Meeting">Meeting</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+
+        <label className="lld-binder-action-field">
+          <span>Who with</span>
+          <input
+            type="text"
+            value={draft.contact}
+            placeholder="Person, company or team"
+            onChange={(event) => updateDraft('contact', event.target.value)}
+            disabled={saving}
+          />
+        </label>
+
+        <label className="lld-binder-action-field lld-binder-action-field-wide">
+          <span>Subject</span>
+          <input
+            type="text"
+            value={draft.subject}
+            placeholder="What was it about?"
+            onChange={(event) => updateDraft('subject', event.target.value)}
+            disabled={saving}
+            required
+          />
+        </label>
+
+        <label className="lld-binder-action-field lld-binder-action-field-wide">
+          <span>Notes / outcome</span>
+          <textarea
+            value={draft.notes}
+            placeholder="What was discussed, agreed, sent or decided?"
+            onChange={(event) => updateDraft('notes', event.target.value)}
+            disabled={saving}
+            rows="4"
+          />
+        </label>
+
+        <label className="lld-binder-action-field">
+          <span>Follow-up required?</span>
+          <select
+            value={draft.follow_up_required ? 'yes' : 'no'}
+            onChange={(event) => updateDraft(
+              'follow_up_required',
+              event.target.value === 'yes'
+            )}
+            disabled={saving}
+          >
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </label>
+
+        {draft.follow_up_required && (
+          <>
+            <label className="lld-binder-action-field">
+              <span>Owner</span>
+              <input
+                type="text"
+                value={draft.owner}
+                placeholder="Who needs to follow up?"
+                onChange={(event) => updateDraft('owner', event.target.value)}
+                disabled={saving}
+                required
+              />
+            </label>
+
+            <label className="lld-binder-action-field">
+              <span>Due date</span>
+              <input
+                type="date"
+                value={draft.due_date}
+                onChange={(event) => updateDraft('due_date', event.target.value)}
+                disabled={saving}
+                required
+              />
+            </label>
+          </>
+        )}
+
+        <div className="lld-binder-action-controls">
+          <button
+            type="submit"
+            className="lld-binder-action-button lld-binder-action-button-primary"
+            disabled={saving || !draft.subject.trim()}
+          >
+            {saving ? 'Saving…' : 'Save communication'}
+          </button>
+
+          <button
+            type="button"
+            className="lld-binder-action-button lld-binder-action-button-quiet"
+            onClick={onClose}
+            disabled={saving}
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
 const BinderTasksActionDetail = ({
   selectedTask,
   selectedTaskDraft,
@@ -4075,6 +4252,9 @@ const DigitalJobBinder = ({
   onSaveMaterial,
   onRemoveMaterial,
   onCloseMaterial,
+  communicationItems = [],
+  communicationSaving = false,
+  onAddCommunication,
   onOpenEmails,
   roadblocks = [],
   selectedRoadblock = null,
@@ -4097,6 +4277,7 @@ const DigitalJobBinder = ({
   const [mobileTodayPage, setMobileTodayPage] = useState('my-day');
   const [diaryEditorOpen, setDiaryEditorOpen] = useState(false);
   const [staffAddOpen, setStaffAddOpen] = useState(false); // binder-native-staff-entry-v2s2b
+  const [communicationAddOpen, setCommunicationAddOpen] = useState(false);
   const mobileTabsRef = useRef(null);
   const diaryEditorReturnFocusRef = useRef(null);
   const diarySaveWasPendingRef = useRef(false);
@@ -4139,6 +4320,7 @@ const DigitalJobBinder = ({
 
   useEffect(() => {
     setDiaryEditorOpen(false);
+    setCommunicationAddOpen(false);
   }, [selectedDate, selectedProject]);
 
   useEffect(() => {
@@ -4398,6 +4580,10 @@ const DigitalJobBinder = ({
       setStaffAddOpen(false);
     }
 
+    if (tabId !== 'emails') {
+      setCommunicationAddOpen(false);
+    }
+
     setActiveTab(tabId);
 
     const params = new URLSearchParams(window.location.search);
@@ -4421,6 +4607,12 @@ const DigitalJobBinder = ({
     if (activeTab === 'staff') {
       setSelectedStaffId(null);
       setStaffAddOpen(true);
+      return;
+    }
+
+    if (activeTab === 'emails') {
+      onCloseTask?.();
+      setCommunicationAddOpen(true);
       return;
     }
 
@@ -4463,8 +4655,39 @@ const DigitalJobBinder = ({
     String(item.id) === String(selectedPhotoId || '')
   )) || null;
 
+  const completedCommunicationItems = useMemo(
+    () => (Array.isArray(communicationItems) ? communicationItems : [])
+      .filter((item) => {
+        const status = safeText(item?.status).toLowerCase();
+
+        if (![
+          'complete',
+          'completed',
+          'closed',
+          'done',
+        ].includes(status)) {
+          return false;
+        }
+
+        const dateKeys = [
+          item?.completed_at,
+          item?.due_date,
+          item?.expected_complete_date,
+          item?.created_at,
+        ]
+          .map((value) => safeText(value).slice(0, 10))
+          .filter(Boolean);
+
+        return dateKeys.includes(selectedDate);
+      }),
+    [communicationItems, selectedDate]
+  );
+
   const emailItems = useMemo(
-    () => outstandingItems.filter((item) => {
+    () => uniqueItemsByKey([
+      ...outstandingItems,
+      ...completedCommunicationItems,
+    ]).filter((item) => {
       const searchable = [
         item?.title,
         item?.task_name,
@@ -4485,9 +4708,10 @@ const DigitalJobBinder = ({
         'reply',
         'respond',
         'communication',
+        'meeting',
       ].some((term) => searchable.includes(term));
     }),
-    [outstandingItems]
+    [outstandingItems, completedCommunicationItems]
   );
 
   const roadblockItems = useMemo(
@@ -4763,7 +4987,7 @@ const DigitalJobBinder = ({
     diary: 'No timestamped diary records have been captured for this day.',
     tasks: 'No open actions or checks are waiting for review.',
     materials: 'No materials have been recorded for this diary day.',
-    emails: 'No email or call follow-ups were identified for this day.',
+    emails: 'No emails, calls, meetings or other communications are recorded for this day.',
     roadblocks: 'No current roadblocks were identified for this diary day.',
     walkaround: 'No walkaround observations have been recorded for this day.',
     photos: 'No photographic evidence has been attached for this day.',
@@ -5626,8 +5850,8 @@ const DigitalJobBinder = ({
                         : 'material records'
                       : activeTab === 'emails'
                         ? focusedCount === 1
-                          ? 'communication follow-up'
-                          : 'communication follow-ups'
+                          ? 'communication record'
+                          : 'communication records'
                         : activeTab === 'roadblocks'
                           ? focusedCount === 1
                             ? 'active roadblock'
@@ -5741,7 +5965,7 @@ const DigitalJobBinder = ({
                 {activeTab === 'materials'
                   ? 'Add / edit materials'
                   : activeTab === 'emails'
-                    ? 'Open communications in Action Items'
+                    ? '+ Add communication'
                     : activeTab === 'photos'
                       ? 'Capture photo evidence'
                       : activeTab === 'staff'
@@ -5806,6 +6030,9 @@ const DigitalJobBinder = ({
                 ) || (
                   activeTab === 'photos' &&
                   selectedPhoto
+                ) || (
+                  activeTab === 'emails' &&
+                  communicationAddOpen
                 ) || (
                   activeTab === 'staff' &&
                   (selectedStaff || staffAddOpen)
@@ -5917,6 +6144,13 @@ const DigitalJobBinder = ({
                   onOpenWorkflow={onOpenRoadblocks}
                   onClose={onCloseRoadblock}
                 />
+              ) : activeTab === 'emails' &&
+              communicationAddOpen ? (
+                <BinderCommunicationAdd
+                  saving={communicationSaving}
+                  onSave={onAddCommunication}
+                  onClose={() => setCommunicationAddOpen(false)}
+                />
               ) : ['tasks', 'emails'].includes(activeTab) &&
               selectedTask &&
               selectedTaskDraft ? (
@@ -5953,7 +6187,7 @@ const DigitalJobBinder = ({
                     : activeTab === 'materials'
                       ? 'Materials register'
                       : activeTab === 'emails'
-                        ? 'Communication follow-ups'
+                        ? 'Communications log'
                         : activeTab === 'roadblocks'
                           ? 'Active roadblocks'
                           : activeTab === 'walkaround'

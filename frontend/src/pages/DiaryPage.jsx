@@ -269,6 +269,8 @@ const DiaryPage = () => {
   const [selectedDiaryActionItem, setSelectedDiaryActionItem] = useState(null); // legacy-action-open-marker-retired-v8-9a6
   const [selectedDiaryActionDraft, setSelectedDiaryActionDraft] = useState(null); // legacy-action-card-marker-retired-v8-9a6
   const [diaryActionSaving, setDiaryActionSaving] = useState(false);
+  const [communicationItems, setCommunicationItems] = useState([]); // binder-native-communication-create-v2s2e
+  const [communicationSaving, setCommunicationSaving] = useState(false);
   const [selectedDiaryRoadblock, setSelectedDiaryRoadblock] = useState(null); // diary-binder-real-roadblocks-v8-9e1
   const [followUpConfirm, setFollowUpConfirm] = useState(null); // diary-followup-app-confirm-v1-state
   const [followUpConfirmSaving, setFollowUpConfirmSaving] = useState(false);
@@ -1613,11 +1615,26 @@ const DiaryPage = () => {
     if (!selectedProject) return;
 
     try {
-      const res = await diaryApi.get(selectedProject, selectedDate);
+      const [res, actionItemsRes] = await Promise.all([
+        diaryApi.get(selectedProject, selectedDate),
+        actionItemsApi
+          .getAll({ project_id: selectedProject })
+          .catch(() => ({ data: [] }))
+      ]);
+
       setDiary(res.data);
+
+      const loadedActionItems = Array.isArray(actionItemsRes?.data)
+        ? actionItemsRes.data
+        : Array.isArray(actionItemsRes?.data?.value)
+          ? actionItemsRes.data.value
+          : [];
+
+      setCommunicationItems(loadedActionItems);
     } catch (error) {
       setDraftStatus('Diary could not be loaded. Check connection or refresh.');
       setDiary(null);
+      setCommunicationItems([]);
     }
   }, [selectedProject, selectedDate]);
 
@@ -2861,6 +2878,93 @@ const DiaryPage = () => {
     setSelectedDiaryActionItem(null);
     setSelectedDiaryActionDraft(null);
   }; // diary-binder-native-action-close-v8-9a6
+
+  // binder-native-communication-create-v2s2e
+  const saveBinderCommunication = async (draft = {}) => {
+    if (!selectedProject || !selectedDate) {
+      toast.error('Select a project and diary date first');
+      return false;
+    }
+
+    const type = String(draft.type || 'Email').trim();
+    const contact = String(draft.contact || '').trim();
+    const subject = String(draft.subject || '').trim();
+    const notes = String(draft.notes || '').trim();
+    const owner = String(draft.owner || '').trim();
+    const dueDate = String(draft.due_date || '').trim();
+    const followUpRequired = Boolean(draft.follow_up_required);
+
+    if (!subject) {
+      toast.error('Add a subject for the communication');
+      return false;
+    }
+
+    if (followUpRequired && (!owner || !dueDate)) {
+      toast.error('Add an owner and due date for the follow-up');
+      return false;
+    }
+
+    const description = [
+      `Communication type: ${type}`,
+      contact ? `With: ${contact}` : '',
+      notes ? `Notes / outcome: ${notes}` : '',
+      followUpRequired
+        ? 'Follow-up required'
+        : 'No follow-up required'
+    ].filter(Boolean).join('\n');
+
+    const payload = {
+      project_id: selectedProject,
+      title: `${type} · ${subject}`,
+      description,
+      priority: followUpRequired ? 'medium' : 'low',
+      due_date: followUpRequired ? dueDate : selectedDate,
+      expected_complete_date: followUpRequired ? dueDate : null,
+      owner: followUpRequired ? owner : ''
+    };
+
+    setCommunicationSaving(true);
+
+    try {
+      const createdResponse = await actionItemsApi.create(payload);
+      const created = createdResponse?.data;
+
+      if (!created?.id) {
+        throw new Error('Created communication returned no action item ID');
+      }
+
+      if (!followUpRequired) {
+        try {
+          await actionItemsApi.complete(created.id);
+        } catch (completeError) {
+          toast.warning(
+            'Communication was saved, but could not be closed automatically. It remains an open follow-up.'
+          );
+
+          await fetchDiary();
+          return true;
+        }
+      }
+
+      toast.success(
+        followUpRequired
+          ? 'Communication saved with follow-up'
+          : 'Communication recorded'
+      );
+
+      await fetchDiary();
+      return true;
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.detail ||
+        'Failed to save communication'
+      );
+      return false;
+    } finally {
+      setCommunicationSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -2964,6 +3068,9 @@ const DiaryPage = () => {
         onReopenSelectedTask={reopenSelectedDiaryActionItem}
         onCloseTask={closeDiaryActionItem}
         onOpenMaterials={() => openDiaryView('resources', 'materials')}
+        communicationItems={communicationItems}
+        communicationSaving={communicationSaving}
+        onAddCommunication={saveBinderCommunication}
         onOpenEmails={() => openActionItemsPage('today')}
         roadblocks={Array.isArray(diary?.blocked_gates) ? diary.blocked_gates : []}
         selectedRoadblock={selectedDiaryRoadblock}
