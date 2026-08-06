@@ -2318,6 +2318,133 @@ const DiaryPage = () => {
     setSelectedDiaryRoadblock(null);
   }; // diary-binder-real-roadblocks-v8-9e1
 
+  // binder-native-roadblocks-v2s2f
+  const [roadblockSaving, setRoadblockSaving] = useState(false);
+
+  const saveBinderRoadblock = async (draft = {}, roadblockId = null) => {
+    if (!selectedProject) {
+      toast.error('Select a project first');
+      return false;
+    }
+
+    const name = String(draft.name || '').trim();
+
+    if (!name) {
+      toast.error('Add a Roadblock / Concern title');
+      return false;
+    }
+
+    const payload = {
+      project_id: selectedProject,
+      name,
+      description: String(draft.description || '').trim(),
+      order: Number.isFinite(Number(draft.order))
+        ? Number(draft.order)
+        : 0,
+      owner_party: String(draft.owner_party || 'YOU').trim() || 'YOU',
+      required_by_date: draft.required_by_date || null,
+      expected_complete_date: draft.expected_complete_date || null,
+      buffer_days: Number.isFinite(Number(draft.buffer_days))
+        ? Number(draft.buffer_days)
+        : 2,
+      depends_on_gate_ids: Array.isArray(draft.depends_on_gate_ids)
+        ? draft.depends_on_gate_ids
+        : [],
+      is_hard_gate: Boolean(draft.is_hard_gate),
+      is_optional: Boolean(draft.is_optional)
+    };
+
+    setRoadblockSaving(true);
+
+    try {
+      if (roadblockId) {
+        const response = await gatesApi.update(roadblockId, payload);
+        const updated = response?.data || {
+          ...draft,
+          ...payload,
+          id: roadblockId
+        };
+
+        setSelectedDiaryRoadblock((current) => ({
+          ...(current || {}),
+          ...updated,
+          ...payload,
+          id: roadblockId
+        }));
+
+        toast.success('Roadblock updated');
+      } else {
+        await gatesApi.create(payload);
+        toast.success('Roadblock added');
+      }
+
+      await fetchDiary();
+      return true;
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.detail ||
+        'Failed to save Roadblock'
+      );
+      return false;
+    } finally {
+      setRoadblockSaving(false);
+    }
+  };
+
+  const completeBinderRoadblock = async (roadblock) => {
+    if (!roadblock?.id) return false;
+
+    setRoadblockSaving(true);
+
+    try {
+      await gatesApi.complete(roadblock.id);
+
+      setSelectedDiaryRoadblock((current) => current ? {
+        ...current,
+        status: 'COMPLETED'
+      } : current);
+
+      toast.success('Roadblock marked complete');
+      await fetchDiary();
+      return true;
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.detail ||
+        'Failed to complete Roadblock'
+      );
+      return false;
+    } finally {
+      setRoadblockSaving(false);
+    }
+  };
+
+  const reopenBinderRoadblock = async (roadblock) => {
+    if (!roadblock?.id) return false;
+
+    setRoadblockSaving(true);
+
+    try {
+      await gatesApi.reopen(roadblock.id);
+
+      setSelectedDiaryRoadblock((current) => current ? {
+        ...current,
+        status: 'ON_TRACK'
+      } : current);
+
+      toast.success('Roadblock reopened');
+      await fetchDiary();
+      return true;
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.detail ||
+        'Failed to reopen Roadblock'
+      );
+      return false;
+    } finally {
+      setRoadblockSaving(false);
+    }
+  };
+
   const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
     if (!capture) {
       toast.error('No saved capture selected for email draft');
@@ -3074,8 +3201,12 @@ const DiaryPage = () => {
         onOpenEmails={() => openActionItemsPage('today')}
         roadblocks={Array.isArray(diary?.blocked_gates) ? diary.blocked_gates : []}
         selectedRoadblock={selectedDiaryRoadblock}
+        roadblockSaving={roadblockSaving}
         onOpenRoadblock={openDiaryRoadblock}
         onCloseRoadblock={closeDiaryRoadblock}
+        onSaveRoadblock={saveBinderRoadblock}
+        onCompleteRoadblock={completeBinderRoadblock}
+        onReopenRoadblock={reopenBinderRoadblock}
         onOpenRoadblocks={openRoadblocksPage}
         onOpenWalkaround={() => window.location.assign(`/walkaround${selectedProject ? `?project=${selectedProject}` : ''}`)}
         onOpenPhotos={() => window.location.assign(`/walkaround${selectedProject ? `?project=${selectedProject}` : ''}`)} // photo-evidence-workflow-routing-v8-9g2

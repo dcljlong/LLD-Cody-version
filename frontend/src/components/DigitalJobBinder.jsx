@@ -56,8 +56,8 @@ const BINDER_REGISTER_COPY = {
     listTitle: 'Active roadblocks',
     detailTitle: 'Roadblock desk',
     unit: 'roadblock',
-    emptyAction: 'Open Roadblocks',
-    selection: 'Select a roadblock to review.',
+    emptyAction: '+ Add Roadblock',
+    selection: 'Select a roadblock to review or edit.',
   },
   walkaround: {
     listTitle: 'Site observations',
@@ -1405,6 +1405,256 @@ const BinderRoadblockDetail = ({
     </div>
   );
 };
+// binder-native-roadblock-editor-v2s2f
+const BinderRoadblockEditor = ({
+  roadblock = null,
+  saving = false,
+  onSave,
+  onComplete,
+  onReopen,
+  onClose,
+}) => {
+  const makeDraft = (source = {}) => ({
+    name: safeText(source?.name || source?.title),
+    description: safeText(source?.description),
+    order: source?.order ?? 0,
+    owner_party: safeText(source?.owner_party || source?.owner || 'YOU') || 'YOU',
+    required_by_date: safeText(source?.required_by_date).slice(0, 10),
+    expected_complete_date: safeText(source?.expected_complete_date).slice(0, 10),
+    buffer_days: source?.buffer_days ?? 2,
+    depends_on_gate_ids: Array.isArray(source?.depends_on_gate_ids)
+      ? source.depends_on_gate_ids
+      : [],
+    is_hard_gate: Boolean(source?.is_hard_gate),
+    is_optional: Boolean(source?.is_optional),
+  });
+
+  const [draft, setDraft] = useState(() => makeDraft(roadblock || {}));
+
+  useEffect(() => {
+    setDraft(makeDraft(roadblock || {}));
+  }, [roadblock?.id]);
+
+  const updateDraft = (field, value) => {
+    setDraft((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
+
+  const status = safeText(roadblock?.status).toUpperCase();
+
+  const completed = [
+    'COMPLETED',
+    'COMPLETE',
+    'CLOSED',
+    'DONE',
+  ].includes(status);
+
+  const submit = async (event) => {
+    event.preventDefault();
+
+    if (!draft.name.trim()) return;
+
+    const saved = await onSave?.(
+      draft,
+      roadblock?.id || null
+    );
+
+    if (saved !== false && !roadblock?.id) {
+      onClose?.();
+    }
+  };
+
+  return (
+    <div
+      className="lld-binder-action-detail lld-binder-roadblock-detail"
+      data-testid="lld-binder-roadblock-editor-v2s2f"
+      aria-busy={saving}
+    >
+      <div className="lld-binder-page-heading lld-binder-action-detail-heading">
+        <div>
+          <p>Roadblock record</p>
+          <h3>
+            {roadblock?.id
+              ? 'Edit Roadblock'
+              : 'Add Roadblock'}
+          </h3>
+          <span>
+            Record the issue, impact, ownership and required dates without leaving the Diary.
+          </span>
+        </div>
+
+        <button
+          type="button"
+          className="lld-binder-action-back"
+          onClick={onClose}
+          disabled={saving}
+        >
+          ← Roadblocks
+        </button>
+      </div>
+
+      <form
+        className="lld-binder-action-form"
+        onSubmit={submit}
+      >
+        <label className="lld-binder-action-field lld-binder-action-field-wide">
+          <span>Roadblock / Concern</span>
+          <input
+            type="text"
+            value={draft.name}
+            placeholder="Short description of the issue"
+            onChange={(event) => updateDraft('name', event.target.value)}
+            disabled={saving}
+            required
+          />
+        </label>
+
+        <label className="lld-binder-action-field lld-binder-action-field-wide">
+          <span>Impact / details</span>
+          <textarea
+            value={draft.description}
+            placeholder="What is blocked, what is the impact, and what needs to happen?"
+            onChange={(event) => updateDraft('description', event.target.value)}
+            disabled={saving}
+            rows="4"
+          />
+        </label>
+
+        <label className="lld-binder-action-field">
+          <span>Owner</span>
+          <input
+            type="text"
+            value={draft.owner_party}
+            placeholder="YOU, contractor, client..."
+            onChange={(event) => updateDraft('owner_party', event.target.value)}
+            disabled={saving}
+          />
+        </label>
+
+        <label className="lld-binder-action-field">
+          <span>Required by</span>
+          <input
+            type="date"
+            value={draft.required_by_date}
+            onChange={(event) => updateDraft('required_by_date', event.target.value)}
+            disabled={saving}
+          />
+        </label>
+
+        <label className="lld-binder-action-field">
+          <span>Expected complete</span>
+          <input
+            type="date"
+            value={draft.expected_complete_date}
+            onChange={(event) => updateDraft('expected_complete_date', event.target.value)}
+            disabled={saving}
+          />
+        </label>
+
+        <label className="lld-binder-action-field">
+          <span>Risk buffer (days)</span>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={draft.buffer_days}
+            onChange={(event) => updateDraft('buffer_days', event.target.value)}
+            disabled={saving}
+          />
+        </label>
+
+        <label className="lld-binder-action-field">
+          <span>Control</span>
+          <select
+            value={
+              draft.is_hard_gate
+                ? 'hard'
+                : draft.is_optional
+                  ? 'optional'
+                  : 'standard'
+            }
+            onChange={(event) => {
+              const value = event.target.value;
+
+              updateDraft(
+                'is_hard_gate',
+                value === 'hard'
+              );
+
+              setDraft((current) => ({
+                ...current,
+                is_hard_gate: value === 'hard',
+                is_optional: value === 'optional',
+              }));
+            }}
+            disabled={saving}
+          >
+            <option value="standard">Standard</option>
+            <option value="hard">Hard gate</option>
+            <option value="optional">Optional</option>
+          </select>
+        </label>
+
+        {roadblock?.id && (
+          <div className="lld-binder-action-field">
+            <span>Status</span>
+            <strong>
+              {formatRoadblockStatus(roadblock.status)}
+            </strong>
+          </div>
+        )}
+
+        <div className="lld-binder-action-controls">
+          <button
+            type="submit"
+            className="lld-binder-action-button lld-binder-action-button-primary"
+            disabled={saving || !draft.name.trim()}
+          >
+            {saving
+              ? 'Saving…'
+              : roadblock?.id
+                ? 'Save changes'
+                : 'Add Roadblock'}
+          </button>
+
+          {roadblock?.id && !completed && (
+            <button
+              type="button"
+              className="lld-binder-action-button"
+              onClick={() => onComplete?.(roadblock)}
+              disabled={saving || typeof onComplete !== 'function'}
+            >
+              Mark complete
+            </button>
+          )}
+
+          {roadblock?.id && completed && (
+            <button
+              type="button"
+              className="lld-binder-action-button"
+              onClick={() => onReopen?.(roadblock)}
+              disabled={saving || typeof onReopen !== 'function'}
+            >
+              Reopen Roadblock
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="lld-binder-action-button lld-binder-action-button-quiet"
+            onClick={onClose}
+            disabled={saving}
+          >
+            Back to Roadblocks
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
 const formatWalkaroundDate = (value) => {
   const raw = safeText(value);
 
@@ -4258,8 +4508,12 @@ const DigitalJobBinder = ({
   onOpenEmails,
   roadblocks = [],
   selectedRoadblock = null,
+  roadblockSaving = false,
   onOpenRoadblock,
   onCloseRoadblock,
+  onSaveRoadblock,
+  onCompleteRoadblock,
+  onReopenRoadblock,
   onOpenRoadblocks,
   onOpenWalkaround,
   onOpenPhotos,
@@ -4278,6 +4532,7 @@ const DigitalJobBinder = ({
   const [diaryEditorOpen, setDiaryEditorOpen] = useState(false);
   const [staffAddOpen, setStaffAddOpen] = useState(false); // binder-native-staff-entry-v2s2b
   const [communicationAddOpen, setCommunicationAddOpen] = useState(false);
+  const [roadblockAddOpen, setRoadblockAddOpen] = useState(false); // binder-native-roadblocks-v2s2f
   const mobileTabsRef = useRef(null);
   const diaryEditorReturnFocusRef = useRef(null);
   const diarySaveWasPendingRef = useRef(false);
@@ -4321,6 +4576,7 @@ const DigitalJobBinder = ({
   useEffect(() => {
     setDiaryEditorOpen(false);
     setCommunicationAddOpen(false);
+    setRoadblockAddOpen(false);
   }, [selectedDate, selectedProject]);
 
   useEffect(() => {
@@ -4584,6 +4840,10 @@ const DigitalJobBinder = ({
       setCommunicationAddOpen(false);
     }
 
+    if (tabId !== 'roadblocks') {
+      setRoadblockAddOpen(false);
+    }
+
     setActiveTab(tabId);
 
     const params = new URLSearchParams(window.location.search);
@@ -4613,6 +4873,12 @@ const DigitalJobBinder = ({
     if (activeTab === 'emails') {
       onCloseTask?.();
       setCommunicationAddOpen(true);
+      return;
+    }
+
+    if (activeTab === 'roadblocks') {
+      onCloseRoadblock?.();
+      setRoadblockAddOpen(true);
       return;
     }
 
@@ -5035,7 +5301,7 @@ const DigitalJobBinder = ({
       selectedMaterial
     ) || (
       activeTab === 'roadblocks' &&
-      selectedRoadblock
+      (selectedRoadblock || roadblockAddOpen)
     ) || (
       activeTab === 'walkaround' &&
       selectedWalkaround
@@ -6023,7 +6289,7 @@ const DigitalJobBinder = ({
                   selectedMaterial
                 ) || (
                   activeTab === 'roadblocks' &&
-                  selectedRoadblock
+                  (selectedRoadblock || roadblockAddOpen)
                 ) || (
                   activeTab === 'walkaround' &&
                   selectedWalkaround
@@ -6138,10 +6404,22 @@ const DigitalJobBinder = ({
                   onClose={() => setSelectedWalkaroundId(null)}
                 />
               ) : activeTab === 'roadblocks' &&
+              roadblockAddOpen ? (
+                <BinderRoadblockEditor
+                  saving={roadblockSaving}
+                  onSave={onSaveRoadblock}
+                  onComplete={onCompleteRoadblock}
+                  onReopen={onReopenRoadblock}
+                  onClose={() => setRoadblockAddOpen(false)}
+                />
+              ) : activeTab === 'roadblocks' &&
               selectedRoadblock ? (
-                <BinderRoadblockDetail
+                <BinderRoadblockEditor
                   roadblock={selectedRoadblock}
-                  onOpenWorkflow={onOpenRoadblocks}
+                  saving={roadblockSaving}
+                  onSave={onSaveRoadblock}
+                  onComplete={onCompleteRoadblock}
+                  onReopen={onReopenRoadblock}
                   onClose={onCloseRoadblock}
                 />
               ) : activeTab === 'emails' &&
