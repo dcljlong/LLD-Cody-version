@@ -2445,7 +2445,36 @@ const DiaryPage = () => {
     }
   };
 
-  const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
+  // binder-native-walkaround-save-v2s2g1
+const [walkaroundSaving, setWalkaroundSaving] = useState(false);
+const saveBinderWalkaround = async (draft = {}) => {
+  if (!selectedProject) { toast.error('Select a project first'); return false; }
+  const observation = String(draft.observation || '').trim();
+  if (!observation) { toast.error('Add the site observation'); return false; }
+  const categoryLabels = { progress:'Progress', labour:'Labour', materials_plant:'Materials / Plant', question_rfi:'Question / RFI', issue_defect:'Issue / Defect', clash_holdup:'Clash / Hold Up', health_safety:'H&S', staff_message:'Staff Message', general_note:'General Note' };
+  const sendLabels = { none:'No', staff:'Staff', builder:'Builder', client:'Client', architect:'Architect', supplier:'Supplier', subbie:'Subbie', email_draft:'Email Draft' };
+  const category = draft.category || 'general_note';
+  const sendTo = draft.send_to || 'none';
+  const needsAction = sendTo !== 'none' || ['materials_plant','question_rfi','issue_defect','clash_holdup','health_safety','staff_message'].includes(category);
+  const actionType = sendTo !== 'none' ? 'email' : category === 'health_safety' ? 'formal' : needsAction ? 'followup' : 'none';
+  const buckets = [];
+  if (['critical','high'].includes(draft.priority)) buckets.push('High Priority');
+  if (sendTo !== 'none') buckets.push('Needs Sending');
+  if (category === 'question_rfi') buckets.push('Questions / RFIs');
+  if (category === 'clash_holdup') buckets.push('Roadblocks / Hold Ups');
+  if (category === 'materials_plant') buckets.push('Materials / Plant');
+  if (category === 'health_safety') buckets.push('H&S');
+  if (['staff_message','issue_defect'].includes(category)) buckets.push('To Do / Follow Up');
+  if (!buckets.length) buckets.push('Diary Only');
+  const note = [`WALKAROUND CAPTURE - ${categoryLabels[category] || 'General Note'}`,`PRIORITY - ${String(draft.priority || 'medium').toUpperCase()}`,`NEEDS SENDING - ${sendLabels[sendTo] || 'No'}`,`ACTION - ${actionType === 'none' ? 'Diary Only' : actionType}`,`SORT TO - ${buckets.join(' | ')}`,'',observation].join('\n');
+  setWalkaroundSaving(true);
+  try {
+    await walkaroundApi.create({ project_id:selectedProject, note, priority:draft.priority || 'medium', owner:String(draft.owner || 'Me').trim() || 'Me', due_date:draft.due_date || null, gate_id:'', photos:[], create_action_item:needsAction, action_type:actionType });
+    toast.success('Observation added'); await fetchDiary(); return true;
+  } catch (error) { toast.error(error?.response?.data?.detail || 'Failed to save observation'); return false; }
+  finally { setWalkaroundSaving(false); }
+};
+const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
     if (!capture) {
       toast.error('No saved capture selected for email draft');
       return;
@@ -3208,6 +3237,8 @@ const DiaryPage = () => {
         onCompleteRoadblock={completeBinderRoadblock}
         onReopenRoadblock={reopenBinderRoadblock}
         onOpenRoadblocks={openRoadblocksPage}
+        walkaroundSaving={walkaroundSaving}
+        onSaveWalkaround={saveBinderWalkaround}
         onOpenWalkaround={() => window.location.assign(`/walkaround${selectedProject ? `?project=${selectedProject}` : ''}`)}
         onOpenPhotos={() => window.location.assign(`/walkaround${selectedProject ? `?project=${selectedProject}` : ''}`)} // photo-evidence-workflow-routing-v8-9g2
         dayReview={diary?.review || null}

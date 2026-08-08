@@ -1988,7 +1988,39 @@ const BinderWalkaroundDetail = ({
     </div>
   );
 };
-const formatStaffTime = (value) => {
+// binder-native-walkaround-add-v2s2g1
+const BinderWalkaroundAdd = ({ saving = false, onSave, onClose }) => {
+  const [draft, setDraft] = useState({
+    observation: '', category: 'general_note', priority: 'medium',
+    owner: 'Me', due_date: '', send_to: 'none',
+  });
+  const updateDraft = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
+  const submit = async (event) => {
+    event.preventDefault();
+    if (!safeText(draft.observation)) return;
+    const saved = await onSave?.(draft);
+    if (saved !== false) onClose?.();
+  };
+  return (
+    <div className="lld-binder-action-detail lld-binder-walkaround-detail" data-testid="lld-binder-walkaround-add-v2s2g1" aria-busy={saving}>
+      <div className="lld-binder-page-heading lld-binder-action-detail-heading">
+        <div><p>Site observation</p><h3>Add Observation</h3><span>Record what you saw without leaving the Diary.</span></div>
+        <button type="button" className="lld-binder-action-back" onClick={onClose} disabled={saving}>&larr; Walkaround</button>
+      </div>
+      <form className="lld-binder-action-form" onSubmit={submit}>
+        <label className="lld-binder-action-field lld-binder-action-field-wide"><span>Observation</span><textarea value={draft.observation} placeholder="What did you see on site?" onChange={(e) => updateDraft('observation', e.target.value)} disabled={saving} rows="5" required /></label>
+        <label className="lld-binder-action-field"><span>Category</span><select value={draft.category} onChange={(e) => updateDraft('category', e.target.value)} disabled={saving}>
+          <option value="progress">Progress</option><option value="labour">Labour</option><option value="materials_plant">Materials / Plant</option><option value="question_rfi">Question / RFI</option><option value="issue_defect">Issue / Defect</option><option value="clash_holdup">Clash / Hold Up</option><option value="health_safety">H&amp;S</option><option value="staff_message">Staff Message</option><option value="general_note">General Note</option>
+        </select></label>
+        <label className="lld-binder-action-field"><span>Priority</span><select value={draft.priority} onChange={(e) => updateDraft('priority', e.target.value)} disabled={saving}><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
+        <label className="lld-binder-action-field"><span>Owner</span><input type="text" value={draft.owner} placeholder="Me, Site, MC, Subbies..." onChange={(e) => updateDraft('owner', e.target.value)} disabled={saving} /></label>
+        <label className="lld-binder-action-field"><span>Due date</span><input type="date" value={draft.due_date} onChange={(e) => updateDraft('due_date', e.target.value)} disabled={saving} /></label>
+        <label className="lld-binder-action-field"><span>Needs sending</span><select value={draft.send_to} onChange={(e) => updateDraft('send_to', e.target.value)} disabled={saving}><option value="none">No</option><option value="staff">Staff</option><option value="builder">Builder</option><option value="client">Client</option><option value="architect">Architect</option><option value="supplier">Supplier</option><option value="subbie">Subbie</option><option value="email_draft">Email Draft</option></select></label>
+        <div className="lld-binder-action-controls"><button type="submit" className="lld-binder-action-button lld-binder-action-button-primary" disabled={saving || !safeText(draft.observation)}>{saving ? 'Saving...' : 'Add Observation'}</button><button type="button" className="lld-binder-action-button lld-binder-action-button-quiet" onClick={onClose} disabled={saving}>Back to Walkaround</button></div>
+      </form>
+    </div>
+  );
+};const formatStaffTime = (value) => {
   const text = safeText(value);
 
   if (!text) {
@@ -4515,6 +4547,8 @@ const DigitalJobBinder = ({
   onCompleteRoadblock,
   onReopenRoadblock,
   onOpenRoadblocks,
+  walkaroundSaving = false,
+  onSaveWalkaround,
   onOpenWalkaround,
   onOpenPhotos,
   dayReview = null,
@@ -4533,6 +4567,7 @@ const DigitalJobBinder = ({
   const [staffAddOpen, setStaffAddOpen] = useState(false); // binder-native-staff-entry-v2s2b
   const [communicationAddOpen, setCommunicationAddOpen] = useState(false);
   const [roadblockAddOpen, setRoadblockAddOpen] = useState(false); // binder-native-roadblocks-v2s2f
+  const [walkaroundAddOpen, setWalkaroundAddOpen] = useState(false); // binder-native-walkaround-add-v2s2g1
   const mobileTabsRef = useRef(null);
   const diaryEditorReturnFocusRef = useRef(null);
   const diarySaveWasPendingRef = useRef(false);
@@ -4577,6 +4612,7 @@ const DigitalJobBinder = ({
     setDiaryEditorOpen(false);
     setCommunicationAddOpen(false);
     setRoadblockAddOpen(false);
+    setWalkaroundAddOpen(false);
   }, [selectedDate, selectedProject]);
 
   useEffect(() => {
@@ -4825,6 +4861,7 @@ const DigitalJobBinder = ({
 
     if (tabId !== 'walkaround') {
       setSelectedWalkaroundId(null);
+      setWalkaroundAddOpen(false);
     }
 
     if (tabId !== 'photos') {
@@ -4879,6 +4916,12 @@ const DigitalJobBinder = ({
     if (activeTab === 'roadblocks') {
       onCloseRoadblock?.();
       setRoadblockAddOpen(true);
+      return;
+    }
+
+    if (activeTab === 'walkaround') {
+      setSelectedWalkaroundId(null);
+      setWalkaroundAddOpen(true);
       return;
     }
 
@@ -5304,7 +5347,7 @@ const DigitalJobBinder = ({
       (selectedRoadblock || roadblockAddOpen)
     ) || (
       activeTab === 'walkaround' &&
-      selectedWalkaround
+      (selectedWalkaround || walkaroundAddOpen)
     ) || (
       activeTab === 'photos' &&
       selectedPhoto
@@ -6238,7 +6281,9 @@ const DigitalJobBinder = ({
                         ? 'Add staff member'
                         : activeTab === 'roadblocks'
                           ? '+ Add Roadblock' // binder-roadblock-primary-action-label-v2s2f1
-                          : activeTab === 'closeout'
+                          : activeTab === 'walkaround'
+                            ? '+ Add Observation'
+                            : activeTab === 'closeout'
                           ? reviewSaving
                             ? dayReviewIsReviewed
                               ? 'Reopening review...'
@@ -6294,7 +6339,7 @@ const DigitalJobBinder = ({
                   (selectedRoadblock || roadblockAddOpen)
                 ) || (
                   activeTab === 'walkaround' &&
-                  selectedWalkaround
+                  (selectedWalkaround || walkaroundAddOpen)
                 ) || (
                   activeTab === 'photos' &&
                   selectedPhoto
@@ -6398,6 +6443,9 @@ const DigitalJobBinder = ({
                   onOpenWorkflow={onOpenPhotos}
                   onClose={() => setSelectedPhotoId(null)}
                 />
+              ) : activeTab === 'walkaround' &&
+              walkaroundAddOpen ? (
+                <BinderWalkaroundAdd saving={walkaroundSaving} onSave={onSaveWalkaround} onClose={() => setWalkaroundAddOpen(false)} />
               ) : activeTab === 'walkaround' &&
               selectedWalkaround ? (
                 <BinderWalkaroundDetail
