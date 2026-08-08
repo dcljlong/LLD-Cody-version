@@ -2378,7 +2378,7 @@ const DiaryPage = () => {
         toast.success('Roadblock added');
       }
 
-      await fetchDiary();
+      await Promise.all([fetchDiary(), fetchGates()]);
       return true;
     } catch (error) {
       toast.error(
@@ -2405,7 +2405,7 @@ const DiaryPage = () => {
       } : current);
 
       toast.success('Roadblock marked complete');
-      await fetchDiary();
+      await Promise.all([fetchDiary(), fetchGates()]);
       return true;
     } catch (error) {
       toast.error(
@@ -2432,7 +2432,7 @@ const DiaryPage = () => {
       } : current);
 
       toast.success('Roadblock reopened');
-      await fetchDiary();
+      await Promise.all([fetchDiary(), fetchGates()]);
       return true;
     } catch (error) {
       toast.error(
@@ -3199,7 +3199,7 @@ const DiaryPage = () => {
         communicationSaving={communicationSaving}
         onAddCommunication={saveBinderCommunication}
         onOpenEmails={() => openActionItemsPage('today')}
-        roadblocks={Array.isArray(diary?.blocked_gates) ? diary.blocked_gates : []}
+        roadblocks={gates} // binder-project-roadblocks-v2s2f2
         selectedRoadblock={selectedDiaryRoadblock}
         roadblockSaving={roadblockSaving}
         onOpenRoadblock={openDiaryRoadblock}
