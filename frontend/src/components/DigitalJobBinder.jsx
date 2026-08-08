@@ -6236,7 +6236,9 @@ const DigitalJobBinder = ({
                       ? 'Capture photo evidence'
                       : activeTab === 'staff'
                         ? 'Add staff member'
-                        : activeTab === 'closeout'
+                        : activeTab === 'roadblocks'
+                          ? '+ Add Roadblock' // binder-roadblock-primary-action-label-v2s2f1
+                          : activeTab === 'closeout'
                           ? reviewSaving
                             ? dayReviewIsReviewed
                               ? 'Reopening review...'
