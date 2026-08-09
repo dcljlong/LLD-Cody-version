@@ -2037,7 +2037,7 @@ const BinderWalkaroundAdd = ({ mode = 'walkaround', saving = false, onSave, onCl
         <button type="button" className="lld-binder-action-back" onClick={onClose} disabled={saving}>&larr; {isPhotoMode ? 'Photos' : 'Walkaround'}</button>
       </div>
       <form className="lld-binder-action-form" onSubmit={submit}>
-        <label className="lld-binder-action-field lld-binder-action-field-wide"><span>Observation</span><textarea value={draft.observation} placeholder="What did you see on site?" onChange={(e) => updateDraft('observation', e.target.value)} disabled={saving} rows="5" required /></label>
+        <label className="lld-binder-action-field lld-binder-action-field-wide"><span>Observation (required)</span><textarea value={draft.observation} placeholder="What did you see on site?" onChange={(e) => updateDraft('observation', e.target.value)} disabled={saving} rows="5" required /></label>
         <label className="lld-binder-action-field"><span>Category</span><select value={draft.category} onChange={(e) => updateDraft('category', e.target.value)} disabled={saving}>
           <option value="progress">Progress</option><option value="labour">Labour</option><option value="materials_plant">Materials / Plant</option><option value="question_rfi">Question / RFI</option><option value="issue_defect">Issue / Defect</option><option value="clash_holdup">Clash / Hold Up</option><option value="health_safety">H&amp;S</option><option value="staff_message">Staff Message</option><option value="general_note">General Note</option>
         </select></label>
@@ -2059,7 +2059,7 @@ const BinderWalkaroundAdd = ({ mode = 'walkaround', saving = false, onSave, onCl
             ))}
           </div>
         )}
-        <div className="lld-binder-action-controls"><button type="submit" className="lld-binder-action-button lld-binder-action-button-primary" disabled={saving || !safeText(draft.observation) || (isPhotoMode && draft.photos.length === 0)}>{saving ? 'Saving...' : isPhotoMode ? 'Save Photo Evidence' : 'Add Observation'}</button><button type="button" className="lld-binder-action-button lld-binder-action-button-quiet" onClick={onClose} disabled={saving}>Back to {isPhotoMode ? 'Photos' : 'Walkaround'}</button></div>
+        <div className="lld-binder-action-controls"><button type="submit" className="lld-binder-action-button lld-binder-action-button-primary" disabled={saving || !safeText(draft.observation) || (isPhotoMode && draft.photos.length === 0)}>{saving ? 'Saving...' : !safeText(draft.observation) ? 'Enter Observation to Save' : isPhotoMode && draft.photos.length === 0 ? 'Add a Photo to Save' : isPhotoMode ? 'Save Photo Evidence' : 'Add Observation'}</button><button type="button" className="lld-binder-action-button lld-binder-action-button-quiet" onClick={onClose} disabled={saving}>Back to {isPhotoMode ? 'Photos' : 'Walkaround'}</button></div>
       </form>
     </div>
   );
