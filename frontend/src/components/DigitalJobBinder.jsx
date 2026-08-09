@@ -1075,7 +1075,12 @@ const BinderMaterialDetail = ({
   onSave,
   onRemove,
   onClose,
-}) => (
+}) => {
+  const isNewMaterial = !safeText(
+    material.id || material._id || material.material_id
+  );
+
+  return (
   <div
     className="lld-binder-action-detail lld-binder-material-detail"
     data-testid="lld-binder-material-detail-v8-9c2"
@@ -1083,9 +1088,13 @@ const BinderMaterialDetail = ({
   >
     <div className="lld-binder-page-heading lld-binder-action-detail-heading">
       <div>
-        <p>Material record</p>
-        <h3>Material detail</h3>
-        <span>Edit this material without leaving the register.</span>
+        <p>{isNewMaterial ? 'New material record' : 'Material record'}</p>
+        <h3>{isNewMaterial ? 'Add new material' : 'Material detail'}</h3>
+        <span>
+          {isNewMaterial
+            ? 'Record this material without leaving the Diary.'
+            : 'Edit this material without leaving the register.'}
+        </span>
       </div>
 
       <button
@@ -1106,7 +1115,7 @@ const BinderMaterialDetail = ({
       }}
     >
       <label className="lld-binder-action-field lld-binder-action-field-wide">
-        <span>Material / item</span>
+        <span>Material / item (required)</span>
         <input
           type="text"
           value={material.item || ''}
@@ -1114,6 +1123,7 @@ const BinderMaterialDetail = ({
           onChange={(event) => onChange?.('item', event.target.value)}
           disabled={materialSaving}
           data-testid="lld-binder-material-item-v8-9c2"
+          required
         />
       </label>
 
@@ -1175,23 +1185,32 @@ const BinderMaterialDetail = ({
           className="lld-binder-action-button lld-binder-action-button-primary"
           disabled={
             materialSaving ||
-            typeof onSave !== 'function'
+            typeof onSave !== 'function' ||
+            !safeText(material.item)
           }
         >
-          {materialSaving ? 'Saving…' : 'Save material'}
+          {materialSaving
+            ? 'Saving…'
+            : !safeText(material.item)
+              ? 'Enter Material / Item to Save'
+              : isNewMaterial
+                ? 'Add material'
+                : 'Save material'}
         </button>
 
-        <button
-          type="button"
-          className="lld-binder-action-button lld-binder-material-remove"
-          onClick={onRemove}
-          disabled={
-            materialSaving ||
-            typeof onRemove !== 'function'
-          }
-        >
-          Remove
-        </button>
+        {!isNewMaterial && (
+          <button
+            type="button"
+            className="lld-binder-action-button lld-binder-material-remove"
+            onClick={onRemove}
+            disabled={
+              materialSaving ||
+              typeof onRemove !== 'function'
+            }
+          >
+            Remove
+          </button>
+        )}
 
         <button
           type="button"
@@ -1204,7 +1223,8 @@ const BinderMaterialDetail = ({
       </div>
     </form>
   </div>
-);
+  );
+};
 
 const formatRoadblockDate = (value) => {
   const raw = safeText(value);
@@ -6323,7 +6343,7 @@ const DigitalJobBinder = ({
                 }
               >
                 {activeTab === 'materials'
-                  ? 'Add / edit materials'
+                  ? '+ Add new material'
                   : activeTab === 'emails'
                     ? '+ Add communication'
                     : activeTab === 'photos'
