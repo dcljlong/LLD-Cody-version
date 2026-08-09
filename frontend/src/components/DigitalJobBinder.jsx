@@ -1989,23 +1989,52 @@ const BinderWalkaroundDetail = ({
   );
 };
 // binder-native-walkaround-add-v2s2g1
-const BinderWalkaroundAdd = ({ saving = false, onSave, onClose }) => {
+const BinderWalkaroundAdd = ({ mode = 'walkaround', saving = false, onSave, onClose }) => {
   const [draft, setDraft] = useState({
     observation: '', category: 'general_note', priority: 'medium',
-    owner: 'Me', due_date: '', send_to: 'none',
+    owner: 'Me', due_date: '', send_to: 'none', photos: [],
   });
+  const [photoError, setPhotoError] = useState('');
+  const isPhotoMode = mode === 'photos';
   const updateDraft = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
+  const addPhotos = (event) => {
+    const files = Array.from(event.target.files || []);
+    setPhotoError('');
+    files.forEach((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        setPhotoError('Each photo must be under 5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => setDraft((current) => ({
+        ...current,
+        photos: [...current.photos, reader.result],
+      }));
+      reader.readAsDataURL(file);
+    });
+    event.target.value = '';
+  };
+  const removeDraftPhoto = (index) => {
+    setDraft((current) => ({
+      ...current,
+      photos: current.photos.filter((_, photoIndex) => photoIndex !== index),
+    }));
+  };
   const submit = async (event) => {
     event.preventDefault();
     if (!safeText(draft.observation)) return;
+    if (isPhotoMode && draft.photos.length === 0) {
+      setPhotoError('Add at least one photo.');
+      return;
+    }
     const saved = await onSave?.(draft);
     if (saved !== false) onClose?.();
   };
   return (
     <div className="lld-binder-action-detail lld-binder-walkaround-detail" data-testid="lld-binder-walkaround-add-v2s2g1" aria-busy={saving}>
       <div className="lld-binder-page-heading lld-binder-action-detail-heading">
-        <div><p>Site observation</p><h3>Add Observation</h3><span>Record what you saw without leaving the Diary.</span></div>
-        <button type="button" className="lld-binder-action-back" onClick={onClose} disabled={saving}>&larr; Walkaround</button>
+        <div><p>{isPhotoMode ? 'Photo evidence' : 'Site observation'}</p><h3>{isPhotoMode ? 'Capture Photo Evidence' : 'Add Observation'}</h3><span>{isPhotoMode ? 'Add site photos and their context without leaving the Diary.' : 'Record what you saw without leaving the Diary.'}</span></div>
+        <button type="button" className="lld-binder-action-back" onClick={onClose} disabled={saving}>&larr; {isPhotoMode ? 'Photos' : 'Walkaround'}</button>
       </div>
       <form className="lld-binder-action-form" onSubmit={submit}>
         <label className="lld-binder-action-field lld-binder-action-field-wide"><span>Observation</span><textarea value={draft.observation} placeholder="What did you see on site?" onChange={(e) => updateDraft('observation', e.target.value)} disabled={saving} rows="5" required /></label>
@@ -2016,7 +2045,21 @@ const BinderWalkaroundAdd = ({ saving = false, onSave, onClose }) => {
         <label className="lld-binder-action-field"><span>Owner</span><input type="text" value={draft.owner} placeholder="Me, Site, MC, Subbies..." onChange={(e) => updateDraft('owner', e.target.value)} disabled={saving} /></label>
         <label className="lld-binder-action-field"><span>Due date</span><input type="date" value={draft.due_date} onChange={(e) => updateDraft('due_date', e.target.value)} disabled={saving} /></label>
         <label className="lld-binder-action-field"><span>Needs sending</span><select value={draft.send_to} onChange={(e) => updateDraft('send_to', e.target.value)} disabled={saving}><option value="none">No</option><option value="staff">Staff</option><option value="builder">Builder</option><option value="client">Client</option><option value="architect">Architect</option><option value="supplier">Supplier</option><option value="subbie">Subbie</option><option value="email_draft">Email Draft</option></select></label>
-        <div className="lld-binder-action-controls"><button type="submit" className="lld-binder-action-button lld-binder-action-button-primary" disabled={saving || !safeText(draft.observation)}>{saving ? 'Saving...' : 'Add Observation'}</button><button type="button" className="lld-binder-action-button lld-binder-action-button-quiet" onClick={onClose} disabled={saving}>Back to Walkaround</button></div>
+        <label className="lld-binder-action-field lld-binder-action-field-wide">
+          <span>{isPhotoMode ? 'Photo evidence (required)' : 'Photo evidence (optional)'}</span>
+          <input type="file" accept="image/*" multiple onChange={addPhotos} disabled={saving} />
+        </label>
+        {photoError && <p className="lld-binder-photo-capture-error">{photoError}</p>}
+        {draft.photos.length > 0 && (
+          <div className="lld-binder-walkaround-photo-grid" data-testid="lld-binder-photo-capture-preview-v2s2g2">
+            {draft.photos.map((photo, index) => (
+              <button type="button" key={index} onClick={() => removeDraftPhoto(index)} disabled={saving} title="Remove photo">
+                <img src={photo} alt={`Evidence ${index + 1}`} />
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="lld-binder-action-controls"><button type="submit" className="lld-binder-action-button lld-binder-action-button-primary" disabled={saving || !safeText(draft.observation) || (isPhotoMode && draft.photos.length === 0)}>{saving ? 'Saving...' : isPhotoMode ? 'Save Photo Evidence' : 'Add Observation'}</button><button type="button" className="lld-binder-action-button lld-binder-action-button-quiet" onClick={onClose} disabled={saving}>Back to {isPhotoMode ? 'Photos' : 'Walkaround'}</button></div>
       </form>
     </div>
   );
@@ -4866,6 +4909,7 @@ const DigitalJobBinder = ({
 
     if (tabId !== 'photos') {
       setSelectedPhotoId(null);
+      setPhotoAddOpen(false);
     }
 
     if (tabId !== 'staff') {
@@ -4925,6 +4969,12 @@ const DigitalJobBinder = ({
       return;
     }
 
+    if (activeTab === 'photos') {
+      setSelectedPhotoId(null);
+      setPhotoAddOpen(true);
+      return;
+    }
+
     const action = actions[activeTab];
 
     if (typeof action === 'function') {
@@ -4959,6 +5009,7 @@ const DigitalJobBinder = ({
   );
 
   const [selectedPhotoId, setSelectedPhotoId] = useState(null);
+  const [photoAddOpen, setPhotoAddOpen] = useState(false); // binder-native-photo-capture-v2s2g2
 
   const selectedPhoto = photoEvidenceItems.find((item) => (
     String(item.id) === String(selectedPhotoId || '')
@@ -5350,7 +5401,7 @@ const DigitalJobBinder = ({
       (selectedWalkaround || walkaroundAddOpen)
     ) || (
       activeTab === 'photos' &&
-      selectedPhoto
+      (selectedPhoto || photoAddOpen)
     ) || (
       activeTab === 'staff' &&
       (selectedStaff || staffAddOpen)
@@ -6342,7 +6393,7 @@ const DigitalJobBinder = ({
                   (selectedWalkaround || walkaroundAddOpen)
                 ) || (
                   activeTab === 'photos' &&
-                  selectedPhoto
+                  (selectedPhoto || photoAddOpen)
                 ) || (
                   activeTab === 'emails' &&
                   communicationAddOpen
@@ -6355,7 +6406,15 @@ const DigitalJobBinder = ({
               }`}
             >
               <div className="lld-binder-register-page-body">
-              {activeTab === 'staff' &&
+              {activeTab === 'photos' &&
+              photoAddOpen ? (
+                <BinderWalkaroundAdd
+                  mode="photos"
+                  saving={walkaroundSaving}
+                  onSave={onSaveWalkaround}
+                  onClose={() => setPhotoAddOpen(false)}
+                />
+              ) : activeTab === 'staff' &&
               staffAddOpen ? (
                 <BinderStaffAdd
                   employeeOptions={

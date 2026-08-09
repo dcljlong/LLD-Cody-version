@@ -2469,7 +2469,8 @@ const saveBinderWalkaround = async (draft = {}) => {
   const note = [`WALKAROUND CAPTURE - ${categoryLabels[category] || 'General Note'}`,`PRIORITY - ${String(draft.priority || 'medium').toUpperCase()}`,`NEEDS SENDING - ${sendLabels[sendTo] || 'No'}`,`ACTION - ${actionType === 'none' ? 'Diary Only' : actionType}`,`SORT TO - ${buckets.join(' | ')}`,'',observation].join('\n');
   setWalkaroundSaving(true);
   try {
-    await walkaroundApi.create({ project_id:selectedProject, note, priority:draft.priority || 'medium', owner:String(draft.owner || 'Me').trim() || 'Me', due_date:draft.due_date || null, gate_id:'', photos:[], create_action_item:needsAction, action_type:actionType });
+    const photos = Array.isArray(draft.photos) ? draft.photos.filter(Boolean) : [];
+    await walkaroundApi.create({ project_id:selectedProject, note, priority:draft.priority || 'medium', owner:String(draft.owner || 'Me').trim() || 'Me', due_date:draft.due_date || null, gate_id:'', photos, create_action_item:needsAction, action_type:actionType });
     toast.success('Observation added'); await fetchDiary(); return true;
   } catch (error) { toast.error(error?.response?.data?.detail || 'Failed to save observation'); return false; }
   finally { setWalkaroundSaving(false); }
