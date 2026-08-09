@@ -1520,7 +1520,7 @@ const BinderRoadblockEditor = ({
         onSubmit={submit}
       >
         <label className="lld-binder-action-field lld-binder-action-field-wide">
-          <span>Roadblock / Concern</span>
+          <span>Roadblock / concern (required)</span>
           <input
             type="text"
             value={draft.name}
