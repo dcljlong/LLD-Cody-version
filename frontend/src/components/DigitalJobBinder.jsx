@@ -2780,12 +2780,18 @@ const CompactStaffCrewList = ({
         />
       </label>
 
-      <section
-        className="lld-staff-report-controls"
-        data-testid="staff-register-report-exports-v1"
-        aria-label="Staff reports"
+      <details
+        className="lld-staff-report-disclosure"
+        data-testid="staff-register-report-disclosure-g8"
       >
-        <label>
+        <summary>Staff reports</summary>
+
+        <section
+          className="lld-staff-report-controls"
+          data-testid="staff-register-report-exports-v1"
+          aria-label="Staff reports"
+        >
+          <label>
           <span>Report job</span>
 
           <select
@@ -2823,10 +2829,11 @@ const CompactStaffCrewList = ({
           </button>
         </div>
 
-        <small>
-          Plain information-only reports. No signatures or LLD branding.
-        </small>
-      </section>
+          <small>
+            Plain information-only reports. No signatures or LLD branding.
+          </small>
+        </section>
+      </details>
 
       {groupedStaff.length === 0 ? (
         <div className="lld-staff-crew-empty">
