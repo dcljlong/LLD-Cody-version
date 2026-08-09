@@ -4205,18 +4205,19 @@ const BinderCommunicationAdd = ({
         </label>
 
         <label className="lld-binder-action-field">
-          <span>Who with</span>
+          <span>Who with (required)</span>
           <input
             type="text"
             value={draft.contact}
             placeholder="Person, company or team"
             onChange={(event) => updateDraft('contact', event.target.value)}
             disabled={saving}
+            required
           />
         </label>
 
         <label className="lld-binder-action-field lld-binder-action-field-wide">
-          <span>Subject</span>
+          <span>Subject (required)</span>
           <input
             type="text"
             value={draft.subject}
@@ -4284,9 +4285,13 @@ const BinderCommunicationAdd = ({
           <button
             type="submit"
             className="lld-binder-action-button lld-binder-action-button-primary"
-            disabled={saving || !draft.subject.trim()}
+            disabled={
+              saving ||
+              !draft.contact.trim() ||
+              !draft.subject.trim()
+            }
           >
-            {saving ? 'Saving…' : 'Save communication'}
+            {saving ? 'Adding…' : 'Add communication'}
           </button>
 
           <button
