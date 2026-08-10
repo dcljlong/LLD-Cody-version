@@ -5179,13 +5179,16 @@ const DigitalJobBinder = ({
     (closeoutDailyCount > 0 ? 0 : 1) +
     (closeoutStaffCount > 0 ? 0 : 1);
 
-  const closeoutAttentionCount =
-    closeoutMissingCount +
+  const closeoutWarningCount =
     closeoutOverdueCount +
     closeoutDueThisDayCount +
     closeoutRoadblockCount;
 
-  const closeoutReady = closeoutAttentionCount === 0;
+  const closeoutAttentionCount =
+    closeoutMissingCount +
+    closeoutWarningCount;
+
+  const closeoutReady = closeoutMissingCount === 0;
 
   const closeoutMissingMessages = [
     closeoutDailyCount === 0 ? 'Add a diary note.' : null,
@@ -5205,11 +5208,16 @@ const DigitalJobBinder = ({
   ].filter(Boolean);
 
   const closeoutStatusMessage = closeoutReady
-    ? 'Required diary items are complete.'
+    ? [
+        'Required diary items are complete.',
+        closeoutReviewLabels.length > 0
+          ? `Ongoing warnings: ${closeoutReviewLabels.join(' and ')}. These do not block day review.`
+          : null,
+      ].filter(Boolean).join(' ')
     : [
         ...closeoutMissingMessages,
         closeoutReviewLabels.length > 0
-          ? `Review ${closeoutReviewLabels.join(' and ')}.`
+          ? `Ongoing warnings: ${closeoutReviewLabels.join(' and ')}.`
           : null,
       ].filter(Boolean).join(' ');
   // closeout-count-definitions-v8-9j2
