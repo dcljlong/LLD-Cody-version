@@ -5289,7 +5289,7 @@ const DigitalJobBinder = ({
   const closeoutDisplayedMessage = dayReviewNeedsChecking
     ? 'A review was recorded, but attention is now present. Reopen the review and check this day again.'
     : dayReviewIsReviewed
-      ? `Reviewed by ${dayReviewReviewer}${dayReviewTimestampLabel ? ` on ${dayReviewTimestampLabel}` : ''}.`
+      ? `Daily diary finished by ${dayReviewReviewer}${dayReviewTimestampLabel ? ` on ${dayReviewTimestampLabel}` : ''}.`
       : closeoutStatusMessage;
   // persisted-day-review-ui-v8-9j8-3
 
@@ -6380,9 +6380,9 @@ const DigitalJobBinder = ({
                               ? 'Reopening review...'
                               : 'Saving review...'
                             : dayReviewIsReviewed
-                              ? 'Reopen review'
+                              ? 'Reopen daily diary'
                               : closeoutReady
-                                ? 'Mark day reviewed'
+                                ? 'Finish daily diary'
                                 : 'Complete required items first'
                           : `Open full ${activeTabConfig.label} workflow`}
               </button>
