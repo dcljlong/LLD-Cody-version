@@ -7474,6 +7474,74 @@
     display: none;
   }
 }
+/* LLD / G10 MOBILE FULL-SCREEN DIARY EDITOR */
+@media screen and (max-width: 980px) {
+  main.lld-diary-experience .lld-binder-editor-shell {
+    box-sizing: border-box;
+    position: fixed;
+    z-index: 1000;
+    inset: 4rem 0 0;
+    display: flex;
+    width: 100%;
+    max-width: none;
+    height: calc(100vh - 4rem);
+    height: calc(100dvh - 4rem);
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 0;
+  }
+
+  main.lld-diary-experience .lld-binder-editor-header {
+    position: relative;
+    z-index: 2;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.72rem 0.8rem;
+  }
+
+  main.lld-diary-experience .lld-binder-editor-header > div {
+    min-width: 0;
+  }
+
+  main.lld-diary-experience .lld-binder-editor-header h2,
+  main.lld-diary-experience .lld-binder-editor-header span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  main.lld-diary-experience .lld-binder-editor-header h2 {
+    font-size: 1.15rem;
+  }
+
+  main.lld-diary-experience .lld-binder-editor-close {
+    flex: 0 0 auto;
+    min-height: 2.55rem;
+    padding: 0.58rem 0.72rem;
+  }
+
+  main.lld-diary-experience .lld-binder-editor-body {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.8rem;
+  }
+
+  main.lld-diary-experience .lld-binder-diary-editor-form {
+    min-height: 100%;
+  }
+
+  main.lld-diary-experience .lld-binder-diary-editor-main,
+  main.lld-diary-experience .lld-binder-diary-editor-fields {
+    min-width: 0;
+  }
+}
+/* LLD / G10 MOBILE FULL-SCREEN DIARY EDITOR END */
 /* LLD / UNIFIED DIARY CAPTURE V2S.2 END */
 
 @media (prefers-reduced-motion: reduce) {
