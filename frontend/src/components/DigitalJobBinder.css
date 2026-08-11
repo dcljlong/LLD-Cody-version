@@ -7017,7 +7017,16 @@
 
 /* LLD / BINDER-NATIVE EDITOR V2S.1 START */
 @media screen {
+/* LLD / G10D OPAQUE DIARY EDITOR WORKSPACE */
   main.lld-diary-experience .lld-binder-editor-shell {
+    --lld-v2r-ink: #30261d;
+    --lld-v2r-muted: #6f6252;
+    --lld-v2r-rule: rgba(82, 126, 151, 0.2);
+    --lld-v2r-margin: rgba(165, 74, 67, 0.38);
+    --lld-v2r-paper: #f8f0dc;
+    --lld-v2r-paper-deep: #efe1c3;
+    --lld-v2r-accent: #8b572b;
+    --lld-v2r-divider: #b78345;
     box-sizing: border-box;
     position: absolute;
     z-index: 90;
