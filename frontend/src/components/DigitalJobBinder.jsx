@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom'; // lld-g10a-mobile-editor-viewport-portal
 import {
   AlertTriangle,
   BookOpen,
@@ -6865,21 +6866,22 @@ const DigitalJobBinder = ({
           </section>
         )}
 
-        {diaryEditorOpen && (
+        {diaryEditorOpen && createPortal(
           <BinderDiaryEditor
             projectName={projectName}
             selectedDateLabel={selectedDateLabel}
             draft={diaryDraft}
             draftStatus={draftStatus}
             categoryOptions={diaryCategoryOptions}
-            priorityOptions={diaryPriorityOptions}
+            priorityOptions={priorityOptions}
             sendToOptions={diarySendToOptions}
             saving={submitting}
             onChange={onDiaryDraftChange}
             onPhotoUpload={onDiaryPhotoUpload}
             onSubmit={onQuickSubmit}
             onClose={closeDiaryEditor}
-          />
+          />,
+          document.body
         )}
           </div>
         </div>
