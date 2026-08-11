@@ -6881,7 +6881,7 @@ const DigitalJobBinder = ({
             onSubmit={onQuickSubmit}
             onClose={closeDiaryEditor}
           />,
-          document.body
+          document.querySelector('main.lld-diary-experience') || document.body
         )}
           </div>
         </div>
