@@ -8841,3 +8841,23 @@
     margin-left: 0;
   }
 }
+
+/* LLD / G10F FINAL MOBILE EDITOR CONTAINMENT */
+@media screen and (max-width: 980px) {
+  main.lld-diary-experience .lld-binder-editor-shell {
+    inset: 0;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+}
+
+@media screen and (max-width: 520px) {
+  main.lld-diary-experience .lld-binder-editor-body {
+    scroll-padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+
+  main.lld-diary-experience .lld-binder-diary-editor-form {
+    padding-bottom: 0;
+  }
+}
