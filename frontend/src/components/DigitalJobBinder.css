@@ -8800,3 +8800,44 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* LLD / G10E COMPACT MOBILE DIARY ACTION RAIL */
+@media screen and (max-width: 520px) {
+  main.lld-diary-experience .lld-binder-editor-body {
+    scroll-padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
+  }
+
+  main.lld-diary-experience .lld-binder-diary-editor-form {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+
+  main.lld-diary-experience .lld-binder-diary-editor-actions {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--lld-v2r-paper);
+    padding:
+      0.55rem
+      0.7rem
+      calc(0.55rem + env(safe-area-inset-bottom));
+  }
+
+  main.lld-diary-experience
+    .lld-binder-diary-editor-actions
+    .lld-binder-action-button {
+    width: auto;
+    min-width: 0;
+    min-height: 2.65rem;
+    flex: 1 1 0;
+    flex-basis: 0;
+    padding-right: 0.55rem;
+    padding-left: 0.55rem;
+    font-size: 0.68rem;
+  }
+
+  main.lld-diary-experience
+    .lld-binder-diary-editor-actions
+    .lld-binder-action-button-quiet {
+    margin-left: 0;
+  }
+}
