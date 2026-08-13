@@ -6342,14 +6342,19 @@ const DigitalJobBinder = ({
                   activeTab === 'closeout'
                     ? dayReviewIsReviewed
                       ? onReopenDayReview
-                      : onMarkDayReviewed
+                      : closeoutReady
+                        ? onMarkDayReviewed
+                        : () => handleTab(
+                            closeoutDailyCount === 0
+                              ? 'diary'
+                              : 'staff'
+                          )
                     : openActiveWorkflow
                 }
                 disabled={
                   activeTab === 'closeout' && (
                     reviewSaving ||
-                    !dayReviewActionAvailable ||
-                    (!dayReviewIsReviewed && !closeoutReady)
+                    (closeoutReady && !dayReviewActionAvailable)
                   )
                 }
                 aria-busy={
