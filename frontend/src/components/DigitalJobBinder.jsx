@@ -6344,11 +6344,15 @@ const DigitalJobBinder = ({
                       ? onReopenDayReview
                       : closeoutReady
                         ? onMarkDayReviewed
-                        : () => handleTab(
-                            closeoutDailyCount === 0
-                              ? 'diary'
-                              : 'staff'
-                          )
+                        : () => {
+                            if (closeoutDailyCount === 0) {
+                              handleTab('diary');
+                              openDiaryEditor();
+                              return;
+                            }
+
+                            handleTab('staff');
+                          }
                     : openActiveWorkflow
                 }
                 disabled={
