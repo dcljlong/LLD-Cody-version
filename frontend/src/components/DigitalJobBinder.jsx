@@ -6354,6 +6354,17 @@ const DigitalJobBinder = ({
                             handleTab('staff');
                             setSelectedStaffId(null);
                             setStaffAddOpen(true);
+
+                            window.requestAnimationFrame(() => {
+                              window.requestAnimationFrame(() => {
+                                document
+                                  .querySelector('[data-testid="lld-binder-staff-add-v2s2b"]')
+                                  ?.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'start',
+                                  });
+                              });
+                            });
                           }
                     : openActiveWorkflow
                 }
