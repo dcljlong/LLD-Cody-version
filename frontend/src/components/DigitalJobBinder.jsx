@@ -6352,6 +6352,8 @@ const DigitalJobBinder = ({
                             }
 
                             handleTab('staff');
+                            setSelectedStaffId(null);
+                            setStaffAddOpen(true);
                           }
                     : openActiveWorkflow
                 }
