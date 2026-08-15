@@ -2933,13 +2933,16 @@ const STAFF_NON_WORKING_STATUSES = new Set([
 
 const CompactDailyStaffRegister = ({
   rows = [],
+  selectedDate = '',
   selectedDateLabel = '',
+  today = '',
   staffSaving = false,
   staffSaveStatus = '',
   onChange,
   onOpenDetails,
   onAddStaff,
-  onSetAllNormalDay
+  onSetAllNormalDay,
+  onChangeDate
 }) => {
   const staffRows = Array.isArray(rows) ? rows : [];
 
@@ -2977,9 +2980,44 @@ const CompactDailyStaffRegister = ({
     >
       <div className="lld-staff-daily-heading">
         <div>
-          <p>Today</p>
+          <p>{selectedDate === today ? 'Today' : 'Selected day'}</p>
           <h3>Daily Staff Register</h3>
-          <small>{selectedDateLabel}</small>
+
+          <div
+            className="lld-staff-daily-date-nav"
+            data-testid="staff-register-day-navigation-v1"
+          >
+            <button
+              type="button"
+              className="lld-binder-page-day-nav lld-binder-page-day-nav-previous"
+              onClick={() => onChangeDate?.(-1)}
+              disabled={typeof onChangeDate !== 'function'}
+              aria-label="Previous staff day"
+              title="Previous day"
+            >
+              <ChevronLeft aria-hidden="true" />
+            </button>
+
+            <small>{selectedDateLabel}</small>
+
+            <button
+              type="button"
+              className="lld-binder-page-day-nav lld-binder-page-day-nav-next"
+              onClick={() => onChangeDate?.(1)}
+              disabled={
+                typeof onChangeDate !== 'function' ||
+                selectedDate >= today
+              }
+              aria-label="Next staff day"
+              title={
+                selectedDate >= today
+                  ? 'This is the latest diary day'
+                  : 'Next day'
+              }
+            >
+              <ChevronRight aria-hidden="true" />
+            </button>
+          </div>
         </div>
 
         <div className="lld-staff-daily-heading-actions">
@@ -6701,7 +6739,10 @@ const DigitalJobBinder = ({
                 <>
                   <CompactDailyStaffRegister
                     rows={labourRows}
+                    selectedDate={selectedDate}
                     selectedDateLabel={selectedDateLabel}
+                    today={today}
+                    onChangeDate={onChangeDate}
                     staffSaving={staffSaving}
                     staffSaveStatus={staffSaveStatus}
                     onChange={onStaffChange}
