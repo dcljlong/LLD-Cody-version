@@ -4987,6 +4987,18 @@ const DigitalJobBinder = ({
     if (activeTab === 'emails') {
       onCloseTask?.();
       setCommunicationAddOpen(true);
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          document
+            .querySelector('[data-testid="lld-binder-communication-add-v2s2e"]')
+            ?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            });
+        });
+      });
+
       return;
     }
 
