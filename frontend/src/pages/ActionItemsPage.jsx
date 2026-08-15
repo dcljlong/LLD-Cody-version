@@ -295,8 +295,18 @@ const ActionItemsPage = () => {
   };
 
   const openCreateDialog = () => {
+    const requestedProjectId = searchParams.get('project') || '';
+
     setSelectedItem(null);
     resetForm();
+
+    if (requestedProjectId) {
+      setFormData((prev) => ({
+        ...prev,
+        project_id: requestedProjectId
+      }));
+    }
+
     setDialogOpen(true);
   };
 
@@ -1076,7 +1086,10 @@ const ActionItemsPage = () => {
         </DialogContent>
       </Dialog>
       <Dialog open={dialogOpen} onOpenChange={requestDialogOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md"
+          data-testid="action-item-dialog-mobile-scroll-v1"
+        >
           <DialogHeader>
             <DialogTitle className="font-heading text-xl uppercase tracking-tight">
               {selectedItem ? 'Edit Item' : 'New Action Item'}
