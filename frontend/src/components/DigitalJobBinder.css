@@ -6252,6 +6252,61 @@
   }
 }
 
+/* LLD / TASK TALLY TRUE MOBILE FIX V2 */
+main.lld-diary-experience .lld-binder-task-tally {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  width: 100%;
+  margin-top: 0.55rem;
+}
+
+main.lld-diary-experience .lld-binder-task-tally > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+  color: var(--lld-v2r-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: normal;
+}
+
+main.lld-diary-experience .lld-binder-task-tally > span > strong {
+  display: block;
+  color: #4f3926;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+main.lld-diary-experience
+  .lld-binder-task-tally
+  > .lld-binder-register-tally-attention,
+main.lld-diary-experience
+  .lld-binder-task-tally
+  > .lld-binder-register-tally-attention
+  > strong {
+  color: #8b3f48;
+}
+
+@media screen and (max-width: 520px) {
+  main.lld-diary-experience .lld-binder-task-tally {
+    gap: 0.45rem;
+  }
+
+  main.lld-diary-experience .lld-binder-task-tally > span {
+    font-size: 0.66rem;
+  }
+
+  main.lld-diary-experience .lld-binder-task-tally > span > strong {
+    font-size: 1rem;
+  }
+}
+/* /LLD / TASK TALLY TRUE MOBILE FIX V2 */
 @media screen and (min-width: 981px) {
   main.lld-diary-experience .lld-digital-job-binder {
     width: 100%;
@@ -6623,49 +6678,7 @@
     flex: 0 0 auto;
     margin-top: 0.9rem;
   }
-  /* LLD / TASK TALLY MOBILE FIX V1 */
-  main.lld-diary-experience .lld-binder-task-tally {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.48rem;
-    width: 100%;
-    margin-top: 0.55rem;
-  }
 
-  main.lld-diary-experience .lld-binder-task-tally > span {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.12rem;
-    color: var(--lld-v2r-muted);
-    font-size: 0.68rem;
-    font-weight: 800;
-    line-height: 1.15;
-  }
-
-  main.lld-diary-experience .lld-binder-task-tally > span > strong {
-    color: #4f3926;
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 1rem;
-    font-weight: 800;
-    line-height: 1;
-  }
-
-  @media (max-width: 520px) {
-    main.lld-diary-experience .lld-binder-task-tally {
-      gap: 0.32rem;
-    }
-
-    main.lld-diary-experience .lld-binder-task-tally > span {
-      font-size: 0.62rem;
-    }
-
-    main.lld-diary-experience .lld-binder-task-tally > span > strong {
-      font-size: 0.95rem;
-    }
-  }
-  /* /LLD / TASK TALLY MOBILE FIX V1 */
 
   main.lld-diary-experience .lld-binder-register-tally > span {
     display: flex;
