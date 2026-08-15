@@ -5011,6 +5011,18 @@ const DigitalJobBinder = ({
     if (activeTab === 'walkaround') {
       setSelectedWalkaroundId(null);
       setWalkaroundAddOpen(true);
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          document
+            .querySelector('[data-testid="lld-binder-walkaround-add-v2s2g1"]')
+            ?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            });
+        });
+      });
+
       return;
     }
 
