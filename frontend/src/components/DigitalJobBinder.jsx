@@ -6421,8 +6421,10 @@ const DigitalJobBinder = ({
                     : undefined
                 }
               >
-                {activeTab === 'materials'
-                  ? '+ Add new material'
+                {activeTab === 'tasks'
+                  ? '+ Add action'
+                  : activeTab === 'materials'
+                    ? '+ Add new material'
                   : activeTab === 'emails'
                     ? '+ Add communication'
                     : activeTab === 'photos'

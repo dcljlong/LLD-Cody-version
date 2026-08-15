@@ -158,6 +158,7 @@ const ActionItemsPage = () => {
     const selectedId = searchParams.get('item');
     const projectId = searchParams.get('project');
     const section = searchParams.get('section');
+    const createRequested = searchParams.get('create') === '1';
 
     if (projectId) {
       setFilterProject(projectId);
@@ -168,6 +169,14 @@ const ActionItemsPage = () => {
         const target = document.getElementById(`action-section-${section}`);
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
+    }
+
+    if (createRequested && !dialogOpen) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('create');
+      setSearchParams(nextParams, { replace: true });
+      openCreateDialog();
+      return;
     }
 
     if (!selectedId || items.length === 0 || dialogOpen) return;
@@ -1108,7 +1117,9 @@ const ActionItemsPage = () => {
                 </SelectTrigger>
                 <SelectContent className="z-[100] bg-card border border-border shadow-2xl">
                   {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.job_name || p.name || 'Untitled Job'}</SelectItem>
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.job_number ? `${p.job_number} - ` : ''}{p.job_name || p.name || 'Untitled Job'}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

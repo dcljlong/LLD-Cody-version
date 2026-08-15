@@ -2289,10 +2289,11 @@ const DiaryPage = () => {
     return 'site-notes';
   }; // diary-nav-post-capture-v4
 
-  const openActionItemsPage = (section = null) => {
+  const openActionItemsPage = (section = null, create = false) => {
     const params = new URLSearchParams();
     if (selectedProject) params.set('project', selectedProject);
     if (section) params.set('section', section);
+    if (create) params.set('create', '1');
     window.location.assign(`/action-items?${params.toString()}`);
   };
 
@@ -3212,7 +3213,7 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
         onQuickSubmit={handleQuickEntry}
         onChangeDate={changeDate}
         onSelectDate={selectDate}
-        onOpenTasks={() => openActionItemsPage('today')}
+        onOpenTasks={() => openActionItemsPage('today', true)}
         onOpenTask={openDiaryActionItem}
         onCompleteTask={handleCompleteFollowUpFromDiary}
         taskCompletionPending={Boolean(followUpConfirm) || followUpConfirmSaving}
