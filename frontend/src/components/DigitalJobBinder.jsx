@@ -4993,6 +4993,18 @@ const DigitalJobBinder = ({
     if (activeTab === 'roadblocks') {
       onCloseRoadblock?.();
       setRoadblockAddOpen(true);
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          document
+            .querySelector('[data-testid="lld-binder-roadblock-editor-v2s2f"]')
+            ?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            });
+        });
+      });
+
       return;
     }
 
