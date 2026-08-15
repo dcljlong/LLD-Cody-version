@@ -629,6 +629,81 @@ const DiaryPage = () => {
     setActiveLabourIndex(null);
   };
 
+  const copyPreviousDayCrew = async () => {
+    if (!selectedProject || !selectedDate) {
+      toast.error('Select a project and date first');
+      return;
+    }
+
+    if (labourRows.length > 0) {
+      toast.info('This day already has staff recorded');
+      return;
+    }
+
+    const previousDate = parseDateInput(selectedDate);
+    previousDate.setDate(previousDate.getDate() - 1);
+    const previousDateValue = formatDateInput(previousDate);
+
+    setLabourLoading(true);
+
+    try {
+      const res = await diaryApi.getLabour(selectedProject, previousDateValue);
+      const previousRows = Array.isArray(res.data?.rows) ? res.data.rows : [];
+
+      if (previousRows.length === 0) {
+        toast.info('No staff were recorded on the previous day');
+        return;
+      }
+
+      const seenStaff = new Set();
+
+      const copiedRows = previousRows
+        .filter((row) => {
+          const staffKey = String(
+            row.employee_id || row.employee_name || ''
+          ).trim().toLowerCase();
+
+          if (!staffKey || seenStaff.has(staffKey)) {
+            return false;
+          }
+
+          seenStaff.add(staffKey);
+          return true;
+        })
+        .map((row) => normaliseLabourRow({
+          ...createEmptyLabourRow(),
+          ...getNormalDayLabourValues(),
+          employee_id: row.employee_id || '',
+          employee_name: row.employee_name || '',
+          job_number: currentProject?.job_number || row.job_number || '',
+          source: 'LLD',
+          source_diary_project_id: selectedProject,
+          source_diary_date: selectedDate,
+          sync_status: row.employee_id
+            ? 'local_only'
+            : 'local_pending_timesheet_staff'
+        }));
+
+      if (copiedRows.length === 0) {
+        toast.info('No usable staff were found on the previous day');
+        return;
+      }
+
+      setLabourRows(copiedRows);
+      setLabourSaveStatus('Previous crew copied - saving');
+      toast.success(
+        `${copiedRows.length} staff copied from previous day`
+      );
+    } catch (error) {
+      toast.error(
+        error.response?.data?.detail ||
+        'Previous day crew could not be loaded'
+      );
+    } finally {
+      setLabourLoading(false);
+    }
+  }; // foreman-daily-crew-copy-previous-v1
+
   const markAllStaffAtWork = () => {
     const defaults = getNormalDayLabourValues();
 
@@ -4350,6 +4425,20 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
                     <Button type="button" variant="outline" className="w-full justify-center sm:w-auto" onClick={() => setShowNewStaffForm((value) => !value)} data-testid="staff-timesheet-add-new-toggle">
                       + Add site-only staff
                     </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-center sm:w-auto"
+                      onClick={copyPreviousDayCrew}
+                      disabled={labourLoading || labourSaving || labourRows.length > 0}
+                      data-testid="staff-copy-previous-day-v1"
+                      title={labourRows.length > 0
+                        ? 'Available when this day has no staff recorded'
+                        : 'Copy the previous day crew into this day with normal hours'}
+                    >
+                      Copy previous crew
+                    </Button>
+
                     {/* LLD / TIMESHEET IMPORT STAFF CARD BUTTON V1 */}
                     <Button
                       type="button"
