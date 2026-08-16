@@ -3703,11 +3703,6 @@ const BinderStaffDetail = ({
       ? getEmployeeOptions(row.employee_id || row.employee_name || '')
       : [];
 
-  const jobOptions =
-    typeof getJobOptions === 'function'
-      ? getJobOptions(row.job_number || currentProject?.job_number || '')
-      : [];
-
   const taskOptions =
     typeof getTaskOptions === 'function'
       ? getTaskOptions(row.task_code || '')
@@ -3763,8 +3758,8 @@ const BinderStaffDetail = ({
               {workerAllocations.length}
               {' '}
               {workerAllocations.length === 1
-                ? 'job / task'
-                : 'jobs / tasks'}
+                ? 'task allocation'
+                : 'task allocations'}
             </strong>
           </div>
 
@@ -3819,7 +3814,7 @@ const BinderStaffDetail = ({
             !String(row.employee_name || '').trim()
           }
         >
-          + Add another job / task
+          + Add another task
         </button>
       </section>
 
@@ -3959,29 +3954,15 @@ const BinderStaffDetail = ({
           <span>Job #</span>
           <input
             type="text"
-            list={`lld-staff-job-options-${rowIndex}`}
-            value={row.job_number || ''}
-            placeholder={currentProject?.job_number || 'Enter job number'}
-            onChange={(event) => (
-              onChange?.(rowIndex, 'job_number', event.target.value)
-            )}
-            disabled={staffSaving}
-            autoComplete="off"
-            data-testid="staff-manual-job-number-entry-v1"
+            value={
+              currentProject?.job_number ||
+              row.job_number ||
+              ''
+            }
+            readOnly
+            aria-readonly="true"
+            data-testid="staff-fixed-project-job-number-v1"
           />
-
-          <datalist id={`lld-staff-job-options-${rowIndex}`}>
-            {(Array.isArray(jobOptions) ? jobOptions : []).map(
-              (option, index) => (
-                <option
-                  key={`${option.value || option.label || 'job'}-${index}`}
-                  value={option.value || ''}
-                >
-                  {option.label || option.value || ''}
-                </option>
-              )
-            )}
-          </datalist>
         </label>
 
         <label className="lld-binder-action-field">
@@ -4057,8 +4038,11 @@ const BinderStaffDetail = ({
               onClose?.();
             }}
             disabled={staffSaving || typeof onRemove !== 'function'}
+            data-testid="staff-delete-selected-allocation-v1"
           >
-            Remove
+            {workerAllocations.length === 1
+              ? 'Remove staff from day'
+              : 'Delete selected allocation'}
           </button>
 
           <button

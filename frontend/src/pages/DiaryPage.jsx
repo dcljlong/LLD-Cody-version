@@ -540,8 +540,8 @@ const DiaryPage = () => {
       employee_name: employeeName,
       attendance_status: sourceRow.attendance_status || 'at_work',
       job_number:
-        sourceRow.job_number ||
         currentProject?.job_number ||
+        sourceRow.job_number ||
         '',
       task_code: '',
       start_time: '',
@@ -1588,7 +1588,7 @@ const DiaryPage = () => {
           ...row,
           work_date: selectedDate,
           day: selectedDateLabel || '',
-          job_number: row.job_number || currentProject?.job_number || '',
+          job_number: currentProject?.job_number || row.job_number || '',
           source: 'LLD',
           source_diary_project_id: selectedProject,
           source_diary_date: selectedDate,
