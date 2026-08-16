@@ -1269,61 +1269,8 @@ const DiaryPage = () => {
         setLabourRows(draft.rows.map(normaliseLabourRow));
         setLabourEditMode(true);
         setDraftStatus('Staff draft restored on this device');
-      } else if (rows.length > 0) {
-        setLabourRows(rows.map(normaliseLabourRow));
       } else {
-        // foreman-daily-crew-auto-carry-v1
-        const previousDate = parseDateInput(selectedDate);
-        previousDate.setDate(previousDate.getDate() - 1);
-        const previousDateValue = formatDateInput(previousDate);
-
-        try {
-          const previousRes = await diaryApi.getLabour(
-            selectedProject,
-            previousDateValue
-          );
-          const previousRows = Array.isArray(previousRes.data?.rows)
-            ? previousRes.data.rows
-            : [];
-
-          const seenStaff = new Set();
-
-          const carriedRows = previousRows
-            .filter((row) => {
-              const staffKey = String(
-                row.employee_id || row.employee_name || ''
-              ).trim().toLowerCase();
-
-              if (!staffKey || seenStaff.has(staffKey)) {
-                return false;
-              }
-
-              seenStaff.add(staffKey);
-              return true;
-            })
-            .map((row) => normaliseLabourRow({
-              ...createEmptyLabourRow(),
-              ...getNormalDayLabourValues(),
-              employee_id: row.employee_id || '',
-              employee_name: row.employee_name || '',
-              job_number: currentProject?.job_number || row.job_number || '',
-              source: 'LLD',
-              source_diary_project_id: selectedProject,
-              source_diary_date: selectedDate,
-              sync_status: row.employee_id
-                ? 'local_only'
-                : 'local_pending_timesheet_staff'
-            }));
-
-          setLabourRows(carriedRows);
-
-          if (carriedRows.length > 0) {
-            setLabourSaveStatus('Previous crew carried forward - saving');
-          }
-        } catch (previousError) {
-          // Previous-day failure must not prevent opening a blank diary.
-          setLabourRows([]);
-        }
+        setLabourRows(rows.map(normaliseLabourRow));
       }
 
       labourDraftReadyRef.current = draftKey;
