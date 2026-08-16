@@ -2983,11 +2983,85 @@ const CompactDailyStaffRegister = ({
           <p>{selectedDate === today ? 'Today' : 'Selected day'}</p>
           <h3>Daily Staff Register</h3>
 
+          {/* staff-compact-inline-day-switcher-v1 */}
           <div
-            className="lld-staff-daily-selected-date"
-            data-testid="staff-register-selected-date-v2"
+            className="lld-staff-daily-date-switcher"
+            data-testid="staff-register-day-switcher-v3"
           >
+            <button
+              type="button"
+              onClick={(event) => {
+                const register = event.currentTarget.closest(
+                  '[data-testid="staff-register-compact-daily-v1"]'
+                );
+                const beforeTop = register?.getBoundingClientRect?.().top;
+
+                onChangeDate?.(-1);
+
+                window.requestAnimationFrame(() => {
+                  window.requestAnimationFrame(() => {
+                    if (typeof beforeTop !== 'number') return;
+
+                    const afterTop = register?.getBoundingClientRect?.().top;
+
+                    if (typeof afterTop !== 'number') return;
+
+                    window.scrollBy({
+                      top: afterTop - beforeTop,
+                      left: 0,
+                      behavior: 'auto',
+                    });
+                  });
+                });
+              }}
+              disabled={typeof onChangeDate !== 'function'}
+              aria-label="Previous staff day"
+              title="Previous day"
+            >
+              <ChevronLeft aria-hidden="true" />
+            </button>
+
             <small>{selectedDateLabel}</small>
+
+            <button
+              type="button"
+              onClick={(event) => {
+                const register = event.currentTarget.closest(
+                  '[data-testid="staff-register-compact-daily-v1"]'
+                );
+                const beforeTop = register?.getBoundingClientRect?.().top;
+
+                onChangeDate?.(1);
+
+                window.requestAnimationFrame(() => {
+                  window.requestAnimationFrame(() => {
+                    if (typeof beforeTop !== 'number') return;
+
+                    const afterTop = register?.getBoundingClientRect?.().top;
+
+                    if (typeof afterTop !== 'number') return;
+
+                    window.scrollBy({
+                      top: afterTop - beforeTop,
+                      left: 0,
+                      behavior: 'auto',
+                    });
+                  });
+                });
+              }}
+              disabled={
+                typeof onChangeDate !== 'function' ||
+                selectedDate >= today
+              }
+              aria-label="Next staff day"
+              title={
+                selectedDate >= today
+                  ? 'This is the latest diary day'
+                  : 'Next day'
+              }
+            >
+              <ChevronRight aria-hidden="true" />
+            </button>
           </div>
         </div>
 
