@@ -3703,6 +3703,11 @@ const BinderStaffDetail = ({
       ? getEmployeeOptions(row.employee_id || row.employee_name || '')
       : [];
 
+  const jobOptions =
+    typeof getJobOptions === 'function'
+      ? getJobOptions(row.job_number || currentProject?.job_number || '')
+      : [];
+
   const taskOptions =
     typeof getTaskOptions === 'function'
       ? getTaskOptions(row.task_code || '')
@@ -3864,6 +3869,60 @@ const BinderStaffDetail = ({
           />
         </label>
 
+        <label className="lld-binder-action-field">
+          <span>Job #</span>
+          <input
+            type="text"
+            list={`lld-staff-job-options-${rowIndex}`}
+            value={row.job_number || ''}
+            placeholder={currentProject?.job_number || 'Select job'}
+            onChange={(event) => (
+              onChange?.(rowIndex, 'job_number', event.target.value)
+            )}
+            disabled={staffSaving}
+            autoComplete="off"
+            data-testid="staff-selectable-job-number-v2"
+          />
+
+          <datalist id={`lld-staff-job-options-${rowIndex}`}>
+            {(Array.isArray(jobOptions) ? jobOptions : []).map(
+              (option, index) => (
+                <option
+                  key={`${option.value || option.label || 'job'}-${index}`}
+                  value={option.value || ''}
+                >
+                  {option.label || option.value || ''}
+                </option>
+              )
+            )}
+          </datalist>
+        </label>
+
+        <label className="lld-binder-action-field">
+          <span>Task code</span>
+          <select
+            value={row.task_code || ''}
+            onChange={(event) => (
+              onChange?.(rowIndex, 'task_code', event.target.value)
+            )}
+            disabled={staffSaving}
+            data-testid="staff-task-code-near-job-v1"
+          >
+            <option value="">Task code</option>
+
+            {(Array.isArray(taskOptions) ? taskOptions : []).map(
+              (option, index) => (
+                <option
+                  key={`${option.value || option.label || 'task'}-${index}`}
+                  value={option.value || ''}
+                >
+                  {option.label || option.value}
+                </option>
+              )
+            )}
+          </select>
+        </label>
+
         <label className="lld-binder-action-field lld-binder-action-field-wide">
           <span>Attendance</span>
           <select
@@ -3950,44 +4009,6 @@ const BinderStaffDetail = ({
           />
         </label>
 
-        <label className="lld-binder-action-field">
-          <span>Job #</span>
-          <input
-            type="text"
-            value={
-              currentProject?.job_number ||
-              row.job_number ||
-              ''
-            }
-            readOnly
-            aria-readonly="true"
-            data-testid="staff-fixed-project-job-number-v1"
-          />
-        </label>
-
-        <label className="lld-binder-action-field">
-          <span>Task code</span>
-          <select
-            value={row.task_code || ''}
-            onChange={(event) => (
-              onChange?.(rowIndex, 'task_code', event.target.value)
-            )}
-            disabled={staffSaving}
-          >
-            <option value="">Task code</option>
-
-            {(Array.isArray(taskOptions) ? taskOptions : []).map(
-              (option, index) => (
-                <option
-                  key={`${option.value || option.label || 'task'}-${index}`}
-                  value={option.value || ''}
-                >
-                  {option.label || option.value}
-                </option>
-              )
-            )}
-          </select>
-        </label>
 
         <label className="lld-binder-action-field lld-binder-action-field-wide">
           <span>Staff notes</span>

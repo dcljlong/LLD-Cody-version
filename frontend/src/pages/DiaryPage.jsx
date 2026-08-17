@@ -1588,7 +1588,7 @@ const DiaryPage = () => {
           ...row,
           work_date: selectedDate,
           day: selectedDateLabel || '',
-          job_number: currentProject?.job_number || row.job_number || '',
+          job_number: row.job_number || currentProject?.job_number || '',
           source: 'LLD',
           source_diary_project_id: selectedProject,
           source_diary_date: selectedDate,
