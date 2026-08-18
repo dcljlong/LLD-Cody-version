@@ -8983,3 +8983,198 @@ main.lld-diary-experience
   }
 }
 /* /LLD / STAFF COMPACT INLINE DAY SWITCHER V1 */
+
+/* LLD / STAFF MOBILE SCALE V2 */
+
+.lld-staff-weekly-summary-toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.75rem;
+  border: 1px solid rgba(23, 52, 74, 0.14);
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.62);
+  padding: 0.5rem 0.65rem;
+  color: #17344a;
+  cursor: pointer;
+  list-style: none;
+}
+
+.lld-staff-weekly-summary-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.lld-staff-weekly-summary-toggle > span {
+  color: #8a4a56;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lld-staff-weekly-summary-toggle > strong {
+  min-width: 0;
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.lld-staff-weekly-summary-toggle > small {
+  color: #6d7e8b;
+  font-size: 0.56rem;
+  font-weight: 850;
+}
+
+.lld-staff-weekly-expanded {
+  margin-top: 0.55rem;
+}
+
+@media screen and (max-width: 760px) {
+
+  /*
+    DAILY ENTRY FIRST:
+    Staff | Status | Hours | Details
+  */
+
+  .lld-staff-daily-register {
+    gap: 0.42rem;
+  }
+
+  .lld-staff-daily-heading {
+    gap: 0.45rem;
+  }
+
+  .lld-staff-daily-heading-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem;
+  }
+
+  .lld-staff-daily-heading-actions button {
+    min-height: 2.25rem;
+    padding: 0.35rem 0.4rem;
+    font-size: 0.66rem;
+  }
+
+  /* Reporting cards do not need to dominate daily entry. */
+  .lld-staff-daily-summary {
+    display: none;
+  }
+
+  .lld-staff-daily-table-wrap {
+    overflow: visible;
+    border-radius: 0.55rem;
+  }
+
+  .lld-staff-daily-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .lld-staff-daily-table th,
+  .lld-staff-daily-table td {
+    padding: 0.25rem 0.18rem;
+  }
+
+  .lld-staff-daily-table th {
+    font-size: 0.48rem;
+  }
+
+  /* Detailed time fields live behind Details on mobile. */
+  .lld-staff-daily-table th:nth-child(3),
+  .lld-staff-daily-table td:nth-child(3),
+  .lld-staff-daily-table th:nth-child(4),
+  .lld-staff-daily-table td:nth-child(4),
+  .lld-staff-daily-table th:nth-child(5),
+  .lld-staff-daily-table td:nth-child(5),
+  .lld-staff-daily-table th:nth-child(7),
+  .lld-staff-daily-table td:nth-child(7) {
+    display: none;
+  }
+
+  .lld-staff-daily-table th:nth-child(1),
+  .lld-staff-daily-table td:nth-child(1) {
+    width: 39%;
+  }
+
+  .lld-staff-daily-table th:nth-child(2),
+  .lld-staff-daily-table td:nth-child(2) {
+    width: 31%;
+  }
+
+  .lld-staff-daily-table th:nth-child(6),
+  .lld-staff-daily-table td:nth-child(6) {
+    width: 15%;
+  }
+
+  .lld-staff-daily-table th:nth-child(8),
+  .lld-staff-daily-table td:nth-child(8) {
+    width: 15%;
+  }
+
+  .lld-staff-daily-name {
+    position: static;
+    min-width: 0;
+  }
+
+  .lld-staff-daily-name strong {
+    overflow: hidden;
+    font-size: 0.69rem;
+    line-height: 1.12;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .lld-staff-daily-name small {
+    overflow: hidden;
+    margin-top: 0.05rem;
+    font-size: 0.5rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .lld-staff-daily-table select {
+    width: 100%;
+    min-height: 1.9rem;
+    padding: 0.15rem 0.18rem;
+    font-size: 0.63rem;
+  }
+
+  .lld-staff-daily-hours {
+    font-size: 0.63rem;
+    text-align: center;
+  }
+
+  .lld-staff-daily-actions button {
+    width: 100%;
+    min-height: 1.9rem;
+    padding: 0.15rem;
+    font-size: 0.52rem;
+  }
+
+  .lld-staff-daily-footer {
+    gap: 0.35rem;
+    font-size: 0.56rem;
+  }
+
+  .lld-staff-daily-footer span:last-child {
+    text-align: right;
+  }
+
+  /* Secondary reporting is one compact row until requested. */
+  .lld-staff-weekly-dashboard {
+    margin-top: 0.45rem;
+  }
+
+  .lld-staff-weekly-heading,
+  .lld-staff-weekly-totals,
+  .lld-staff-weekly-table-wrap,
+  .lld-staff-weekly-legend,
+  .lld-staff-weekly-message {
+    margin-right: 0;
+    margin-left: 0;
+  }
+}
+
+/* /LLD / STAFF MOBILE SCALE V2 */

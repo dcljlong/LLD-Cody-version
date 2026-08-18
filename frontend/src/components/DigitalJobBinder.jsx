@@ -3375,11 +3375,26 @@ const WeeklyStaffDashboard = ({
   const totals = weeklyLabour?.totals || {};
 
   return (
-    <section
+    <details
       className="lld-staff-weekly-dashboard"
-      data-testid="staff-register-weekly-dashboard-v1"
-      aria-label="Weekly staff summary"
+      data-testid="staff-register-weekly-dashboard-v2"
     >
+      <summary
+        className="lld-staff-weekly-summary-toggle"
+        aria-label="Open weekly staff summary"
+      >
+        <span>This week</span>
+
+        <strong>
+          {Number(weeklyLabour?.staff_count || 0)} staff
+          {' · '}
+          {Number(totals.hours || 0).toFixed(2)}h
+        </strong>
+
+        <small>View</small>
+      </summary>
+
+      <div className="lld-staff-weekly-expanded">
       <div className="lld-staff-weekly-heading">
         <div>
           <p>This week</p>
@@ -3525,10 +3540,10 @@ const WeeklyStaffDashboard = ({
           </small>
         </>
       )}
-    </section>
+          </div>
+    </details>
   );
 };
-
 const BinderStaffAdd = ({
   employeeOptions = [],
   staffSaving = false,
