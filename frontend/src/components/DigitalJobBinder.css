@@ -9178,3 +9178,16 @@ main.lld-diary-experience
 }
 
 /* /LLD / STAFF MOBILE SCALE V2 */
+
+/* LLD / STAFF IOS INPUT NO ZOOM V1 */
+@media screen and (max-width: 760px) {
+  main.lld-diary-experience .lld-binder-staff-form input,
+  main.lld-diary-experience .lld-binder-staff-form select,
+  main.lld-diary-experience .lld-binder-staff-form textarea,
+  main.lld-diary-experience .lld-binder-staff-detail input,
+  main.lld-diary-experience .lld-binder-staff-detail select,
+  main.lld-diary-experience .lld-binder-staff-detail textarea {
+    font-size: 16px;
+  }
+}
+/* /LLD / STAFF IOS INPUT NO ZOOM V1 */
