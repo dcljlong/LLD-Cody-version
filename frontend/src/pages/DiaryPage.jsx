@@ -509,7 +509,7 @@ const DiaryPage = () => {
       {
         ...createEmptyLabourRow(),
         ...getNormalDayLabourValues(),
-                employee_id: employeeOption.employee_id || '',
+        employee_id: employeeOption.employee_id || '',
         employee_name: staffName,
         job_number: currentProject?.job_number || '',
         sync_status: employeeOption.linked_to_timesheet ? 'local_only' : 'local_pending_timesheet_staff'
@@ -1674,6 +1674,21 @@ const DiaryPage = () => {
     }
   };
 
+  // staff-edit-first-autosave-v1
+  const labourRowHasInvalidTimeRange = (row) => {
+    if (!row?.start_time || !row?.finish_time) {
+      return false;
+    }
+
+    const start = new Date(`1970-01-01T${row.start_time}`);
+    const finish = new Date(`1970-01-01T${row.finish_time}`);
+
+    return (
+      !Number.isNaN(start.getTime()) &&
+      !Number.isNaN(finish.getTime()) &&
+      finish <= start
+    );
+  };
   const saveLabourRows = async ({ silent = false } = {}) => {
     if (!selectedProject || !selectedDate) {
       toast.error('Select a project and date first');
@@ -1707,16 +1722,20 @@ const DiaryPage = () => {
         return;
       }
 
-      const invalidTimeRow = startedRows.find(({ row }) => {
-        if (!row.start_time || !row.finish_time) return false;
-        const start = new Date(`1970-01-01T${row.start_time}`);
-        const finish = new Date(`1970-01-01T${row.finish_time}`);
-        return !Number.isNaN(start.getTime()) && !Number.isNaN(finish.getTime()) && finish <= start;
-      });
+      const invalidTimeRow = startedRows.find(
+        ({ row }) => labourRowHasInvalidTimeRange(row)
+      );
 
       if (invalidTimeRow) {
-        toast.error(`Finish time must be after start time for staff row ${invalidTimeRow.rowNumber}`);
-        return;
+        setLabourSaveStatus('Editing times');
+
+        if (!silent) {
+          toast.error(
+            `Finish time must be after start time for staff row ${invalidTimeRow.rowNumber}`
+          );
+        }
+
+        return false;
       }
 
       const cleanRows = startedRows
@@ -2097,11 +2116,29 @@ const DiaryPage = () => {
       return undefined;
     }
 
+    // staff-edit-first-autosave-v1
+    // Keep edits local while the detail form is open.
+    // Closing the editor releases the normal backend autosave.
+    if (labourEditMode && activeLabourIndex !== null) {
+      setLabourSaveStatus('Editing');
+
+      if (labourServerAutosaveTimerRef.current) {
+        window.clearTimeout(labourServerAutosaveTimerRef.current);
+      }
+
+      return undefined;
+    }
+
     if (
       !selectedProject ||
       !selectedDate ||
       !hasMeaningfulLabourRows(labourRows)
     ) {
+      return undefined;
+    }
+
+    if (labourRows.some(labourRowHasInvalidTimeRange)) {
+      setLabourSaveStatus('Editing times');
       return undefined;
     }
 
@@ -2149,7 +2186,7 @@ const DiaryPage = () => {
         window.clearTimeout(labourServerAutosaveTimerRef.current);
       }
     };
-  }, [labourRows, selectedProject, selectedDate, labourLoading]); // staff-diary-backend-autosave-v4
+  }, [labourRows, selectedProject, selectedDate, labourLoading, labourEditMode, activeLabourIndex]); // staff-diary-backend-autosave-v4
 
   const changeDate = (days) => {
     const current = parseDateInput(selectedDate);
