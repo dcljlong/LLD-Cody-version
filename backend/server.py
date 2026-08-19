@@ -1634,6 +1634,98 @@ async def get_daily_labour_rows(
         "rows": rows
     }
 
+# project-staff-pool-v1
+@api_router.get("/diary/{project_id}/labour/staff-pool")
+async def get_project_staff_pool(
+    project_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Return unique staff previously recorded on this LLD project.
+
+    This is a selection/reference pool only. It does not create attendance,
+    hours or labour rows for any diary date.
+    """
+    project = await db.projects.find_one(
+        {"id": project_id, "user_id": current_user["id"]},
+        {"_id": 0}
+    )
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    documents = await db.daily_labour_rows.find(
+        {
+            "project_id": project_id,
+            "user_id": current_user["id"]
+        },
+        {
+            "_id": 0,
+            "date": 1,
+            "rows": 1
+        }
+    ).sort("date", -1).to_list(5000)
+
+    staff_map = {}
+
+    for document in documents:
+        document_date = str(document.get("date") or "").strip()
+
+        for row in document.get("rows", []) or []:
+            employee_name = str(
+                row.get("employee_name") or ""
+            ).strip()
+
+            employee_id = str(
+                row.get("employee_id") or ""
+            ).strip()
+
+            if not employee_name:
+                continue
+
+            key = (
+                f"id:{employee_id}"
+                if employee_id
+                else f"name:{employee_name.lower()}"
+            )
+
+            existing = staff_map.get(key)
+
+            if not existing:
+                staff_map[key] = {
+                    "key": key,
+                    "employee_id": employee_id,
+                    "employee_name": employee_name,
+                    "last_used_date": document_date
+                }
+                continue
+
+            # Preserve an employee ID if a later/older diary row has one.
+            if not existing.get("employee_id") and employee_id:
+                existing["employee_id"] = employee_id
+
+            if (
+                document_date and
+                document_date > str(existing.get("last_used_date") or "")
+            ):
+                existing["last_used_date"] = document_date
+
+    staff = sorted(
+        staff_map.values(),
+        key=lambda item: (
+            str(item.get("employee_name") or "").lower(),
+            str(item.get("employee_id") or "")
+        )
+    )
+
+    return {
+        "project_id": project_id,
+        "job_number": project.get("job_number"),
+        "staff": staff,
+        "staff_count": len(staff),
+        "source": "lld_project_labour_history",
+        "creates_daily_attendance": False
+    }
+
 # staff-register-weekly-api-v1
 @api_router.get("/diary/{project_id}/labour/week")
 async def get_weekly_labour_rows(

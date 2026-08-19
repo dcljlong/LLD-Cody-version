@@ -109,6 +109,9 @@ export const diaryApi = {
   // staff-register-weekly-client-v1
   getWeeklyLabour: (projectId, date) =>
     api.get(`/diary/${projectId}/labour/week?date=${date}`),
+  // project-staff-pool-client-v1
+  getProjectStaffPool: (projectId) =>
+    api.get(`/diary/${projectId}/labour/staff-pool`),
   saveLabour: (projectId, data) => api.post(`/diary/${projectId}/labour`, data),
   importLabourToTimesheet: (projectId, data) => api.post(`/diary/${projectId}/labour/import-timesheet`, data),
   getResources: (projectId, date) => api.get(`/diary/${projectId}/resources?date=${date}`),

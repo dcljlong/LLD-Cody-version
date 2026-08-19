@@ -233,6 +233,8 @@ const DiaryPage = () => {
   const [labourEditMode, setLabourEditMode] = useState(false);
   const [activeLabourIndex, setActiveLabourIndex] = useState(null);
   const [selectedStaffEmployeeValue, setSelectedStaffEmployeeValue] = useState('');
+  // project-staff-pool-state-v1
+  const [projectStaffPool, setProjectStaffPool] = useState([]);
   const [showNewStaffForm, setShowNewStaffForm] = useState(false);
   const [staffSectionExpanded, setStaffSectionExpanded] = useState(false); // staff-collapsible-summary-v1
   const [newStaffName, setNewStaffName] = useState('');
@@ -964,33 +966,149 @@ const DiaryPage = () => {
     ['employee_name', 'name', 'full_name', 'display_name', 'email', 'id']
   );
 
+  // project-staff-pool-picker-v1
   const employeePickerOptions = (currentValue = '') => {
     const sourceEmployees = Array.isArray(timesheetReferenceOptions.employees)
       ? timesheetReferenceOptions.employees
       : [];
 
-    const options = [];
-    const seen = new Set();
+    const rememberedStaff = Array.isArray(projectStaffPool)
+      ? projectStaffPool
+      : [];
 
-    const isCleanStaffOption = (employee) => { // staff-timesheet-dropdown-filter-v1
-      const combined = ['employee_name', 'name', 'full_name', 'display_name', 'email', 'id']
+    const options = [];
+    const seenValues = new Set();
+    const seenNames = new Set();
+
+    const normaliseNameKey = (value) => (
+      String(value || '')
+        .toLocaleLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim()
+    );
+
+    const isCleanStaffOption = (employee) => {
+      const combined = [
+        'employee_name',
+        'name',
+        'full_name',
+        'display_name',
+        'email',
+        'id'
+      ]
         .map((key) => String(employee?.[key] || ''))
         .join(' ')
         .toLowerCase();
+
       if (combined.includes('tm cert')) return false;
       if (combined.includes('cert employee')) return false;
       if (combined.includes('cert pm')) return false;
       if (combined.includes('demo')) return false;
       if (combined.includes('sample')) return false;
+
       return true;
     };
 
-    // staff-picker-name-dedupe-v2s2d
-    const seenNames = new Set();
+    const addOption = ({
+      employeeId = '',
+      employeeName = '',
+      label = '',
+      remembered = false
+    }) => {
+      const cleanName = String(employeeName || '').trim();
+      const cleanId = String(employeeId || '').trim();
 
+      if (!cleanName) return;
+
+      const value = cleanId || cleanName;
+      const nameKey = normaliseNameKey(cleanName);
+
+      if (
+        !value ||
+        seenValues.has(value) ||
+        seenNames.has(nameKey)
+      ) {
+        return;
+      }
+
+      seenValues.add(value);
+      seenNames.add(nameKey);
+
+      options.push({
+        value,
+        label: label || cleanName,
+        employee_id: cleanId,
+        employee_name: cleanName,
+        display_name: cleanName,
+        linked_to_timesheet: Boolean(cleanId),
+        remembered_project_staff: remembered
+      });
+    };
+
+    // Previously used on this project comes first.
+    rememberedStaff.forEach((employee) => {
+      const rememberedName = String(
+        employee.employee_name || ''
+      ).trim();
+
+      const rememberedId = String(
+        employee.employee_id || ''
+      ).trim();
+
+      if (!rememberedName) return;
+
+      // If Timesheet has this person, retain its employee ID.
+      const timesheetMatch = sourceEmployees.find((candidate) => {
+        const candidateId = String(
+          candidate?.employee_id ||
+          candidate?.id ||
+          candidate?.value ||
+          ''
+        ).trim();
+
+        const candidateName = String(
+          candidate?.employee_name ||
+          candidate?.name ||
+          candidate?.full_name ||
+          candidate?.display_name ||
+          candidate?.label ||
+          ''
+        ).trim();
+
+        return (
+          (rememberedId && candidateId === rememberedId) ||
+          normaliseNameKey(candidateName) ===
+            normaliseNameKey(rememberedName)
+        );
+      });
+
+      const resolvedId = String(
+        timesheetMatch?.employee_id ||
+        timesheetMatch?.id ||
+        timesheetMatch?.value ||
+        rememberedId ||
+        ''
+      ).trim();
+
+      addOption({
+        employeeId: resolvedId,
+        employeeName: rememberedName,
+        label: `${rememberedName} · Project staff`,
+        remembered: true
+      });
+    });
+
+    // Then add remaining company/Timesheet staff.
     sourceEmployees.forEach((employee) => {
       if (!isCleanStaffOption(employee)) return;
-      const employeeId = String(employee.employee_id || employee.id || employee.value || '').trim();
+
+      const employeeId = String(
+        employee.employee_id ||
+        employee.id ||
+        employee.value ||
+        ''
+      ).trim();
+
       const employeeName = String(
         employee.employee_name ||
         employee.name ||
@@ -1000,44 +1118,35 @@ const DiaryPage = () => {
         employee.email ||
         ''
       ).trim();
-      const displayName = employeeName || employeeId;
-      const value = employeeId || displayName;
 
-      const nameKey = displayName.toLocaleLowerCase().replace(/\s+/g, ' ').trim();
-      const isCurrentValue = String(currentValue || '').trim() === value;
-
-      if (
-        !value ||
-        seen.has(value) ||
-        (seenNames.has(nameKey) && !isCurrentValue)
-      ) return;
-
-      seen.add(value);
-      seenNames.add(nameKey);
-      options.push({
-        value,
-        label: displayName,
-        employee_id: employeeId,
-        employee_name: displayName,
-        display_name: displayName,
-        linked_to_timesheet: Boolean(employeeId)
+      addOption({
+        employeeId,
+        employeeName,
+        label: employeeName,
+        remembered: false
       });
     });
 
     const current = String(currentValue || '').trim();
-    if (current && !seen.has(current)) {
+
+    if (
+      current &&
+      !seenValues.has(current) &&
+      !seenNames.has(normaliseNameKey(current))
+    ) {
       options.unshift({
         value: current,
-        label: `${current} (site-only diary entry)`,
+        label: `${current} · Site-only`,
         employee_id: '',
         employee_name: current,
-        linked_to_timesheet: false
+        display_name: current,
+        linked_to_timesheet: false,
+        remembered_project_staff: true
       });
     }
 
     return options;
   };
-
   const resolveEmployeeSelection = (value) => {
     const selectedValue = String(value || '').trim();
     if (!selectedValue) return null;
@@ -1203,6 +1312,32 @@ const DiaryPage = () => {
   useEffect(() => {
     fetchTimesheetReferenceOptions();
   }, [fetchTimesheetReferenceOptions]);
+  // project-staff-pool-fetch-v1
+  const fetchProjectStaffPool = useCallback(async () => {
+    if (!selectedProject) {
+      setProjectStaffPool([]);
+      return;
+    }
+
+    try {
+      const response = await diaryApi.getProjectStaffPool(
+        selectedProject
+      );
+
+      setProjectStaffPool(
+        Array.isArray(response.data?.staff)
+          ? response.data.staff
+          : []
+      );
+    } catch (error) {
+      // Staff entry must remain usable if history lookup fails.
+      setProjectStaffPool([]);
+    }
+  }, [selectedProject]);
+
+  useEffect(() => {
+    fetchProjectStaffPool();
+  }, [fetchProjectStaffPool]);
   const fetchWeeklyLabour = useCallback(async () => {
     if (!selectedProject || !selectedDate) {
       setWeeklyLabour({
@@ -1637,6 +1772,7 @@ const DiaryPage = () => {
       setLabourSaveStatus('Saved');
 
       fetchWeeklyLabour();
+      fetchProjectStaffPool();
     } catch (error) {
       setLabourSaveStatus('Save failed');
       if (!silent) {
@@ -4418,26 +4554,13 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
                       }}
                       data-testid="staff-timesheet-employee-select"
                     >
-                      <option value="" data-commercial-readiness="staff-picker-dark-options-v1 staff-site-only-wording-v1">Add from Timesheet staff</option>
+                      <option value="" data-commercial-readiness="staff-picker-dark-options-v1 staff-site-only-wording-v1">Add project / company staff</option>
                       {employeePickerOptions().map((option) => (
                         <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
                     </select>
                     <Button type="button" variant="outline" className="w-full justify-center sm:w-auto" onClick={() => setShowNewStaffForm((value) => !value)} data-testid="staff-timesheet-add-new-toggle">
                       + Add site-only staff
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full justify-center sm:w-auto"
-                      onClick={copyPreviousDayCrew}
-                      disabled={labourLoading || labourSaving || labourRows.length > 0}
-                      data-testid="staff-copy-previous-day-v1"
-                      title={labourRows.length > 0
-                        ? 'Available when this day has no staff recorded'
-                        : 'Copy the previous day crew into this day with normal hours'}
-                    >
-                      Copy previous crew
                     </Button>
 
                     {/* LLD / TIMESHEET IMPORT STAFF CARD BUTTON V1 */}
