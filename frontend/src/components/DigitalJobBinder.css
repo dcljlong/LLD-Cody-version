@@ -9572,3 +9572,159 @@ main.lld-diary-experience
 }
 
 /* /LLD / STAFF MOBILE REPORT FIX V1 */
+
+/* LLD / STAFF PORTRAIT CONTAINMENT V2 */
+
+@media screen and (max-width: 760px) {
+
+  /* Keep the binder and Staff spread inside the phone viewport. */
+  main.lld-diary-experience,
+  main.lld-diary-experience .lld-digital-job-binder,
+  main.lld-diary-experience .lld-binder-stage,
+  main.lld-diary-experience .lld-binder-pages,
+  main.lld-diary-experience .lld-binder-active-staff,
+  main.lld-diary-experience .lld-binder-active-staff > *,
+  main.lld-diary-experience .lld-binder-active-staff .lld-binder-page,
+  main.lld-diary-experience .lld-binder-active-staff .lld-binder-focused-page,
+  main.lld-diary-experience .lld-binder-active-staff .lld-binder-register-index-page,
+  main.lld-diary-experience .lld-binder-active-staff .lld-binder-register-list-page,
+  main.lld-diary-experience .lld-staff-crew-index,
+  main.lld-diary-experience .lld-staff-daily-register,
+  main.lld-diary-experience .lld-staff-weekly-dashboard,
+  main.lld-diary-experience .lld-staff-weekly-expanded {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  main.lld-diary-experience .lld-digital-job-binder,
+  main.lld-diary-experience .lld-binder-stage,
+  main.lld-diary-experience .lld-binder-pages,
+  main.lld-diary-experience .lld-binder-active-staff {
+    width: 100%;
+    overflow-x: clip;
+  }
+
+  /* Daily summary cards: compact 2 x 2 instead of forcing width. */
+  main.lld-diary-experience .lld-staff-crew-totals {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    min-width: 0;
+    gap: 0.4rem;
+  }
+
+  main.lld-diary-experience .lld-staff-crew-totals > span {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Both daily action buttons must remain fully visible. */
+  main.lld-diary-experience .lld-staff-crew-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    min-width: 0;
+    gap: 0.4rem;
+  }
+
+  main.lld-diary-experience .lld-staff-crew-actions > button {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  main.lld-diary-experience .lld-staff-crew-search,
+  main.lld-diary-experience .lld-staff-crew-search input {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Weekly summary header itself must not extend outside card. */
+  main.lld-diary-experience .lld-staff-weekly-summary-toggle {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-summary-toggle > * {
+    min-width: 0;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-summary-toggle > strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Weekly stats: true two-column phone grid. */
+  main.lld-diary-experience .lld-staff-weekly-totals {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    gap: 0.4rem;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-totals > span {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /*
+   * The existing MOBILE REPORT FIX V1 already owns horizontal
+   * scrolling for the weekly matrix. Preserve that behaviour.
+   */
+  main.lld-diary-experience .lld-staff-weekly-table-wrap,
+  main.lld-diary-experience .lld-staff-inline-report-table-wrap {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  /* Inline report view must also remain contained. */
+  main.lld-diary-experience .lld-staff-inline-report,
+  main.lld-diary-experience .lld-staff-inline-report-heading,
+  main.lld-diary-experience .lld-staff-inline-report-totals,
+  main.lld-diary-experience .lld-staff-report-controls {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  main.lld-diary-experience .lld-staff-inline-report-totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main.lld-diary-experience .lld-staff-report-controls > label {
+    grid-template-columns: 1fr;
+  }
+
+  main.lld-diary-experience .lld-staff-report-controls select,
+  main.lld-diary-experience .lld-staff-report-controls button {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+@media screen and (max-width: 430px) {
+  main.lld-diary-experience .lld-staff-crew-actions > button {
+    padding-right: 0.45rem;
+    padding-left: 0.45rem;
+    font-size: 0.68rem;
+  }
+}
+
+/* /LLD / STAFF PORTRAIT CONTAINMENT V2 */
