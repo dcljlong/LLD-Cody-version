@@ -9306,3 +9306,269 @@ main.lld-diary-experience
 }
 
 /* /LLD / STAFF BULK CREW PICKER V1 */
+
+/* LLD / STAFF MOBILE REPORT FIX V1 */
+
+.lld-staff-inline-report {
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  color: #17344a;
+}
+
+.lld-staff-inline-report-toolbar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.lld-staff-inline-report-toolbar > div {
+  display: flex;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.lld-staff-inline-report-toolbar button {
+  min-height: 2.2rem;
+  border: 1px solid rgba(23, 52, 74, 0.18);
+  border-radius: 0.45rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: #17344a;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.62rem;
+  font-weight: 850;
+}
+
+.lld-staff-inline-report-toolbar button.is-active {
+  border-color: rgba(47, 203, 187, 0.7);
+  background: rgba(47, 203, 187, 0.13);
+}
+
+.lld-staff-inline-report-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 2px solid rgba(23, 52, 74, 0.7);
+  padding-bottom: 0.55rem;
+}
+
+.lld-staff-inline-report-heading > div {
+  min-width: 0;
+}
+
+.lld-staff-inline-report-heading p {
+  margin: 0;
+  color: #20a997;
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.lld-staff-inline-report-heading h2 {
+  margin: 0.15rem 0;
+  font-size: 1.15rem;
+  line-height: 1.05;
+}
+
+.lld-staff-inline-report-heading span,
+.lld-staff-inline-report-heading small {
+  color: #6d7e8b;
+  font-size: 0.58rem;
+}
+
+.lld-staff-inline-report-heading > div:last-child {
+  display: grid;
+  justify-items: end;
+  text-align: right;
+}
+
+.lld-staff-inline-report-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.lld-staff-inline-report-totals > span {
+  display: grid;
+  gap: 0.1rem;
+  border: 1px solid rgba(23, 52, 74, 0.12);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.55);
+  padding: 0.5rem;
+}
+
+.lld-staff-inline-report-totals strong {
+  font-size: 0.78rem;
+}
+
+.lld-staff-inline-report-totals small {
+  color: #6d7e8b;
+  font-size: 0.52rem;
+}
+
+.lld-staff-inline-report-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lld-staff-inline-report-table {
+  width: 100%;
+  min-width: 38rem;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.65);
+  font-size: 0.58rem;
+}
+
+.lld-staff-inline-report-table.is-full {
+  min-width: 58rem;
+}
+
+.lld-staff-inline-report-table th,
+.lld-staff-inline-report-table td {
+  border: 1px solid rgba(23, 52, 74, 0.16);
+  padding: 0.4rem 0.45rem;
+  vertical-align: top;
+  text-align: left;
+}
+
+.lld-staff-inline-report-table th {
+  background: #eef2f4;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.lld-staff-inline-report-table .number {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.lld-staff-inline-report-footer {
+  border-top: 1px solid rgba(23, 52, 74, 0.16);
+  padding-top: 0.5rem;
+  color: #6d7e8b;
+  font-size: 0.52rem;
+  line-height: 1.35;
+}
+
+/* weekly report must scroll inside its card, never widen page */
+.lld-staff-weekly-expanded {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.lld-staff-weekly-table-wrap {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lld-staff-weekly-table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.lld-staff-weekly-table .lld-staff-weekly-name-cell {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 8rem;
+  background: #fff;
+  box-shadow: 1px 0 rgba(23, 52, 74, 0.12);
+}
+
+.lld-staff-weekly-table thead .lld-staff-weekly-name-cell {
+  z-index: 3;
+  background: #f4f6f7;
+}
+
+@media screen and (max-width: 700px) {
+  .lld-staff-inline-report-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lld-staff-inline-report-toolbar > div {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .lld-staff-inline-report-toolbar > button:last-child {
+    justify-self: end;
+  }
+
+  .lld-staff-inline-report-heading {
+    align-items: flex-start;
+  }
+
+  .lld-staff-inline-report-totals {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .lld-staff-weekly-totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    min-width: 0;
+  }
+
+  .lld-staff-weekly-table-wrap {
+    margin-right: 0;
+    padding-bottom: 0.25rem;
+  }
+
+  .lld-staff-weekly-table {
+    min-width: 42rem;
+  }
+
+  .lld-staff-weekly-table .lld-staff-weekly-name-cell {
+    min-width: 7.4rem;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .lld-staff-inline-report,
+  .lld-staff-inline-report * {
+    visibility: visible;
+  }
+
+  .lld-staff-inline-report {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    background: #fff;
+  }
+
+  .lld-staff-inline-report-toolbar {
+    display: none;
+  }
+
+  .lld-staff-inline-report-table-wrap {
+    overflow: visible;
+  }
+
+  .lld-staff-inline-report-table,
+  .lld-staff-inline-report-table.is-full {
+    width: 100%;
+    min-width: 0;
+    font-size: 8pt;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+}
+
+/* /LLD / STAFF MOBILE REPORT FIX V1 */

@@ -2266,6 +2266,8 @@ const CompactStaffCrewList = ({
 }) => {
   const [search, setSearch] = useState('');
   const [reportJobFilter, setReportJobFilter] = useState('');
+  // staff-inline-report-view-v1
+  const [activeReportType, setActiveReportType] = useState(null);
   const staffRows = Array.isArray(rows) ? rows : [];
 
   // staff-register-grouped-crew-list-v1
@@ -2373,21 +2375,20 @@ const CompactStaffCrewList = ({
     STAFF_STATUS_DISPLAY.at_work.label
   );
 
-  const openStaffReport = (reportType) => {
-    const filteredRows = staffRows.filter((row) => (
+  // staff-inline-report-view-v1
+  const getFilteredReportRows = () => (
+    staffRows.filter((row) => (
       !reportJobFilter ||
       String(row.job_number || '').trim() === reportJobFilter
-    ));
+    ))
+  );
 
-    if (filteredRows.length === 0) {
-      window.alert('No staff rows match the selected job filter.');
-      return;
-    }
-
+  const buildReportPeople = (filteredRows) => {
     const reportGroups = new Map();
 
     filteredRows.forEach((row, index) => {
       const employeeId = String(row.employee_id || '').trim();
+
       const employeeName =
         String(row.employee_name || '').trim() ||
         `Staff ${index + 1}`;
@@ -2419,284 +2420,40 @@ const CompactStaffCrewList = ({
       }
     });
 
-    const people = Array.from(reportGroups.values());
+    return Array.from(reportGroups.values());
+  };
 
-    const reportTitle =
-      reportType === 'full'
-        ? 'Detailed Labour Report'
-        : 'Site Labour Summary';
+  const openStaffReport = (reportType) => {
+    const filteredRows = getFilteredReportRows();
 
-    const jobLabel =
-      reportJobFilter || 'All job numbers';
-
-    const summaryRows = people.map((person) => {
-      const jobs = Array.from(new Set(
-        person.rows.map((row) => (
-          String(row.job_number || '').trim() || 'Not allocated'
-        ))
-      )).join(', ');
-
-      const tasks = Array.from(new Set(
-        person.rows.map((row) => (
-          String(row.task_code || '').trim() || 'Not allocated'
-        ))
-      )).join(', ');
-
-      return `
-        <tr>
-          <td>${escapeReportHtml(person.employeeName)}</td>
-          <td>${escapeReportHtml(jobs)}</td>
-          <td>${escapeReportHtml(tasks)}</td>
-          <td>${escapeReportHtml(getReportStatus(person.status))}</td>
-          <td class="number">${person.totalHours.toFixed(2)}</td>
-        </tr>
-      `;
-    }).join('');
-
-    const fullRows = filteredRows.map((row, index) => `
-      <tr>
-        <td>${escapeReportHtml(row.employee_name || `Staff ${index + 1}`)}</td>
-        <td>${escapeReportHtml(row.job_number || 'Not allocated')}</td>
-        <td>${escapeReportHtml(row.task_code || 'Not allocated')}</td>
-        <td>${escapeReportHtml(getReportStatus(row.attendance_status))}</td>
-        <td>${escapeReportHtml(row.start_time || '')}</td>
-        <td>${escapeReportHtml(row.finish_time || '')}</td>
-        <td class="number">${escapeReportHtml(row.lunch_duration || '0')}</td>
-        <td class="number">${Number(row.total_hours || 0).toFixed(2)}</td>
-        <td>${escapeReportHtml(row.description || row.other || '')}</td>
-      </tr>
-    `).join('');
-
-    const table =
-      reportType === 'full'
-        ? `
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Job number</th>
-                <th>Task code / task</th>
-                <th>Status</th>
-                <th>Start</th>
-                <th>Finish</th>
-                <th>Lunch</th>
-                <th>Hours</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>${fullRows}</tbody>
-          </table>
-        `
-        : `
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Job number</th>
-                <th>Task code / task</th>
-                <th>Status</th>
-                <th>Total hours</th>
-              </tr>
-            </thead>
-            <tbody>${summaryRows}</tbody>
-          </table>
-        `;
-
-    const totalHours = filteredRows.reduce(
-      (total, row) => total + Number(row.total_hours || 0),
-      0
-    );
-
-    const reportWindow = window.open(
-      '',
-      '_blank',
-      'noopener,noreferrer'
-    );
-
-    if (!reportWindow) {
+    if (filteredRows.length === 0) {
       window.alert(
-        'The report window was blocked. Allow pop-ups for this site and try again.'
+        'No staff rows match the selected job filter.'
       );
       return;
     }
 
-    reportWindow.document.open();
-    reportWindow.document.write(`
-      <!doctype html>
-      <html lang="en">
-        <head>
-          <meta charset="utf-8" />
-          <title>${escapeReportHtml(reportTitle)}</title>
-          <style>
-            @page {
-              size: A4 landscape;
-              margin: 12mm;
-            }
-
-            * {
-              box-sizing: border-box;
-            }
-
-            body {
-              margin: 0;
-              color: #111;
-              background: #fff;
-              font-family: Arial, Helvetica, sans-serif;
-              font-size: 10px;
-              line-height: 1.35;
-            }
-
-            header {
-              display: flex;
-              align-items: flex-start;
-              justify-content: space-between;
-              gap: 24px;
-              margin-bottom: 12px;
-              border-bottom: 2px solid #111;
-              padding-bottom: 8px;
-            }
-
-            h1 {
-              margin: 0 0 4px;
-              font-size: 20px;
-            }
-
-            header p,
-            footer p {
-              margin: 2px 0;
-            }
-
-            .meta {
-              text-align: right;
-              white-space: nowrap;
-            }
-
-            .totals {
-              display: flex;
-              gap: 20px;
-              margin: 0 0 10px;
-              border: 1px solid #bbb;
-              padding: 7px 9px;
-              font-size: 11px;
-            }
-
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              table-layout: auto;
-            }
-
-            thead {
-              display: table-header-group;
-            }
-
-            tr {
-              break-inside: avoid;
-              page-break-inside: avoid;
-            }
-
-            th,
-            td {
-              border: 1px solid #999;
-              padding: 5px 6px;
-              vertical-align: top;
-              text-align: left;
-            }
-
-            th {
-              background: #eee;
-              font-weight: 700;
-            }
-
-            td.number,
-            th.number {
-              text-align: right;
-              white-space: nowrap;
-            }
-
-            footer {
-              margin-top: 10px;
-              border-top: 1px solid #999;
-              padding-top: 7px;
-              color: #444;
-              font-size: 9px;
-            }
-
-            .screen-actions {
-              display: flex;
-              justify-content: flex-end;
-              gap: 8px;
-              margin-bottom: 10px;
-            }
-
-            .screen-actions button {
-              border: 1px solid #333;
-              border-radius: 4px;
-              background: #fff;
-              padding: 7px 12px;
-              cursor: pointer;
-              font-weight: 700;
-            }
-
-            @media print {
-              .screen-actions {
-                display: none;
-              }
-            }
-          </style>
-        </head>
-
-        <body>
-          <div class="screen-actions">
-            <button type="button" onclick="window.print()">
-              Print / Save PDF
-            </button>
-            <button type="button" onclick="window.close()">
-              Close
-            </button>
-          </div>
-
-          <header>
-            <div>
-              <h1>${escapeReportHtml(reportTitle)}</h1>
-              <p>Project: ${escapeReportHtml(selectedDateLabel || 'Selected diary day')}</p>
-              <p>Job filter: ${escapeReportHtml(jobLabel)}</p>
-            </div>
-
-            <div class="meta">
-              <p>Date: ${escapeReportHtml(selectedDateLabel)}</p>
-              <p>Generated: ${escapeReportHtml(
-                new Intl.DateTimeFormat('en-NZ', {
-                  dateStyle: 'medium',
-                  timeStyle: 'short',
-                  timeZone: 'Pacific/Auckland'
-                }).format(new Date())
-              )}</p>
-            </div>
-          </header>
-
-          <div class="totals">
-            <strong>${people.length} people</strong>
-            <strong>${filteredRows.length} job/task rows</strong>
-            <strong>${totalHours.toFixed(2)} total hours</strong>
-          </div>
-
-          ${table}
-
-          <footer>
-            <p>
-              Information only. This report records labour attendance and work allocation
-              supplied for site coordination. It is not a signed timesheet or payroll approval.
-            </p>
-          </footer>
-        </body>
-      </html>
-    `);
-
-    reportWindow.document.close();
-    reportWindow.focus();
+    setActiveReportType(
+      reportType === 'full'
+        ? 'full'
+        : 'summary'
+    );
   };
 
+  const reportRows = activeReportType
+    ? getFilteredReportRows()
+    : [];
+
+  const reportPeople = activeReportType
+    ? buildReportPeople(reportRows)
+    : [];
+
+  const reportTotalHours = reportRows.reduce(
+    (total, row) => (
+      total + Number(row.total_hours || 0)
+    ),
+    0
+  );
   const query = search.trim().toLowerCase();
 
   const filteredStaff = groupedStaff.filter(
@@ -2722,6 +2479,201 @@ const CompactStaffCrewList = ({
     otherSite: 0
   });
 
+  if (activeReportType) {
+    const isFullReport = activeReportType === 'full';
+
+    return (
+      <section
+        className="lld-staff-inline-report"
+        data-testid="staff-inline-report-view-v1"
+      >
+        <div className="lld-staff-inline-report-toolbar">
+          <button
+            type="button"
+            onClick={() => setActiveReportType(null)}
+          >
+            ← Back to Staff
+          </button>
+
+          <div>
+            <button
+              type="button"
+              className={!isFullReport ? 'is-active' : ''}
+              onClick={() => setActiveReportType('summary')}
+            >
+              Summary
+            </button>
+
+            <button
+              type="button"
+              className={isFullReport ? 'is-active' : ''}
+              onClick={() => setActiveReportType('full')}
+            >
+              Full
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => window.print()}
+          >
+            Print / Save PDF
+          </button>
+        </div>
+
+        <header className="lld-staff-inline-report-heading">
+          <div>
+            <p>STAFF REPORT</p>
+
+            <h2>
+              {isFullReport
+                ? 'Detailed Labour Report'
+                : 'Site Labour Summary'}
+            </h2>
+
+            <span>{selectedDateLabel}</span>
+          </div>
+
+          <div>
+            <strong>
+              {reportJobFilter || 'All jobs'}
+            </strong>
+
+            <small>Job filter</small>
+          </div>
+        </header>
+
+        <div className="lld-staff-inline-report-totals">
+          <span>
+            <strong>{reportPeople.length}</strong>
+            <small>People</small>
+          </span>
+
+          <span>
+            <strong>{reportRows.length}</strong>
+            <small>Job / task rows</small>
+          </span>
+
+          <span>
+            <strong>
+              {reportTotalHours.toFixed(2)}h
+            </strong>
+            <small>Total hours</small>
+          </span>
+        </div>
+
+        <div className="lld-staff-inline-report-table-wrap">
+          {isFullReport ? (
+            <table className="lld-staff-inline-report-table is-full">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Job</th>
+                  <th>Task</th>
+                  <th>Status</th>
+                  <th>Start</th>
+                  <th>Finish</th>
+                  <th>Lunch</th>
+                  <th>Hours</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {reportRows.map((row, index) => (
+                  <tr key={`staff-full-report-${index}`}>
+                    <td>
+                      {row.employee_name || `Staff ${index + 1}`}
+                    </td>
+
+                    <td>
+                      {row.job_number || 'Not allocated'}
+                    </td>
+
+                    <td>
+                      {row.task_code || 'Not allocated'}
+                    </td>
+
+                    <td>
+                      {getReportStatus(row.attendance_status)}
+                    </td>
+
+                    <td>{row.start_time || '—'}</td>
+                    <td>{row.finish_time || '—'}</td>
+
+                    <td>
+                      {String(row.lunch_duration || '0')}
+                    </td>
+
+                    <td className="number">
+                      {Number(row.total_hours || 0).toFixed(2)}
+                    </td>
+
+                    <td>
+                      {row.description || row.other || ''}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <table className="lld-staff-inline-report-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Job</th>
+                  <th>Task</th>
+                  <th>Status</th>
+                  <th>Hours</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {reportPeople.map((person, index) => {
+                  const jobs = Array.from(
+                    new Set(
+                      person.rows.map((row) => (
+                        String(row.job_number || '').trim() ||
+                        'Not allocated'
+                      ))
+                    )
+                  ).join(', ');
+
+                  const tasks = Array.from(
+                    new Set(
+                      person.rows.map((row) => (
+                        String(row.task_code || '').trim() ||
+                        'Not allocated'
+                      ))
+                    )
+                  ).join(', ');
+
+                  return (
+                    <tr key={`staff-summary-report-${index}`}>
+                      <td>{person.employeeName}</td>
+                      <td>{jobs}</td>
+                      <td>{tasks}</td>
+                      <td>{getReportStatus(person.status)}</td>
+
+                      <td className="number">
+                        {person.totalHours.toFixed(2)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        <footer className="lld-staff-inline-report-footer">
+          Information only. This report records labour attendance
+          and work allocation for site coordination. It is not a
+          signed timesheet or payroll approval.
+        </footer>
+      </section>
+    );
+  }
   return (
     <section
       className="lld-staff-crew-index"
@@ -3462,7 +3414,10 @@ const WeeklyStaffDashboard = ({
         </p>
       ) : (
         <>
-          <div className="lld-staff-weekly-table-wrap">
+          <div
+            className="lld-staff-weekly-table-wrap"
+            data-testid="staff-weekly-mobile-scroll-v1"
+          >
             <table className="lld-staff-weekly-table">
               <thead>
                 <tr>
