@@ -9191,3 +9191,118 @@ main.lld-diary-experience
   }
 }
 /* /LLD / STAFF IOS INPUT NO ZOOM V1 */
+
+/* LLD / STAFF BULK CREW PICKER V1 */
+
+.lld-staff-multi-picker-actions {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.lld-staff-multi-picker-actions > strong {
+  color: var(--lld-v2r-muted);
+  font-size: 0.72rem;
+  text-align: right;
+}
+
+.lld-staff-multi-picker {
+  display: grid;
+  max-height: min(46vh, 25rem);
+  overflow-y: auto;
+  border: 1px solid rgba(107, 79, 48, 0.16);
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.lld-staff-multi-picker-row {
+  display: grid;
+  grid-template-columns: 1.35rem minmax(0, 1fr) auto;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(107, 79, 48, 0.1);
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+}
+
+.lld-staff-multi-picker-row:last-child {
+  border-bottom: 0;
+}
+
+.lld-staff-multi-picker-row > input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+}
+
+.lld-staff-multi-picker-row > span {
+  min-width: 0;
+  overflow: hidden;
+  color: #263d4c;
+  font-size: 0.78rem;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lld-staff-multi-picker-row > small {
+  color: #71808a;
+  font-size: 0.6rem;
+  font-weight: 760;
+}
+
+.lld-staff-multi-picker-row.is-already-added {
+  opacity: 0.58;
+  cursor: default;
+}
+
+.lld-staff-add-selected {
+  width: 100%;
+  min-height: 2.8rem;
+}
+
+.lld-staff-site-only-disclosure {
+  border-top: 1px solid rgba(107, 79, 48, 0.13);
+  padding-top: 0.55rem;
+}
+
+.lld-staff-site-only-disclosure > summary {
+  color: #60717d;
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lld-staff-site-only-add {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+}
+
+@media screen and (max-width: 760px) {
+  .lld-staff-multi-picker-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lld-staff-multi-picker-actions > strong {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+
+  .lld-staff-multi-picker {
+    max-height: 48vh;
+  }
+
+  .lld-staff-multi-picker-row {
+    min-height: 2.65rem;
+    padding: 0.35rem 0.45rem;
+  }
+
+  .lld-staff-multi-picker-row > span {
+    font-size: 0.72rem;
+  }
+}
+
+/* /LLD / STAFF BULK CREW PICKER V1 */

@@ -3546,29 +3546,119 @@ const WeeklyStaffDashboard = ({
 };
 const BinderStaffAdd = ({
   employeeOptions = [],
+  existingRows = [],
   staffSaving = false,
-  onAddEmployee,
+  onAddEmployees,
   onAddSiteStaff,
   onClose,
 }) => {
-  const [employeeValue, setEmployeeValue] = useState('');
+  const [search, setSearch] = useState('');
+  const [selectedValues, setSelectedValues] = useState([]);
   const [siteOnlyName, setSiteOnlyName] = useState('');
 
   const options = Array.isArray(employeeOptions)
     ? employeeOptions
     : [];
 
+  const rows = Array.isArray(existingRows)
+    ? existingRows
+    : [];
+
+  const existingEmployeeIds = new Set(
+    rows
+      .map((row) => String(row?.employee_id || '').trim())
+      .filter(Boolean)
+  );
+
+  const existingNames = new Set(
+    rows
+      .map((row) => (
+        String(row?.employee_name || '')
+          .trim()
+          .toLowerCase()
+      ))
+      .filter(Boolean)
+  );
+
+  const getOptionName = (option) => String(
+    option?.employee_name ||
+    option?.display_name ||
+    option?.name ||
+    option?.label ||
+    option?.value ||
+    ''
+  ).trim();
+
+  const isAlreadyAdded = (option) => {
+    const employeeId = String(
+      option?.employee_id || ''
+    ).trim();
+
+    const nameKey = getOptionName(option).toLowerCase();
+
+    return (
+      (employeeId && existingEmployeeIds.has(employeeId)) ||
+      (nameKey && existingNames.has(nameKey))
+    );
+  };
+
+  const query = search.trim().toLowerCase();
+
+  const filteredOptions = options.filter((option) => {
+    if (!query) return true;
+
+    return [
+      option?.label,
+      option?.employee_name,
+      option?.display_name,
+      option?.name,
+      option?.value
+    ].some((value) => (
+      String(value || '')
+        .toLowerCase()
+        .includes(query)
+    ));
+  });
+
+  const selectableValues = filteredOptions
+    .filter((option) => !isAlreadyAdded(option))
+    .map((option) => String(option?.value || '').trim())
+    .filter(Boolean);
+
+  const selectedSet = new Set(selectedValues);
+
+  const toggleValue = (value) => {
+    if (!value) return;
+
+    setSelectedValues((current) => (
+      current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value]
+    ));
+  };
+
+  const selectAllShown = () => {
+    setSelectedValues((current) => (
+      Array.from(
+        new Set([
+          ...current,
+          ...selectableValues
+        ])
+      )
+    ));
+  };
+
   return (
     <div
       className="lld-binder-action-detail lld-binder-staff-detail"
-      data-testid="lld-binder-staff-add-v2s2b"
+      data-testid="lld-binder-staff-multi-add-v1"
     >
       <div className="lld-binder-page-heading lld-binder-action-detail-heading">
         <div>
           <p>Daily labour</p>
-          <h3>Add staff member</h3>
+          <h3>Add crew</h3>
           <small>
-            Add Timesheet staff or record a site-only person without leaving the binder.
+            Tick everyone working today and add them together.
           </small>
         </div>
 
@@ -3584,71 +3674,169 @@ const BinderStaffAdd = ({
 
       <div className="lld-binder-action-form">
         <label className="lld-binder-action-field lld-binder-action-field-wide">
-          <span>Timesheet staff</span>
-          <select
-            value={employeeValue}
-            onChange={(event) => setEmployeeValue(event.target.value)}
-            disabled={staffSaving}
-            data-testid="lld-binder-staff-add-employee-v2s2b"
-          >
-            <option value="">Select staff member</option>
+          <span>Find staff</span>
 
-            {options.map((option, index) => (
-              <option
-                key={`${option.value || option.label || 'staff'}-${index}`}
-                value={option.value || ''}
-              >
-                {option.label || option.value}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="lld-binder-action-field lld-binder-action-field-wide">
-          <span>Site-only staff name</span>
           <input
-            type="text"
-            value={siteOnlyName}
-            placeholder="Name for this diary only"
-            onChange={(event) => setSiteOnlyName(event.target.value)}
+            type="search"
+            value={search}
+            placeholder="Search project or company staff..."
+            onChange={(event) => setSearch(event.target.value)}
             disabled={staffSaving}
-            data-testid="lld-binder-staff-add-site-only-v2s2b"
+            data-testid="staff-multi-search-v1"
           />
         </label>
 
-        <div className="lld-binder-action-controls">
-          <button
-            type="button"
-            className="lld-binder-action-button lld-binder-action-button-primary"
-            onClick={() => onAddEmployee?.(employeeValue)}
-            disabled={staffSaving || !employeeValue}
-          >
-            Add Timesheet staff
-          </button>
-
+        <div className="lld-staff-multi-picker-actions">
           <button
             type="button"
             className="lld-binder-action-button"
-            onClick={() => onAddSiteStaff?.(siteOnlyName.trim())}
-            disabled={staffSaving || !siteOnlyName.trim()}
+            onClick={selectAllShown}
+            disabled={
+              staffSaving ||
+              selectableValues.length === 0
+            }
           >
-            Add site-only staff
+            Select all shown
           </button>
 
           <button
             type="button"
             className="lld-binder-action-button lld-binder-action-button-quiet"
-            onClick={onClose}
-            disabled={staffSaving}
+            onClick={() => setSelectedValues([])}
+            disabled={
+              staffSaving ||
+              selectedValues.length === 0
+            }
           >
-            Back to Staff
+            Clear
           </button>
+
+          <strong>
+            {selectedValues.length} selected
+          </strong>
         </div>
+
+        <div
+          className="lld-staff-multi-picker"
+          data-testid="staff-multi-picker-v1"
+        >
+          {filteredOptions.length === 0 ? (
+            <div className="lld-staff-crew-empty">
+              <strong>No matching staff</strong>
+            </div>
+          ) : (
+            filteredOptions.map((option, index) => {
+              const value = String(
+                option?.value || ''
+              ).trim();
+
+              const label =
+                option?.label ||
+                getOptionName(option) ||
+                value;
+
+              const alreadyAdded =
+                isAlreadyAdded(option);
+
+              const checked =
+                alreadyAdded ||
+                selectedSet.has(value);
+
+              return (
+                <label
+                  key={`${value || label || 'staff'}-${index}`}
+                  className={`lld-staff-multi-picker-row${
+                    alreadyAdded
+                      ? ' is-already-added'
+                      : ''
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={
+                      staffSaving ||
+                      alreadyAdded ||
+                      !value
+                    }
+                    onChange={() => toggleValue(value)}
+                  />
+
+                  <span>{label}</span>
+
+                  {alreadyAdded && (
+                    <small>Already on day</small>
+                  )}
+                </label>
+              );
+            })
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="lld-binder-action-button lld-binder-action-button-primary lld-staff-add-selected"
+          onClick={() => {
+            const addedCount =
+              onAddEmployees?.(selectedValues);
+
+            if (addedCount !== 0) {
+              onClose?.();
+            }
+          }}
+          disabled={
+            staffSaving ||
+            selectedValues.length === 0
+          }
+          data-testid="staff-add-selected-v1"
+        >
+          Add selected staff ({selectedValues.length})
+        </button>
+
+        <details className="lld-staff-site-only-disclosure">
+          <summary>
+            Add someone not in the staff list
+          </summary>
+
+          <div className="lld-staff-site-only-add">
+            <label className="lld-binder-action-field lld-binder-action-field-wide">
+              <span>Site-only staff name</span>
+
+              <input
+                type="text"
+                value={siteOnlyName}
+                placeholder="Enter name"
+                onChange={(event) => (
+                  setSiteOnlyName(event.target.value)
+                )}
+                disabled={staffSaving}
+              />
+            </label>
+
+            <button
+              type="button"
+              className="lld-binder-action-button"
+              onClick={() => {
+                const name = siteOnlyName.trim();
+
+                if (!name) return;
+
+                onAddSiteStaff?.(name);
+                onClose?.();
+              }}
+              disabled={
+                staffSaving ||
+                !siteOnlyName.trim()
+              }
+            >
+              Add site-only staff
+            </button>
+          </div>
+        </details>
       </div>
     </div>
   );
 };
-
 // binder-native-staff-entry-v2s2b
 const BinderStaffDetail = ({
   row = {},
@@ -4668,6 +4856,7 @@ const DigitalJobBinder = ({
   getStaffJobOptions,
   getStaffTaskOptions,
   onAddStaffEmployee,
+  onAddStaffEmployees,
   onAddSiteStaff,
   onStaffEmployeeChange,
   onStaffChange,
@@ -6622,18 +6811,14 @@ const DigitalJobBinder = ({
                       ? getStaffEmployeeOptions('')
                       : []
                   }
+                  existingRows={labourRows}
                   staffSaving={staffSaving}
-                  onAddEmployee={(value) => {
-                    const nextIndex = labourRows.length;
-                    onAddStaffEmployee?.(value);
-                    setStaffAddOpen(false);
-                    setSelectedStaffId(`binder-staff-${nextIndex}`);
-                  }}
+                  onAddEmployees={(values) => (
+                    onAddStaffEmployees?.(values)
+                  )}
                   onAddSiteStaff={(name) => {
-                    const nextIndex = labourRows.length;
                     onAddSiteStaff?.(name);
-                    setStaffAddOpen(false);
-                    setSelectedStaffId(`binder-staff-${nextIndex}`);
+                    setSelectedStaffId(null);
                   }}
                   onClose={() => setStaffAddOpen(false)}
                 />

@@ -519,6 +519,101 @@ const DiaryPage = () => {
     window.requestAnimationFrame(() => openLabourEditor(labourRows.length));
   };
 
+  // staff-bulk-add-v1
+  const addStaffRowsFromEmployees = (employeeOptions = []) => {
+    const options = Array.isArray(employeeOptions)
+      ? employeeOptions
+      : [];
+
+    if (options.length === 0) {
+      toast.error('Select at least one staff member');
+      return 0;
+    }
+
+    const existingIds = new Set(
+      labourRows
+        .map((row) => String(row.employee_id || '').trim())
+        .filter(Boolean)
+    );
+
+    const existingNames = new Set(
+      labourRows
+        .map((row) => (
+          String(row.employee_name || '')
+            .trim()
+            .toLowerCase()
+        ))
+        .filter(Boolean)
+    );
+
+    const nextRows = [];
+
+    options.forEach((employeeOption) => {
+      const staffName = String(
+        employeeOption?.employee_name ||
+        employeeOption?.display_name ||
+        employeeOption?.label ||
+        employeeOption?.name ||
+        employeeOption?.value ||
+        ''
+      ).trim();
+
+      const employeeId = String(
+        employeeOption?.employee_id || ''
+      ).trim();
+
+      const nameKey = staffName.toLowerCase();
+
+      if (
+        !staffName ||
+        (employeeId && existingIds.has(employeeId)) ||
+        existingNames.has(nameKey)
+      ) {
+        return;
+      }
+
+      if (employeeId) {
+        existingIds.add(employeeId);
+      }
+
+      existingNames.add(nameKey);
+
+      nextRows.push({
+        ...createEmptyLabourRow(),
+        ...getNormalDayLabourValues(),
+        employee_id: employeeId,
+        employee_name: staffName,
+        job_number: currentProject?.job_number || '',
+        sync_status: employeeOption.linked_to_timesheet
+          ? 'local_only'
+          : 'local_pending_timesheet_staff'
+      });
+    });
+
+    if (nextRows.length === 0) {
+      toast.info('Selected staff are already on this day');
+      return 0;
+    }
+
+    setLabourRows((current) => [
+      ...current,
+      ...nextRows
+    ]);
+
+    setActiveLabourIndex(null);
+    setLabourEditMode(false);
+
+    setLabourSaveStatus(
+      `${nextRows.length} staff added - saving`
+    );
+
+    toast.success(
+      `${nextRows.length} staff added to ${selectedDateLabel}`
+    );
+
+    return nextRows.length;
+  };
+
   // staff-register-add-allocation-row-v1
   const addLabourAllocationForStaff = (sourceIndex) => {
     const sourceRow = labourRows[sourceIndex];
@@ -3432,6 +3527,13 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
           if (employeeOption) {
             addStaffRowFromEmployee(employeeOption);
           }
+        }}
+        onAddStaffEmployees={(values) => {
+          const options = (Array.isArray(values) ? values : [])
+            .map((value) => resolveEmployeeSelection(value))
+            .filter(Boolean);
+
+          return addStaffRowsFromEmployees(options);
         }}
         onAddSiteStaff={(name) => {
           addStaffRowFromEmployee({
