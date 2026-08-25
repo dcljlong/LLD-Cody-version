@@ -9728,3 +9728,208 @@ main.lld-diary-experience
 }
 
 /* /LLD / STAFF PORTRAIT CONTAINMENT V2 */
+
+/* LLD / WEEKLY CREW MOBILE POLISH V3 */
+
+@media screen and (max-width: 760px) {
+
+  /*
+   * Expanded weekly section must behave like a contained card.
+   * Only the matrix is allowed to scroll horizontally.
+   */
+  main.lld-diary-experience .lld-staff-weekly-dashboard[open] {
+    overflow: hidden;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-expanded {
+    display: grid;
+    gap: 0.55rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  /*
+   * Compact heading.
+   */
+  main.lld-diary-experience .lld-staff-weekly-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-heading > div {
+    min-width: 0;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-heading h3 {
+    margin: 0.05rem 0;
+    font-size: 0.86rem;
+    line-height: 1.15;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-heading small {
+    font-size: 0.58rem;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-heading > strong {
+    display: grid;
+    width: 2.35rem;
+    height: 2.35rem;
+    place-items: center;
+    border-radius: 999px;
+    font-size: 0.78rem;
+  }
+
+  /*
+   * Weekly totals should read like small dashboard tiles,
+   * not giant desktop cards.
+   */
+  main.lld-diary-experience .lld-staff-weekly-totals {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-totals > span {
+    display: grid;
+    align-content: center;
+    min-width: 0;
+    min-height: 3.15rem;
+    border-radius: 0.5rem;
+    padding: 0.38rem 0.5rem;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-totals strong {
+    font-size: 0.83rem;
+    line-height: 1.1;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-totals small {
+    margin-top: 0.12rem;
+    font-size: 0.52rem;
+    line-height: 1.15;
+  }
+
+  /*
+   * Matrix is the only sideways-scrolling region.
+   */
+  main.lld-diary-experience .lld-staff-weekly-table-wrap {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
+  }
+
+  /*
+   * Keep columns large enough to read instead of shrinking
+   * the entire week to microscopic text.
+   */
+  main.lld-diary-experience .lld-staff-weekly-table {
+    width: max-content;
+    min-width: 39rem;
+    table-layout: fixed;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-table th,
+  main.lld-diary-experience .lld-staff-weekly-table td {
+    min-width: 3.75rem;
+    width: 3.75rem;
+    padding: 0.34rem 0.28rem;
+  }
+
+  /*
+   * Worker name remains visible while Mon-Sun swipe.
+   */
+  main.lld-diary-experience
+    .lld-staff-weekly-table
+    .lld-staff-weekly-name-cell {
+    position: sticky;
+    left: 0;
+    z-index: 4;
+    min-width: 7.1rem;
+    width: 7.1rem;
+    max-width: 7.1rem;
+    overflow: hidden;
+    background: #fff;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    box-shadow: 2px 0 3px rgba(23, 52, 74, 0.09);
+  }
+
+  main.lld-diary-experience
+    .lld-staff-weekly-table
+    thead
+    .lld-staff-weekly-name-cell {
+    z-index: 5;
+    background: #f4f6f7;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-table thead th {
+    font-size: 0.54rem;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-table thead th small {
+    font-size: 0.46rem;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-status {
+    font-size: 0.57rem;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-hours {
+    font-size: 0.48rem;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-total-cell {
+    min-width: 4.25rem !important;
+    width: 4.25rem !important;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-legend {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    font-size: 0.5rem;
+    line-height: 1.35;
+  }
+
+  /*
+   * Collapsed weekly row stays readable without truncating
+   * the staff/hour total.
+   */
+  main.lld-diary-experience .lld-staff-weekly-summary-toggle {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.4rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  main.lld-diary-experience .lld-staff-weekly-summary-toggle > strong {
+    overflow: visible;
+    font-size: 0.67rem;
+    text-align: center;
+    text-overflow: clip;
+    white-space: nowrap;
+  }
+}
+
+/* /LLD / WEEKLY CREW MOBILE POLISH V3 */
