@@ -10091,3 +10091,183 @@ main.lld-diary-experience
 }
 
 /* /LLD / STAFF PRINT PAGINATION FIX V1 */
+
+/* LLD / ISOLATED STAFF REPORT PRINT V2 */
+
+.lld-staff-print-host {
+  display: none;
+}
+
+@media print {
+
+  /*
+   * Safari must receive ONLY the cloned report in print layout.
+   * The live React application is removed with display:none.
+   */
+  body.lld-staff-printing > *:not(.lld-staff-print-host) {
+    display: none !important;
+  }
+
+  html,
+  body.lld-staff-printing {
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  body.lld-staff-printing .lld-staff-print-host {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+
+    height: auto !important;
+    min-height: 0 !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    overflow: visible !important;
+    visibility: visible !important;
+
+    background: #fff !important;
+    transform: none !important;
+  }
+
+  body.lld-staff-printing .lld-staff-print-host,
+  body.lld-staff-printing .lld-staff-print-host * {
+    visibility: visible !important;
+  }
+
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+
+    height: auto !important;
+    min-height: 0 !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    overflow: visible !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-toolbar {
+    display: none !important;
+  }
+
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-heading,
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-totals,
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-footer {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-totals {
+    margin-top: 4mm !important;
+    margin-bottom: 4mm !important;
+    gap: 3mm !important;
+  }
+
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-totals > span {
+    min-height: 0 !important;
+    padding: 2.5mm 3mm !important;
+  }
+
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-table-wrap {
+    display: block !important;
+
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    overflow: visible !important;
+
+    break-before: auto !important;
+    page-break-before: auto !important;
+  }
+
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-table,
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-table.is-full {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+
+    margin: 0 !important;
+
+    border-collapse: collapse !important;
+    table-layout: auto !important;
+    font-size: 8pt !important;
+  }
+
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-table thead {
+    display: table-header-group !important;
+  }
+
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-table tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-table th,
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-table td {
+    padding: 1.5mm 2mm !important;
+  }
+
+  body.lld-staff-printing
+    .lld-staff-print-host
+    .lld-staff-inline-report-footer {
+    margin-top: 4mm !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+}
+
+/* /LLD / ISOLATED STAFF REPORT PRINT V2 */

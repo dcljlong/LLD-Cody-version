@@ -2515,7 +2515,66 @@ const CompactStaffCrewList = ({
 
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() => {
+              const report = document.querySelector(
+                '[data-testid="staff-inline-report-view-v1"]'
+              );
+
+              if (!report) {
+                window.alert(
+                  'Staff report is not available to print.'
+                );
+                return;
+              }
+
+              document
+                .querySelectorAll('.lld-staff-print-host')
+                .forEach((node) => node.remove());
+
+              const printHost = document.createElement('div');
+              printHost.className = 'lld-staff-print-host';
+
+              const reportClone = report.cloneNode(true);
+
+              reportClone
+                .querySelectorAll(
+                  '.lld-staff-inline-report-toolbar'
+                )
+                .forEach((node) => node.remove());
+
+              printHost.appendChild(reportClone);
+              document.body.appendChild(printHost);
+
+              document.body.classList.add(
+                'lld-staff-printing'
+              );
+
+              const cleanupPrintHost = () => {
+                document.body.classList.remove(
+                  'lld-staff-printing'
+                );
+
+                if (printHost.parentNode) {
+                  printHost.parentNode.removeChild(
+                    printHost
+                  );
+                }
+
+                window.removeEventListener(
+                  'afterprint',
+                  cleanupPrintHost
+                );
+              };
+
+              window.addEventListener(
+                'afterprint',
+                cleanupPrintHost
+              );
+
+              void printHost.offsetHeight;
+
+              window.print();
+            }}
           >
             Print / Save PDF
           </button>
