@@ -6505,7 +6505,9 @@ const DigitalJobBinder = ({
                     ? ' lld-binder-tasks-ledger-spread lld-binder-communications-ledger-spread'
                     : activeTab === 'staff'
                       ? ' lld-binder-active-staff'
-                      : ''
+                      : activeTab === 'roadblocks'
+                        ? ' lld-binder-active-roadblocks'
+                        : ''
             }`}
             data-staff-workspace={
               activeTab === 'staff'
@@ -6995,6 +6997,16 @@ const DigitalJobBinder = ({
                 </strong>
               </header>
 
+              {activeTab === 'roadblocks' && (
+                <button
+                  type="button"
+                  className="lld-roadblock-mobile-add"
+                  onClick={openActiveWorkflow}
+                >
+                  + Add Roadblock
+                </button>
+              )}
+
               {activeTab === 'staff' && (
                 <>
                   <CompactDailyStaffRegister
@@ -7197,7 +7209,11 @@ const DigitalJobBinder = ({
                     type="button"
                     onClick={openActiveWorkflow}
                   >
-                    {activeTab === 'photos' ? 'Add photo evidence' : `Open ${activeTabConfig.label}`}
+                    {activeTab === 'photos'
+                      ? 'Add photo evidence'
+                      : activeTab === 'roadblocks'
+                        ? '+ Add Roadblock'
+                        : `Open ${activeTabConfig.label}`}
                   </button>
                 </div>
               )}
