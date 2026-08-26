@@ -9933,3 +9933,161 @@ main.lld-diary-experience
 }
 
 /* /LLD / WEEKLY CREW MOBILE POLISH V3 */
+
+/* LLD / STAFF PRINT PAGINATION FIX V1 */
+
+@media print {
+
+  /*
+   * Safari print pagination:
+   * keep the report in normal document flow instead of using
+   * an absolute full-viewport layer.
+   */
+  html,
+  body {
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .lld-staff-inline-report,
+  .lld-staff-inline-report * {
+    visibility: visible !important;
+  }
+
+  .lld-staff-inline-report {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .lld-staff-inline-report-toolbar {
+    display: none !important;
+  }
+
+  .lld-staff-inline-report-heading,
+  .lld-staff-inline-report-totals,
+  .lld-staff-inline-report-footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .lld-staff-inline-report-heading {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  /*
+   * Compact the dashboard summary so the table starts on page 1.
+   */
+  .lld-staff-inline-report-totals {
+    margin-top: 4mm !important;
+    margin-bottom: 4mm !important;
+    gap: 3mm !important;
+  }
+
+  .lld-staff-inline-report-totals > span {
+    min-height: 0 !important;
+    padding: 2.5mm 3mm !important;
+  }
+
+  .lld-staff-inline-report-table-wrap {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
+  }
+
+  .lld-staff-inline-report-table,
+  .lld-staff-inline-report-table.is-full {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border-collapse: collapse !important;
+    table-layout: auto !important;
+    font-size: 8pt !important;
+  }
+
+  /*
+   * Repeat column headings on genuine multi-page reports.
+   */
+  .lld-staff-inline-report-table thead {
+    display: table-header-group;
+  }
+
+  .lld-staff-inline-report-table tfoot {
+    display: table-footer-group;
+  }
+
+  /*
+   * Never split an individual staff/allocation row across pages.
+   */
+  .lld-staff-inline-report-table tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .lld-staff-inline-report-table th,
+  .lld-staff-inline-report-table td {
+    padding: 1.5mm 2mm !important;
+    vertical-align: top !important;
+  }
+
+  .lld-staff-inline-report-footer {
+    margin-top: 4mm !important;
+    padding-top: 3mm !important;
+  }
+
+  /*
+   * Prevent leftover structural containers from reserving print pages.
+   */
+  main.lld-diary-experience,
+  .lld-digital-job-binder,
+  .lld-binder-stage,
+  .lld-binder-pages,
+  .lld-binder-active-staff,
+  .lld-binder-page,
+  .lld-binder-focused-page {
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+}
+
+/* /LLD / STAFF PRINT PAGINATION FIX V1 */
