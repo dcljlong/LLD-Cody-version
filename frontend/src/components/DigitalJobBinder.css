@@ -10512,3 +10512,84 @@ main.lld-diary-experience
 }
 
 /* /LLD / PHOTOS SINGLE MOBILE WORKSPACE V1 */
+
+/* LLD / COMMUNICATIONS SINGLE MOBILE WORKSPACE V1 */
+
+.lld-emails-mobile-add {
+  display: none;
+}
+
+@media screen and (max-width: 900px) {
+
+  /*
+   * Communications log is the real working surface on mobile.
+   * Hide the duplicate Emails / Calls index page.
+   */
+  .lld-binder-active-emails {
+    grid-template-columns: 1fr !important;
+  }
+
+  .lld-binder-active-emails
+    .lld-binder-focused-page-left {
+    display: none !important;
+  }
+
+  .lld-binder-active-emails
+    .lld-binder-focused-page-right {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /*
+   * Keep Add communication immediately available
+   * above the communication rows.
+   */
+  .lld-binder-active-emails
+    .lld-emails-mobile-add {
+    display: block;
+    width: 100%;
+    min-height: 2.7rem;
+    margin: 0.65rem 0;
+    border: 1px solid rgba(23, 52, 74, 0.2);
+    border-radius: 0.55rem;
+    background: rgba(255, 255, 255, 0.72);
+    color: #17344a;
+    font-size: 0.72rem;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  /*
+   * Keep an empty Communications register compact.
+   */
+  .lld-binder-active-emails
+    .lld-binder-focused-empty {
+    min-height: 0;
+    margin-top: 0.45rem;
+    padding: 0.7rem;
+    gap: 0.35rem;
+  }
+
+  .lld-binder-active-emails
+    .lld-binder-focused-empty strong {
+    font-size: 0.72rem;
+  }
+
+  .lld-binder-active-emails
+    .lld-binder-focused-empty p {
+    margin: 0;
+    font-size: 0.62rem;
+    line-height: 1.35;
+  }
+
+  /*
+   * Primary Add communication action is already above the list.
+   */
+  .lld-binder-active-emails
+    .lld-binder-focused-empty button {
+    display: none;
+  }
+}
+
+/* /LLD / COMMUNICATIONS SINGLE MOBILE WORKSPACE V1 */
