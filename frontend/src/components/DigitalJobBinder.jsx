@@ -6511,7 +6511,7 @@ const DigitalJobBinder = ({
             key={activeTab}
             className={`lld-binder-focused-spread lld-binder-register-spread${
               activeTab === 'tasks'
-                ? ' lld-binder-tasks-ledger-spread'
+                ? ' lld-binder-tasks-ledger-spread lld-binder-active-tasks'
                 : activeTab === 'materials'
                   ? ' lld-binder-materials-ledger-spread lld-binder-active-materials'
                   : activeTab === 'emails'
@@ -7013,6 +7013,38 @@ const DigitalJobBinder = ({
                     : focusedCount}
                 </strong>
               </header>
+
+              {activeTab === 'tasks' && (
+                <>
+                  <button
+                    type="button"
+                    className="lld-tasks-mobile-add"
+                    onClick={openActiveWorkflow}
+                  >
+                    + Add action
+                  </button>
+
+                  <div
+                    className="lld-tasks-mobile-tally"
+                    aria-label="Open action date totals"
+                  >
+                    <span className={taskDateSummary.overdue > 0 ? 'is-attention' : ''}>
+                      <strong>{taskDateSummary.overdue}</strong>
+                      Overdue
+                    </span>
+
+                    <span>
+                      <strong>{taskDateSummary.dueToday}</strong>
+                      Due today
+                    </span>
+
+                    <span>
+                      <strong>{taskDateSummary.noDate}</strong>
+                      No due date
+                    </span>
+                  </div>
+                </>
+              )}
 
               {activeTab === 'materials' && (
                 <button
