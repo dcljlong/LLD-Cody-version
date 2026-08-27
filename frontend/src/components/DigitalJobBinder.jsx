@@ -6424,7 +6424,7 @@ const DigitalJobBinder = ({
 
               <div className="lld-binder-focused-rule" />
 
-              <div className="lld-binder-diary-focused-list">
+              <div className="lld-binder-diary-focused-list lld-binder-diary-desktop-list">
                 {entries.length > 0 ? (
                   entries
                     .slice(0, Math.max(1, Math.ceil(entries.length / 2)))
@@ -6434,6 +6434,24 @@ const DigitalJobBinder = ({
                         entry={entry}
                       />
                     ))
+                ) : (
+                  <div className="lld-binder-diary-focused-empty">
+                    <BookOpen aria-hidden="true" />
+                    <strong>No entries recorded</strong>
+                    <p>This diary page is ready for the first site record of the day.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* diary-mobile-all-entries-v1 */}
+              <div className="lld-binder-diary-focused-list lld-binder-diary-mobile-list">
+                {entries.length > 0 ? (
+                  entries.map((entry, index) => (
+                    <DiaryEntry
+                      key={entry?.id || entry?.saved_at || entry?.created_at || index}
+                      entry={entry}
+                    />
+                  ))
                 ) : (
                   <div className="lld-binder-diary-focused-empty">
                     <BookOpen aria-hidden="true" />

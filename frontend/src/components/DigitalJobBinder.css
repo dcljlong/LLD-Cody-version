@@ -10769,3 +10769,93 @@ main.lld-diary-experience
 }
 
 /* /LLD / TASKS SINGLE MOBILE WORKSPACE V1 */
+
+/* LLD / DIARY SINGLE MOBILE PAGE V1 */
+
+/*
+ * Desktop retains the original two-page diary split.
+ * The dedicated all-entry list exists only for phone/tablet layouts.
+ */
+.lld-binder-diary-mobile-list {
+  display: none !important;
+}
+
+@media screen and (max-width: 900px) {
+
+  /*
+   * One continuous Diary page on mobile.
+   */
+  main.lld-diary-experience
+    .lld-binder-diary-focused-spread {
+    display: block !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /*
+   * First page becomes the complete mobile Diary.
+   */
+  main.lld-diary-experience
+    .lld-binder-diary-focused-page-left {
+    display: flex !important;
+    width: 100%;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /*
+   * The separate desktop continuation / Supporting notes page
+   * is unnecessary on mobile because all entries are above.
+   */
+  main.lld-diary-experience
+    .lld-binder-diary-focused-page-right {
+    display: none !important;
+  }
+
+  /*
+   * Desktop list contains only half of the entries.
+   * Replace it on mobile with the complete list.
+   */
+  main.lld-diary-experience
+    .lld-binder-diary-desktop-list {
+    display: none !important;
+  }
+
+  main.lld-diary-experience
+    .lld-binder-diary-mobile-list {
+    display: flex !important;
+    flex: 0 1 auto;
+    flex-direction: column;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /*
+   * Empty diary should be compact rather than reserving
+   * a large sheet of unused paper.
+   */
+  main.lld-diary-experience
+    .lld-binder-diary-mobile-list
+    .lld-binder-diary-focused-empty {
+    min-height: 0 !important;
+    margin: 0.7rem 0;
+    padding: 1rem;
+    place-content: start;
+  }
+
+  /*
+   * Footer follows the content naturally rather than being pushed
+   * toward the bottom of an artificial full-height page.
+   */
+  main.lld-diary-experience
+    .lld-binder-diary-focused-page-left
+    .lld-binder-page-footer {
+    margin-top: 1rem;
+  }
+}
+
+/* /LLD / DIARY SINGLE MOBILE PAGE V1 */
