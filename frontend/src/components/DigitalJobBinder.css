@@ -10859,3 +10859,44 @@ main.lld-diary-experience
 }
 
 /* /LLD / DIARY SINGLE MOBILE PAGE V1 */
+
+/* LLD / DIARY MOBILE COLUMN FIX V1A */
+
+@media screen and (max-width: 900px) {
+
+  /*
+   * The desktop diary page carries a horizontal flex layout.
+   * Mobile must stack date/header, entries and footer vertically.
+   */
+  main.lld-diary-experience
+    .lld-binder-diary-focused-page-left {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+  }
+
+  main.lld-diary-experience
+    .lld-binder-diary-focused-page-left
+    > * {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  main.lld-diary-experience
+    .lld-binder-diary-mobile-list {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  main.lld-diary-experience
+    .lld-binder-diary-mobile-list
+    .lld-binder-diary-focused-empty {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+/* /LLD / DIARY MOBILE COLUMN FIX V1A */
