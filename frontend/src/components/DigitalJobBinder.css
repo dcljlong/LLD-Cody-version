@@ -10432,3 +10432,83 @@ main.lld-diary-experience
 }
 
 /* /LLD / WALKAROUND SINGLE MOBILE WORKSPACE V1 */
+
+/* LLD / PHOTOS SINGLE MOBILE WORKSPACE V1 */
+
+.lld-photos-mobile-add {
+  display: none;
+}
+
+@media screen and (max-width: 900px) {
+
+  /*
+   * Photos uses one working page on mobile.
+   * Hide the duplicate desktop index page.
+   */
+  .lld-binder-active-photos {
+    grid-template-columns: 1fr !important;
+  }
+
+  .lld-binder-active-photos
+    .lld-binder-focused-page-left {
+    display: none !important;
+  }
+
+  .lld-binder-active-photos
+    .lld-binder-focused-page-right {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /*
+   * Keep Add photo evidence visible at the top of the list page.
+   */
+  .lld-binder-active-photos
+    .lld-photos-mobile-add {
+    display: block;
+    width: 100%;
+    min-height: 2.7rem;
+    margin: 0.65rem 0;
+    border: 1px solid rgba(23, 52, 74, 0.2);
+    border-radius: 0.55rem;
+    background: rgba(255, 255, 255, 0.72);
+    color: #17344a;
+    font-size: 0.72rem;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  /*
+   * Compact photo empty state.
+   */
+  .lld-binder-active-photos
+    .lld-binder-focused-empty {
+    min-height: 0;
+    margin-top: 0.45rem;
+    padding: 0.7rem;
+    gap: 0.35rem;
+  }
+
+  .lld-binder-active-photos
+    .lld-binder-focused-empty strong {
+    font-size: 0.72rem;
+  }
+
+  .lld-binder-active-photos
+    .lld-binder-focused-empty p {
+    margin: 0;
+    font-size: 0.62rem;
+    line-height: 1.35;
+  }
+
+  /*
+   * Primary Add button already sits above the list.
+   */
+  .lld-binder-active-photos
+    .lld-binder-focused-empty button {
+    display: none;
+  }
+}
+
+/* /LLD / PHOTOS SINGLE MOBILE WORKSPACE V1 */

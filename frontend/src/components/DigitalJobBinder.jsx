@@ -6522,7 +6522,9 @@ const DigitalJobBinder = ({
                         ? ' lld-binder-active-roadblocks'
                         : activeTab === 'walkaround'
                           ? ' lld-binder-active-walkaround'
-                          : ''
+                          : activeTab === 'photos'
+                            ? ' lld-binder-active-photos'
+                            : ''
             }`}
             data-staff-workspace={
               activeTab === 'staff'
@@ -7029,6 +7031,16 @@ const DigitalJobBinder = ({
                   onClick={openActiveWorkflow}
                 >
                   + Add Observation
+                </button>
+              )}
+
+              {activeTab === 'photos' && (
+                <button
+                  type="button"
+                  className="lld-photos-mobile-add"
+                  onClick={openActiveWorkflow}
+                >
+                  + Add photo evidence
                 </button>
               )}
 
