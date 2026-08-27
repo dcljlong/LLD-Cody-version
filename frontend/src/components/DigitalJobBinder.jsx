@@ -6507,7 +6507,9 @@ const DigitalJobBinder = ({
                       ? ' lld-binder-active-staff'
                       : activeTab === 'roadblocks'
                         ? ' lld-binder-active-roadblocks'
-                        : ''
+                        : activeTab === 'walkaround'
+                          ? ' lld-binder-active-walkaround'
+                          : ''
             }`}
             data-staff-workspace={
               activeTab === 'staff'
@@ -7004,6 +7006,16 @@ const DigitalJobBinder = ({
                   onClick={openActiveWorkflow}
                 >
                   + Add Roadblock
+                </button>
+              )}
+
+              {activeTab === 'walkaround' && (
+                <button
+                  type="button"
+                  className="lld-walkaround-mobile-add"
+                  onClick={openActiveWorkflow}
+                >
+                  + Add Observation
                 </button>
               )}
 
