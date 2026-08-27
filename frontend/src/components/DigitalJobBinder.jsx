@@ -6513,7 +6513,7 @@ const DigitalJobBinder = ({
               activeTab === 'tasks'
                 ? ' lld-binder-tasks-ledger-spread'
                 : activeTab === 'materials'
-                  ? ' lld-binder-materials-ledger-spread'
+                  ? ' lld-binder-materials-ledger-spread lld-binder-active-materials'
                   : activeTab === 'emails'
                     ? ' lld-binder-tasks-ledger-spread lld-binder-communications-ledger-spread lld-binder-active-emails'
                     : activeTab === 'staff'
@@ -7013,6 +7013,16 @@ const DigitalJobBinder = ({
                     : focusedCount}
                 </strong>
               </header>
+
+              {activeTab === 'materials' && (
+                <button
+                  type="button"
+                  className="lld-materials-mobile-add"
+                  onClick={openActiveWorkflow}
+                >
+                  + Add new material
+                </button>
+              )}
 
               {activeTab === 'emails' && (
                 <button
