@@ -5343,6 +5343,19 @@ const DigitalJobBinder = ({
     if (activeTab === 'photos') {
       setSelectedPhotoId(null);
       setPhotoAddOpen(true);
+
+      // binder-photo-add-auto-scroll-v1
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          document
+            .querySelector('[data-testid="lld-binder-walkaround-add-v2s2g1"]')
+            ?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            });
+        });
+      });
+
       return;
     }
 
