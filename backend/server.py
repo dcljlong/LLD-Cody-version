@@ -1838,25 +1838,65 @@ async def get_weekly_labour_rows(
                     "total_hours": 0.0
                 }
 
-            staff_map[staff_key]["days"][document_date] = {
-                "status": attendance_status,
-                "status_label": status_labels[attendance_status],
-                "code": status_codes[attendance_status],
+            # staff-register-weekly-multi-allocation-v1
+            allocation = {
+                "id": row.get("id") or "",
+                "row_index": row_index,
                 "hours": hours,
+                "job_number": row.get("job_number") or "",
+                "task_code": row.get("task_code") or "",
                 "start_time": row.get("start_time") or "",
                 "finish_time": row.get("finish_time") or "",
-                "notes": row.get("description") or row.get("other") or "",
-                "row_index": row_index
+                "notes": row.get("description") or row.get("other") or ""
             }
+
+            day_entry = staff_map[staff_key]["days"].get(document_date)
+
+            if day_entry is None:
+                staff_map[staff_key]["days"][document_date] = {
+                    "status": attendance_status,
+                    "status_label": status_labels[attendance_status],
+                    "code": status_codes[attendance_status],
+                    "hours": hours,
+                    "start_time": row.get("start_time") or "",
+                    "finish_time": row.get("finish_time") or "",
+                    "notes": row.get("description") or row.get("other") or "",
+                    "row_index": row_index,
+                    "allocations": [allocation]
+                }
+
+                # Attendance is one person/day, not one allocation row.
+                totals[attendance_status] += 1
+                totals["recorded_entries"] += 1
+
+            else:
+                day_entry["hours"] = round(
+                    float(day_entry.get("hours") or 0) + hours,
+                    2
+                )
+
+                day_entry.setdefault("allocations", []).append(allocation)
+
+                if not day_entry.get("start_time") and row.get("start_time"):
+                    day_entry["start_time"] = row.get("start_time")
+
+                if row.get("finish_time"):
+                    day_entry["finish_time"] = row.get("finish_time")
+
+                if not day_entry.get("notes"):
+                    day_entry["notes"] = (
+                        row.get("description") or
+                        row.get("other") or
+                        ""
+                    )
 
             staff_map[staff_key]["total_hours"] = round(
                 staff_map[staff_key]["total_hours"] + hours,
                 2
             )
 
+            # Labour hours remain allocation-based and must include every row.
             totals["hours"] = round(totals["hours"] + hours, 2)
-            totals[attendance_status] += 1
-            totals["recorded_entries"] += 1
 
     staff = sorted(
         staff_map.values(),
