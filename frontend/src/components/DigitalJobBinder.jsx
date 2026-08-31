@@ -5088,7 +5088,7 @@ const DigitalJobBinder = ({
     : 'No project selected';
 
   const entries = useMemo(
-    () => (Array.isArray(diaryEntries) ? diaryEntries.slice(0, 6) : []),
+    () => (Array.isArray(diaryEntries) ? diaryEntries : []),
     [diaryEntries]
   );
 
