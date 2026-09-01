@@ -624,11 +624,41 @@ const getDiaryEntryDisplay = (entry = {}) => {
   };
 };
 
-const DiaryEntry = ({ entry }) => {
+const DiaryEntry = ({ entry, onOpen }) => {
   const display = getDiaryEntryDisplay(entry);
 
   return (
-    <article className="lld-binder-diary-entry">
+    <article
+      className="lld-binder-diary-entry"
+      role={typeof onOpen === 'function' ? 'button' : undefined}
+      tabIndex={typeof onOpen === 'function' ? 0 : undefined}
+      aria-label={
+        typeof onOpen === 'function'
+          ? `Edit diary entry: ${display.title}`
+          : undefined
+      }
+      title={
+        typeof onOpen === 'function'
+          ? 'Tap to edit this diary entry'
+          : undefined
+      }
+      onClick={(event) => {
+        onOpen?.(entry, event.currentTarget);
+      }}
+      onKeyDown={(event) => {
+        if (
+          typeof onOpen === 'function' &&
+          (
+            event.key === 'Enter' ||
+            event.key === ' '
+          )
+        ) {
+          event.preventDefault();
+          onOpen?.(entry, event.currentTarget);
+        }
+      }}
+      data-testid="lld-binder-diary-entry-edit-v1f"
+    >
       <time className="lld-binder-entry-time">{getEntryTime(entry)}</time>
 
       <div className="lld-binder-entry-copy">
@@ -740,6 +770,7 @@ const BinderDiaryEditor = ({
   priorityOptions = [],
   sendToOptions = [],
   saving = false,
+  editing = false,
   onChange,
   onPhotoUpload,
   onSubmit,
@@ -751,8 +782,8 @@ const BinderDiaryEditor = ({
 
   return (
     <BinderEditorShell
-      kicker="Detailed diary entry"
-      title="Add details & photos"
+      kicker={editing ? 'Saved diary entry' : 'Detailed diary entry'}
+      title={editing ? 'Edit diary entry' : 'Add details & photos'}
       context={`${selectedDateLabel} · ${projectName}`}
       busy={saving}
       onClose={onClose}
@@ -904,7 +935,7 @@ const BinderDiaryEditor = ({
             }
             data-testid="lld-binder-diary-save-v2s1"
           >
-            {saving ? 'Saving diary entry...' : 'Save to diary'}
+            {saving ? (editing ? 'Saving changes...' : 'Saving diary entry...') : (editing ? 'Save changes' : 'Save to diary')}
           </button>
 
           <button
@@ -913,7 +944,7 @@ const BinderDiaryEditor = ({
             onClick={onClose}
             disabled={saving}
           >
-            Keep draft and go back
+            {editing ? 'Cancel edit' : 'Keep draft and go back'}
           </button>
         </div>
       </form>
@@ -4889,6 +4920,10 @@ const DigitalJobBinder = ({
   onDiaryDraftChange,
   onDiaryPhotoUpload,
   onQuickSubmit,
+  diaryEditing = false,
+  onOpenDiaryEntry,
+  onStartDiaryEntry,
+  onCancelDiaryEdit,
   onChangeDate,
   onSelectDate,
   onOpenTasks,
@@ -4959,6 +4994,10 @@ const DigitalJobBinder = ({
   const closeDiaryEditor = () => {
     if (submitting) return;
 
+    if (diaryEditing) {
+      onCancelDiaryEdit?.();
+    }
+
     setDiaryEditorOpen(false);
     restoreDiaryEditorFocus();
   };
@@ -4966,9 +5005,38 @@ const DigitalJobBinder = ({
   const openDiaryEditor = (triggerElement = null) => {
     if (selectedDate !== today) return;
 
-    diaryEditorReturnFocusRef.current = triggerElement || document.activeElement;
+    onStartDiaryEntry?.();
+
+    diaryEditorReturnFocusRef.current =
+      triggerElement ||
+      document.activeElement;
+
     setDiaryEditorOpen(true);
   };
+
+  const openExistingDiaryEntry = (
+    entry,
+    triggerElement = null
+  ) => {
+    if (
+      !entry?.id ||
+      typeof onOpenDiaryEntry !== 'function'
+    ) {
+      return;
+    }
+
+    const opened = onOpenDiaryEntry(entry);
+
+    if (opened === false) {
+      return;
+    }
+
+    diaryEditorReturnFocusRef.current =
+      triggerElement ||
+      document.activeElement;
+
+    setDiaryEditorOpen(true);
+  }; // diary-existing-entry-open-v1f
 
   useEffect(() => {
     const saveWasPending = diarySaveWasPendingRef.current;
@@ -4987,6 +5055,10 @@ const DigitalJobBinder = ({
   }, [diaryDraft?.note, diaryEditorOpen, submitting]);
 
   useEffect(() => {
+    if (diaryEditing) {
+      onCancelDiaryEdit?.();
+    }
+
     setDiaryEditorOpen(false);
     setCommunicationAddOpen(false);
     setRoadblockAddOpen(false);
@@ -5222,6 +5294,11 @@ const DigitalJobBinder = ({
     // diary-editor-tab-release-v2s2a
     if (diaryEditorOpen) {
       if (submitting) return;
+
+      if (diaryEditing) {
+        onCancelDiaryEdit?.();
+      }
+
       setDiaryEditorOpen(false);
     }
 
@@ -6071,6 +6148,7 @@ const DigitalJobBinder = ({
                     <DiaryEntry
                       key={entry?.id || entry?.saved_at || entry?.created_at || index}
                       entry={entry}
+                    onOpen={openExistingDiaryEntry}
                     />
                   ))
                 ) : (
@@ -6432,6 +6510,7 @@ const DigitalJobBinder = ({
                       <DiaryEntry
                         key={entry?.id || entry?.saved_at || entry?.created_at || index}
                         entry={entry}
+                      onOpen={openExistingDiaryEntry}
                       />
                     ))
                 ) : (
@@ -6450,6 +6529,7 @@ const DigitalJobBinder = ({
                     <DiaryEntry
                       key={entry?.id || entry?.saved_at || entry?.created_at || index}
                       entry={entry}
+                    onOpen={openExistingDiaryEntry}
                     />
                   ))
                 ) : (
@@ -6497,6 +6577,7 @@ const DigitalJobBinder = ({
                       <DiaryEntry
                         key={entry?.id || entry?.saved_at || entry?.created_at || index}
                         entry={entry}
+                      onOpen={openExistingDiaryEntry}
                       />
                     ))
                 ) : (
@@ -7360,6 +7441,7 @@ const DigitalJobBinder = ({
             priorityOptions={diaryPriorityOptions}
             sendToOptions={diarySendToOptions}
             saving={submitting}
+            editing={diaryEditing}
             onChange={onDiaryDraftChange}
             onPhotoUpload={onDiaryPhotoUpload}
             onSubmit={onQuickSubmit}

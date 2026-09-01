@@ -96,8 +96,9 @@ export const gatesApi = {
 
 export const walkaroundApi = {
   getAll: (params) => api.get('/walkaround', { params }),
-  create: (data) => api.post('/walkaround', data)
-};
+  create: (data) => api.post('/walkaround', data),
+  update: (entryId, data) => api.put(`/walkaround/${entryId}`, data)
+}; // diary-entry-edit-api-v1f
 
 
 export const integrationsApi = {

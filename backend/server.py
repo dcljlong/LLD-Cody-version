@@ -1230,6 +1230,204 @@ async def create_walkaround_entry(entry: WalkaroundEntryCreate, current_user: di
 
     return WalkaroundEntryResponse(**doc)
 
+# walkaround-entry-update-v1f
+@api_router.put("/walkaround/{entry_id}", response_model=WalkaroundEntryResponse)
+async def update_walkaround_entry(
+    entry_id: str,
+    entry: WalkaroundEntryCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    # Update an existing diary / walkaround entry without creating a duplicate.
+
+    existing = await db.walkaround_entries.find_one(
+        {
+            "id": entry_id,
+            "user_id": current_user["id"]
+        },
+        {"_id": 0}
+    )
+
+    if not existing:
+        raise HTTPException(
+            status_code=404,
+            detail="Diary entry not found"
+        )
+
+    existing_project_id = str(
+        existing.get("project_id") or ""
+    ).strip()
+
+    requested_project_id = str(
+        entry.project_id or ""
+    ).strip()
+
+    if existing_project_id != requested_project_id:
+        raise HTTPException(
+            status_code=400,
+            detail="A saved diary entry cannot be moved to another project"
+        )
+
+    project = await db.projects.find_one(
+        {
+            "id": existing_project_id,
+            "user_id": current_user["id"]
+        }
+    )
+
+    if not project:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found"
+        )
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    action_item_id = existing.get("action_item_id")
+
+    action_title = (
+        entry.note[:100]
+        + ("..." if len(entry.note) > 100 else "")
+    )
+    action_description = entry.note
+
+    if "WALKAROUND CAPTURE -" in entry.note:
+        note_lines = entry.note.splitlines()
+
+        category_line = next(
+            (
+                line
+                for line in note_lines
+                if str(line or "").startswith("WALKAROUND CAPTURE - ")
+            ),
+            ""
+        )
+
+        if category_line:
+            action_title = category_line[
+                len("WALKAROUND CAPTURE - "):
+            ].strip() or action_title
+
+        blank_index = next(
+            (
+                index
+                for index, line in enumerate(note_lines)
+                if index > 0 and not str(line or "").strip()
+            ),
+            -1
+        )
+
+        if blank_index >= 0:
+            clean_note = "\n".join(
+                note_lines[blank_index + 1:]
+            ).strip()
+
+            if clean_note:
+                action_description = clean_note
+
+    action_fields = {
+        "project_id": existing_project_id,
+        "gate_id": entry.gate_id,
+        "title": action_title,
+        "description": action_description,
+        "priority": entry.priority,
+        "due_date": entry.due_date,
+        "expected_complete_date": entry.expected_complete_date,
+        "owner": entry.owner,
+        "photos": entry.photos,
+        "updated_at": now
+    }
+
+    if action_item_id:
+        linked_result = await db.action_items.update_one(
+            {
+                "id": action_item_id,
+                "user_id": current_user["id"]
+            },
+            {
+                "$set": action_fields
+            }
+        )
+
+        if linked_result.matched_count == 0:
+            action_item_id = None
+
+    if not action_item_id and entry.create_action_item:
+        action_item_id = str(uuid.uuid4())
+
+        await db.action_items.insert_one(
+            {
+                "id": action_item_id,
+                "user_id": current_user["id"],
+                **action_fields,
+                "status": "open",
+                "completed_at": None,
+                "created_at": now
+            }
+        )
+
+    result = await db.walkaround_entries.update_one(
+        {
+            "id": entry_id,
+            "user_id": current_user["id"]
+        },
+        {
+            "$set": {
+                "gate_id": entry.gate_id,
+                "task_id": entry.task_id,
+                "note": entry.note,
+                "photos": entry.photos,
+                "priority": entry.priority,
+                "due_date": entry.due_date,
+                "expected_complete_date": entry.expected_complete_date,
+                "owner": entry.owner,
+                "action_item_id": action_item_id,
+                "updated_at": now
+            }
+        }
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(
+            status_code=404,
+            detail="Diary entry not found"
+        )
+
+    from zoneinfo import ZoneInfo
+
+    created_at = existing.get("created_at") or now
+
+    try:
+        diary_date = datetime.fromisoformat(
+            created_at
+        ).astimezone(
+            ZoneInfo("Pacific/Auckland")
+        ).date().isoformat()
+    except Exception:
+        diary_date = datetime.fromisoformat(
+            now
+        ).astimezone(
+            ZoneInfo("Pacific/Auckland")
+        ).date().isoformat()
+
+    await invalidate_daily_diary_review_after_change(
+        existing_project_id,
+        diary_date,
+        current_user,
+        "walkaround",
+        "Walkaround or site-note evidence edited"
+    )
+
+    updated = await db.walkaround_entries.find_one(
+        {
+            "id": entry_id,
+            "user_id": current_user["id"]
+        },
+        {"_id": 0}
+    )
+
+    return WalkaroundEntryResponse(**updated)
+
+
 @api_router.get("/walkaround", response_model=List[WalkaroundEntryResponse])
 async def get_walkaround_entries(
     project_id: Optional[str] = None,

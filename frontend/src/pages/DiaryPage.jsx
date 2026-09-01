@@ -1326,6 +1326,8 @@ const DiaryPage = () => {
     create_action_item: false,
     send_to: 'none'
   });
+  const [editingDiaryEntryId, setEditingDiaryEntryId] = useState(null);
+  // diary-saved-entry-edit-v1f
 
   const createEmptyIssueRecorderData = () => ({
     issue_type: 'delay',
@@ -2193,11 +2195,35 @@ const DiaryPage = () => {
 
   useEffect(() => {
     const key = getDiaryDraftKey('quick_entry');
-    if (!key || quickEntryDraftReadyRef.current !== key || submitting) return;
-    if (String(entryData.note || '').trim() || (Array.isArray(entryData.photos) && entryData.photos.length > 0)) {
-      writeDiaryDraft('quick_entry', { entryData }); // diary-draft-autosave-v1-quick-entry
+
+    if (
+      editingDiaryEntryId ||
+      !key ||
+      quickEntryDraftReadyRef.current !== key ||
+      submitting
+    ) {
+      return;
     }
-  }, [entryData, selectedProject, selectedDate, submitting]);
+
+    if (
+      String(entryData.note || '').trim() ||
+      (
+        Array.isArray(entryData.photos) &&
+        entryData.photos.length > 0
+      )
+    ) {
+      writeDiaryDraft(
+        'quick_entry',
+        { entryData }
+      ); // diary-draft-autosave-v1-quick-entry
+    }
+  }, [
+    entryData,
+    selectedProject,
+    selectedDate,
+    submitting,
+    editingDiaryEntryId
+  ]);
 
   useEffect(() => {
     const key = getDiaryDraftKey('labour');
@@ -3032,14 +3058,46 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
       return;
     }
 
+    const editingEntryId = editingDiaryEntryId;
+    const isEditing = Boolean(editingEntryId);
+
     setSubmitting(true);
+
     try {
       const sendTo = entryData.send_to || 'none';
-      const derivedActionType = getSmartCaptureActionType(entryData.entry_type, sendTo);
+      const derivedActionType = getSmartCaptureActionType(
+        entryData.entry_type,
+        sendTo
+      );
       const needsAction = derivedActionType !== 'none';
-      const sortedBuckets = getWorkThroughBuckets(entryData.entry_type, sendTo, entryData.priority);
+      const sortedBuckets = getWorkThroughBuckets(
+        entryData.entry_type,
+        sendTo,
+        entryData.priority
+      );
       const captureNote = buildSmartCaptureNote();
+
+      const payload = {
+        ...entryData,
+        note: captureNote,
+        create_action_item: needsAction,
+        action_type: derivedActionType,
+        project_id: selectedProject
+      };
+
+      const response = isEditing
+        ? await walkaroundApi.update(
+            editingEntryId,
+            payload
+          )
+        : await walkaroundApi.create(
+            payload
+          );
+
+      const persisted = response?.data || {};
+
       const savedCaptureResult = {
+        id: persisted.id || editingEntryId || '',
         note: captureNote,
         raw_note: entryData.note,
         entry_type: entryData.entry_type,
@@ -3052,31 +3110,40 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
         project_id: selectedProject,
         project_name: currentProject?.name || '',
         job_number: currentProject?.job_number || '',
-        saved_at: new Date().toISOString(),
-        has_photos: Array.isArray(entryData.photos) && entryData.photos.length > 0,
-        work_through_buckets: sortedBuckets,
-      }; // diary-quick-walkaround-v1
+        saved_at: persisted.created_at || new Date().toISOString(),
+        has_photos:
+          Array.isArray(entryData.photos) &&
+          entryData.photos.length > 0,
+        work_through_buckets: sortedBuckets
+      };
 
-      await walkaroundApi.create({
-        ...entryData,
-        note: captureNote,
-        create_action_item: needsAction,
-        action_type: derivedActionType,
-        project_id: selectedProject
-      }); // diary-command-centre-ux-v1 diary-quick-walkaround-v1
+      if (isEditing) {
+        setQuickWalkaroundItems([]);
+      } else {
+        setQuickWalkaroundItems(
+          (prev) => [
+            savedCaptureResult,
+            ...prev
+          ].slice(0, 12)
+        );
+      }
 
-      setQuickWalkaroundItems((prev) => [savedCaptureResult, ...prev].slice(0, 12));
       setLastCaptureResult(savedCaptureResult);
-      localStorage.setItem('lld_last_project_id', selectedProject);
-      clearDiaryDraft('quick_entry');
-      setDraftStatus('Diary entry saved - choose next action');
-      toast.success('Entry captured. Choose the next action below.');
 
+      localStorage.setItem(
+        'lld_last_project_id',
+        selectedProject
+      );
 
-      // Reset form
+      if (!isEditing) {
+        clearDiaryDraft('quick_entry');
+      }
+
+      setEditingDiaryEntryId(null);
+
       setEntryData({
         note: '',
-        entry_type: 'general_note', // diary-quick-walkaround-v1
+        entry_type: 'general_note',
         needs_action: false,
         action_type: 'none',
         priority: 'medium',
@@ -3088,12 +3155,30 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
         send_to: 'none'
       });
 
-      // Refresh diary
-      fetchDiary();
-    fetchLabourRows();
-      setShowQuickEntry(true); // diary-quick-walkaround-persistent-queue-v1
+      setDraftStatus(
+        isEditing
+          ? 'Diary entry updated'
+          : 'Diary entry saved - choose next action'
+      );
+
+      toast.success(
+        isEditing
+          ? 'Diary entry updated'
+          : 'Entry captured. Choose the next action below.'
+      );
+
+      await fetchDiary();
+      fetchLabourRows();
+      setShowQuickEntry(true);
     } catch (error) {
-      toast.error('Failed to save entry');
+      toast.error(
+        isEditing
+          ? (
+              error?.response?.data?.detail ||
+              'Failed to update diary entry'
+            )
+          : 'Failed to save entry'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -3179,6 +3264,158 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
     '',
     String(entryData.note || '').trim()
   ].filter(Boolean).join('\n'); // diary-quick-walkaround-v1
+
+  const normaliseDiaryEditLabel = (value) => (
+    String(value || '').trim().toLowerCase()
+  );
+
+  const resetDiaryEntryEdit = () => {
+    setEditingDiaryEntryId(null);
+
+    setEntryData({
+      note: '',
+      entry_type: 'general_note',
+      needs_action: false,
+      action_type: 'none',
+      priority: 'medium',
+      owner: 'Me',
+      due_date: tomorrow,
+      gate_id: '',
+      photos: [],
+      create_action_item: false,
+      send_to: 'none'
+    });
+  };
+
+  const cancelDiaryEntryEdit = () => {
+    if (!editingDiaryEntryId) return;
+
+    resetDiaryEntryEdit();
+    setDraftStatus('Diary edit cancelled');
+  };
+
+  const beginNewDiaryEntry = () => {
+    if (!editingDiaryEntryId) return;
+
+    resetDiaryEntryEdit();
+  };
+
+  const openDiaryEntryForEdit = (entry = {}) => {
+    const entryId = String(entry?.id || '').trim();
+
+    if (!entryId) {
+      toast.error('This diary entry has no saved ID');
+      return false;
+    }
+
+    const storedNote = String(entry?.note || '');
+    const lines = storedNote.split(/\r?\n/);
+
+    const getLineValue = (prefix) => {
+      const found = lines.find(
+        (line) => (
+          String(line || '')
+            .toUpperCase()
+            .startsWith(prefix.toUpperCase())
+        )
+      );
+
+      return found
+        ? String(found).slice(prefix.length).trim()
+        : '';
+    };
+
+    const categoryLabel =
+      getLineValue('WALKAROUND CAPTURE - ') ||
+      getLineValue('CAPTURE SITE ACTIVITY - ');
+
+    const categoryOption = smartCaptureOptions.find(
+      (option) => (
+        normaliseDiaryEditLabel(option.label) ===
+        normaliseDiaryEditLabel(categoryLabel)
+      )
+    );
+
+    const sendLabel = getLineValue('NEEDS SENDING - ');
+
+    const sendOption = sendToOptions.find(
+      (option) => (
+        normaliseDiaryEditLabel(option.label) ===
+        normaliseDiaryEditLabel(sendLabel)
+      )
+    );
+
+    const priorityHeader = getLineValue('PRIORITY - ');
+
+    const sortIndex = lines.findIndex(
+      (line) => (
+        String(line || '')
+          .toUpperCase()
+          .startsWith('SORT TO - ')
+      )
+    );
+
+    const metadataPrefixes = [
+      'WALKAROUND CAPTURE - ',
+      'CAPTURE SITE ACTIVITY - ',
+      'PRIORITY - ',
+      'NEEDS SENDING - ',
+      'ACTION - ',
+      'ACTION REQUIRED - ',
+      'SORT TO - '
+    ];
+
+    const editableNote = categoryLabel
+      ? (
+          sortIndex >= 0
+            ? lines
+                .slice(sortIndex + 1)
+                .join('\n')
+                .trim()
+            : lines
+                .filter(
+                  (line) => (
+                    !metadataPrefixes.some(
+                      (prefix) => (
+                        String(line || '')
+                          .toUpperCase()
+                          .startsWith(prefix.toUpperCase())
+                      )
+                    )
+                  )
+                )
+                .join('\n')
+                .trim()
+        )
+      : storedNote.trim();
+
+    setEditingDiaryEntryId(entryId);
+
+    setEntryData({
+      note: editableNote || storedNote,
+      entry_type: categoryOption?.value || 'general_note',
+      needs_action: Boolean(entry?.action_item_id),
+      action_type: 'none',
+      priority: String(
+        entry?.priority ||
+        priorityHeader ||
+        'medium'
+      ).trim().toLowerCase(),
+      owner: entry?.owner || 'Me',
+      due_date: entry?.due_date || '',
+      gate_id: entry?.gate_id || '',
+      photos:
+        Array.isArray(entry?.photos)
+          ? entry.photos.filter(Boolean)
+          : [],
+      create_action_item: Boolean(entry?.action_item_id),
+      send_to: sendOption?.value || 'none'
+    });
+
+    setDraftStatus('Editing saved diary entry');
+
+    return true;
+  }; // diary-saved-entry-edit-v1f
 
   const issueTypeOptions = [
     { value: 'delay', label: 'Delay / Roadblock' },
@@ -3555,6 +3792,10 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
         diaryPriorityOptions={priorityOptions}
         diarySendToOptions={sendToOptions}
         submitting={submitting}
+        diaryEditing={Boolean(editingDiaryEntryId)}
+        onOpenDiaryEntry={openDiaryEntryForEdit}
+        onStartDiaryEntry={beginNewDiaryEntry}
+        onCancelDiaryEdit={cancelDiaryEntryEdit}
         onQuickNoteChange={(note) => setEntryData((current) => ({ ...current, note }))}
         onDiaryDraftChange={(field, value) => setEntryData((current) => ({
           ...current,
