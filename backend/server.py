@@ -233,6 +233,7 @@ class WalkaroundEntryCreate(BaseModel):
     gate_id: Optional[str] = None
     task_id: Optional[str] = None
     note: str
+    capture_state: str = "organised"  # capture-inbox-v1
     photos: List[str] = []  # base64 encoded
     priority: str = "medium"
     due_date: Optional[str] = None
@@ -246,6 +247,7 @@ class WalkaroundEntryResponse(BaseModel):
     gate_id: Optional[str] = None
     task_id: Optional[str] = None
     note: str
+    capture_state: str = "organised"
     photos: List[str] = []
     priority: str
     due_date: Optional[str] = None
@@ -1205,6 +1207,7 @@ async def create_walkaround_entry(entry: WalkaroundEntryCreate, current_user: di
         "gate_id": entry.gate_id,
         "task_id": entry.task_id,
         "note": entry.note,
+        "capture_state": entry.capture_state,
         "photos": entry.photos,
         "priority": entry.priority,
         "due_date": entry.due_date,
@@ -1375,6 +1378,7 @@ async def update_walkaround_entry(
                 "gate_id": entry.gate_id,
                 "task_id": entry.task_id,
                 "note": entry.note,
+                "capture_state": entry.capture_state,
                 "photos": entry.photos,
                 "priority": entry.priority,
                 "due_date": entry.due_date,

@@ -3049,6 +3049,87 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
     }
   }; // onsite-issue-recorder-v1
 
+  // capture-inbox-v1
+  const handleQuickCapture = async (e) => {
+    e.preventDefault();
+
+    const note = String(entryData.note || '').trim();
+
+    if (!note) {
+      toast.error('Write something first');
+      noteInputRef.current?.focus();
+      return;
+    }
+
+    if (!selectedProject) {
+      toast.error('Select a project first');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const response = await walkaroundApi.create({
+        project_id: selectedProject,
+        gate_id: '',
+        task_id: null,
+        note,
+        photos: Array.isArray(entryData.photos)
+          ? entryData.photos.filter(Boolean)
+          : [],
+        priority: 'medium',
+        due_date: null,
+        expected_complete_date: null,
+        owner: 'Me',
+        create_action_item: false,
+        capture_state: 'inbox'
+      });
+
+      const persisted = response?.data || {};
+
+      setLastCaptureResult({
+        ...persisted,
+        note,
+        raw_note: note,
+        display_note: note,
+        capture_state: 'inbox',
+        project_id: selectedProject,
+        project_name: currentProject?.name || '',
+        job_number: currentProject?.job_number || '',
+        saved_at: persisted.created_at || new Date().toISOString()
+      });
+
+      clearDiaryDraft('quick_entry');
+      setEditingDiaryEntryId(null);
+
+      setEntryData({
+        note: '',
+        entry_type: 'general_note',
+        needs_action: false,
+        action_type: 'none',
+        priority: 'medium',
+        owner: 'Me',
+        due_date: tomorrow,
+        gate_id: '',
+        photos: [],
+        create_action_item: false,
+        send_to: 'none'
+      });
+
+      setDraftStatus('Saved - needs organising');
+      toast.success('Saved. It is in today\'s list.');
+
+      await fetchDiary();
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.detail ||
+        'Failed to save capture'
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleQuickEntry = async (e) => {
     e.preventDefault();
 
@@ -3082,6 +3163,7 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
         note: captureNote,
         create_action_item: needsAction,
         action_type: derivedActionType,
+        capture_state: 'organised',
         project_id: selectedProject
       };
 
@@ -3103,6 +3185,7 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
         entry_type: entryData.entry_type,
         needs_action: needsAction,
         action_type: derivedActionType,
+        capture_state: 'organised',
         send_to: sendTo,
         priority: entryData.priority || 'medium',
         owner: entryData.owner || 'Me',
@@ -3802,7 +3885,8 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
           [field]: value
         }))}
         onDiaryPhotoUpload={handlePhotoUpload}
-        onQuickSubmit={handleQuickEntry}
+        onQuickSubmit={handleQuickCapture}
+        onDiarySubmit={handleQuickEntry}
         onChangeDate={changeDate}
         onSelectDate={selectDate}
         onOpenTasks={() => openActionItemsPage('today', true)}

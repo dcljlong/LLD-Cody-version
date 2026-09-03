@@ -626,6 +626,8 @@ const getDiaryEntryDisplay = (entry = {}) => {
 
 const DiaryEntry = ({ entry, onOpen }) => {
   const display = getDiaryEntryDisplay(entry);
+  const needsOrganising =
+    safeText(entry?.capture_state).toLowerCase() === 'inbox';
 
   return (
     <article
@@ -673,13 +675,17 @@ const DiaryEntry = ({ entry, onOpen }) => {
         )}
 
         <div className="lld-binder-chip-row">
-          {display.priority && (
+          {!needsOrganising && display.priority && (
             <StatusChip tone={display.priority === 'critical' || display.priority === 'high' ? 'danger' : 'warning'}>
               {display.priority}
             </StatusChip>
           )}
 
-          <StatusChip tone="teal">{display.entryType}</StatusChip>
+          {needsOrganising ? (
+            <StatusChip tone="warning">Needs organising</StatusChip>
+          ) : (
+            <StatusChip tone="teal">{display.entryType}</StatusChip>
+          )}
 
           {entry?.has_photos && (
             <StatusChip tone="blue">Evidence</StatusChip>
@@ -4920,6 +4926,7 @@ const DigitalJobBinder = ({
   onDiaryDraftChange,
   onDiaryPhotoUpload,
   onQuickSubmit,
+  onDiarySubmit,
   diaryEditing = false,
   onOpenDiaryEntry,
   onStartDiaryEntry,
@@ -5446,6 +5453,16 @@ const DigitalJobBinder = ({
   const activeTabConfig =
     BINDER_TABS.find((tab) => tab.id === activeTab) || BINDER_TABS[0];
 
+  const captureInboxCount = (
+    Array.isArray(diaryEntries)
+      ? diaryEntries
+      : []
+  ).filter(
+    (entry) => (
+      safeText(entry?.capture_state).toLowerCase() === 'inbox'
+    )
+  ).length; // capture-inbox-v1
+
   const photoEvidenceItems = useMemo(
     () => (Array.isArray(diaryEntries) ? diaryEntries : [])
       .flatMap((entry, entryIndex) => {
@@ -5901,11 +5918,11 @@ const DigitalJobBinder = ({
       >
         <div className="lld-binder-capture-heading">
           <div className="lld-binder-capture-title">
-            <p>{selectedDate === today ? 'Digital Job Binder' : 'Diary archive'}</p>
-            <h2>{selectedDate === today ? 'Write it down' : 'Past diary day'}</h2>
+            <p>{selectedDate === today ? 'Quick capture' : 'Diary archive'}</p>
+            <h2>{selectedDate === today ? "What's on your mind?" : 'Past diary day'}</h2>
             <span>
               {selectedDate === today
-                ? 'LLD timestamps the entry and keeps important work visible.'
+                ? 'Capture it now. Organise it later.'
                 : 'Review the recorded day without changing today\'s working diary.'}
             </span>
           </div>
@@ -5996,7 +6013,7 @@ const DigitalJobBinder = ({
               value={quickNote}
               onChange={(event) => onQuickNoteChange?.(event.target.value)}
               placeholder="Write anything you need to remember, do, order, email, check, chase or record..."
-              rows={1}
+              rows={3}
               data-testid="lld-binder-quick-note-v1"
             />
 
@@ -6012,7 +6029,7 @@ const DigitalJobBinder = ({
                 data-testid="lld-binder-quick-save-v1"
               >
                 <Plus />
-                {submitting ? 'Saving...' : 'Add to diary'}
+                {submitting ? 'Saving...' : 'Save'}
               </button>
 
               <button
@@ -6023,7 +6040,7 @@ const DigitalJobBinder = ({
                 data-testid="lld-binder-quick-details-v2s2"
               >
                 <Camera aria-hidden="true" />
-                Add details & photos
+                Add details
               </button>
             </div>
           </form>
@@ -6045,6 +6062,12 @@ const DigitalJobBinder = ({
             <span>
               {draftStatus || projectName}
             </span>
+
+            {captureInboxCount > 0 && (
+              <span className="lld-binder-inbox-count">
+                {captureInboxCount} need organising
+              </span>
+            )}
           </div>
         )}
       </header>
@@ -7444,7 +7467,7 @@ const DigitalJobBinder = ({
             editing={diaryEditing}
             onChange={onDiaryDraftChange}
             onPhotoUpload={onDiaryPhotoUpload}
-            onSubmit={onQuickSubmit}
+            onSubmit={onDiarySubmit || onQuickSubmit}
             onClose={closeDiaryEditor}
           />,
           document.querySelector('main.lld-diary-experience') || document.body
