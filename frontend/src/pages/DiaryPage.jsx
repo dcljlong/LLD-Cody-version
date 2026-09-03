@@ -3240,8 +3240,8 @@ const openQuickCaptureEmailDraft = (capture = lastCaptureResult) => {
 
       setDraftStatus(
         isEditing
-          ? 'Diary entry updated'
-          : 'Diary entry saved - choose next action'
+          ? 'Saved'
+          : 'Saved - organised'
       );
 
       toast.success(

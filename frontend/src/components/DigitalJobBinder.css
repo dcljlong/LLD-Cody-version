@@ -10949,3 +10949,19 @@ main.lld-diary-experience
     flex-wrap: wrap;
   }
 }
+
+/* LONG LINE DIARY / CAPTURE INBOX V1.1 PROMPT */
+.lld-binder-quick-prompt {
+  display: block;
+  margin: 0 0 -0.15rem;
+  color: #f4fbff;
+  font-size: 1rem;
+  font-weight: 950;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 640px) {
+  .lld-binder-quick-prompt {
+    font-size: 1.05rem;
+  }
+}

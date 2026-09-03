@@ -6009,7 +6009,15 @@ const DigitalJobBinder = ({
             className="lld-binder-quick-form"
             onSubmit={onQuickSubmit}
           >
+            <label
+              className="lld-binder-quick-prompt"
+              htmlFor="lld-binder-quick-note"
+            >
+              What's on your mind?
+            </label>
+
             <textarea
+              id="lld-binder-quick-note"
               value={quickNote}
               onChange={(event) => onQuickNoteChange?.(event.target.value)}
               placeholder="Write anything you need to remember, do, order, email, check, chase or record..."
