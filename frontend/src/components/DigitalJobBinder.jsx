@@ -4991,6 +4991,9 @@ const DigitalJobBinder = ({
   const mobileTabsRef = useRef(null);
   const diaryEditorReturnFocusRef = useRef(null);
   const diarySaveWasPendingRef = useRef(false);
+  const [captureQueueActive, setCaptureQueueActive] = useState(false); // capture-inbox-queue-v1
+  const captureQueueProcessedIdsRef = useRef(new Set());
+  const captureQueueCurrentIdRef = useRef('');
 
   const restoreDiaryEditorFocus = () => {
     window.requestAnimationFrame(() => {
@@ -5005,9 +5008,13 @@ const DigitalJobBinder = ({
       onCancelDiaryEdit?.();
     }
 
+    setCaptureQueueActive(false);
+    captureQueueProcessedIdsRef.current.clear();
+    captureQueueCurrentIdRef.current = '';
+
     setDiaryEditorOpen(false);
     restoreDiaryEditorFocus();
-  };
+  }; // capture-inbox-queue-v1
 
   const openDiaryEditor = (triggerElement = null) => {
     if (selectedDate !== today) return;
@@ -5057,7 +5064,22 @@ const DigitalJobBinder = ({
       !safeText(diaryDraft?.note)
     ) {
       setDiaryEditorOpen(false);
-      restoreDiaryEditorFocus();
+
+      if (captureQueueActive) {
+        const completedId = safeText(
+          captureQueueCurrentIdRef.current
+        );
+
+        if (completedId) {
+          captureQueueProcessedIdsRef.current.add(
+            completedId
+          );
+        }
+
+        captureQueueCurrentIdRef.current = '';
+      } else {
+        restoreDiaryEditorFocus();
+      }
     }
   }, [diaryDraft?.note, diaryEditorOpen, submitting]);
 
@@ -5065,6 +5087,10 @@ const DigitalJobBinder = ({
     if (diaryEditing) {
       onCancelDiaryEdit?.();
     }
+
+    setCaptureQueueActive(false);
+    captureQueueProcessedIdsRef.current.clear();
+    captureQueueCurrentIdRef.current = '';
 
     setDiaryEditorOpen(false);
     setCommunicationAddOpen(false);
@@ -5453,7 +5479,7 @@ const DigitalJobBinder = ({
   const activeTabConfig =
     BINDER_TABS.find((tab) => tab.id === activeTab) || BINDER_TABS[0];
 
-  const captureInboxCount = (
+  const captureInboxEntries = (
     Array.isArray(diaryEntries)
       ? diaryEntries
       : []
@@ -5461,7 +5487,77 @@ const DigitalJobBinder = ({
     (entry) => (
       safeText(entry?.capture_state).toLowerCase() === 'inbox'
     )
-  ).length; // capture-inbox-v1
+  );
+
+  const captureInboxCount =
+    captureInboxEntries.length; // capture-inbox-queue-v1
+
+  const openCaptureInboxQueue = () => {
+    if (captureInboxEntries.length === 0) {
+      return;
+    }
+
+    captureQueueProcessedIdsRef.current.clear();
+    captureQueueCurrentIdRef.current = '';
+
+    setCaptureQueueActive(true);
+    setActiveTab('diary');
+    setMobileTodayPage('diary');
+
+    const firstEntry = captureInboxEntries[0];
+
+    captureQueueCurrentIdRef.current =
+      safeText(firstEntry?.id);
+
+    window.requestAnimationFrame(() => {
+      openExistingDiaryEntry(firstEntry);
+    });
+  }; // capture-inbox-queue-v1
+
+  useEffect(() => {
+    if (
+      !captureQueueActive ||
+      submitting ||
+      diaryEditorOpen
+    ) {
+      return;
+    }
+
+    const nextEntry = captureInboxEntries.find(
+      (entry) => {
+        const entryId = safeText(entry?.id);
+
+        return (
+          entryId &&
+          !captureQueueProcessedIdsRef.current.has(entryId)
+        );
+      }
+    );
+
+    if (!nextEntry) {
+      setCaptureQueueActive(false);
+      captureQueueProcessedIdsRef.current.clear();
+      captureQueueCurrentIdRef.current = '';
+      restoreDiaryEditorFocus();
+      return;
+    }
+
+    captureQueueCurrentIdRef.current =
+      safeText(nextEntry?.id);
+
+    const frame = window.requestAnimationFrame(() => {
+      openExistingDiaryEntry(nextEntry);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [
+    captureQueueActive,
+    diaryEditorOpen,
+    submitting,
+    diaryEntries
+  ]); // capture-inbox-queue-v1
 
   const photoEvidenceItems = useMemo(
     () => (Array.isArray(diaryEntries) ? diaryEntries : [])
@@ -6072,9 +6168,21 @@ const DigitalJobBinder = ({
             </span>
 
             {captureInboxCount > 0 && (
-              <span className="lld-binder-inbox-count">
-                {captureInboxCount} need organising
-              </span>
+              <button
+                type="button"
+                className="lld-binder-inbox-count"
+                onClick={openCaptureInboxQueue}
+                data-testid="lld-capture-inbox-queue-v1"
+              >
+                <span>
+                  {captureInboxCount}{' '}
+                  {captureInboxCount === 1
+                    ? 'needs'
+                    : 'need'} organising
+                </span>
+
+                <strong>Work through</strong>
+              </button>
             )}
           </div>
         )}

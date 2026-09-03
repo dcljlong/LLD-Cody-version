@@ -10965,3 +10965,40 @@ main.lld-diary-experience
     font-size: 1.05rem;
   }
 }
+
+/* LONG LINE DIARY / CAPTURE INBOX V1.2 QUEUE */
+button.lld-binder-inbox-count {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid rgba(245, 158, 11, 0.34);
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 0.38rem 0.65rem;
+  color: #fbbf24;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+button.lld-binder-inbox-count:hover,
+button.lld-binder-inbox-count:focus-visible {
+  border-color: rgba(245, 158, 11, 0.72);
+  background: rgba(245, 158, 11, 0.16);
+  outline: none;
+}
+
+button.lld-binder-inbox-count strong {
+  color: #f4fbff;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 640px) {
+  button.lld-binder-inbox-count {
+    width: 100%;
+  }
+}
